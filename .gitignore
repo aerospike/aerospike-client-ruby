@@ -1,0 +1,12 @@
+.env
+.vagrant
+.yardoc
+coverage
+doc
+Gemfile.lock
+perf/results
+tmp/
+.idea
+.replica
+TODO
+.DS_Store
