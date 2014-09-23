@@ -8,6 +8,7 @@ if ENV['CI']
 end
 
 require 'rspec'
+require "support/utils"
 
 $:.unshift((Pathname(__FILE__).dirname.parent + 'lib').to_s)
 

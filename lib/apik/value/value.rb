@@ -453,43 +453,37 @@ module Apik
       StringValue.new(buf.read(offset, length))
 
     when Apik::ParticleType::INTEGER
-      num = buffer.read_int64(buf, offset)
-
-      Buffer.BytesToNumber(buf, offset, length)
+      Value.of(buffer.read_int64(buf, offset))
 
     when Apik::ParticleType::BLOB
-      # newObj = make([]byte, length)
-      copy(newObj, buf[offsetoffset+length])
-      newObj
+      BytesValue.new(buf.read(offse,length))
 
-    when Apik::ParticleType::LIST
-      newUnpacker(buf, offset, length).UnpackList
+    # when Apik::ParticleType::LIST
+    #   newUnpacker(buf, offset, length).UnpackList
 
-    when Apik::ParticleType::MAP
-      newUnpacker(buf, offset, length).UnpackMap
+    # when Apik::ParticleType::MAP
+    #   newUnpacker(buf, offset, length).UnpackMap
 
     else
       nil
     end
   end
 
-  # def bytesToKeyValue(type int, buf []byte, offset int, len int) (Value, error) {
+  def self.bytesToKeyValue(type, buf, offset, len)
 
-  #   case type
-  #   when Apik::ParticleType::STRING
-  #     NewStringValue(string(buf[offset : offset+len])), nil
+    case type
+    when Apik::ParticleType::STRING
+      StringValue.new(buf.read(offset, len))
 
-  #   when Apik::ParticleType::INTEGER
-  #     NewLongValue(Buffer.VarBytesToInt64(buf, offset, len)), nil
+    when Apik::ParticleType::INTEGER
+      LongValue.new(buf.read_var_int64(offset, len))
 
-  #   when Apik::ParticleType::BLOB
-  #     bytes = make([]byte, len, len)
-  #     copy(bytes, buf[offset:offset+len])
-  #     NewBytesValue(bytes), nil
+    when Apik::ParticleType::BLOB
+      BytesValue.new(buf.read(offset,len))
 
-  #   else
-  #     nil, nil
-  #   end
-  # end
+    else
+      nil
+    end
+  end
 
 end # module

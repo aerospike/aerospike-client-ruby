@@ -21,6 +21,8 @@ require 'apik/value/value'
 
 module Apik
 
+  protected
+
   class ReadCommand < SingleCommand
 
     attr_reader :record

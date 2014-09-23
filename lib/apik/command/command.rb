@@ -113,7 +113,7 @@ module Apik
       sizeBuffer()
       writeHeaderWithPolicy(policy, 0, INFO2_WRITE, fieldCount, 1)
       writeKey(key)
-      writeOperationForOperationType(TOUCH)
+      writeOperationForOperationType(Apik::Operation::TOUCH)
       end_cmd()
     end
 
@@ -175,7 +175,7 @@ module Apik
       writeHeader(INFO1_READ, 0, fieldCount, 1)
 
       writeKey(key)
-      writeOperationForBinName('', READ)
+      writeOperationForBinName('', Apik::Operation::READ)
       end_cmd()
     end
 
@@ -329,7 +329,7 @@ module Apik
     end
 
     def estimateOperationSizeForBinName(binName)
-      @dataOffset += binNam.length + OPERATION_HEADER_SIZE
+      @dataOffset += binName.length + OPERATION_HEADER_SIZE
     end
 
     def estimateOperationSize()
