@@ -45,9 +45,8 @@ module Apik
 
     def set_address(timeout)
       @aliases.each do |aliass|
-        conn = Connection.new(aliass.name, aliass.port, 1)
-
         begin
+          conn = Connection.new(aliass.name, aliass.port, 1)
           conn.set_timeout(timeout)
 
           infoMap= Info.request(conn, 'node', 'build')

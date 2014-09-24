@@ -37,7 +37,7 @@ module Apik
       when String
         res = StringValue.new(value)
       when Value
-        res = v
+        res = value
       when Map
         res = MapValue.new(value)
       when Array
@@ -74,14 +74,13 @@ module Apik
       ''
     end
 
-    protected
 
     def estimateSize
       0
     end
 
     def write(buffer, offset)
-
+      0
     end
 
     def pack(packer)
@@ -254,7 +253,6 @@ module Apik
       @value.to_s
     end
 
-    protected
 
     # def GetLuaValue LuaValue {
     #  LuaInteger.valueOf(@value)
@@ -453,7 +451,7 @@ module Apik
       StringValue.new(buf.read(offset, length))
 
     when Apik::ParticleType::INTEGER
-      Value.of(buffer.read_int64(buf, offset))
+      Value.of(buf.read_int64(offset))
 
     when Apik::ParticleType::BLOB
       BytesValue.new(buf.read(offse,length))

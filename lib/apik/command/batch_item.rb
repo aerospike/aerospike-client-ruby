@@ -13,29 +13,54 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
+require 'thread'
+
+require 'apik/record'
+
+require 'apik/command/command'
+
 module Apik
 
-  class Partition
-    attr_reader :namespace, :partition_id
+  protected
 
-    def initialize(namespace, partition_id)
-      @namespace = namespace
-      @partition_id = partition_id
+  class BatchItem
 
-      self
+    def self.generate_map(keys)
+      keyMap = {}
+      keys.each_with_index do |key, i|
+        item = keyMap[key.digest]
+        unless item
+          item = BatchItem.new(i)
+          keyMap[key.digest] = item
+        else
+          item.add_duplicate(i)
+        end
+      end
+
+      keyMap
     end
 
-    def self.new_by_key(key)
-      Partition.new(key.namespace, key.digest_to_intel_int)
+
+    def initialize(index)
+      @index = index
     end
 
-    def to_s
-      "#{@namespace}:#{partition_id}"
+    def add_duplicate(idx)
+      unless @duplicates
+        @duplicates = []
+        @duplicates << @index
+        @index = 0
+      end
+
+      @duplicates << idx
     end
 
-    def ==(other)
-      other && other.is_a?(Partition) && @partition_id == other.partition_id &&
-        @namespace == other.namespace
+    def get_index
+      return @index unless @duplicates
+
+      r = @duplicates[@index]
+      @index+=1
+      return r
     end
 
   end # class

@@ -64,6 +64,12 @@ module Apik
 
   class Command
 
+    def initialize(node)
+      @node = node
+
+      self
+    end
+
     # Writes the command for write operations
     def setWrite(policy, operation, key, bins)
       begin_cmd()
@@ -179,6 +185,134 @@ module Apik
       end_cmd()
     end
 
+    # Implements different command operations
+    def setOperate(policy, key, operations)
+      begin_cmd()
+      fieldCount = estimateKeySize(key)
+      readAttr = 0
+      writeAttr = 0
+      readHeader = false
+
+      operations.each do |operation|
+        case operation.op_type
+        when Apik::Operation::READ
+            readAttr |= INFO1_READ
+
+          # Read all bins if no bin is specified.
+          readAttr |= INFO1_GET_ALL unless operation.bin_name
+
+        when Apik::Operation::READ_HEADER
+            # The server does not currently return record header data with _INFO1_NOBINDATA attribute set.
+            # The workaround is to request a non-existent bin.
+            # TODO: Fix this on server.
+            # readAttr |= _INFO1_READ | _INFO1_NOBINDATA
+            readAttr |= INFO1_READ
+          readHeader = true
+
+        else
+          writeAttr = INFO2_WRITE
+        end
+
+        estimateOperationSizeForOperation(operation)
+      end
+      sizeBuffer()
+
+      if writeAttr != 0
+        writeHeaderWithPolicy(policy, readAttr, writeAttr, fieldCount, operations.length)
+      else
+        writeHeader(readAttr, writeAttr, fieldCount, operations.length)
+      end
+      writeKey(key)
+
+      operations.each do |operation|
+        writeOperationForOperation(operation)
+      end
+
+      writeOperationForBin(nil, Apik::Operation::READ) if readHeader
+
+      end_cmd()
+    end
+
+    def setUdf(key, packageName, functionName, args)
+      begin_cmd()
+      fieldCount = estimateKeySize(key)
+      argBytes = packValueArray(args)
+
+      fieldCount += estimateUdfSize(packageName, functionName, argBytes)
+      sizeBuffer()
+
+      writeHeader(0, INFO2_WRITE, fieldCount, 0)
+      writeKey(key)
+      writeFieldString(packageName, UDF_PACKAGE_NAME)
+      writeFieldString(functionName, UDF_FUNCTION)
+      writeFieldBytes(argBytes, UDF_ARGLIST)
+
+      end_cmd()
+    end
+
+    def setBatchExists(batchNamespace)
+      # Estimate buffer size
+      begin_cmd()
+      keys = batchNamespace.keys
+      byteSize = keys.length * DIGEST_SIZE
+
+      @dataOffset += (batchNamespace ? batchNamespace.namespace.bytesize : 0)  +
+        FIELD_HEADER_SIZE + byteSize + FIELD_HEADER_SIZE
+
+      sizeBuffer()
+
+      writeHeader(INFO1_READ|INFO1_NOBINDATA, 0, 2, 0)
+      writeFieldString(batchNamespace.namespace, Apik::FieldType::NAMESPACE)
+      writeFieldHeader(byteSize, Apik::FieldType::DIGEST_RIPE_ARRAY)
+
+      keys.each do |key|
+        digest = key.digest
+        @dataBuffer.write_binary(digest, @dataOffset)
+        @dataOffset += digest.bytesize
+      end
+      end_cmd()
+    end
+
+    def setBatchGet(batchNamespace, binNames, readAttr)
+      # Estimate buffer size
+      begin_cmd()
+      keys = batchNamespace.keys
+      byteSize = keys.length * DIGEST_SIZE
+
+      @dataOffset += batchNamespace.namespace.bytesize +
+        FIELD_HEADER_SIZE + byteSize + FIELD_HEADER_SIZE
+
+      if binNames
+        binNames.eahc do |binName|
+          estimateOperationSizeForBinName(binName)
+        end
+      end
+
+      sizeBuffer()
+
+      operationCount = 0
+      if binNames
+        operationCount = binNames.length
+      end
+
+      writeHeader(readAttr, 0, 2, operationCount)
+      writeFieldString(batchNamespace.namespace, Apik::FieldType::NAMESPACE)
+      writeFieldHeader(byteSize, Apik::FieldType::DIGEST_RIPE_ARRAY)
+
+      keys.each do |key|
+        digest = key.digest
+        @dataBuffer.write_binary(digest, @dataOffset)
+        @dataOffset += digest.length
+      end
+
+      if binNames
+        binNames.each do |binName|
+          writeOperationForBinName(binName, Apik::Operation::READ)
+        end
+      end
+
+      end_cmd()
+    end
 
     def execute
       iterations = 0
@@ -199,10 +333,8 @@ module Apik
         break if @policy.Timeout > 0 && Time.now > limit
 
         begin
-          # p "222222222222222222222222222222222222222222222222"
           @conn = @node.get_connection(@policy.Timeout)
         rescue Exception => e
-          # p "!!!!!!!!!!!!!!!!!!!!!!!!!!!!! #{e}"
           # Socket connection error has occurred. Decrease health and retry.
           @node.decrease_health()
 
@@ -212,12 +344,10 @@ module Apik
 
         # Draw a buffer from buffer pool, and make sure it will be put back
         begin
-          # p "333333333333333333333333333333333333333333333"
           @dataBuffer = Buffer.get
 
           # Set command buffer.
           begin
-            # p "4333333333333333333333333333333333333333333333"
             writeBuffer
           rescue
             # All runtime exceptions are considered fatal. Do not retry.
@@ -227,12 +357,10 @@ module Apik
           end
 
           # Reset timeout in send buffer (destined for server) and socket.
-          # p "533333333333333333333333333333333333333333333"
           @dataBuffer.write_int32((@policy.Timeout * 1000).to_i, 22)
 
           # Send command.
           begin
-            # p "633333333333333333333333333333333333333333333"
             @conn.write(@dataBuffer, @dataOffset)
           rescue Exception => e
             # IO errors are considered temporary anomalies. Retry.
@@ -248,7 +376,6 @@ module Apik
 
           # Parse results.
           begin
-            # p "733333333333333333333333333333333333333333333"
             parseResult
           rescue Exception => e
             p "#{e}"
@@ -259,8 +386,6 @@ module Apik
             @conn.close
             raise
           end
-
-          # p "833333333333333333333333333333333333333333333"
 
           # Reflect healthy status.
           @node.restore_health
@@ -317,14 +442,14 @@ module Apik
     def estimateOperationSizeForOperation(operation)
       binLen = 0
 
-      if operation.BinName
-        binLen = operation.BinName
+      if operation.bin_name
+        binLen = operation.bin_name.length
       end
 
       @dataOffset += binLen + OPERATION_HEADER_SIZE
 
-      if operation.BinValue
-        @dataOffset += operation.BinValue.estimateSize()
+      if operation.bin_value
+        @dataOffset += operation.bin_value.estimateSize()
       end
     end
 
@@ -343,7 +468,7 @@ module Apik
       @dataBuffer.write_byte(readAttr, 9)
       @dataBuffer.write_byte(writeAttr, 10)
 
-      for i in 11..26-1
+      for i in 11...26
         @dataBuffer.write_byte(0, i)
       end
 
@@ -447,19 +572,19 @@ module Apik
 
     def writeOperationForOperation(operation)
       nameLength = 0
-      if operation.BinName
-        nameLength = @dataBuffer.writer_binary(operation.bin_name, @dataOffset+OPERATION_HEADER_SIZE)
+      if operation.bin_name
+        nameLength = @dataBuffer.write_binary(operation.bin_name, @dataOffset+OPERATION_HEADER_SIZE)
       end
 
-      valueLength = operation.BinValue.write(@dataBuffer, @dataOffset+OPERATION_HEADER_SIZE+nameLength)
+      valueLength = operation.bin_value.write(@dataBuffer, @dataOffset+OPERATION_HEADER_SIZE+nameLength)
 
       # Buffer.Int32ToBytes(nameLength+valueLength+4, @dataBuffer, @dataOffset)
       @dataBuffer.write_int32(nameLength+valueLength+4, @dataOffset)
 
       @dataOffset += 4
-      @dataBuffer.write_byte(operation.OpType, @dataOffset)
+      @dataBuffer.write_byte(operation.op_type, @dataOffset)
       @dataOffset += 1
-      @dataBuffer.write_byte(operation.BinValue.type(), @dataOffset)
+      @dataBuffer.write_byte(operation.bin_value.type(), @dataOffset)
       @dataOffset += 1
       @dataBuffer.write_byte(0, @dataOffset)
       @dataOffset += 1

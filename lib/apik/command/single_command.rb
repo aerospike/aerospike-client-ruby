@@ -26,7 +26,8 @@ module Apik
       @cluster = cluster
       @key = key
       @partition = Partition.new_by_key(key)
-      @node = @cluster.get_node(@partition)
+
+      super(@cluster.get_node(@partition))
 
       self
     end

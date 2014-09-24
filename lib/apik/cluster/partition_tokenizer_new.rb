@@ -13,6 +13,8 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
+require 'base64'
+
 module Apik
 
   protected
@@ -20,6 +22,105 @@ module Apik
   REPLICAS_NAME = 'replicas-master'
 
   class PartitionTokenizerNew
+
+    def initialize(conn)
+      # Use low-level info methods and parse byte array directly for maximum performance.
+      # Send format:    replicas-master\n
+      # Receive format: replicas-master\t<ns1>:<base 64 encoded bitmap>;<ns2>:<base 64 encoded bitmap>... \n
+      infoMap = Info.request(conn, REPLICAS_NAME)
+
+      info = infoMap[REPLICAS_NAME]
+
+      @length = info ? info.length : 0
+
+      if !info || @length == 0
+        raise Apik::Exceptions::Connection.new("#{replicasName} is empty")
+      end
+
+      @buffer = info
+      @offset = 0
+
+      self
+    end
+
+    def update_partition(nmap, node)
+      amap = nil
+
+      beginning = @offset
+      copied = false
+
+      while @offset < @length
+        if @buffer[@offset] == ':'
+          # Parse namespace.
+          namespace = @buffer[beginning...@offset].strip!
+
+          if namespace.length <= 0 || namespace.length >= 32
+            response = getTruncatedResponse()
+            raise Apik::Exceptions::Parse.new(
+              "Invalid partition namespace #{namespace}. Response=#{response}"
+            )
+          end
+
+          @offset+=1
+          beginning = @offset
+
+          # Parse partition id.
+          while @offset < @length
+            b = @buffer[@offset]
+
+            break if b == ";" || b == "\n"
+            @offset+=1
+          end
+
+          if @offset == beginning
+            response = getTruncatedResponse()
+
+            raise Apik::Exceptions::Parse.new(
+              "Empty partition id for namespace #{namespace}. Response=#{response}"
+            )
+          end
+
+          if !nmap[namespace]
+            if !copied
+              # Make shallow copy of map.
+              amap = {}
+              nmap.each {|k, v| amap[k] = Atomic.new(v)}
+              copied = true
+            end
+
+            # p "WE WERE HERE!"
+            nodeArray = Atomic.new(Array.new(Apik::Node::PARTITIONS))
+            amap[namespace] = nodeArray
+          end
+
+          bitMapLength = @offset - beginning
+          restoreBuffer = Base64.decode64(@buffer[beginning, bitMapLength])
+
+          for i in 0...Apik::Node::PARTITIONS
+            if (restoreBuffer[i>>3].ord & (0x80 >> (i & 7))) != 0
+              # Logger.Info("Map: `" + namespace + "`," + strconv.Itoa(i) + "," + node.String())
+              nodeArray.update{|v| v[i] = node; v}
+            end
+          end
+
+          @offset+=1
+          beginning = @offset
+        else
+          @offset+=1
+        end
+      end
+
+      copied ? amap : nil
+    end
+
+    private
+
+    def getTruncatedResponse()
+      max = @length
+      @length = max if @length > 200
+      @buffer[0...max]
+    end
+
 
   end # class
 

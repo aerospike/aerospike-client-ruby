@@ -21,6 +21,9 @@ require 'atomic'
 require 'apik/cluster/node_validator'
 require 'apik/cluster/node'
 
+require 'apik/cluster/partition_tokenizer_new'
+require 'apik/cluster/partition_tokenizer_old'
+
 module Apik
 
   class Cluster
@@ -79,7 +82,7 @@ module Apik
       # Must copy hashmap reference for copy on write semantics to work.
       nmap = get_partitions
       if nodeArray = nmap[partition.namespace]
-        node = nodeArray.Get(partition.partition_id)
+        node = nodeArray.value[partition.partition_id]
 
         if node && node.active?
           return node
@@ -136,6 +139,43 @@ module Apik
       end
     end
 
+    def find_alias(aliass)
+      res = nil
+      @mutex.synchronize do
+        res = @aliases[aliass]
+      end
+      res
+    end
+
+    def update_partitions(conn, node)
+      # TODO: Cluster should not care about version of tokenizer
+      # decouple clstr interface
+      # p "1111BOOOOOO!"
+      nmap = {}
+      if node.use_new_info?
+        Apik.logger.info("Updating partitions using new protocol...")
+
+      # p "2111BOOOOOO!"
+        tokens = PartitionTokenizerNew.new(conn)
+      # p "3111BOOOOOO!"
+        nmap = tokens.update_partition(get_partitions, node)
+      # p "4111BOOOOOO!"
+      else
+        Apik.logger.info("Updating partitions using old protocol...")
+        tokens = PartitionTokenizerOld.new(conn)
+        nmap = tokens.update_partition(get_partitions, node)
+      end
+
+      # p "BOOOOOO!"
+
+      # update partition write map
+      if nmap
+        set_partitions(nmap)
+      end
+
+      Apik.logger.info("Partitions updated...")
+    end
+
     private
 
     def launch_cluster_boss
@@ -183,7 +223,7 @@ module Apik
             friends = node.refresh
             refreshCount += 1
             if friends
-              friendList.concat( friends)
+              friendList.concat(friends)
             end
           rescue Exception => e
             Apik.logger.warn("Node `#{node}` refresh failed: #{e.to_s}")
@@ -203,6 +243,10 @@ module Apik
       if addList.length > 0
         add_nodes(addList)
       end
+
+      # get_nodes.each do |n|
+      #   p n.name
+      # end
 
       Apik.logger.info("Tend finished. Live node count: #{get_nodes.length}")
     end
@@ -237,16 +281,6 @@ module Apik
       end
 
     end
-
-    def find_alias(aliass)
-      res = nil
-      @mutex.synchronize do
-        res = @alises[aliass]
-      end
-
-      res
-    end
-
     def set_partitions(partMap)
       @mutex.synchronize do
         @partition_write_map = partMap
@@ -260,29 +294,6 @@ module Apik
       end
 
       res
-    end
-
-    def update_partitions(conn, node)
-      # TODO: Cluster should not care about version of tokenizer
-      # decouple clstr interface
-      nmap = {}
-      if node.use_new_info?
-        Apik.logger.info("Updating partitions using new protocol...")
-
-        tokens = PartitionTokenizerNew.new(conn)
-        nmap = tokens.UpdatePartition(get_partitions, node)
-      else
-        Apik.logger.info("Updating partitions using old protocol...")
-        tokens = PartitionTokenizerOld.new(conn)
-        nmap = tokens.UpdatePartition(get_partitions, node)
-      end
-
-      # update partition write map
-      if nmap
-        set_partitions(nmap)
-      end
-
-      Apik.logger.info("Partitions updated...")
     end
 
     def seed_nodes
@@ -375,7 +386,7 @@ module Apik
             # services list contains both internal and external IP addresses
             # for the same node.  Add new host to list of alias filters
             # and do not add new node.
-            node.referenceCount.IncrementAndvalue
+            node.referenceCount.update{|v| v + 1}
             node.add_alias(host)
             add_alias(host, node)
             next
@@ -385,7 +396,7 @@ module Apik
           list << node
 
         rescue Exception => e
-          Apik.logger.warn("Add node %s failed: %s", err.Error)
+          Apik.logger.warn("Add node #{node.to_s} failed: #{e}")
         end
       end
 
@@ -449,8 +460,8 @@ module Apik
       partitions.each do |nodeArray|
         max = nodeArray.length
 
-        for i in 0..max-1
-          node = nodeArray.Get(i)
+        for i in 0...max
+          node = nodeArray[i]
           # Use reference equality for performance.
           if node == filter
             return true
@@ -492,7 +503,7 @@ module Apik
       nodesToRemove.each do |node|
         # Remove node's aliases from cluster alias set.
         # Aliases are only used in tend goroutine, so synchronization is not necessary.
-        node.GetAliases.each do |aliass|
+        node.get_aliases.each do |aliass|
           Apik.logger.debug("Removing alias #{aliass}")
           remove_alias(aliass)
         end
@@ -547,7 +558,7 @@ module Apik
 
     def find_node_by_name(node_name)
       # Must copy array reference for copy on write semantics to work.
-      get_nodes.detect{|node| node.get_name == nodeName }
+      get_nodes.detect{|node| node.name == node_name }
     end
 
   end

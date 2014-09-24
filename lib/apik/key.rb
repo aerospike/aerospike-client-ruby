@@ -50,7 +50,9 @@ module Apik
     end
 
     def ==(other)
-      other && other.is_a?(Key) && other.namespace == @namespace && other.setName == @setName && other.userKey == @userKey
+      other && other.is_a?(Key) &&
+        other.digest == @digest &&
+        other.namespace == @namespace
     end
 
     def digest_to_intel_int

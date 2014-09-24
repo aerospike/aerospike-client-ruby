@@ -13,29 +13,22 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
+require 'apik/command/read_command'
+
 module Apik
 
-  class Partition
-    attr_reader :namespace, :partition_id
+  protected
 
-    def initialize(namespace, partition_id)
-      @namespace = namespace
-      @partition_id = partition_id
+  class OperateCommand < ReadCommand
 
-      self
+    def initialize(cluster, policy, key, operations)
+      super(cluster, policy, key, nil)
+
+      @operations = operations
     end
 
-    def self.new_by_key(key)
-      Partition.new(key.namespace, key.digest_to_intel_int)
-    end
-
-    def to_s
-      "#{@namespace}:#{partition_id}"
-    end
-
-    def ==(other)
-      other && other.is_a?(Partition) && @partition_id == other.partition_id &&
-        @namespace == other.namespace
+    def writeBuffer
+      setOperate(@policy, @key, @operations)
     end
 
   end # class

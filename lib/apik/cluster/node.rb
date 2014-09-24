@@ -19,7 +19,7 @@ module Apik
 
   class Node
 
-    attr_reader :referenceCount, :responded
+    attr_reader :referenceCount, :responded, :name
 
     PARTITIONS = 4096
     FULL_HEALTH = 100
@@ -30,7 +30,7 @@ module Apik
       @name = nv.name
       @aliases = Atomic.new(nv.aliases)
       @host = nv.host
-      @useNewInfo = nv.useNewInfo
+      @useNewInfo = Atomic.new(nv.useNewInfo)
 
       # Assign host to first IP alias because the server identifies nodes
       # by IP address (not hostname).
@@ -45,30 +45,27 @@ module Apik
     end
 
     # Request current status from server node, and update node with the result
-    def Refresh
+    def refresh
       friends = []
-
-      conn = get_connection(1 * time.Second)
+      conn = get_connection(1)
 
       begin
-        infoMap = RequestInfo(conn, "node", "partition-generation", "services")
+        infoMap = Info.request(conn, "node", "partition-generation", "services")
       rescue Exception => e
         conn.close
         decrease_health
+
         raise e
       end
 
       verify_node_name(infoMap)
-
       restore_health
+
       @responded.update{|v| true}
 
       friends = add_friends(infoMap)
-
       update_partitions(conn, infoMap)
-
       put_connection(conn)
-
       friends
     end
 
@@ -169,6 +166,10 @@ module Apik
       other && other.is_a?(Node) && (@name == other.name)
     end
 
+    def use_new_info?
+      @useNewInfo.value
+    end
+
     private
 
     def close_connections
@@ -186,7 +187,7 @@ module Apik
     def verify_node_name(infoMap)
       info_name = infoMap['node']
 
-      if !info_name || info_name.strip!.length == 0
+      if !info_name
         decrease_health
         raise Apik::Exceptions.Aerospike.new("Node name is empty")
       end
@@ -194,19 +195,15 @@ module Apik
       if !(@name == info_name)
         # Set node to inactive immediately.
         @active.update{|v| false}
-        raise Apik::Exceptions.Aerospike.new("Node name has changed. Old=#{nd.name} New= #{info_name}")
+        raise Apik::Exceptions.Aerospike.new("Node name has changed. Old=#{@name} New= #{info_name}")
       end
-    end
-
-    def use_new_info?
-      @useNewInfo.value
     end
 
     def add_friends(infoMap)
       friendString = infoMap['services']
       friends = []
 
-      if !friendString || friendString.strip!.length == 0
+      if !friendString
         return friends
       end
 
@@ -222,7 +219,7 @@ module Apik
         if node
           node.referenceCount.update{|v| v + 1}
         else
-          if !nd.find_alias(friends, aliass)
+          if !find_alias(friends, aliass)
             if !friends
               friends = []
             end
@@ -240,18 +237,16 @@ module Apik
     end
 
     def update_partitions(conn, infoMap)
-      genString= infoMap['partition-generation']
+      genString = infoMap['partition-generation']
 
-      if !genString || genString.strip!.length == 0
-        raise Apik::Exceptions.Aerospike.new("partition-generation is empty")
-      end
+      raise Apik::Exceptions.Aerospike.new("partition-generation is empty") if !genString
 
       generation = genString.to_i
 
       if @partitionGeneration.value != generation
-        Apik.logger.info("Node #{} partition generation %d changed", nd.get_name, generation)
-        @cluster.updatePartitions(conn, nd)
-        @partitionGeneration.Update{|v| generation}
+        Apik.logger.info("Node #{get_name} partition generation #{generation} changed")
+        @cluster.update_partitions(conn, self)
+        @partitionGeneration.update{|v| generation}
       end
     end
 

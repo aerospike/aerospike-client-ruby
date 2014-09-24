@@ -31,8 +31,8 @@ module Apik
 
     def initialize(op_type, bin_name=nil, bin_value=NullValue.new)
       @op_type = op_type
-      @bin_name = @bin_name
-      @bin_value = @bin_value
+      @bin_name = bin_name
+      @bin_value = Value.of(bin_value)
       self
     end
 
@@ -45,7 +45,7 @@ module Apik
     end
 
     def self.put(bin)
-      Operation.new(PUT, bin.name, bin.value)
+      Operation.new(WRITE, bin.name, bin.value)
     end
 
     def self.append(bin)

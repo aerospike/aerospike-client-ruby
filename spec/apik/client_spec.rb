@@ -6,10 +6,6 @@ require 'apik/bin'
 
 describe Apik::Client do
 
-  let(:random_key) do
-    Apik::Key.new('test', 'test', Support.rand_string(50))
-  end
-
   let(:client) do
     described_class.new(nil, "127.0.0.1", 3000)
   end
@@ -44,7 +40,7 @@ describe Apik::Client do
 
     it "should write a key successfully - and read it again" do
 
-      key = random_key
+      key = Support.gen_random_key
       client.put_bins(nil, key, Apik::Bin.new('bin', 'value'))
 
       expect(client.connected?).to be true
@@ -56,7 +52,7 @@ describe Apik::Client do
 
     it "should write a key successfully - and read its header again" do
 
-      key = random_key
+      key = Support.gen_random_key
       client.put_bins(nil, key, Apik::Bin.new('bin', 'value'))
 
       expect(client.connected?).to be true
@@ -73,7 +69,7 @@ describe Apik::Client do
 
     it "should write a key successfully - and delete it" do
 
-      key = random_key
+      key = Support.gen_random_key
       client.put_bins(nil, key, Apik::Bin.new('bin', 'value'))
 
       existed = client.delete(nil, key)
@@ -83,7 +79,7 @@ describe Apik::Client do
 
     it "should return existed = false on non-existing keys" do
 
-      key = random_key
+      key = Support.gen_random_key
       existed = client.delete(nil, key)
       expect(existed).to be false
 
@@ -95,7 +91,7 @@ describe Apik::Client do
 
     it "should write a key successfully - and touch it to bump generation" do
 
-      key = random_key
+      key = Support.gen_random_key
       client.put_bins(nil, key, Apik::Bin.new('bin', 'value'))
 
       client.touch(nil, key)
@@ -110,7 +106,7 @@ describe Apik::Client do
 
     it "should write a key successfully - and check if it exists" do
 
-      key = random_key
+      key = Support.gen_random_key
 
       exists = client.exists(nil, key)
       expect(exists).to be false
@@ -124,12 +120,121 @@ describe Apik::Client do
 
   end
 
+  describe "#operate" do
+
+    let(:key) do
+      Support.gen_random_key
+    end
+
+    let(:bin_str) do
+      Apik::Bin.new('bin name', 'string')
+    end
+
+    let(:bin_int) do
+      Apik::Bin.new('bin name', rand(456123890))
+    end
+
+
+    it "should put a key, append, prepend, touch it and read it back" do
+
+      rec = client.operate(nil, key,
+        Apik::Operation.put(bin_str),
+        Apik::Operation.get
+      )
+
+      expect(rec.bins[bin_str.name]).to eq bin_str.value
+      expect(rec.generation).to eq 1
+
+      rec = client.operate(nil, key,
+        Apik::Operation.append(bin_str),
+        Apik::Operation.get
+      )
+
+      expect(rec.bins[bin_str.name]).to eq bin_str.value * 2
+      expect(rec.generation).to eq 2
+
+      rec = client.operate(nil, key,
+        Apik::Operation.prepend(bin_str),
+        Apik::Operation.get
+      )
+
+      expect(rec.bins[bin_str.name]).to eq bin_str.value * 3
+      expect(rec.generation).to eq 3
+
+      rec = client.operate(nil, key,
+        Apik::Operation.put(bin_int),
+        Apik::Operation.get
+      )
+
+      expect(rec.bins[bin_str.name]).to eq bin_int.value
+      expect(rec.generation).to eq 4
+
+      rec = client.operate(nil, key,
+        Apik::Operation.add(bin_int),
+        Apik::Operation.get
+      )
+
+      expect(rec.bins[bin_str.name]).to eq bin_int.value * 2
+      expect(rec.generation).to eq 5
+
+      rec = client.operate(nil, key,
+        Apik::Operation.touch,
+        Apik::Operation.get
+      )
+
+      expect(rec.generation).to eq 6
+    end
+
+  end
+
+  context "Batch commands" do
+
+    it "should successfully check existence of keys" do
+
+      key1 = Support.gen_random_key
+      key2 = Support.gen_random_key
+      key3 = Support.gen_random_key
+
+      client.put_bins(nil, key1, Apik::Bin.new('bin', 'value'))
+      client.put_bins(nil, key3, Apik::Bin.new('bin', 'value'))
+
+      exists = client.batch_exists(nil, [key1, key2, key3])
+
+      expect(exists.length).to eq 3
+
+      expect(exists[0]).to be true
+      expect(exists[1]).to be false
+      expect(exists[2]).to be true
+
+    end
+
+    it "should successfully get keys" do
+
+      key1 = Support.gen_random_key
+      key2 = Support.gen_random_key
+      key3 = Support.gen_random_key
+
+      client.put_bins(nil, key1, Apik::Bin.new('bin', 'value'))
+      client.put_bins(nil, key3, Apik::Bin.new('bin', 'value'))
+
+      records = client.batch_get(nil, [key1, key2, key3])
+
+      expect(records.length).to eq 3
+
+      expect(records[0].key).to eq key1
+      expect(records[1]).to be nil
+      expect(records[2].key).to eq key3
+
+    end
+
+  end
+
   describe "benchmarks" do
 
     it "benchmark #put #get" do
 
       bin = Apik::Bin.new('bin', 'value')
-      key = random_key
+      key = Support.gen_random_key
 
       Benchmark.bm do |bm|
         # joining an array of strings

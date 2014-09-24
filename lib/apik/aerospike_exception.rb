@@ -50,56 +50,56 @@ module Apik
 
     class Serialize < Aerospike
 
-      def initialize
-        super(Apik::ResultCode::SERIALIZE_ERROR)
+      def initialize(msg=nil)
+        super(Apik::ResultCode::SERIALIZE_ERROR, msg)
       end
 
     end
 
     class Parse < Aerospike
 
-      def initialize
-        super(Apik::ResultCode::PARSE_ERROR)
+      def initialize(msg=nil)
+        super(Apik::ResultCode::PARSE_ERROR, msg)
       end
 
     end
 
     class Connection < Aerospike
 
-      def initialize
-        super(Apik::ResultCode::SERVER_NOT_AVAILABLE)
+      def initialize(msg=nil)
+        super(Apik::ResultCode::SERVER_NOT_AVAILABLE, msg)
       end
 
     end
 
     class InvalidNode < Aerospike
 
-      def initialize
-        super(Apik::ResultCode::INVALID_NODE_ERROR)
+      def initialize(msg=nil)
+        super(Apik::ResultCode::INVALID_NODE_ERROR, msg)
       end
 
     end
 
     class ScanTerminated < Aerospike
 
-      def initialize
-        super(Apik::ResultCode::SCAN_TERMINATED)
+      def initialize(msg=nil)
+        super(Apik::ResultCode::SCAN_TERMINATED, msg)
       end
 
     end
 
     class QueryTerminated < Aerospike
 
-      def initialize
-        super(Apik::ResultCode::QUERY_TERMINATED)
+      def initialize(msg=nil)
+        super(Apik::ResultCode::QUERY_TERMINATED, msg)
       end
 
     end
 
     class CommandRejected < Aerospike
 
-      def initialize
-        super(Apik::ResultCode::COMMAND_REJECTED)
+      def initialize(msg=nil)
+        super(Apik::ResultCode::COMMAND_REJECTED, msg)
       end
 
     end

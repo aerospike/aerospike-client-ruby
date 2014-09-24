@@ -119,14 +119,14 @@ module Apik
       # Logger.Debug("field count: %d, databuffer: %v", fieldCount, @dataBuffer)
       if fieldCount != 0
         # Just skip over all the fields
-        for i in 0..fieldCount-1
+        for i in 0...fieldCount
           # Logger.Debug("%d", receiveOffset)
           fieldSize = @dataBuffer.read_int32(receiveOffset)
           receiveOffset += (4 + fieldSize)
         end
       end
 
-      for i in 0..opCount-1
+      for i in 0...opCount
         opSize = @dataBuffer.read_int32(receiveOffset)
         particleType = @dataBuffer.read(receiveOffset+5).ord
         version = @dataBuffer.read(receiveOffset+6).ord
@@ -170,16 +170,7 @@ module Apik
       end
 
       # Remove nil duplicates just in case there were holes in the version number space.
-      if duplicates
-        lastElem = 0
-        duplicates.each do |d|
-          if d
-            duplicates[lastElem] = d
-            lastElem+=1
-          end
-        end
-        duplicates = duplicates[0..lastElem]
-      end
+      duplicates.compact! if duplicates
 
       Record.new(@node, @key, bins, duplicates, generation, expiration)
     end

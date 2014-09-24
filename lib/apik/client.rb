@@ -27,6 +27,12 @@ require 'apik/command/write_command'
 require 'apik/command/delete_command'
 require 'apik/command/exists_command'
 require 'apik/command/touch_command'
+require 'apik/command/operate_command'
+
+require 'apik/command/batch_command_get'
+require 'apik/command/batch_command_exists'
+require 'apik/command/batch_node'
+require 'apik/command/batch_item'
 
 module Apik
 
@@ -170,10 +176,30 @@ module Apik
     #  Determine if a record key exists.
     #  The policy can be used to specify timeouts.
     def exists(policy, key)
-      policy ||= WritePolicy.new(0, 0)
+      policy ||= Policy.new
       command = ExistsCommand.new(@cluster, policy, key)
       command.execute()
       command.exists
+    end
+
+    #  Check if multiple record keys exist in one batch call.
+    #  The returned array bool is in positional order with the original key array order.
+    #  The policy can be used to specify timeouts.
+    def batch_exists(policy, keys)
+      policy ||= Policy.new
+
+      # same array can be used without sychronization;
+      # when a key exists, the corresponding index will be marked true
+      existsArray = Array.new(keys.length)
+
+      keyMap = BatchItem.generate_map(keys)
+
+      cmdGen = Proc.new do |node, bns|
+        BatchCommandExists.new(node, bns, policy, keyMap, existsArray)
+      end
+
+      batch_execute(keys, &cmdGen)
+      existsArray
     end
 
     #-------------------------------------------------------
@@ -197,6 +223,104 @@ module Apik
       command = ReadHeaderCommand.new(@cluster, policy, key)
       command.execute()
       command.record
+    end
+
+    #-------------------------------------------------------
+    # Batch Read Operations
+    #-------------------------------------------------------
+
+    #  Read multiple record headers and bins for specified keys in one batch call.
+    #  The returned records are in positional order with the original key array order.
+    #  If a key is not found, the positional record will be nil.
+    #  The policy can be used to specify timeouts.
+    def batch_get(policy, keys, *binNames)
+      policy ||= Policy.new
+
+      # wait until all migrations are finished
+      # TODO: implement
+      # @cluster.WaitUntillMigrationIsFinished(policy.timeout())
+
+      # same array can be used without sychronization;
+      # when a key exists, the corresponding index will be set to record
+      records = Array.new(keys.length)
+
+      keyMap = BatchItem.generate_map(keys)
+      binSet = {}
+      binNames.each do |bn|
+        binSet[bn] = {}
+      end
+
+
+      cmdGen = Proc.new do |node, bns|
+        BatchCommandGet.new(node, bns, policy, keyMap, nil, records, INFO1_READ|INFO1_NOBINDATA)
+      end
+
+      batch_execute(keys, &cmdGen)
+      records
+    end
+
+    #  Read multiple record header data for specified keys in one batch call.
+    #  The returned records are in positional order with the original key array order.
+    #  If a key is not found, the positional record will be nil.
+    #  The policy can be used to specify timeouts.
+    def batch_get_header(policy, keys)
+      policy ||= Policy.new
+
+      # wait until all migrations are finished
+      # TODO: Fix this and implement
+      # @cluster.WaitUntillMigrationIsFinished(policy.timeout())
+
+      # same array can be used without sychronization;
+      # when a key exists, the corresponding index will be set to record
+      records = Array.new(keys.length)
+
+      keyMap = BatchItem.generate_map(keys)
+      binSet = {}
+      binNames.each do |bn|
+        binSet[bn] = {}
+      end
+
+      command = BatchCommandGet.new(node, bns, policy, keyMap, binSet, records, INFO1_READ | INFO_NOBINDATA)
+      command.execute
+    end
+
+    #-------------------------------------------------------
+    # Generic Database Operations
+    #-------------------------------------------------------
+
+    #  Perform multiple read/write operations on a single key in one batch call.
+    #  An example would be to add an integer value to an existing record and then
+    #  read the result, all in one database call.
+    #
+    #  Write operations are always performed first, regardless of operation order
+    #  relative to read operations.
+    def operate(policy, key, *operations)
+      policy ||= WritePolicy.new(0, 0)
+
+      command = OperateCommand.new(@cluster, policy, key, operations)
+      command.execute()
+      command.record
+    end
+
+    private
+
+    def batch_execute(keys, &cmdGen)
+      batchNodes = BatchNode.generate_list(@cluster, keys)
+      threads = []
+
+      # Use a thread per namespace per node
+      batchNodes.each do |batchNode|
+        # copy to avoid race condition
+        bn = batchNode
+        bn.batch_namespaces.each do |bns|
+          threads << Thread.new do
+            command = cmdGen.call(bn.node, bns)
+            command.execute
+          end
+        end
+      end
+
+      threads.each { |thr| thr.join }
     end
 
   end # class
