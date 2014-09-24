@@ -131,7 +131,6 @@ module Apik
         particleType = @dataBuffer.read(receiveOffset+5).ord
         version = @dataBuffer.read(receiveOffset+6).ord
         nameSize = @dataBuffer.read(receiveOffset+7).ord
-        # name = Buffer.utf8ToString(@dataBuffer, receiveOffset+8, nameSize);
         name = @dataBuffer.read(receiveOffset+8, nameSize).force_encoding('utf-8')
         receiveOffset += 4 + 4 + nameSize
 

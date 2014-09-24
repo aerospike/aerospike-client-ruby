@@ -16,12 +16,8 @@
 module Apik
 
   class Host
-    include Optionable
 
     attr_accessor :name, :port
-
-    # option(:name).any(String)
-    # option(:port.any(Int)
 
     def initialize(hostName, hostPort)
       @name = hostName

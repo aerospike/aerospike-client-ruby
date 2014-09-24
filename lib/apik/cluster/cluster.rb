@@ -99,7 +99,7 @@ module Apik
       length = nodeArray.length
       for i in 0..length
         # Must handle concurrency with other non-tending goroutines, so nodeIndex is consistent.
-        index = (@nodeIndex.update{|v| v = v+1} % nodeArray.length).abs
+        index = (@nodeIndex.update{|v| v+1} % nodeArray.length).abs
         node = nodeArray[index]
 
         if node.active?

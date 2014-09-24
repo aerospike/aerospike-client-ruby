@@ -4,7 +4,7 @@ require "stringio"
 require "monitor"
 require "timeout"
 require 'resolv'
-require "optionable"
+require 'msgpack'
 
 require "apik/loggable"
 require "apik/version"

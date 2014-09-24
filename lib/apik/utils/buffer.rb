@@ -41,7 +41,7 @@ module Apik
     end
 
     def self.get
-      return @bufPool.poll
+      @bufPool.poll
     end
 
     def self.put(buffer)
@@ -130,6 +130,15 @@ module Apik
       vals.unpack(INT64)[0]
     end
 
+    def read_var_int64(offset, len)
+      val = 0
+      for i in 0...len
+        val <<= 8
+        val |= @buf[offset+i].ord & 0xFF
+      end
+      val
+    end
+
     def to_a(format="C*")
       @buf.unpack(format)
     end
@@ -157,7 +166,7 @@ module Apik
       # if byte.is_a?(FixedNum) && byte < 0
       #   [byte].pack('c')
       # else
-        byte.chr
+      byte.chr
       # end
     end
 

@@ -38,15 +38,86 @@ describe Apik::Client do
 
   describe "#put and #get" do
 
-    it "should write a key successfully - and read it again" do
+    context "data types" do
 
-      key = Support.gen_random_key
-      client.put_bins(nil, key, Apik::Bin.new('bin', 'value'))
+      it "should put a STRING and get it successfully" do
 
-      expect(client.connected?).to be true
+        key = Support.gen_random_key
+        client.put_bins(nil, key, Apik::Bin.new('bin', 'value'))
 
-      record = client.get(nil, key)
-      expect(record.bins['bin']).to eq 'value'
+        expect(client.connected?).to be true
+
+        record = client.get(nil, key)
+        expect(record.bins['bin']).to eq 'value'
+
+      end
+
+      it "should put a NIL and get it successfully" do
+
+        key = Support.gen_random_key
+        client.put_bins(nil, key, Apik::Bin.new('bin', nil),
+                        Apik::Bin.new('bin1', 'auxilary')
+                        )
+
+        expect(client.connected?).to be true
+
+        record = client.get(nil, key)
+        expect(record.bins['bin']).to eq nil
+
+      end
+
+      it "should put an INTEGER and get it successfully" do
+
+        key = Support.gen_random_key
+        bin = Apik::Bin.new('bin', rand(2**63))
+        client.put_bins(nil, key, bin)
+
+        expect(client.connected?).to be true
+
+        record = client.get(nil, key)
+        expect(record.bins['bin']).to eq bin.value
+
+      end
+
+      it "should put an ARRAY and get it successfully" do
+
+        key = Support.gen_random_key
+        bin = Apik::Bin.new('bin', [
+                              "string",
+                              rand(2**63),
+                              [1, nil, 'this'],
+                              ["embedded array", 1984, nil, {2 => 'string'}],
+                              nil,
+                              {'array' => ["another string", 17]},
+        ])
+        client.put_bins(nil, key, bin)
+
+        expect(client.connected?).to be true
+
+        record = client.get(nil, key)
+        expect(record.bins['bin']).to eq bin.value
+
+      end
+
+      it "should put a MAP and get it successfully" do
+
+        key = Support.gen_random_key
+        bin = Apik::Bin.new('bin', {
+                              "string" => nil,
+                              rand(2**63) => {2 => 11},
+                              [1, nil, 'this'] => {nil => "nihilism"},
+                              nil => ["embedded array", 1984, nil, {2 => 'string'}],
+                              {11 => [11, 'str']} => nil,
+                              {} => {'array' => ["another string", 17]},
+        })
+        client.put_bins(nil, key, bin)
+
+        expect(client.connected?).to be true
+
+        record = client.get(nil, key)
+        expect(record.bins['bin']).to eq bin.value
+
+      end
 
     end
 
@@ -135,54 +206,82 @@ describe Apik::Client do
     end
 
 
-    it "should put a key, append, prepend, touch it and read it back" do
+    it "should #put, #append" do
 
       rec = client.operate(nil, key,
-        Apik::Operation.put(bin_str),
-        Apik::Operation.get
-      )
+                           Apik::Operation.put(bin_str),
+                           Apik::Operation.get
+                           )
 
       expect(rec.bins[bin_str.name]).to eq bin_str.value
       expect(rec.generation).to eq 1
 
       rec = client.operate(nil, key,
-        Apik::Operation.append(bin_str),
-        Apik::Operation.get
-      )
+                           Apik::Operation.append(bin_str),
+                           Apik::Operation.get
+                           )
 
       expect(rec.bins[bin_str.name]).to eq bin_str.value * 2
       expect(rec.generation).to eq 2
 
-      rec = client.operate(nil, key,
-        Apik::Operation.prepend(bin_str),
-        Apik::Operation.get
-      )
+    end
 
-      expect(rec.bins[bin_str.name]).to eq bin_str.value * 3
-      expect(rec.generation).to eq 3
+    it "should #put, #prepend" do
 
       rec = client.operate(nil, key,
-        Apik::Operation.put(bin_int),
-        Apik::Operation.get
-      )
+                           Apik::Operation.put(bin_str),
+                           Apik::Operation.get
+                           )
 
-      expect(rec.bins[bin_str.name]).to eq bin_int.value
-      expect(rec.generation).to eq 4
+      expect(rec.bins[bin_str.name]).to eq bin_str.value
+      expect(rec.generation).to eq 1
 
       rec = client.operate(nil, key,
-        Apik::Operation.add(bin_int),
-        Apik::Operation.get
-      )
+                           Apik::Operation.prepend(bin_str),
+                           Apik::Operation.get
+                           )
+
+      expect(rec.bins[bin_str.name]).to eq bin_str.value * 2
+      expect(rec.generation).to eq 2
+    end
+
+    it "should #put, #add" do
+
+      rec = client.operate(nil, key,
+                           Apik::Operation.put(bin_int),
+                           Apik::Operation.get
+                           )
+
+      expect(rec.bins[bin_int.name]).to eq bin_int.value
+      expect(rec.generation).to eq 1
+
+      rec = client.operate(nil, key,
+                           Apik::Operation.add(bin_int),
+                           Apik::Operation.get
+                           )
 
       expect(rec.bins[bin_str.name]).to eq bin_int.value * 2
-      expect(rec.generation).to eq 5
+      expect(rec.generation).to eq 2
+
+    end
+
+    it "should #put, #touch" do
 
       rec = client.operate(nil, key,
-        Apik::Operation.touch,
-        Apik::Operation.get
-      )
+                           Apik::Operation.put(bin_int),
+                           Apik::Operation.get
+                           )
 
-      expect(rec.generation).to eq 6
+      expect(rec.bins[bin_int.name]).to eq bin_int.value
+      expect(rec.generation).to eq 1
+
+      rec = client.operate(nil, key,
+                           Apik::Operation.touch,
+                           Apik::Operation.get_header
+                           )
+
+      # expect(rec.bins).to be nil
+      expect(rec.generation).to eq 2
     end
 
   end

@@ -14,7 +14,6 @@
 # the License.
 
 require 'digest'
-require 'optionable'
 
 require 'apik/operation'
 
@@ -37,7 +36,6 @@ require 'apik/command/batch_item'
 module Apik
 
   class Client
-    include Optionable
 
     def initialize(policy, host, port)
       policy ||= ClientPolicy.new

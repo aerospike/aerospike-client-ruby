@@ -13,6 +13,10 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
+require 'msgpack'
+
+require 'apik/utils/pool'
+
 require 'apik/aerospike_exception'
 require 'apik/value/particle_type'
 
@@ -21,15 +25,26 @@ module Apik
   # Polymorphic value classes used to efficiently serialize objects into the wire protocol.
   class Value
 
+    @@packerPool = Pool.new
+    @@packerPool.create_block = Proc.new { MessagePack::Packer.new }
+
+    def self.get_packer
+      res = @@packerPool.poll
+      res.clear
+      res
+    end
+
+    def self.put_packer(packer)
+      @@packerPool.offer(packer)
+    end
+
     def self.of(value)
       case value
       when nil
         res = NullValue.new
       when Integer
-        if value < 2**31
+        if value < 2**63
           res = IntegerValue.new(value)
-        elsif value < 2**63
-          res = LongValue.new(value)
         else
           # big nums > 2**63 are not supported
           raise Apik::Exceptions::Aerospike.new(TYPE_NOT_SUPPORTED, "Value type #{value.class} not supported.").freeze
@@ -38,12 +53,10 @@ module Apik
         res = StringValue.new(value)
       when Value
         res = value
-      when Map
+      when Hash
         res = MapValue.new(value)
       when Array
         res = ListValue.new(value)
-      when AerospikeBlob
-        res = BlobValue.new(value)
       else
         # panic for anything that is not supported.
         raise Apik::Exceptions::Aerospike.new(TYPE_NOT_SUPPORTED, "Value type #{value.class} not supported.").freeze
@@ -84,7 +97,7 @@ module Apik
     end
 
     def pack(packer)
-      packer.PackNil
+      packer.write_nil
     end
 
     # GetLuaValue LuaValue {
@@ -92,7 +105,7 @@ module Apik
     # }
 
     def to_bytes
-      nil
+      ''
     end
   end
 
@@ -115,7 +128,7 @@ module Apik
     end
 
     def to_s
-      Buffer.BytesToHexString(@bytes)
+      @bytes.to_s
     end
 
     # def GetLuaValue LuaValue {
@@ -123,7 +136,7 @@ module Apik
     # end
 
     def to_bytes
-      @bytes
+      @bytes.bytes
     end
 
     def estimateSize
@@ -136,7 +149,7 @@ module Apik
     end
 
     def pack(packer)
-      packer.PackBytes(@bytes)
+      packer.write(@bytes.bytes)
     end
 
   end # BytesValue
@@ -160,7 +173,7 @@ module Apik
     end
 
     def pack(packer)
-      packer.PackString(@value)
+      packer.write(@value)
     end
 
     def type
@@ -205,7 +218,7 @@ module Apik
     end
 
     def pack(packer)
-      packer.PackAInt(@value)
+      packer.write(@value)
     end
 
     def type
@@ -221,7 +234,7 @@ module Apik
     # }
 
     def to_bytes
-      [@value].pack('l<'.freeze)
+      [@value].pack('Q<'.freeze)
     end
 
     def to_s
@@ -230,217 +243,113 @@ module Apik
 
   end # IntegerValue
 
-  #######################################/
+   # List value.
+  # Supported by Aerospike 3 servers only.
+  class ListValue < Value
 
-  # Long value.
-  class LongValue < Value
-
-    def NewLongValue(value)
-      @value = val
+    def initialize(list)
+      @list = list
+      packer = Value.get_packer
+      pack(packer)
+      @bytes = packer.to_s.force_encoding('binary')
+      Value.put_packer(packer)
 
       self
     end
 
-    def type
-      Apik::ParticleType::INTEGER
-    end
-
-    def get
-      @value
-    end
-
-    def to_s
-      @value.to_s
-    end
-
-
-    # def GetLuaValue LuaValue {
-    #  LuaInteger.valueOf(@value)
-    # }
-
-    def to_bytes
-      [@value].pack('q<'.freeze)
-    end
-
     def estimateSize
-      8
+      @bytes.bytesize
     end
 
     def write(buffer, offset)
-      buffer.write_int64(@value, offset)
-      8
+      buffer.write_binary(@bytes, offset)
+      @bytes.bytesize
     end
 
     def pack(packer)
-      packer.PackALong(value)
+      packer.write_array_header(@list.length)
+      @list.each do |val|
+        Value.of(val).pack(packer)
+      end
     end
 
-  end # LongValue
+    def type
+      Apik::ParticleType::LIST
+    end
 
-  #######################################/
+    def get
+      @list
+    end
 
-  # # Value array.
-  # # Supported by Aerospike 3 servers only.
-  # type ValueArray < Value
-  #   array []Value
-  #   bytes []byte
-  # end
+    # def GetLuaValue LuaValue {
+    #  nil
+    # }
 
-  # def ToValueArray(array []interface{}) *ValueArray {
-  #   res = make([]Value, 0, len(array))
-  #   for i = range array {
-  #     res = append(res, NewValue(array[i]))
-  #   end
-  #   NewValueArray(res)
-  # end
+    def to_bytes
+      @bytes
+    end
 
-  # def NewValueArray(array []Value) *ValueArray {
-  #   res = &ValueArray{
-  #     array: array,
-  #   end
+    def to_s
+      @list.map{|v| v.to_s}.to_s
+    end
 
-  #   res.bytes, _ = packValueArray(array)
-
-  #   res
-  # end
-
-  # def estimateSize
-  #   len(@bytes)
-  # end
-
-  # def
-  #   res = copy(buffer[offset:], @bytes)
-  #   res, nil
-  # end
-
-  # def
-  #   packer.packValueArray(@array)
-  # end
-
-  # def type
-  #   Apik::ParticleType::LIST
-  # end
-
-  # def get
-  #   @array
-  # end
-
-  # # def GetLuaValue LuaValue {
-  # #  nil
-  # # }
-
-  # def to_bytes
-  #   @bytes
-  # end
-
-  # def to_s
-  #   fmt.Sprintf("%v", @array)
-  # end
+  end
 
   # #######################################/
 
-  # # List value.
-  # # Supported by Aerospike 3 servers only.
-  # type ListValue < Value
-  #   list  []interface{}
-  #   bytes []byte
-  # end
+  # Map value.
+  # Supported by Aerospike 3 servers only.
+  class MapValue < Value
 
-  # def NewListValue(list []interface{}) *ListValue {
-  #   res = &ListValue{
-  #     list: list,
-  #   end
+    def initialize(vmap)
+      @vmap = vmap
 
-  #   res.bytes, _ = packAnyArray(list)
+      packer = Value.get_packer
+      pack(packer)
+      @bytes = packer.to_s.force_encoding('binary')
+      Value.put_packer(packer)
 
-  #   res
-  # end
+      self
+    end
 
-  # def estimateSize
-  #   # var err error
-  #   @bytes, _ = packAnyArray(@list)
-  #   len(@bytes)
-  # end
+    def estimateSize
+      @bytes.bytesize
+    end
 
-  # def
-  #   l = copy(buffer[offset:], @bytes)
-  #   l, nil
-  # end
+    def write(buffer, offset)
+      buffer.write_binary(@bytes, offset)
+      @bytes.bytesize
+    end
 
-  # def
-  #   packer.PackList(@list)
-  # end
+    def pack(packer)
+      packer.write_map_header(@vmap.length)
+      @vmap.each do |key, val|
+        Value.of(key).pack(packer)
+        Value.of(val).pack(packer)
+      end
+    end
 
-  # def type
-  #   Apik::ParticleType::LIST
-  # end
+    def type
+      Apik::ParticleType::MAP
+    end
 
-  # def get
-  #   @list
-  # end
+    def get
+      @vmap
+    end
 
-  # # def GetLuaValue LuaValue {
-  # #  nil
-  # # }
+    # def GetLuaValue LuaValue {
+    #  nil
+    # }
 
-  # def to_bytes
-  #   @bytes
-  # end
+    def to_bytes
+      @bytes.bytes
+    end
 
-  # def to_s
-  #   fmt.Sprintf("%v", @list)
-  # end
+    def to_s
+      @vmap.map{|k, v| "#{k.to_s} => #{v.to_s}" }.to_s
+    end
 
-  # #######################################/
-
-  # # Map value.
-  # # Supported by Aerospike 3 servers only.
-  # type MapValue < Value
-  #   vmap  map[interface{}]interface{}
-  #   bytes []byte
-  # end
-
-  # def NewMapValue(vmap map[interface{}]interface{}) *MapValue {
-  #   res = &MapValue{
-  #     vmap: vmap,
-  #   end
-
-  #   res.bytes, _ = packAnyMap(vmap)
-
-  #   res
-  # end
-
-  # def estimateSize
-  #   len(@bytes)
-  # end
-
-  # def
-  #   copy(buffer[offset:], @bytes), nil
-  # end
-
-  # def
-  #   packer.PackMap(@vmap)
-  # end
-
-  # def type
-  #   Apik::ParticleType::MAP
-  # end
-
-  # def get
-  #   @vmap
-  # end
-
-  # # def GetLuaValue LuaValue {
-  # #  nil
-  # # }
-
-  # def to_bytes
-  #   @bytes
-  # end
-
-  # def to_s
-  #   fmt.Sprintf("%v", @vmap)
-  # end
+  end
 
   #######################################
 
@@ -456,11 +365,11 @@ module Apik
     when Apik::ParticleType::BLOB
       BytesValue.new(buf.read(offse,length))
 
-    # when Apik::ParticleType::LIST
-    #   newUnpacker(buf, offset, length).UnpackList
+      when Apik::ParticleType::LIST
+        ListValue.new(MessagePack.unpack(buf.read(offset, length)))
 
-    # when Apik::ParticleType::MAP
-    #   newUnpacker(buf, offset, length).UnpackMap
+      when Apik::ParticleType::MAP
+        MapValue.new(MessagePack.unpack(buf.read(offset, length)))
 
     else
       nil
@@ -474,7 +383,7 @@ module Apik
       StringValue.new(buf.read(offset, len))
 
     when Apik::ParticleType::INTEGER
-      LongValue.new(buf.read_var_int64(offset, len))
+      IntegerValue.new(buf.read_var_int64(offset, len))
 
     when Apik::ParticleType::BLOB
       BytesValue.new(buf.read(offset,len))
