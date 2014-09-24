@@ -13,11 +13,6 @@ matrix:
   fast_finish: true
 
 install:
-  - mv $HOME/gopath/src/github.com/citrusleaf $HOME/gopath/src/github.com/aerospike
-  - export PATH=$PATH:$HOME/gopath/bin
-  - go get github.com/onsi/ginkgo/ginkgo
-  - go get github.com/onsi/gomega
-  - go get code.google.com/p/go.tools/cmd/cover
   - wget -O aerospike-server.tgz http://aerospike.com/download/server/latest/artifact/tgz
   - tar xvzf aerospike-server.tgz
   - cp -f .travis/aerospike.conf ./aerospike-server/share/etc
