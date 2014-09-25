@@ -331,7 +331,6 @@ describe Apik::Client do
   describe "benchmarks" do
 
     it "benchmark #put #get" do
-
       bin = Apik::Bin.new('bin', 'value')
       key = Support.gen_random_key
 

@@ -13,79 +13,74 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
+require 'apik/utils/buffer'
+
 module Apik
 
   # Polymorphic value classes used to efficiently serialize objects into the wire protocol.
   class Info
 
     def self.request(conn, *commands)
-      @buffer = Buffer.new
-
-      # First, do quick conservative buffer size estimate.
-      @offset = 8
-
-      commands.each do |command|
-        @offset += command.length * 2 + 1
-      end
+      buffer = Buffer.get
 
       # If conservative estimate may be exceeded, get exact estimate
       # to preserve memory and resize buffer.
-      if (@offset > @buffer.length)
-        @offset = 8
+      offset = 8
 
-        commands.each do |command|
-          @offset += command.length + 1
-        end
-
-        @buffer.resize(@offset)
+      commands.each do |command|
+        offset += command.bytesize + 1
       end
 
-      @offset = 8 # Skip size field.
+      buffer.resize(offset)
+
+      offset = 8 # Skip size field.
 
       # The command format is: <name1>\n<name2>\n...
       commands.each do |command|
-        @buffer.write_binary(command, @offset)
-        @offset += command.length
-        @buffer.write_byte("\n", @offset)
-        @offset += 1
+        buffer.write_binary(command, offset)
+        offset += command.bytesize
+        buffer.write_byte("\n", offset)
+        offset += 1
       end
 
-      sendCommand(conn)
-      parse_multiple_response
+      buf_length = sendCommand(conn, offset, buffer)
+      res = parse_multiple_response(buf_length, buffer)
+      Buffer.put(buffer)
+      res
     end
 
-    def self.parse_multiple_response
+    def self.parse_multiple_response(buf_length, buffer)
       res = {}
-      @buffer.buf.force_encoding('utf-8').split("\n").each do |vstr|
+      buffer.read(0, buf_length).split("\n").each do |vstr|
         k, v = vstr.split("\t")
         res[k] = v
       end
-
       res
     end
 
     private
 
-    def self.sendCommand(conn)
+    def self.sendCommand(conn, offset, buffer)
       begin
         # Write size field.
-        size = (@offset - 8) | (Integer(2) << 56) | (Integer(1) << 48)
+        size = (offset - 8) | (2 << 56) | (1 << 48)
 
-        @buffer.write_int64(size, 0)
-
-        # Write.
-        conn.write(@buffer, @offset)
+        buffer.write_int64(size, 0)
+        conn.write(buffer, offset)
 
         # Read - reuse input buffer.
-        conn.read(@buffer, 8)
+        conn.read(buffer, 8)
 
-        size = @buffer.read_int64(0)
-        length = size & Integer(0xFFFFFFFFFFFF)
+        size = buffer.read_int64(0)
+        length = size & 0xFFFFFFFFFFFF
 
-        @buffer.resize(length)
-        conn.read(@buffer, length)
-      rescue
-        raise
+        buffer.resize(length)
+
+        conn.read(buffer, length)
+        return length
+      rescue Exception => e
+        conn.close
+        raise e
       end
     end
 

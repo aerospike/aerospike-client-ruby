@@ -45,7 +45,7 @@ module Apik
       amap = nil
       copied = false
 
-      while partition = getNext()
+      while partition = getNext
         exists = nmap[partition.namespace]
 
         if !exists
@@ -69,7 +69,7 @@ module Apik
 
     private
 
-    def getNext()
+    def getNext
       beginning = @offset
 
       while @offset < @length
@@ -78,7 +78,7 @@ module Apik
           namespace = @buffer[beginning...@offset].strip!
 
           if namespace.length <= 0 || namespace.length >= 32
-            response = getTruncatedResponse()
+            response = getTruncatedResponse
             raise Apik::Exceptions::Parse.new(
               "Invalid partition namespace #{namespace}. Response=#{response}"
             )
@@ -96,7 +96,7 @@ module Apik
           end
 
           if @offset == beginning
-            response = getTruncatedResponse()
+            response = getTruncatedResponse
             raise Apik::Exceptions::Parse.new(
               "Empty partition id for namespace #{namespace}. Response=#{response}"
             )
@@ -104,7 +104,7 @@ module Apik
 
           partitionId = @buffer[beginning...@offset].to_i
           if partitionId < 0 || partitionId >= Apik::Node::PARTITIONS
-            response = getTruncatedResponse()
+            response = getTruncatedResponse
             partitionString = @buffer[beginning...@offset]
             aise Apik::Exceptions::Parse.new(
               "Invalid partition id #{partitionString} for namespace #{namespace}. Response=#{response}"
@@ -122,7 +122,7 @@ module Apik
     end
 
 
-    def getTruncatedResponse()
+    def getTruncatedResponse
       max = @length
       @length = max if @length > 200
       @buffer[0...max]

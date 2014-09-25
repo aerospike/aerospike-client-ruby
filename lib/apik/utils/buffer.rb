@@ -20,8 +20,8 @@ module Apik
   # Buffer class to ease the work around
   class Buffer
 
-    @bufPool = Pool.new
-    @bufPool.create_block = Proc.new { Buffer.new }
+    @@bufPool = Pool.new
+    @@bufPool.create_block = Proc.new { Buffer.new }
 
     attr_accessor :buf
 
@@ -29,23 +29,22 @@ module Apik
     INT32 = 'l>'.freeze
     INT64 = 'q>'.freeze
 
-    DEFAULT_BUFFER_SIZE = 16* 1024
+    DEFAULT_BUFFER_SIZE = 16 * 1024
     MAX_BUFFER_SIZE = 10 * 1024 * 1024
-    NULL_BYTE = 0.chr
 
     def initialize(size=DEFAULT_BUFFER_SIZE)
-      @buf = NULL_BYTE * size
+      @buf = "%0#{size}d" % 0
       @buf.force_encoding('binary')
 
       @slice_end = @buf.bytesize
     end
 
     def self.get
-      @bufPool.poll
+      @@bufPool.poll
     end
 
     def self.put(buffer)
-      @bufPool.offer(buffer)
+      @@bufPool.offer(buffer)
     end
 
     def size
@@ -55,13 +54,13 @@ module Apik
 
     def resize(length)
       if @buf.bytesize < length
-        @buf << NULL_BYTE * (length - @buf.bytesize)
+        @buf.concat("%0#{length - @buf.bytesize}d" % 0)
       end
       @slice_end = length
     end
 
     def write_byte(byte, offset)
-      @buf[offset] = chr(byte)
+      @buf[offset] = byte.chr
       1
     end
 
@@ -69,20 +68,14 @@ module Apik
       if data.encoding != Encoding.find('binary')
         data = data.dup.force_encoding('binary')
       end
-      @buf[offset, data.length] = data
-      data.length
+      @buf[offset, data.bytesize] = data
+      data.bytesize
     end
 
     def write_array(array, offset)
       @buf[offset, array.length] = array.pack("C*")
       array.length
     end
-
-    # def write_int(i, offset, bytes)
-    #   pack_type = (bytes == 4) ? INT32 : INT64
-
-    #   @buf[offset, bytes] = [i].pack(pack_type)
-    # end
 
     def write_int16(i, offset)
       @buf[offset, 2] = [i].pack(INT16)

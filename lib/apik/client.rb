@@ -14,8 +14,10 @@
 # the License.
 
 require 'digest'
+require 'base64'
 
 require 'apik/operation'
+require 'apik/udf'
 
 require 'apik/cluster/cluster'
 require 'apik/policy/client_policy'
@@ -32,6 +34,9 @@ require 'apik/command/batch_command_get'
 require 'apik/command/batch_command_exists'
 require 'apik/command/batch_node'
 require 'apik/command/batch_item'
+
+require 'apik/task/udf_register_task'
+require 'apik/task/udf_remove_task'
 
 module Apik
 
@@ -89,7 +94,7 @@ module Apik
     def put_bins(policy, key, *bins)
       policy ||= WritePolicy.new(0, 0)
       command = WriteCommand.new(@cluster, policy, key, bins, Apik::Operation::WRITE)
-      command.execute()
+      command.execute
     end
 
     #-------------------------------------------------------
@@ -107,7 +112,7 @@ module Apik
     def append_bins(policy, key, bins)
       policy ||= WritePolicy.new(0, 0)
       command = WriteCommand.new(@cluster, policy, key, bins, Apik::Operation::APPEND)
-      command.execute()
+      command.execute
     end
 
     #  Prepend bin values string to existing record bin values.
@@ -121,7 +126,7 @@ module Apik
     def prepend_bins(policy, key, bins)
       policy ||= WritePolicy.new(0, 0)
       command = WriteCommand.new(@cluster, policy, key, bins, Apik::Operation::PREPEND)
-      command.execute()
+      command.execute
     end
 
     #-------------------------------------------------------
@@ -139,7 +144,7 @@ module Apik
     def add_bins(policy, key, bins)
       policy ||= WritePolicy.new(0, 0)
       command = WriteCommand.new(@cluster, policy, key, bins, Apik::Operation::ADD)
-      command.execute()
+      command.execute
     end
 
     #-------------------------------------------------------
@@ -151,7 +156,7 @@ module Apik
     def delete(policy, key)
       policy ||= WritePolicy.new(0, 0)
       command = DeleteCommand.new(@cluster, policy, key)
-      command.execute()
+      command.execute
       command.existed
     end
 
@@ -164,7 +169,7 @@ module Apik
     def touch(policy, key)
       policy ||= WritePolicy.new(0, 0)
       command = TouchCommand.new(@cluster, policy, key)
-      command.execute()
+      command.execute
     end
 
     #-------------------------------------------------------
@@ -176,7 +181,7 @@ module Apik
     def exists(policy, key)
       policy ||= Policy.new
       command = ExistsCommand.new(@cluster, policy, key)
-      command.execute()
+      command.execute
       command.exists
     end
 
@@ -210,7 +215,7 @@ module Apik
       policy ||= Policy.new
 
       command = ReadCommand.new(@cluster, policy, key, binNames)
-      command.execute()
+      command.execute
       command.record
     end
 
@@ -219,7 +224,7 @@ module Apik
     def get_header(policy, key)
       policy ||= Policy.new
       command = ReadHeaderCommand.new(@cluster, policy, key)
-      command.execute()
+      command.execute
       command.record
     end
 
@@ -236,7 +241,7 @@ module Apik
 
       # wait until all migrations are finished
       # TODO: implement
-      # @cluster.WaitUntillMigrationIsFinished(policy.timeout())
+      # @cluster.WaitUntillMigrationIsFinished(policy.timeout)
 
       # same array can be used without sychronization;
       # when a key exists, the corresponding index will be set to record
@@ -266,7 +271,7 @@ module Apik
 
       # wait until all migrations are finished
       # TODO: Fix this and implement
-      # @cluster.WaitUntillMigrationIsFinished(policy.timeout())
+      # @cluster.WaitUntillMigrationIsFinished(policy.timeout)
 
       # same array can be used without sychronization;
       # when a key exists, the corresponding index will be set to record
@@ -296,8 +301,156 @@ module Apik
       policy ||= WritePolicy.new(0, 0)
 
       command = OperateCommand.new(@cluster, policy, key, operations)
-      command.execute()
+      command.execute
       command.record
+    end
+
+    #---------------------------------------------------------------
+    # User defined functions (Supported by Aerospike 3 servers only)
+    #---------------------------------------------------------------
+
+    #  Register package containing user defined functions with server.
+    #  This asynchronous server call will return before command is complete.
+    #  The user can optionally wait for command completion by using the returned
+    #  RegisterTask instance.
+    #
+    #  This method is only supported by Aerospike 3 servers.
+    def register_udf_from_file(policy, clientPath, serverPath, language)
+      udfBody = File.read(clientPath)
+      register_udf(policy, udfBody, serverPath, language)
+    end
+
+    #  Register package containing user defined functions with server.
+    #  This asynchronous server call will return before command is complete.
+    #  The user can optionally wait for command completion by using the returned
+    #  RegisterTask instance.
+    #
+    #  This method is only supported by Aerospike 3 servers.
+    def register_udf(policy, udfBody, serverPath, language)
+      content = Base64.strict_encode64(udfBody).force_encoding('binary')
+
+      strCmd = "udf-put:filename=#{serverPath};content=#{content};"
+      strCmd += "content-len=#{content.length};udf-type=#{language};"
+      # Send UDF to one node. That node will distribute the UDF to other nodes.
+      node = @cluster.get_random_node
+      conn = node.get_connection(@cluster.connection_timeout)
+
+      responseMap = Info.request(conn, strCmd)
+      response, _ = responseMap.first
+
+      res = {}
+      vals = response.split(';')
+      vals.each do |pair|
+        k, v = pair.split("=", 2)
+        res[k] = v
+      end
+
+      if res['error']
+        raise Apik::Exceptions::CommandRejected.new("Registration failed: #{res['error']}\nFile: #{res['file']}\nLine: #{res['line']}\nMessage: #{res['message']}")
+      end
+
+      node.put_connection(conn)
+      UdfRegisterTask.new(@cluster, serverPath)
+    end
+
+    #  RemoveUDF removes a package containing user defined functions in the server.
+    #  This asynchronous server call will return before command is complete.
+    #  The user can optionally wait for command completion by using the returned
+    #  RemoveTask instance.
+    #
+    #  This method is only supported by Aerospike 3 servers.
+    def remove_udf(policy, udfName)
+      # errors are to remove errcheck warnings
+      # they will always be nil as stated in golang docs
+      strCmd = "udf-remove:filename=#{udfName};"
+
+      # Send command to one node. That node will distribute it to other nodes.
+      node = @cluster.get_random_node
+      conn = node.get_connection(@cluster.connection_timeout)
+
+      responseMap = Info.request(conn, strCmd)
+      _, response = responseMap.first
+
+      if response == 'ok'
+        UdfRemoveTask.new(@cluster, udfName)
+      else
+        raise Apik::Exceptions::Aerospike.new(Apik::ResultCode::SERVER_ERROR, response)
+      end
+    end
+
+    #  ListUDF lists all packages containing user defined functions in the server.
+    #  This method is only supported by Aerospike 3 servers.
+    def list_udf(policy=nil)
+      # errors are to remove errcheck warnings
+      # they will always be nil as stated in golang docs
+      strCmd = 'udf-list'
+
+      # Send command to one node. That node will distribute it to other nodes.
+      node = @cluster.get_random_node
+      conn = node.get_connection(@cluster.connection_timeout)
+
+      responseMap = Info.request(conn, strCmd)
+      _, response = responseMap.first
+
+      vals = response.split(';')
+
+      res = vals.map do |udfInfo|
+        next if udfInfo.strip! == ''
+
+        udfParts = udfInfo.split(',')
+        udf = UDF.new
+        udfParts.each do |values|
+          k, v = values.split('=', 2)
+          case k
+          when 'filename'
+            udf.filename = v
+          when 'hash'
+            udf.hash = v
+          when 'type'
+            udf.language = v
+          end
+        end
+        udf
+      end
+
+
+      node.put_connection(conn)
+
+      res
+    end
+
+    #  Execute user defined function on server and return results.
+    #  The function operates on a single record.
+    #  The package name is used to locate the udf file location:
+    #
+    #  udf file = <server udf dir>/<package name>.lua
+    #
+    #  This method is only supported by Aerospike 3 servers.
+    def execute_udf(policy, key, packageName, functionName, *args)
+      policy ||= WritePolicy.new(0, 0)
+
+      command = ExecuteCommand.new(@cluster, policy, key, packageName, functionName, args)
+      command.execute
+
+      record = command.record
+
+
+      return nil if !record || record.bins.length == 0
+
+      resultMap = record.bins
+
+      # User defined functions don't have to return a value.
+      key, obj = resultMap.detect{|k, v| k.include?('SUCCESS')}
+      if key
+        return obj
+      end
+
+      key, obj = resultMap.detect{|k, v| k.include?('FAILURE')}
+      if key
+        raise Apik::Exceptions::Aerospike.new(UDF_BAD_RESPONSE, "#{obj}")
+      end
+
+      raise Apik::Exception::Aerospike.new(UDF_BAD_RESPONSE, "Invalid UDF return value")
     end
 
     private

@@ -5,7 +5,7 @@
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
-# the License at http://www.apache.org/licenses/LICENSE-2.0
+# the License at http:#www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
@@ -13,12 +13,30 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
+require 'apik/value/value'
+require 'apik/command/read_command'
+
 module Apik
 
-  module Language
+  protected
 
-    LUA = 'LUA'
+  class ExecuteCommand < ReadCommand
 
-  end
+    def initialize(cluster, policy, key, packageName, functionName, args)
+      super(cluster, policy, key, nil)
 
-end
+      @packageName = packageName
+      @functionName = functionName
+      @args = args.map{|v| Value.of(v)}
+      @operations = operations
+
+      self
+    end
+
+    def writeBuffer
+      setUDF(@key, @packageName, @functionName, @args)
+    end
+
+  end # class
+
+end # module

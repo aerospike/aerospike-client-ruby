@@ -24,21 +24,13 @@ module Apik
     end
     alias_method :<<, :offer
 
-    def poll
+    def poll(create_new=true)
       res = nil
       begin
         res = @pool.pop(true) # non_blocking
         return res
       rescue
-        return @create_block.call
-      end
-    end
-
-    def finalizer=(&block)
-      raise ArgumentError, "shutdown must receive a block" unless block_given?
-
-      @mutex.synchronize do
-        @cleanup_block = block
+        return @create_block.call if @create_block && create_new
       end
     end
 

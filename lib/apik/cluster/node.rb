@@ -35,13 +35,21 @@ module Apik
       # Assign host to first IP alias because the server identifies nodes
       # by IP address (not hostname).
       @host =                nv.aliases[0]
-      @connections =         Queue.new
       @health =              Atomic.new(FULL_HEALTH)
       @partitionGeneration = Atomic.new(-1)
       @referenceCount =      Atomic.new(0)
       @responded =           Atomic.new(false)
       @active =              Atomic.new(true)
 
+      @connections =         Pool.new(@cluster.connection_queue_size)
+      @connections.create_block = Proc.new do
+        while conn = Connection.new(@host.name, @host.port, @cluster.connection_timeout)
+          break if conn.connected?
+        end
+        conn
+      end
+
+      @connections.cleanup_block = Proc.new { |conn| conn.close }
     end
 
     # Request current status from server node, and update node with the result
@@ -73,32 +81,19 @@ module Apik
     # a new connection will be created
     def get_connection(timeout)
       while true
-        begin
-          conn = @connections.pop(true) # non-blocking pop
-          break unless conn
-          if conn.connected?
-            conn.set_timeout(timeout.to_f)
-            return conn
-          end
-          conn.close
-        rescue ThreadError => e
-          break
+        conn = @connections.poll
+        if conn.connected?
+          conn.set_timeout(timeout.to_f)
+          return conn
         end
       end
-
-      conn = Connection.new(@host.name, @host.port, @cluster.connection_timeout)
-      conn.set_timeout(timeout)
-      conn
     end
 
     # Put back a connection to the cache. If cache is full, the connection will be
     # closed and discarded
     def put_connection(conn)
-      if !@active.value || (@connections.length >= @cluster.connection_queue_size)
-        conn.close
-      end
-
-      @connections << conn
+      conn.close if !@active.value
+      @connections.offer(conn)
     end
 
     # Mark the node as healthy
@@ -173,7 +168,9 @@ module Apik
     private
 
     def close_connections
-      while conn = @connections.pop(true) # non-blocking
+      # drain connections and close all of them
+      # non-blocking, does not call create_block when passed false
+      while conn = @connections.poll(false)
         conn.close
       end
     end

@@ -55,7 +55,7 @@ module Apik
           namespace = @buffer[beginning...@offset].strip!
 
           if namespace.length <= 0 || namespace.length >= 32
-            response = getTruncatedResponse()
+            response = getTruncatedResponse
             raise Apik::Exceptions::Parse.new(
               "Invalid partition namespace #{namespace}. Response=#{response}"
             )
@@ -73,7 +73,7 @@ module Apik
           end
 
           if @offset == beginning
-            response = getTruncatedResponse()
+            response = getTruncatedResponse
 
             raise Apik::Exceptions::Parse.new(
               "Empty partition id for namespace #{namespace}. Response=#{response}"
@@ -94,11 +94,11 @@ module Apik
           end
 
           bitMapLength = @offset - beginning
-          restoreBuffer = Base64.decode64(@buffer[beginning, bitMapLength])
+          restoreBuffer = Base64.strict_decode64(@buffer[beginning, bitMapLength])
 
           for i in 0...Apik::Node::PARTITIONS
             if (restoreBuffer[i>>3].ord & (0x80 >> (i & 7))) != 0
-              # Logger.Info("Map: `" + namespace + "`," + strconv.Itoa(i) + "," + node.String())
+              # Logger.Info("Map: `" + namespace + "`," + strconv.Itoa(i) + "," + node.String)
               nodeArray.update{|v| v[i] = node; v}
             end
           end
@@ -115,7 +115,7 @@ module Apik
 
     private
 
-    def getTruncatedResponse()
+    def getTruncatedResponse
       max = @length
       @length = max if @length > 200
       @buffer[0...max]

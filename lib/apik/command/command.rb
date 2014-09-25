@@ -72,12 +72,12 @@ module Apik
 
     # Writes the command for write operations
     def setWrite(policy, operation, key, bins)
-      begin_cmd()
+      begin_cmd
       fieldCount = estimateKeySize(key)
 
       if policy.SendKey
         # field header size + key size
-        @dataOffset += key.userKeyAsValue.estimateSize() + FIELD_HEADER_SIZE
+        @dataOffset += key.userKeyAsValue.estimateSize + FIELD_HEADER_SIZE
         fieldCount += 1
       end
 
@@ -85,7 +85,7 @@ module Apik
         estimateOperationSizeForBin(bin)
       end
 
-      sizeBuffer()
+      sizeBuffer
 
       writeHeaderWithPolicy(policy, 0, INFO2_WRITE, fieldCount, bins.length)
       writeKey(key)
@@ -98,62 +98,62 @@ module Apik
         writeOperationForBin(bin, operation)
       end
 
-      end_cmd()
+      end_cmd
     end
 
     # Writes the command for delete operations
     def setDelete(policy, key)
-      begin_cmd()
+      begin_cmd
       fieldCount = estimateKeySize(key)
-      sizeBuffer()
+      sizeBuffer
       writeHeaderWithPolicy(policy, 0, INFO2_WRITE|INFO2_DELETE, fieldCount, 0)
       writeKey(key)
-      end_cmd()
+      end_cmd
     end
 
     # Writes the command for touch operations
     def setTouch(policy, key)
-      begin_cmd()
+      begin_cmd
       fieldCount = estimateKeySize(key)
-      estimateOperationSize()
-      sizeBuffer()
+      estimateOperationSize
+      sizeBuffer
       writeHeaderWithPolicy(policy, 0, INFO2_WRITE, fieldCount, 1)
       writeKey(key)
       writeOperationForOperationType(Apik::Operation::TOUCH)
-      end_cmd()
+      end_cmd
     end
 
     # Writes the command for exist operations
     def setExists(key)
-      begin_cmd()
+      begin_cmd
       fieldCount = estimateKeySize(key)
-      sizeBuffer()
+      sizeBuffer
       writeHeader(INFO1_READ|INFO1_NOBINDATA, 0, fieldCount, 0)
       writeKey(key)
-      end_cmd()
+      end_cmd
     end
 
     # Writes the command for get operations (all bins)
     def setReadForKeyOnly(key)
-      begin_cmd()
+      begin_cmd
       fieldCount = estimateKeySize(key)
-      sizeBuffer()
+      sizeBuffer
       writeHeader(INFO1_READ|INFO1_GET_ALL, 0, fieldCount, 0)
       writeKey(key)
-      end_cmd()
+      end_cmd
     end
 
     # Writes the command for get operations (specified bins)
     def setRead(key, binNames)
       if binNames && binNames.length > 0
-        begin_cmd()
+        begin_cmd
         fieldCount = estimateKeySize(key)
 
         binNames.each do |binName|
           estimateOperationSizeForBinName(binName)
         end
 
-        sizeBuffer()
+        sizeBuffer
         writeHeader(INFO1_READ, 0, fieldCount, binNames.length)
         writeKey(key)
 
@@ -161,7 +161,7 @@ module Apik
           writeOperationForBinName(binName, Apik::Operation::READ)
         end
 
-        end_cmd()
+        end_cmd
       else
         setReadForKeyOnly(key)
       end
@@ -169,10 +169,10 @@ module Apik
 
     # Writes the command for getting metadata operations
     def setReadHeader(key)
-      begin_cmd()
+      begin_cmd
       fieldCount = estimateKeySize(key)
       estimateOperationSizeForBinName('')
-      sizeBuffer()
+      sizeBuffer
 
       # The server does not currently return record header data with _INFO1_NOBINDATA attribute set.
       # The workaround is to request a non-existent bin.
@@ -182,12 +182,12 @@ module Apik
 
       writeKey(key)
       writeOperationForBinName('', Apik::Operation::READ)
-      end_cmd()
+      end_cmd
     end
 
     # Implements different command operations
     def setOperate(policy, key, operations)
-      begin_cmd()
+      begin_cmd
       fieldCount = estimateKeySize(key)
       readAttr = 0
       writeAttr = 0
@@ -215,7 +215,7 @@ module Apik
 
         estimateOperationSizeForOperation(operation)
       end
-      sizeBuffer()
+      sizeBuffer
 
       if writeAttr != 0
         writeHeaderWithPolicy(policy, readAttr, writeAttr, fieldCount, operations.length)
@@ -230,16 +230,16 @@ module Apik
 
       writeOperationForBin(nil, Apik::Operation::READ) if readHeader
 
-      end_cmd()
+      end_cmd
     end
 
     def setUdf(key, packageName, functionName, args)
-      begin_cmd()
+      begin_cmd
       fieldCount = estimateKeySize(key)
       argBytes = packValueArray(args)
 
       fieldCount += estimateUdfSize(packageName, functionName, argBytes)
-      sizeBuffer()
+      sizeBuffer
 
       writeHeader(0, INFO2_WRITE, fieldCount, 0)
       writeKey(key)
@@ -247,19 +247,19 @@ module Apik
       writeFieldString(functionName, UDF_FUNCTION)
       writeFieldBytes(argBytes, UDF_ARGLIST)
 
-      end_cmd()
+      end_cmd
     end
 
     def setBatchExists(batchNamespace)
       # Estimate buffer size
-      begin_cmd()
+      begin_cmd
       keys = batchNamespace.keys
       byteSize = keys.length * DIGEST_SIZE
 
       @dataOffset += (batchNamespace ? batchNamespace.namespace.bytesize : 0)  +
         FIELD_HEADER_SIZE + byteSize + FIELD_HEADER_SIZE
 
-      sizeBuffer()
+      sizeBuffer
 
       writeHeader(INFO1_READ|INFO1_NOBINDATA, 0, 2, 0)
       writeFieldString(batchNamespace.namespace, Apik::FieldType::NAMESPACE)
@@ -270,12 +270,12 @@ module Apik
         @dataBuffer.write_binary(digest, @dataOffset)
         @dataOffset += digest.bytesize
       end
-      end_cmd()
+      end_cmd
     end
 
     def setBatchGet(batchNamespace, binNames, readAttr)
       # Estimate buffer size
-      begin_cmd()
+      begin_cmd
       keys = batchNamespace.keys
       byteSize = keys.length * DIGEST_SIZE
 
@@ -288,7 +288,7 @@ module Apik
         end
       end
 
-      sizeBuffer()
+      sizeBuffer
 
       operationCount = 0
       if binNames
@@ -311,7 +311,7 @@ module Apik
         end
       end
 
-      end_cmd()
+      end_cmd
     end
 
     def execute
@@ -336,7 +336,7 @@ module Apik
           @conn = @node.get_connection(@policy.Timeout)
         rescue Exception => e
           # Socket connection error has occurred. Decrease health and retry.
-          @node.decrease_health()
+          @node.decrease_health
 
           Apik.logger.warn("Node #{@node.to_s}: #{e}")
           next
@@ -349,11 +349,11 @@ module Apik
           # Set command buffer.
           begin
             writeBuffer
-          rescue
+          rescue Exception => e
             # All runtime exceptions are considered fatal. Do not retry.
             # Close socket to flush out possible garbage. Do not put back in pool.
             @conn.close
-            raise
+            raise e
           end
 
           # Reset timeout in send buffer (destined for server) and socket.
@@ -370,7 +370,7 @@ module Apik
             Apik.logger.warn("Node #{@node.to_s}: #{e}")
             # IO error means connection to server @node is unhealthy.
             # Reflect cmd status.
-            @node.decrease_health()
+            @node.decrease_health
             next
           end
 
@@ -378,13 +378,12 @@ module Apik
           begin
             parseResult
           rescue Exception => e
-            p "#{e}"
             # close the connection
             # cancelling/closing the batch/multi commands will return an error, which will
             # close the connection to throw away its data and signal the server about the
             # situation. We will not put back the connection in the buffer.
             @conn.close
-            raise
+            raise e
           end
 
           # Reflect healthy status.
@@ -436,7 +435,7 @@ module Apik
 
     def estimateOperationSizeForBin(bin)
       @dataOffset += bin.name.length + OPERATION_HEADER_SIZE
-      @dataOffset += bin.value_object.estimateSize()
+      @dataOffset += bin.value_object.estimateSize
     end
 
     def estimateOperationSizeForOperation(operation)
@@ -449,7 +448,7 @@ module Apik
       @dataOffset += binLen + OPERATION_HEADER_SIZE
 
       if operation.bin_value
-        @dataOffset += operation.bin_value.estimateSize()
+        @dataOffset += operation.bin_value.estimateSize
       end
     end
 
@@ -457,7 +456,7 @@ module Apik
       @dataOffset += binName.length + OPERATION_HEADER_SIZE
     end
 
-    def estimateOperationSize()
+    def estimateOperationSize
       @dataOffset += OPERATION_HEADER_SIZE
     end
 
@@ -561,7 +560,7 @@ module Apik
       @dataOffset += 4
       @dataBuffer.write_byte(operation, @dataOffset)
       @dataOffset += 1
-      @dataBuffer.write_byte(bin.value_object.type(), @dataOffset)
+      @dataBuffer.write_byte(bin.value_object.type, @dataOffset)
       @dataOffset += 1
       @dataBuffer.write_byte(0, @dataOffset)
       @dataOffset += 1
@@ -584,7 +583,7 @@ module Apik
       @dataOffset += 4
       @dataBuffer.write_byte(operation.op_type, @dataOffset)
       @dataOffset += 1
-      @dataBuffer.write_byte(operation.bin_value.type(), @dataOffset)
+      @dataBuffer.write_byte(operation.bin_value.type, @dataOffset)
       @dataOffset += 1
       @dataBuffer.write_byte(0, @dataOffset)
       @dataOffset += 1
@@ -655,11 +654,11 @@ module Apik
       @dataOffset += 1
     end
 
-    def begin_cmd()
+    def begin_cmd
       @dataOffset = MSG_TOTAL_HEADER_SIZE
     end
 
-    def sizeBuffer()
+    def sizeBuffer
       sizeBufferSz(@dataOffset)
     end
 
@@ -671,18 +670,9 @@ module Apik
       end
 
       @dataBuffer.resize(size)
-
-      # if size <= @dataBuffe.length
-      #   # don't touch the buffer
-      # elsif size <= (@dataBuffer)
-      #   @dataBuffer = @dataBuffer[:size]
-      # else
-      #   # not enough space
-      #   @dataBuffer = make([]byte, size)
-      # end
     end
 
-    def end_cmd()
+    def end_cmd
       size = (@dataOffset-8) | Integer(CL_MSG_VERSION << 56) | Integer(AS_MSG_TYPE << 48)
       @dataBuffer.write_int64(size, 0)
     end

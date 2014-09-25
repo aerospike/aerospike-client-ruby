@@ -47,8 +47,7 @@ module Apik
         @conn.read(@dataBuffer, MSG_TOTAL_HEADER_SIZE)
       rescue Exception => e
         Apik.logger.warn("parse result error: #{e}")
-
-        raise
+        raise e
       end
 
       # A number of these are commented out because we just don't care enough to read
@@ -72,7 +71,7 @@ module Apik
           @conn.read(@dataBuffer, receiveSize)
         rescue Exception => e
           Apik.logger.warn("parse result error: #{e}")
-          raise
+          raise e
         end
 
       end
@@ -86,7 +85,7 @@ module Apik
             handleUdfError(resultCode)
           rescue Exception => e
             Apik.logger.warn("UDF execution error: #{e}")
-            raise
+            raise e
           end
 
         end

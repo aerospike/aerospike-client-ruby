@@ -72,9 +72,6 @@ module Apik
     def connected?
       # Must copy array reference for copy on write semantics to work.
       nodeArray = get_nodes
-
-      nodeArray.inspect
-
       (nodeArray.length > 0) && !@closed.value
     end
 
@@ -136,7 +133,12 @@ module Apik
         # send close signal to maintenance channel
         @closed.value = true
         @tend_thread.kill
+
+        get_nodes.each do |node|
+          node.close
+        end
       end
+
     end
 
     def find_alias(aliass)
@@ -150,23 +152,17 @@ module Apik
     def update_partitions(conn, node)
       # TODO: Cluster should not care about version of tokenizer
       # decouple clstr interface
-      # p "1111BOOOOOO!"
       nmap = {}
       if node.use_new_info?
         Apik.logger.info("Updating partitions using new protocol...")
 
-      # p "2111BOOOOOO!"
         tokens = PartitionTokenizerNew.new(conn)
-      # p "3111BOOOOOO!"
         nmap = tokens.update_partition(get_partitions, node)
-      # p "4111BOOOOOO!"
       else
         Apik.logger.info("Updating partitions using old protocol...")
         tokens = PartitionTokenizerOld.new(conn)
         nmap = tokens.update_partition(get_partitions, node)
       end
-
-      # p "BOOOOOO!"
 
       # update partition write map
       if nmap
@@ -259,13 +255,13 @@ module Apik
         while true
           tend
 
-          # Check to see if cluster has changed since the last Tend().
+          # Check to see if cluster has changed since the last Tend.
           # If not, assume cluster has stabilized and return.
           if count == get_nodes.length
             break
           end
 
-          sleep(0.001) # sleep for a milisecond
+          sleep(0.001) # sleep for a miliseconds
 
           count = get_nodes.length
         end
@@ -281,6 +277,7 @@ module Apik
       end
 
     end
+
     def set_partitions(partMap)
       @mutex.synchronize do
         @partition_write_map = partMap
