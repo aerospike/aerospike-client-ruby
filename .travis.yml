@@ -28,3 +28,6 @@ install:
   - sleep 5
   # dump keep server log for debugging
   - sudo tail -n 1000 aerospike-server/instance1/var/log/aerospike.log
+
+
+
