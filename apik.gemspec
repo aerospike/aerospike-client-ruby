@@ -15,6 +15,4 @@ Gem::Specification.new do |s|
   s.description = s.summary
   s.files = Dir.glob("lib/**/*") + %w(CHANGELOG.md LICENSE README.md)
   s.require_path = "lib"
-  s.add_dependency("atomic", ["~> 1.1"])
-  s.add_dependency("msgpack")
 end

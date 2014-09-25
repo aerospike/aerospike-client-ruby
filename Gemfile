@@ -13,5 +13,8 @@ end
 
 gem "rake"
 gem "jruby-openssl", :platform => :jruby
+gem 'msgpack-jruby', :require => 'msgpack', :platform => :jruby
+gem 'msgpack-jruby', :require => 'msgpack', :platform => :jruby
+gem 'atomic', "~> 1.1"
 
 gemspec
