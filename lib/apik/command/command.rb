@@ -238,7 +238,7 @@ module Apik
     def setUdf(key, packageName, functionName, args)
       begin_cmd
       fieldCount = estimateKeySize(key)
-      argBytes = args.packed_bytes
+      argBytes = args.to_bytes
 
       fieldCount += estimateUdfSize(packageName, functionName, argBytes)
       sizeBuffer

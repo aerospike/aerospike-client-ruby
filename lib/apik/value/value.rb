@@ -18,7 +18,6 @@ require 'msgpack'
 require 'apik/utils/pool'
 
 require 'apik/aerospike_exception'
-require 'apik/value/particle_type'
 
 module Apik
 
@@ -173,7 +172,7 @@ module Apik
     end
 
     def pack(packer)
-      packer.write(Apik::ParticleType::STRING.chr + @value)
+      packer.write(@value)
     end
 
     def type
@@ -243,7 +242,7 @@ module Apik
 
   end # IntegerValue
 
-   # List value.
+  # List value.
   # Supported by Aerospike 3 servers only.
   class ListValue < Value
 
@@ -266,8 +265,8 @@ module Apik
       @bytes.bytesize
     end
 
-    def pack(packer, as_array=true)
-      packer.write_array_header(@list.length) #if as_array
+    def pack(packer)
+      packer.write_array_header(@list.length)
       @list.each do |val|
         Value.of(val).pack(packer)
       end
@@ -287,14 +286,6 @@ module Apik
 
     def to_bytes
       @bytes
-    end
-
-    def packed_bytes
-      packer = Value.get_packer
-      pack(packer, false)
-      res = packer.to_s.force_encoding('binary')
-      Value.put_packer(packer)
-      res
     end
 
     def to_s
@@ -375,11 +366,11 @@ module Apik
     when Apik::ParticleType::BLOB
       BytesValue.new(buf.read(offse,length))
 
-      when Apik::ParticleType::LIST
-        ListValue.new(MessagePack.unpack(buf.read(offset, length)))
+    when Apik::ParticleType::LIST
+      ListValue.new(MessagePack.unpack(buf.read(offset, length)))
 
-      when Apik::ParticleType::MAP
-        MapValue.new(MessagePack.unpack(buf.read(offset, length)))
+    when Apik::ParticleType::MAP
+      MapValue.new(MessagePack.unpack(buf.read(offset, length)))
 
     else
       nil

@@ -13,6 +13,8 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
+require 'apik/value/particle_type'
+
 module Apik
 
   class Large
@@ -21,8 +23,8 @@ module Apik
       @client = client
       @policy = policy
       @key = key
-      @binName = binName
-      @userModule = userModule
+      @binName = Apik::ParticleType::STRING.chr + binName
+      @userModule = Apik::ParticleType::STRING.chr + userModule unless userModule.nil?
 
       self
     end
