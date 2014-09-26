@@ -160,7 +160,7 @@ module Apik
   class StringValue < Value
 
     def initialize(val)
-      @value = val
+      @value = val || ''
       self
     end
 
@@ -173,7 +173,7 @@ module Apik
     end
 
     def pack(packer)
-      packer.write(@value)
+      packer.write(Apik::ParticleType::STRING.chr + @value)
     end
 
     def type
@@ -204,7 +204,7 @@ module Apik
   class IntegerValue < Value
 
     def initialize(val)
-      @value = val
+      @value = val || 0
       self
     end
 
@@ -248,7 +248,7 @@ module Apik
   class ListValue < Value
 
     def initialize(list)
-      @list = list
+      @list = list || nil
       packer = Value.get_packer
       pack(packer)
       @bytes = packer.to_s.force_encoding('binary')
@@ -266,8 +266,8 @@ module Apik
       @bytes.bytesize
     end
 
-    def pack(packer)
-      packer.write_array_header(@list.length)
+    def pack(packer, as_array=true)
+      packer.write_array_header(@list.length) #if as_array
       @list.each do |val|
         Value.of(val).pack(packer)
       end
@@ -289,6 +289,14 @@ module Apik
       @bytes
     end
 
+    def packed_bytes
+      packer = Value.get_packer
+      pack(packer, false)
+      res = packer.to_s.force_encoding('binary')
+      Value.put_packer(packer)
+      res
+    end
+
     def to_s
       @list.map{|v| v.to_s}.to_s
     end
@@ -302,7 +310,7 @@ module Apik
   class MapValue < Value
 
     def initialize(vmap)
-      @vmap = vmap
+      @vmap = vmap || {}
 
       packer = Value.get_packer
       pack(packer)
@@ -342,7 +350,7 @@ module Apik
     # }
 
     def to_bytes
-      @bytes.bytes
+      @bytes
     end
 
     def to_s
@@ -352,6 +360,8 @@ module Apik
   end
 
   #######################################
+
+  protected
 
   def self.bytesToParticle(type, buf , offset, length)
 

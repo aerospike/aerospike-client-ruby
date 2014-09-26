@@ -148,19 +148,20 @@ module Apik
       from ||= 0
       to ||= @slice_end - 1
 
-      @buf.bytes[from..to-1].each do |c|
-        putc c
+      @buf.bytes[from...to].each do |c|
+        print c.ord.to_s(16)
+        putc ' '
       end
     end
 
     private
 
     def chr(byte)
-      # if byte.is_a?(FixedNum) && byte < 0
-      #   [byte].pack('c')
-      # else
-      byte.chr
-      # end
+      if byte.is_a?(FixedNum) && byte < 0
+        [byte].pack('c')
+      else
+        byte.chr
+      end
     end
 
     def validate_read(offset, len)

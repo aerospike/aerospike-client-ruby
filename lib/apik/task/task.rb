@@ -33,22 +33,27 @@ module Apik
       self
     end
 
-    def wait_till_completed(poll_interval = 1)
+    def wait_till_completed(poll_interval = 0.1, allowed_failures = 3)
       unless @done_thread
         @mutex.synchronize do
           @done_thread = Thread.new do
+            failures = 0
             while true
               begin
                 break if completed?
                 sleep(poll_interval.to_f)
-              rescue Exception => e
-                break
+              rescue
+                failures += 1
+                if failures > allowed_failures
+                  @done_event.broadcast
+                  break
+                end
               end
             end
-            puts "thread exited!"
           end
 
           @done_event.wait(@mutex)
+          @done.value
         end
       end
     end

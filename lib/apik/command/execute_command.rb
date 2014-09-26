@@ -27,14 +27,13 @@ module Apik
 
       @packageName = packageName
       @functionName = functionName
-      @args = args.map{|v| Value.of(v)}
-      @operations = operations
+      @args = ListValue.new(args)
 
       self
     end
 
     def writeBuffer
-      setUDF(@key, @packageName, @functionName, @args)
+      setUdf(@key, @packageName, @functionName, @args)
     end
 
   end # class

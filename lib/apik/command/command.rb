@@ -15,6 +15,8 @@
 
 require 'time'
 
+
+require 'msgpack'
 require 'apik/result_code'
 require 'apik/command/field_type'
 
@@ -236,16 +238,16 @@ module Apik
     def setUdf(key, packageName, functionName, args)
       begin_cmd
       fieldCount = estimateKeySize(key)
-      argBytes = packValueArray(args)
+      argBytes = args.packed_bytes
 
       fieldCount += estimateUdfSize(packageName, functionName, argBytes)
       sizeBuffer
 
       writeHeader(0, INFO2_WRITE, fieldCount, 0)
       writeKey(key)
-      writeFieldString(packageName, UDF_PACKAGE_NAME)
-      writeFieldString(functionName, UDF_FUNCTION)
-      writeFieldBytes(argBytes, UDF_ARGLIST)
+      writeFieldString(packageName, Apik::FieldType::UDF_PACKAGE_NAME)
+      writeFieldString(functionName, Apik::FieldType::UDF_FUNCTION)
+      writeFieldBytes(argBytes, Apik::FieldType::UDF_ARGLIST)
 
       end_cmd
     end

@@ -29,6 +29,7 @@ require 'apik/command/delete_command'
 require 'apik/command/exists_command'
 require 'apik/command/touch_command'
 require 'apik/command/operate_command'
+require 'apik/command/execute_command'
 
 require 'apik/command/batch_command_get'
 require 'apik/command/batch_command_exists'
@@ -38,7 +39,15 @@ require 'apik/command/batch_item'
 require 'apik/task/udf_register_task'
 require 'apik/task/udf_remove_task'
 
+require 'apik/ldt/large_list'
+require 'apik/ldt/large_map'
+require 'apik/ldt/large_set'
+require 'apik/ldt/large_stack'
+
 module Apik
+
+  # make sure threads abort on exceptions
+  Thread.abort_on_exception=true
 
   class Client
 
@@ -305,6 +314,42 @@ module Apik
       command.record
     end
 
+    #-------------------------------------------------------------------
+    # Large collection functions (Supported by Aerospike 3 servers only)
+    #-------------------------------------------------------------------
+
+    #  Initialize large list operator.  This operator can be used to create and manage a list
+    #  within a single bin.
+    #
+    #  This method is only supported by Aerospike 3 servers.
+    def get_large_list(policy, key, binName, userModule=nil)
+      LargeList.new(self, policy, key, binName, userModule)
+    end
+
+    #  Initialize large map operator.  This operator can be used to create and manage a map
+    #  within a single bin.
+    #
+    #  This method is only supported by Aerospike 3 servers.
+    def get_large_map(policy, key, binName, userModule=nil)
+      LargeMap.new(self, policy, key, binName, userModule)
+    end
+
+    #  Initialize large set operator.  This operator can be used to create and manage a set
+    #  within a single bin.
+    #
+    #  This method is only supported by Aerospike 3 servers.
+    def get_large_set(policy, key, binName, userModule=nil)
+      LargeSet.new(self, policy, key, binName, userModule)
+    end
+
+    #  Initialize large stack operator.  This operator can be used to create and manage a stack
+    #  within a single bin.
+    #
+    #  This method is only supported by Aerospike 3 servers.
+    def get_large_stack(policy, key, binName, userModule=nil)
+      LargeStack.new(self, policy, key, binName, userModule)
+    end
+
     #---------------------------------------------------------------
     # User defined functions (Supported by Aerospike 3 servers only)
     #---------------------------------------------------------------
@@ -433,7 +478,6 @@ module Apik
       command.execute
 
       record = command.record
-
 
       return nil if !record || record.bins.length == 0
 
