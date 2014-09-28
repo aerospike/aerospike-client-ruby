@@ -22,18 +22,18 @@ module Apik
 
   class ExecuteCommand < ReadCommand
 
-    def initialize(cluster, policy, key, packageName, functionName, args)
+    def initialize(cluster, policy, key, package_name, function_name, args)
       super(cluster, policy, key, nil)
 
-      @packageName = packageName
-      @functionName = functionName
+      @package_name = package_name
+      @function_name = function_name
       @args = ListValue.new(args)
 
       self
     end
 
-    def writeBuffer
-      setUdf(@key, @packageName, @functionName, @args)
+    def write_buffer
+      set_udf(@key, @package_name, @function_name, @args)
     end
 
   end # class

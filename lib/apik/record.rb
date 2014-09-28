@@ -17,11 +17,11 @@ module Apik
   class Record
     attr_reader :key, :bins, :generation, :expiration, :node, :dups
 
-    def initialize(node, recKey, recBins, dups, recGen, recExp)
-      @key = recKey
-      @bins = recBins
-      @generation = recGen
-      @expiration = recExp
+    def initialize(node, rec_key, rec_bins, dups, rec_gen, rec_exp)
+      @key = rec_key
+      @bins = rec_bins
+      @generation = rec_gen
+      @expiration = rec_exp
       @node = node
       @dups = dups
     end

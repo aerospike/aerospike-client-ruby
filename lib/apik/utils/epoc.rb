@@ -20,8 +20,8 @@ module Apik
   CITRUSLEAF_EPOCH = 1262304000
 
   # Converts an Expiration time to TTL in seconds
-  def self.TTL(secsFromCitrusLeafEpoc)
-    CITRUSLEAF_EPOCH+secsFromCitrusLeafEpoc - Time.now.to_i
+  def self.TTL(secs_from_citrus_leaf_epoc)
+    CITRUSLEAF_EPOCH+secs_from_citrus_leaf_epoc - Time.now.to_i
   end
 
 end # module

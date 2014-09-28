@@ -19,22 +19,22 @@ module Apik
 
   class LargeSet < Large
 
-    def initialize(client, policy, key, binName, userModule=nil)
+    def initialize(client, policy, key, bin_name, user_module=nil)
       @PACKAGE_NAME = 'lset'
 
-      super(client, policy, key, binName, userModule)
+      super(client, policy, key, bin_name, user_module)
 
       self
     end
 
-    # Add values to the list.  If the list does not exist, create it using specified userModule configuration.
+    # Add values to the list.  If the list does not exist, create it using specified user_module configuration.
     #
     # values      values to add
     def add(*values)
       if values.length == 1
-        @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'add', @binName, values[0], @userModule)
+        @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'add', @bin_name, values[0], @user_module)
       else
-        @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'add_all', @binName, values, @userModule)
+        @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'add_all', @bin_name, values, @user_module)
       end
     end
 
@@ -42,7 +42,7 @@ module Apik
     #
     # value       value to delete
     def remove(value)
-      @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'remove', @binName, value)
+      @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'remove', @bin_name, value)
     end
 
     # Select values from list.
@@ -50,7 +50,7 @@ module Apik
     # value       value to select
     # returns          list of entries selected
     def get(value)
-      @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'get', @binName, value)
+      @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'get', @bin_name, value)
     end
 
     # Check existence of value in the set.
@@ -58,16 +58,16 @@ module Apik
     # value       value to check
     # returns          true if found, otherwise false
     def exists(value)
-      1 == @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'exists', @binName, value)
+      1 == @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'exists', @bin_name, value)
     end
 
     # Select values from list and apply specified Lua filter.
     #
-    # filterName    Lua function name which applies filter to returned list
-    # filterArgs    arguments to Lua function name
+    # filter_name    Lua function name which applies filter to returned list
+    # filter_args    arguments to Lua function name
     # returns          list of entries selected
-    def filter(filterName, *filterArgs)
-      @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'filter', @binName, @userModule, filterName, filterArgs)
+    def filter(filter_name, *filter_args)
+      @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'filter', @bin_name, @user_module, filter_name, filter_args)
     end
 
   end # class

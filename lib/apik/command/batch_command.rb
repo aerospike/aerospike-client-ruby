@@ -35,68 +35,68 @@ module Apik
       self
     end
 
-    def parseResult
+    def parse_result
       # Read socket into receive buffer one record at a time.  Do not read entire receive size
       # because the receive buffer would be too big.
       status = true
 
       while status
         # Read header.
-        readBytes(8)
+        read_bytes(8)
 
-        size = @dataBuffer.read_int64(0)
-        receiveSize = size & 0xFFFFFFFFFFFF
+        size = @data_buffer.read_int64(0)
+        receive_size = size & 0xFFFFFFFFFFFF
 
-        if receiveSize > 0
-          status = parseRecordResults(receiveSize)
+        if receive_size > 0
+          status = parse_record_results(receive_size)
         else
           status = false
         end
       end
     end
 
-    def parseKey(fieldCount)
+    def parse_key(field_count)
       digest = nil
       namespace = nil
-      setName = nil
-      userKey = nil
+      set_name = nil
+      user_key = nil
 
-      for i in 0...fieldCount
-        readBytes(4)
+      for i in 0...field_count
+        read_bytes(4)
 
-        fieldlen = @dataBuffer.read_int32(0)
-        readBytes(fieldlen)
+        fieldlen = @data_buffer.read_int32(0)
+        read_bytes(fieldlen)
 
-        fieldtype = @dataBuffer.read(0).ord
+        fieldtype = @data_buffer.read(0).ord
         size = fieldlen - 1
 
         case fieldtype
         when Apik::FieldType::DIGEST_RIPE
-          digest = @dataBuffer.read(1, size)
+          digest = @data_buffer.read(1, size)
         when Apik::FieldType::NAMESPACE
-          namespace = @dataBuffer.read(1, size).force_encoding('utf-8')
+          namespace = @data_buffer.read(1, size).force_encoding('utf-8')
         when Apik::FieldType::TABLE
-          setName = @dataBuffer.read(1, size).force_encoding('utf-8')
+          set_name = @data_buffer.read(1, size).force_encoding('utf-8')
         when Apik::FieldType::KEY
-          userKey = Value.bytesToKeyValue(@dataBuffer.read(1).ord, @dataBuffer, 2, size-1)
+          user_key = Value.bytes_to_key_value(@data_buffer.read(1).ord, @data_buffer, 2, size-1)
         end
       end
 
-      Apik::Key.new(namespace, setName, userKey, digest)
+      Apik::Key.new(namespace, set_name, user_key, digest)
     end
 
-    def readBytes(length)
-      if length > @dataBuffer.length
+    def read_bytes(length)
+      if length > @data_buffer.length
         # Corrupted data streams can result in a huge length.
         # Do a sanity check here.
         if length > Apik::Buffer::MAX_BUFFER_SIZE
-          raise Apik::Exceptions::Parse.new("Invalid readBytes length: #{length}")
+          raise Apik::Exceptions::Parse.new("Invalid read_bytes length: #{length}")
         end
-        @dataBuffer = Buffer.new(length)
+        @data_buffer = Buffer.new(length)
       end
 
-      @conn.read(@dataBuffer, length)
-      @dataOffset += length
+      @conn.read(@data_buffer, length)
+      @data_offset += length
     end
 
     def stop

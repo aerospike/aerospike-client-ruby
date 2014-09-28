@@ -26,18 +26,18 @@ module Apik
   class BatchItem
 
     def self.generate_map(keys)
-      keyMap = {}
+      key_map = {}
       keys.each_with_index do |key, i|
-        item = keyMap[key.digest]
+        item = key_map[key.digest]
         unless item
           item = BatchItem.new(i)
-          keyMap[key.digest] = item
+          key_map[key.digest] = item
         else
           item.add_duplicate(i)
         end
       end
 
-      keyMap
+      key_map
     end
 
 

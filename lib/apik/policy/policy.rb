@@ -38,7 +38,7 @@ module Apik
 
       # Maximum number of retries before aborting the current transaction.
       # A retry is attempted when there is a network error other than timeout.
-      # If maxRetries is exceeded, the abort will occur even if the timeout
+      # If max_retries is exceeded, the abort will occur even if the timeout
       # has not yet been exceeded.
       @MaxRetries = max_retiries || 2
 

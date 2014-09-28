@@ -19,7 +19,7 @@ module Apik
 
   class Node
 
-    attr_reader :referenceCount, :responded, :name
+    attr_reader :reference_count, :responded, :name
 
     PARTITIONS = 4096
     FULL_HEALTH = 100
@@ -30,14 +30,14 @@ module Apik
       @name = nv.name
       @aliases = Atomic.new(nv.aliases)
       @host = nv.host
-      @useNewInfo = Atomic.new(nv.useNewInfo)
+      @use_new_info = Atomic.new(nv.use_new_info)
 
       # Assign host to first IP alias because the server identifies nodes
       # by IP address (not hostname).
       @host =                nv.aliases[0]
       @health =              Atomic.new(FULL_HEALTH)
-      @partitionGeneration = Atomic.new(-1)
-      @referenceCount =      Atomic.new(0)
+      @partition_generation = Atomic.new(-1)
+      @reference_count =      Atomic.new(0)
       @responded =           Atomic.new(false)
       @active =              Atomic.new(true)
 
@@ -58,7 +58,7 @@ module Apik
       conn = get_connection(1)
 
       begin
-        infoMap = Info.request(conn, "node", "partition-generation", "services")
+        info_map = Info.request(conn, "node", "partition-generation", "services")
       rescue Exception => e
         conn.close
         decrease_health
@@ -66,13 +66,13 @@ module Apik
         raise e
       end
 
-      verify_node_name(infoMap)
+      verify_node_name(info_map)
       restore_health
 
       @responded.update{|v| true}
 
-      friends = add_friends(infoMap)
-      update_partitions(conn, infoMap)
+      friends = add_friends(info_map)
+      update_partitions(conn, info_map)
       put_connection(conn)
       friends
     end
@@ -134,7 +134,7 @@ module Apik
     end
 
     # Adds an alias for the node
-    def add_alias(aliasToAdd)
+    def add_alias(alias_to_add)
       # Aliases are only referenced in the cluster tend threads,
       # so synchronization is not necessary.
       aliases = get_aliases
@@ -142,7 +142,7 @@ module Apik
         aliases = []
       end
 
-      aliases << aliasToAdd
+      aliases << alias_to_add
       set_aliases(aliases)
     end
 
@@ -162,7 +162,7 @@ module Apik
     end
 
     def use_new_info?
-      @useNewInfo.value
+      @use_new_info.value
     end
 
     private
@@ -181,8 +181,8 @@ module Apik
       @aliases.value = aliases
     end
 
-    def verify_node_name(infoMap)
-      info_name = infoMap['node']
+    def verify_node_name(info_map)
+      info_name = info_map['node']
 
       if !info_name
         decrease_health
@@ -196,25 +196,25 @@ module Apik
       end
     end
 
-    def add_friends(infoMap)
-      friendString = infoMap['services']
+    def add_friends(info_map)
+      friend_string = info_map['services']
       friends = []
 
-      if !friendString
+      if !friend_string
         return friends
       end
 
-      friendNames = friendString.split(';')
+      friend_names = friend_string.split(';')
 
-      friendNames.each do |friend|
-        friendInfo = friend.split(':')
-        host = friendInfo[0]
-        port = friendInfo[1].to_i
+      friend_names.each do |friend|
+        friend_info = friend.split(':')
+        host = friend_info[0]
+        port = friend_info[1].to_i
         aliass = Host.new(host, port)
         node = @cluster.find_alias(aliass)
 
         if node
-          node.referenceCount.update{|v| v + 1}
+          node.reference_count.update{|v| v + 1}
         else
           if !find_alias(friends, aliass)
             if !friends
@@ -233,17 +233,17 @@ module Apik
       friends.any? {|host| host == aliass}
     end
 
-    def update_partitions(conn, infoMap)
-      genString = infoMap['partition-generation']
+    def update_partitions(conn, info_map)
+      gen_string = info_map['partition-generation']
 
-      raise Apik::Exceptions.Aerospike.new("partition-generation is empty") if !genString
+      raise Apik::Exceptions.Aerospike.new("partition-generation is empty") if !gen_string
 
-      generation = genString.to_i
+      generation = gen_string.to_i
 
-      if @partitionGeneration.value != generation
+      if @partition_generation.value != generation
         Apik.logger.info("Node #{get_name} partition generation #{generation} changed")
         @cluster.update_partitions(conn, self)
-        @partitionGeneration.update{|v| generation}
+        @partition_generation.update{|v| generation}
       end
     end
 

@@ -32,21 +32,21 @@ module Apik
       self
     end
 
-    def writeBuffer
-      setWrite(@policy, @operation, @key, @bins)
+    def write_buffer
+      set_write(@policy, @operation, @key, @bins)
     end
 
-    def parseResult
+    def parse_result
       # Read header.
-      @conn.read(@dataBuffer, MSG_TOTAL_HEADER_SIZE)
+      @conn.read(@data_buffer, MSG_TOTAL_HEADER_SIZE)
 
-      resultCode = @dataBuffer.read(13).ord & 0xFF
+      result_code = @data_buffer.read(13).ord & 0xFF
 
-      if resultCode != 0
-        raise Apik::Exceptions::Aerospike.new(resultCode)
+      if result_code != 0
+        raise Apik::Exceptions::Aerospike.new(result_code)
       end
 
-      emptySocket
+      empty_socket
     end
 
   end # class

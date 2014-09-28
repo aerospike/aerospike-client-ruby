@@ -21,12 +21,12 @@ module Apik
 
   class Key
 
-    attr_reader :namespace, :setName, :digest
+    attr_reader :namespace, :set_name, :digest
 
     def initialize(ns, set, val, digest=nil)
       @namespace = ns
-      @setName = set
-      @userKey = Value.of(val)
+      @set_name = set
+      @user_key = Value.of(val)
 
       unless digest
         compute_digest
@@ -38,15 +38,15 @@ module Apik
     end
 
     def to_s
-      @namespace + ':' + @setName + ':' + @userKey.to_s
+      @namespace + ':' + @set_name + ':' + @user_key.to_s
     end
 
-    def userKey
-      @userKey.get if @userKey
+    def user_key
+      @user_key.get if @user_key
     end
 
-    def userKeyAsValue
-      @userKey
+    def user_key_as_value
+      @user_key
     end
 
     def ==(other)
@@ -67,8 +67,8 @@ module Apik
     def compute_digest
       # Compute a complete digest
       h = Digest::RMD160.new
-      h.update(@setName)
-      h.update(@userKey.to_bytes)
+      h.update(@set_name)
+      h.update(@user_key.to_bytes)
       @digest = h.digest
     end
 

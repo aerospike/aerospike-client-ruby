@@ -27,8 +27,8 @@ module Apik
       @operations = operations
     end
 
-    def writeBuffer
-      setOperate(@policy, @key, @operations)
+    def write_buffer
+      set_operate(@policy, @key, @operations)
     end
 
   end # class

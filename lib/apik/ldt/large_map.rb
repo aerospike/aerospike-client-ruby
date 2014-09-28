@@ -19,27 +19,27 @@ module Apik
 
   class LargeMap < Large
 
-    def initialize(client, policy, key, binName, userModule=nil)
+    def initialize(client, policy, key, bin_name, user_module=nil)
       @PACKAGE_NAME = 'lmap'
 
-      super(client, policy, key, binName, userModule)
+      super(client, policy, key, bin_name, user_module)
 
       self
     end
 
-    # Add entry to map.  If the map does not exist, create it using specified userModule configuration.
+    # Add entry to map.  If the map does not exist, create it using specified user_module configuration.
     #
     # name        entry key
     # value       entry value
     def put(name, value)
-      @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'put', @binName, name, value, @userModule)
+      @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'put', @bin_name, name, value, @user_module)
     end
 
-    # Add map values to map.  If the map does not exist, create it using specified userModule configuration.
+    # Add map values to map.  If the map does not exist, create it using specified user_module configuration.
     #
     # map       map values to push
-    def put_map(theMap)
-      @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'put_all', @binName, theMap, @userModule)
+    def put_map(the_map)
+      @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'put_all', @bin_name, the_map, @user_module)
     end
 
     # Get value from map given name key.
@@ -48,7 +48,7 @@ module Apik
     # return          map of items selected
     def get(name)
       begin
-        @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'get', @binName, name, @userModule)
+        @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'get', @bin_name, name, @user_module)
       rescue Apik::Exceptions::Aerospike => e
         unless e.result_code == Apik::ResultCode::UDF_BAD_RESPONSE && e.message.index("Item Not Found")
           raise e
@@ -62,16 +62,16 @@ module Apik
     # name        key.
     # return          map of items selected
     def remove(name)
-      @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'remove', @binName, name, @userModule)
+      @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'remove', @bin_name, name, @user_module)
     end
 
     # Select items from map.
     #
-    # filterName    Lua function name which applies filter to returned list
-    # filterArgs    arguments to Lua function name
+    # filter_name    Lua function name which applies filter to returned list
+    # filter_args    arguments to Lua function name
     # return          list of items selected
-    def filter(filterName, *filterArgs)
-      @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'filter', @binName, @userModule, filterName, filterArgs)
+    def filter(filter_name, *filter_args)
+      @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'filter', @bin_name, @user_module, filter_name, filter_args)
     end
 
   end # class

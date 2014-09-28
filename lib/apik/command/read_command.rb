@@ -27,24 +27,24 @@ module Apik
 
     attr_reader :record
 
-    def initialize(cluster, policy, key, binNames)
+    def initialize(cluster, policy, key, bin_names)
       super(cluster, key)
 
-      @binNames = binNames
+      @bin_names = bin_names
       @policy = policy
 
       self
     end
 
-    def writeBuffer
-      setRead(@key, @binNames)
+    def write_buffer
+      set_read(@key, @bin_names)
     end
 
-    def parseResult
+    def parse_result
       # Read header.
-      # Logger.Debug("readCommand Parse Result: trying to read %d bytes from the connection...", int(_MSG_TOTAL_HEADER_SIZE))
+      # Logger.Debug("read_command Parse Result: trying to read %d bytes from the connection...", int(_MSG_TOTAL_HEADER_SIZE))
       begin
-        @conn.read(@dataBuffer, MSG_TOTAL_HEADER_SIZE)
+        @conn.read(@data_buffer, MSG_TOTAL_HEADER_SIZE)
       rescue Exception => e
         Apik.logger.warn("parse result error: #{e}")
         raise e
@@ -52,23 +52,23 @@ module Apik
 
       # A number of these are commented out because we just don't care enough to read
       # that section of the header. If we do care, uncomment and check!
-      sz = @dataBuffer.read_int64(0)
-      headerLength = @dataBuffer.read(8).ord
-      resultCode = @dataBuffer.read(13).ord & 0xFF
-      generation = @dataBuffer.read_int32(14)
-      expiration = Apik.TTL(@dataBuffer.read_int32(18))
-      fieldCount = @dataBuffer.read_int16(26) # almost certainly 0
-      opCount = @dataBuffer.read_int16(28)
-      receiveSize = (sz & 0xFFFFFFFFFFFF) - headerLength
+      sz = @data_buffer.read_int64(0)
+      header_length = @data_buffer.read(8).ord
+      result_code = @data_buffer.read(13).ord & 0xFF
+      generation = @data_buffer.read_int32(14)
+      expiration = Apik.TTL(@data_buffer.read_int32(18))
+      field_count = @data_buffer.read_int16(26) # almost certainly 0
+      op_count = @data_buffer.read_int16(28)
+      receive_size = (sz & 0xFFFFFFFFFFFF) - header_length
 
-      # Apik.logger.debug("readCommand Parse Result: resultCode: %d, headerLength: %d, generation: %d, expiration: %d, fieldCount: %d, opCount: %d, receiveSize: %d", resultCode, headerLength, generation, expiration, fieldCount, opCount, receiveSize)
+      # Apik.logger.debug("read_command Parse Result: result_code: %d, header_length: %d, generation: %d, expiration: %d, field_count: %d, op_count: %d, receive_size: %d", result_code, header_length, generation, expiration, field_count, op_count, receive_size)
 
       # Read remaining message bytes.
-      if receiveSize > 0
-        sizeBufferSz(receiveSize)
+      if receive_size > 0
+        size_buffer_sz(receive_size)
 
         begin
-          @conn.read(@dataBuffer, receiveSize)
+          @conn.read(@data_buffer, receive_size)
         rescue Exception => e
           Apik.logger.warn("parse result error: #{e}")
           raise e
@@ -76,13 +76,13 @@ module Apik
 
       end
 
-      if resultCode != 0
-        return if resultCode == Apik::ResultCode::KEY_NOT_FOUND_ERROR
+      if result_code != 0
+        return if result_code == Apik::ResultCode::KEY_NOT_FOUND_ERROR
 
-        if resultCode == Apik::ResultCode::UDF_BAD_RESPONSE
+        if result_code == Apik::ResultCode::UDF_BAD_RESPONSE
           begin
-            @record = parseRecord(opCount, fieldCount, generation, expiration)
-            handleUdfError(resultCode)
+            @record = parse_record(op_count, field_count, generation, expiration)
+            handle_udf_error(result_code)
           rescue Exception => e
             Apik.logger.warn("UDF execution error: #{e}")
             raise e
@@ -90,53 +90,53 @@ module Apik
 
         end
 
-        raise Apik::Exceptions::Aerospike.new(resultCode)
+        raise Apik::Exceptions::Aerospike.new(result_code)
       end
 
-      if opCount == 0
+      if op_count == 0
         # data Bin was not returned.
         @record = Record.new(@node, @key, nil, nil, generation, expiration)
         return
       end
 
-      @record = parseRecord(opCount, fieldCount, generation, expiration)
+      @record = parse_record(op_count, field_count, generation, expiration)
     end
 
-    def handleUdfError(resultCode)
+    def handle_udf_error(result_code)
       ret = @record.bins['FAILURE']
-      raise Apik::Exceptions::Aerospike.new(resultCode, ret) if ret
-      raise Apik::Exceptions::Aerospike.new(resultCode)
+      raise Apik::Exceptions::Aerospike.new(result_code, ret) if ret
+      raise Apik::Exceptions::Aerospike.new(result_code)
     end
 
-    def parseRecord(opCount, fieldCount, generation, expiration)
+    def parse_record(op_count, field_count, generation, expiration)
       bins = nil
       duplicates = nil
-      receiveOffset = 0
+      receive_offset = 0
 
       # There can be fields in the response (setname etc).
       # But for now, ignore them. Expose them to the API if needed in the future.
-      # Logger.Debug("field count: %d, databuffer: %v", fieldCount, @dataBuffer)
-      if fieldCount != 0
+      # Logger.Debug("field count: %d, databuffer: %v", field_count, @data_buffer)
+      if field_count != 0
         # Just skip over all the fields
-        for i in 0...fieldCount
-          # Logger.Debug("%d", receiveOffset)
-          fieldSize = @dataBuffer.read_int32(receiveOffset)
-          receiveOffset += (4 + fieldSize)
+        for i in 0...field_count
+          # Logger.Debug("%d", receive_offset)
+          field_size = @data_buffer.read_int32(receive_offset)
+          receive_offset += (4 + field_size)
         end
       end
 
-      for i in 0...opCount
-        opSize = @dataBuffer.read_int32(receiveOffset)
-        particleType = @dataBuffer.read(receiveOffset+5).ord
-        version = @dataBuffer.read(receiveOffset+6).ord
-        nameSize = @dataBuffer.read(receiveOffset+7).ord
-        name = @dataBuffer.read(receiveOffset+8, nameSize).force_encoding('utf-8')
-        receiveOffset += 4 + 4 + nameSize
+      for i in 0...op_count
+        op_size = @data_buffer.read_int32(receive_offset)
+        particle_type = @data_buffer.read(receive_offset+5).ord
+        version = @data_buffer.read(receive_offset+6).ord
+        name_size = @data_buffer.read(receive_offset+7).ord
+        name = @data_buffer.read(receive_offset+8, name_size).force_encoding('utf-8')
+        receive_offset += 4 + 4 + name_size
 
 
-        particleBytesSize = opSize - (4 + nameSize)
-        value = Apik.bytesToParticle(particleType, @dataBuffer, receiveOffset, particleBytesSize)
-        receiveOffset += particleBytesSize
+        particle_bytes_size = op_size - (4 + name_size)
+        value = Apik.bytes_to_particle(particle_type, @data_buffer, receive_offset, particle_bytes_size)
+        receive_offset += particle_bytes_size
 
         vmap = {}
 

@@ -19,9 +19,9 @@ module Apik
 
     attr_accessor :name, :port
 
-    def initialize(hostName, hostPort)
-      @name = hostName
-      @port = hostPort
+    def initialize(host_name, host_port)
+      @name = host_name
+      @port = host_port
     end
 
     def to_s

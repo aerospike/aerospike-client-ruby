@@ -73,243 +73,243 @@ module Apik
     end
 
     # Writes the command for write operations
-    def setWrite(policy, operation, key, bins)
+    def set_write(policy, operation, key, bins)
       begin_cmd
-      fieldCount = estimateKeySize(key)
+      field_count = estimate_key_size(key)
 
       if policy.SendKey
         # field header size + key size
-        @dataOffset += key.userKeyAsValue.estimateSize + FIELD_HEADER_SIZE
-        fieldCount += 1
+        @data_offset += key.user_key_as_value.estimate_size + FIELD_HEADER_SIZE
+        field_count += 1
       end
 
       bins.each do |bin|
-        estimateOperationSizeForBin(bin)
+        estimate_operation_size_for_bin(bin)
       end
 
-      sizeBuffer
+      size_buffer
 
-      writeHeaderWithPolicy(policy, 0, INFO2_WRITE, fieldCount, bins.length)
-      writeKey(key)
+      write_header_with_policy(policy, 0, INFO2_WRITE, field_count, bins.length)
+      write_key(key)
 
       if policy.SendKey
-        writeFieldValue(key.userKeyAsValue, Apik::FieldType::KEY)
+        write_field_value(key.user_key_as_value, Apik::FieldType::KEY)
       end
 
       bins.each do |bin|
-        writeOperationForBin(bin, operation)
+        write_operation_for_bin(bin, operation)
       end
 
       end_cmd
     end
 
     # Writes the command for delete operations
-    def setDelete(policy, key)
+    def set_delete(policy, key)
       begin_cmd
-      fieldCount = estimateKeySize(key)
-      sizeBuffer
-      writeHeaderWithPolicy(policy, 0, INFO2_WRITE|INFO2_DELETE, fieldCount, 0)
-      writeKey(key)
+      field_count = estimate_key_size(key)
+      size_buffer
+      write_header_with_policy(policy, 0, INFO2_WRITE|INFO2_DELETE, field_count, 0)
+      write_key(key)
       end_cmd
     end
 
     # Writes the command for touch operations
-    def setTouch(policy, key)
+    def set_touch(policy, key)
       begin_cmd
-      fieldCount = estimateKeySize(key)
-      estimateOperationSize
-      sizeBuffer
-      writeHeaderWithPolicy(policy, 0, INFO2_WRITE, fieldCount, 1)
-      writeKey(key)
-      writeOperationForOperationType(Apik::Operation::TOUCH)
+      field_count = estimate_key_size(key)
+      estimate_operation_size
+      size_buffer
+      write_header_with_policy(policy, 0, INFO2_WRITE, field_count, 1)
+      write_key(key)
+      write_operation_for_operation_type(Apik::Operation::TOUCH)
       end_cmd
     end
 
     # Writes the command for exist operations
-    def setExists(key)
+    def set_exists(key)
       begin_cmd
-      fieldCount = estimateKeySize(key)
-      sizeBuffer
-      writeHeader(INFO1_READ|INFO1_NOBINDATA, 0, fieldCount, 0)
-      writeKey(key)
+      field_count = estimate_key_size(key)
+      size_buffer
+      write_header(INFO1_READ|INFO1_NOBINDATA, 0, field_count, 0)
+      write_key(key)
       end_cmd
     end
 
     # Writes the command for get operations (all bins)
-    def setReadForKeyOnly(key)
+    def set_read_for_key_only(key)
       begin_cmd
-      fieldCount = estimateKeySize(key)
-      sizeBuffer
-      writeHeader(INFO1_READ|INFO1_GET_ALL, 0, fieldCount, 0)
-      writeKey(key)
+      field_count = estimate_key_size(key)
+      size_buffer
+      write_header(INFO1_READ|INFO1_GET_ALL, 0, field_count, 0)
+      write_key(key)
       end_cmd
     end
 
     # Writes the command for get operations (specified bins)
-    def setRead(key, binNames)
-      if binNames && binNames.length > 0
+    def set_read(key, bin_names)
+      if bin_names && bin_names.length > 0
         begin_cmd
-        fieldCount = estimateKeySize(key)
+        field_count = estimate_key_size(key)
 
-        binNames.each do |binName|
-          estimateOperationSizeForBinName(binName)
+        bin_names.each do |bin_name|
+          estimate_operation_size_for_bin_name(bin_name)
         end
 
-        sizeBuffer
-        writeHeader(INFO1_READ, 0, fieldCount, binNames.length)
-        writeKey(key)
+        size_buffer
+        write_header(INFO1_READ, 0, field_count, bin_names.length)
+        write_key(key)
 
-        binNames.each do |binName|
-          writeOperationForBinName(binName, Apik::Operation::READ)
+        bin_names.each do |bin_name|
+          write_operation_for_bin_name(bin_name, Apik::Operation::READ)
         end
 
         end_cmd
       else
-        setReadForKeyOnly(key)
+        set_read_for_key_only(key)
       end
     end
 
     # Writes the command for getting metadata operations
-    def setReadHeader(key)
+    def set_read_header(key)
       begin_cmd
-      fieldCount = estimateKeySize(key)
-      estimateOperationSizeForBinName('')
-      sizeBuffer
+      field_count = estimate_key_size(key)
+      estimate_operation_size_for_bin_name('')
+      size_buffer
 
       # The server does not currently return record header data with _INFO1_NOBINDATA attribute set.
       # The workaround is to request a non-existent bin.
       # TODO: Fix this on server.
-      #command.setRead(INFO1_READ | _INFO1_NOBINDATA);
-      writeHeader(INFO1_READ, 0, fieldCount, 1)
+      #command.set_read(INFO1_READ | _INFO1_NOBINDATA);
+      write_header(INFO1_READ, 0, field_count, 1)
 
-      writeKey(key)
-      writeOperationForBinName('', Apik::Operation::READ)
+      write_key(key)
+      write_operation_for_bin_name('', Apik::Operation::READ)
       end_cmd
     end
 
     # Implements different command operations
-    def setOperate(policy, key, operations)
+    def set_operate(policy, key, operations)
       begin_cmd
-      fieldCount = estimateKeySize(key)
-      readAttr = 0
-      writeAttr = 0
-      readHeader = false
+      field_count = estimate_key_size(key)
+      read_attr = 0
+      write_attr = 0
+      read_header = false
 
       operations.each do |operation|
         case operation.op_type
         when Apik::Operation::READ
-            readAttr |= INFO1_READ
+            read_attr |= INFO1_READ
 
           # Read all bins if no bin is specified.
-          readAttr |= INFO1_GET_ALL unless operation.bin_name
+          read_attr |= INFO1_GET_ALL unless operation.bin_name
 
         when Apik::Operation::READ_HEADER
             # The server does not currently return record header data with _INFO1_NOBINDATA attribute set.
             # The workaround is to request a non-existent bin.
             # TODO: Fix this on server.
-            # readAttr |= _INFO1_READ | _INFO1_NOBINDATA
-            readAttr |= INFO1_READ
-          readHeader = true
+            # read_attr |= _INFO1_READ | _INFO1_NOBINDATA
+            read_attr |= INFO1_READ
+          read_header = true
 
         else
-          writeAttr = INFO2_WRITE
+          write_attr = INFO2_WRITE
         end
 
-        estimateOperationSizeForOperation(operation)
+        estimate_operation_size_for_operation(operation)
       end
-      sizeBuffer
+      size_buffer
 
-      if writeAttr != 0
-        writeHeaderWithPolicy(policy, readAttr, writeAttr, fieldCount, operations.length)
+      if write_attr != 0
+        write_header_with_policy(policy, read_attr, write_attr, field_count, operations.length)
       else
-        writeHeader(readAttr, writeAttr, fieldCount, operations.length)
+        write_header(read_attr, write_attr, field_count, operations.length)
       end
-      writeKey(key)
+      write_key(key)
 
       operations.each do |operation|
-        writeOperationForOperation(operation)
+        write_operation_for_operation(operation)
       end
 
-      writeOperationForBin(nil, Apik::Operation::READ) if readHeader
+      write_operation_for_bin(nil, Apik::Operation::READ) if read_header
 
       end_cmd
     end
 
-    def setUdf(key, packageName, functionName, args)
+    def set_udf(key, package_name, function_name, args)
       begin_cmd
-      fieldCount = estimateKeySize(key)
-      argBytes = args.to_bytes
+      field_count = estimate_key_size(key)
+      arg_bytes = args.to_bytes
 
-      fieldCount += estimateUdfSize(packageName, functionName, argBytes)
-      sizeBuffer
+      field_count += estimate_udf_size(package_name, function_name, arg_bytes)
+      size_buffer
 
-      writeHeader(0, INFO2_WRITE, fieldCount, 0)
-      writeKey(key)
-      writeFieldString(packageName, Apik::FieldType::UDF_PACKAGE_NAME)
-      writeFieldString(functionName, Apik::FieldType::UDF_FUNCTION)
-      writeFieldBytes(argBytes, Apik::FieldType::UDF_ARGLIST)
+      write_header(0, INFO2_WRITE, field_count, 0)
+      write_key(key)
+      write_field_string(package_name, Apik::FieldType::UDF_PACKAGE_NAME)
+      write_field_string(function_name, Apik::FieldType::UDF_FUNCTION)
+      write_field_bytes(arg_bytes, Apik::FieldType::UDF_ARGLIST)
 
       end_cmd
     end
 
-    def setBatchExists(batchNamespace)
+    def set_batch_exists(batch_namespace)
       # Estimate buffer size
       begin_cmd
-      keys = batchNamespace.keys
-      byteSize = keys.length * DIGEST_SIZE
+      keys = batch_namespace.keys
+      byte_size = keys.length * DIGEST_SIZE
 
-      @dataOffset += (batchNamespace ? batchNamespace.namespace.bytesize : 0)  +
-        FIELD_HEADER_SIZE + byteSize + FIELD_HEADER_SIZE
+      @data_offset += (batch_namespace ? batch_namespace.namespace.bytesize : 0)  +
+        FIELD_HEADER_SIZE + byte_size + FIELD_HEADER_SIZE
 
-      sizeBuffer
+      size_buffer
 
-      writeHeader(INFO1_READ|INFO1_NOBINDATA, 0, 2, 0)
-      writeFieldString(batchNamespace.namespace, Apik::FieldType::NAMESPACE)
-      writeFieldHeader(byteSize, Apik::FieldType::DIGEST_RIPE_ARRAY)
+      write_header(INFO1_READ|INFO1_NOBINDATA, 0, 2, 0)
+      write_field_string(batch_namespace.namespace, Apik::FieldType::NAMESPACE)
+      write_field_header(byte_size, Apik::FieldType::DIGEST_RIPE_ARRAY)
 
       keys.each do |key|
         digest = key.digest
-        @dataBuffer.write_binary(digest, @dataOffset)
-        @dataOffset += digest.bytesize
+        @data_buffer.write_binary(digest, @data_offset)
+        @data_offset += digest.bytesize
       end
       end_cmd
     end
 
-    def setBatchGet(batchNamespace, binNames, readAttr)
+    def set_batch_get(batch_namespace, bin_names, read_attr)
       # Estimate buffer size
       begin_cmd
-      keys = batchNamespace.keys
-      byteSize = keys.length * DIGEST_SIZE
+      keys = batch_namespace.keys
+      byte_size = keys.length * DIGEST_SIZE
 
-      @dataOffset += batchNamespace.namespace.bytesize +
-        FIELD_HEADER_SIZE + byteSize + FIELD_HEADER_SIZE
+      @data_offset += batch_namespace.namespace.bytesize +
+        FIELD_HEADER_SIZE + byte_size + FIELD_HEADER_SIZE
 
-      if binNames
-        binNames.eahc do |binName|
-          estimateOperationSizeForBinName(binName)
+      if bin_names
+        bin_names.eahc do |bin_name|
+          estimate_operation_size_for_bin_name(bin_name)
         end
       end
 
-      sizeBuffer
+      size_buffer
 
-      operationCount = 0
-      if binNames
-        operationCount = binNames.length
+      operation_count = 0
+      if bin_names
+        operation_count = bin_names.length
       end
 
-      writeHeader(readAttr, 0, 2, operationCount)
-      writeFieldString(batchNamespace.namespace, Apik::FieldType::NAMESPACE)
-      writeFieldHeader(byteSize, Apik::FieldType::DIGEST_RIPE_ARRAY)
+      write_header(read_attr, 0, 2, operation_count)
+      write_field_string(batch_namespace.namespace, Apik::FieldType::NAMESPACE)
+      write_field_header(byte_size, Apik::FieldType::DIGEST_RIPE_ARRAY)
 
       keys.each do |key|
         digest = key.digest
-        @dataBuffer.write_binary(digest, @dataOffset)
-        @dataOffset += digest.length
+        @data_buffer.write_binary(digest, @data_offset)
+        @data_offset += digest.length
       end
 
-      if binNames
-        binNames.each do |binName|
-          writeOperationForBinName(binName, Apik::Operation::READ)
+      if bin_names
+        bin_names.each do |bin_name|
+          write_operation_for_bin_name(bin_name, Apik::Operation::READ)
         end
       end
 
@@ -346,11 +346,11 @@ module Apik
 
         # Draw a buffer from buffer pool, and make sure it will be put back
         begin
-          @dataBuffer = Buffer.get
+          @data_buffer = Buffer.get
 
           # Set command buffer.
           begin
-            writeBuffer
+            write_buffer
           rescue Exception => e
             # All runtime exceptions are considered fatal. Do not retry.
             # Close socket to flush out possible garbage. Do not put back in pool.
@@ -359,11 +359,11 @@ module Apik
           end
 
           # Reset timeout in send buffer (destined for server) and socket.
-          @dataBuffer.write_int32((@policy.Timeout * 1000).to_i, 22)
+          @data_buffer.write_int32((@policy.Timeout * 1000).to_i, 22)
 
           # Send command.
           begin
-            @conn.write(@dataBuffer, @dataOffset)
+            @conn.write(@data_buffer, @data_offset)
           rescue Exception => e
             # IO errors are considered temporary anomalies. Retry.
             # Close socket to flush out possible garbage. Do not put back in pool.
@@ -378,7 +378,7 @@ module Apik
 
           # Parse results.
           begin
-            parseResult
+            parse_result
           rescue Exception => e
             # close the connection
             # cancelling/closing the batch/multi commands will return an error, which will
@@ -397,7 +397,7 @@ module Apik
           # command has completed successfully.  Exit method.
           return
         ensure
-          Buffer.put(@dataBuffer)
+          Buffer.put(@data_buffer)
         end
 
       end # while
@@ -409,274 +409,274 @@ module Apik
     protected
 
 
-    def estimateKeySize(key)
-      fieldCount = 0
+    def estimate_key_size(key)
+      field_count = 0
 
       if key.namespace
-        @dataOffset += key.namespace.length + FIELD_HEADER_SIZE
-        fieldCount += 1
+        @data_offset += key.namespace.length + FIELD_HEADER_SIZE
+        field_count += 1
       end
 
-      if key.setName
-        @dataOffset += key.setName.length + FIELD_HEADER_SIZE
-        fieldCount += 1
+      if key.set_name
+        @data_offset += key.set_name.length + FIELD_HEADER_SIZE
+        field_count += 1
       end
 
-      @dataOffset += key.digest.length + FIELD_HEADER_SIZE
-      fieldCount += 1
+      @data_offset += key.digest.length + FIELD_HEADER_SIZE
+      field_count += 1
 
-      return fieldCount
+      return field_count
     end
 
-    def estimateUdfSize(packageName, functionName, bytes)
-      @dataOffset += packageName.bytesize + FIELD_HEADER_SIZE
-      @dataOffset += functionName.bytesize + FIELD_HEADER_SIZE
-      @dataOffset += bytes.bytesize + FIELD_HEADER_SIZE
+    def estimate_udf_size(package_name, function_name, bytes)
+      @data_offset += package_name.bytesize + FIELD_HEADER_SIZE
+      @data_offset += function_name.bytesize + FIELD_HEADER_SIZE
+      @data_offset += bytes.bytesize + FIELD_HEADER_SIZE
       return 3
     end
 
-    def estimateOperationSizeForBin(bin)
-      @dataOffset += bin.name.length + OPERATION_HEADER_SIZE
-      @dataOffset += bin.value_object.estimateSize
+    def estimate_operation_size_for_bin(bin)
+      @data_offset += bin.name.length + OPERATION_HEADER_SIZE
+      @data_offset += bin.value_object.estimate_size
     end
 
-    def estimateOperationSizeForOperation(operation)
-      binLen = 0
+    def estimate_operation_size_for_operation(operation)
+      bin_len = 0
 
       if operation.bin_name
-        binLen = operation.bin_name.length
+        bin_len = operation.bin_name.length
       end
 
-      @dataOffset += binLen + OPERATION_HEADER_SIZE
+      @data_offset += bin_len + OPERATION_HEADER_SIZE
 
       if operation.bin_value
-        @dataOffset += operation.bin_value.estimateSize
+        @data_offset += operation.bin_value.estimate_size
       end
     end
 
-    def estimateOperationSizeForBinName(binName)
-      @dataOffset += binName.length + OPERATION_HEADER_SIZE
+    def estimate_operation_size_for_bin_name(bin_name)
+      @data_offset += bin_name.length + OPERATION_HEADER_SIZE
     end
 
-    def estimateOperationSize
-      @dataOffset += OPERATION_HEADER_SIZE
+    def estimate_operation_size
+      @data_offset += OPERATION_HEADER_SIZE
     end
 
     # Generic header write.
-    def writeHeader(readAttr, writeAttr, fieldCount, operationCount)
+    def write_header(read_attr, write_attr, field_count, operation_count)
       # Write all header data except total size which must be written last.
-      @dataBuffer.write_byte(MSG_REMAINING_HEADER_SIZE, 8) # Message heade.length.
-      @dataBuffer.write_byte(readAttr, 9)
-      @dataBuffer.write_byte(writeAttr, 10)
+      @data_buffer.write_byte(MSG_REMAINING_HEADER_SIZE, 8) # Message heade.length.
+      @data_buffer.write_byte(read_attr, 9)
+      @data_buffer.write_byte(write_attr, 10)
 
       for i in 11...26
-        @dataBuffer.write_byte(0, i)
+        @data_buffer.write_byte(0, i)
       end
 
-      # Buffer.Int16ToBytes(fieldCount, @dataBuffer, 26)
-      # Buffer.Int16ToBytes(operationCount, @dataBuffer, 28)
-      @dataBuffer.write_int16(fieldCount, 26)
-      @dataBuffer.write_int16(operationCount, 28)
+      # Buffer.Int16ToBytes(field_count, @data_buffer, 26)
+      # Buffer.Int16ToBytes(operation_count, @data_buffer, 28)
+      @data_buffer.write_int16(field_count, 26)
+      @data_buffer.write_int16(operation_count, 28)
 
-      @dataOffset = MSG_TOTAL_HEADER_SIZE
+      @data_offset = MSG_TOTAL_HEADER_SIZE
     end
 
     # Header write for write operations.
-    def writeHeaderWithPolicy(policy, readAttr, writeAttr, fieldCount, operationCount)
+    def write_header_with_policy(policy, read_attr, write_attr, field_count, operation_count)
       # Set flags.
       generation = Integer(0)
-      infoAttr = Integer(0)
+      info_attr = Integer(0)
 
       case policy.RecordExistsAction
       when Apik::RecordExistsAction::UPDATE
       when Apik::RecordExistsAction::UPDATE_ONLY
-        infoAttr |= INFO3_UPDATE_ONLY
+        info_attr |= INFO3_UPDATE_ONLY
       when Apik::RecordExistsAction::REPLACE
-        infoAttr |= INFO3_CREATE_OR_REPLACE
+        info_attr |= INFO3_CREATE_OR_REPLACE
       when Apik::RecordExistsAction::REPLACE_ONLY
-        infoAttr |= INFO3_REPLACE_ONLY
+        info_attr |= INFO3_REPLACE_ONLY
       when Apik::RecordExistsAction::CREATE_ONLY
-        writeAttr |= INFO2_CREATE_ONLY
+        write_attr |= INFO2_CREATE_ONLY
       end
 
       case policy.GenerationPolicy
       when Apik::GenerationPolicy::NONE
       when Apik::GenerationPolicy::EXPECT_GEN_EQUAL
         generation = policy.Generation
-        writeAttr |= INFO2_GENERATION
+        write_attr |= INFO2_GENERATION
       when Apik::GenerationPolicy::EXPECT_GEN_GT
         generation = policy.Generation
-        writeAttr |= INFO2_GENERATION_GT
+        write_attr |= INFO2_GENERATION_GT
       when Apik::GenerationPolicy::DUPLICATE
         generation = policy.Generation
-        writeAttr |= INFO2_GENERATION_DUP
+        write_attr |= INFO2_GENERATION_DUP
       end
 
       # Write all header data except total size which must be written last.
-      @dataBuffer.write_byte(MSG_REMAINING_HEADER_SIZE, 8) # Message heade.length.
-      @dataBuffer.write_byte(readAttr, 9)
-      @dataBuffer.write_byte(writeAttr, 10)
-      @dataBuffer.write_byte(infoAttr, 11)
-      @dataBuffer.write_byte(0, 12) # unused
-      @dataBuffer.write_byte(0, 13) # clear the result code
-      # Buffer.Int32ToBytes(generation, @dataBuffer, 14)
-      @dataBuffer.write_int32(generation, 14)
-      # Buffer.Int32ToBytes(policy.Expiration, @dataBuffer, 18)
-      @dataBuffer.write_int32(policy.Expiration, 18)
+      @data_buffer.write_byte(MSG_REMAINING_HEADER_SIZE, 8) # Message heade.length.
+      @data_buffer.write_byte(read_attr, 9)
+      @data_buffer.write_byte(write_attr, 10)
+      @data_buffer.write_byte(info_attr, 11)
+      @data_buffer.write_byte(0, 12) # unused
+      @data_buffer.write_byte(0, 13) # clear the result code
+      # Buffer.Int32ToBytes(generation, @data_buffer, 14)
+      @data_buffer.write_int32(generation, 14)
+      # Buffer.Int32ToBytes(policy.Expiration, @data_buffer, 18)
+      @data_buffer.write_int32(policy.Expiration, 18)
 
       # Initialize timeout. It will be written later.
-      @dataBuffer.write_byte(0, 22)
-      @dataBuffer.write_byte(0, 23)
-      @dataBuffer.write_byte(0, 24)
-      @dataBuffer.write_byte(0, 25)
+      @data_buffer.write_byte(0, 22)
+      @data_buffer.write_byte(0, 23)
+      @data_buffer.write_byte(0, 24)
+      @data_buffer.write_byte(0, 25)
 
 
-      # Buffer.Int16ToBytes(fieldCount, @dataBuffer, 26)
-      @dataBuffer.write_int16(fieldCount, 26)
-      # Buffer.Int16ToBytes(operationCount, @dataBuffer, 28)
-      @dataBuffer.write_int16(operationCount, 28)
+      # Buffer.Int16ToBytes(field_count, @data_buffer, 26)
+      @data_buffer.write_int16(field_count, 26)
+      # Buffer.Int16ToBytes(operation_count, @data_buffer, 28)
+      @data_buffer.write_int16(operation_count, 28)
 
-      @dataOffset = MSG_TOTAL_HEADER_SIZE
+      @data_offset = MSG_TOTAL_HEADER_SIZE
     end
 
-    def writeKey(key)
+    def write_key(key)
       # Write key into buffer.
       if key.namespace
-        writeFieldString(key.namespace, Apik::FieldType::NAMESPACE)
+        write_field_string(key.namespace, Apik::FieldType::NAMESPACE)
       end
 
-      if key.setName
-        writeFieldString(key.setName, Apik::FieldType::TABLE)
+      if key.set_name
+        write_field_string(key.set_name, Apik::FieldType::TABLE)
       end
 
-      writeFieldBytes(key.digest, Apik::FieldType::DIGEST_RIPE)
+      write_field_bytes(key.digest, Apik::FieldType::DIGEST_RIPE)
     end
 
-    def writeOperationForBin(bin, operation)
-      nameLength = @dataBuffer.write_binary(bin.name, @dataOffset+OPERATION_HEADER_SIZE)
-      valueLength = bin.value_object.write(@dataBuffer, @dataOffset+OPERATION_HEADER_SIZE+nameLength)
+    def write_operation_for_bin(bin, operation)
+      name_length = @data_buffer.write_binary(bin.name, @data_offset+OPERATION_HEADER_SIZE)
+      value_length = bin.value_object.write(@data_buffer, @data_offset+OPERATION_HEADER_SIZE+name_length)
 
-      # Buffer.Int32ToBytes(nameLength+valueLength+4, @dataBuffer, @dataOffset)
-      @dataBuffer.write_int32(nameLength+valueLength+4, @dataOffset)
+      # Buffer.Int32ToBytes(name_length+value_length+4, @data_buffer, @data_offset)
+      @data_buffer.write_int32(name_length+value_length+4, @data_offset)
 
-      @dataOffset += 4
-      @dataBuffer.write_byte(operation, @dataOffset)
-      @dataOffset += 1
-      @dataBuffer.write_byte(bin.value_object.type, @dataOffset)
-      @dataOffset += 1
-      @dataBuffer.write_byte(0, @dataOffset)
-      @dataOffset += 1
-      @dataBuffer.write_byte(nameLength, @dataOffset)
-      @dataOffset += 1
-      @dataOffset += nameLength + valueLength
+      @data_offset += 4
+      @data_buffer.write_byte(operation, @data_offset)
+      @data_offset += 1
+      @data_buffer.write_byte(bin.value_object.type, @data_offset)
+      @data_offset += 1
+      @data_buffer.write_byte(0, @data_offset)
+      @data_offset += 1
+      @data_buffer.write_byte(name_length, @data_offset)
+      @data_offset += 1
+      @data_offset += name_length + value_length
     end
 
-    def writeOperationForOperation(operation)
-      nameLength = 0
+    def write_operation_for_operation(operation)
+      name_length = 0
       if operation.bin_name
-        nameLength = @dataBuffer.write_binary(operation.bin_name, @dataOffset+OPERATION_HEADER_SIZE)
+        name_length = @data_buffer.write_binary(operation.bin_name, @data_offset+OPERATION_HEADER_SIZE)
       end
 
-      valueLength = operation.bin_value.write(@dataBuffer, @dataOffset+OPERATION_HEADER_SIZE+nameLength)
+      value_length = operation.bin_value.write(@data_buffer, @data_offset+OPERATION_HEADER_SIZE+name_length)
 
-      # Buffer.Int32ToBytes(nameLength+valueLength+4, @dataBuffer, @dataOffset)
-      @dataBuffer.write_int32(nameLength+valueLength+4, @dataOffset)
+      # Buffer.Int32ToBytes(name_length+value_length+4, @data_buffer, @data_offset)
+      @data_buffer.write_int32(name_length+value_length+4, @data_offset)
 
-      @dataOffset += 4
-      @dataBuffer.write_byte(operation.op_type, @dataOffset)
-      @dataOffset += 1
-      @dataBuffer.write_byte(operation.bin_value.type, @dataOffset)
-      @dataOffset += 1
-      @dataBuffer.write_byte(0, @dataOffset)
-      @dataOffset += 1
-      @dataBuffer.write_byte(nameLength, @dataOffset)
-      @dataOffset += 1
-      @dataOffset += nameLength + valueLength
+      @data_offset += 4
+      @data_buffer.write_byte(operation.op_type, @data_offset)
+      @data_offset += 1
+      @data_buffer.write_byte(operation.bin_value.type, @data_offset)
+      @data_offset += 1
+      @data_buffer.write_byte(0, @data_offset)
+      @data_offset += 1
+      @data_buffer.write_byte(name_length, @data_offset)
+      @data_offset += 1
+      @data_offset += name_length + value_length
     end
 
-    def writeOperationForBinName(name, operation)
-      nameLength = @dataBuffer.write_binary(name, @dataOffset+OPERATION_HEADER_SIZE)
-      # Buffer.Int32ToBytes(nameLength+4, @dataBuffer, @dataOffset)
-      @dataBuffer.write_int32(nameLength+4, @dataOffset)
+    def write_operation_for_bin_name(name, operation)
+      name_length = @data_buffer.write_binary(name, @data_offset+OPERATION_HEADER_SIZE)
+      # Buffer.Int32ToBytes(name_length+4, @data_buffer, @data_offset)
+      @data_buffer.write_int32(name_length+4, @data_offset)
 
-      @dataOffset += 4
-      @dataBuffer.write_byte(operation, @dataOffset)
-      @dataOffset += 1
-      @dataBuffer.write_byte(0, @dataOffset)
-      @dataOffset += 1
-      @dataBuffer.write_byte(0, @dataOffset)
-      @dataOffset += 1
-      @dataBuffer.write_byte(nameLength, @dataOffset)
-      @dataOffset += 1
-      @dataOffset += nameLength
+      @data_offset += 4
+      @data_buffer.write_byte(operation, @data_offset)
+      @data_offset += 1
+      @data_buffer.write_byte(0, @data_offset)
+      @data_offset += 1
+      @data_buffer.write_byte(0, @data_offset)
+      @data_offset += 1
+      @data_buffer.write_byte(name_length, @data_offset)
+      @data_offset += 1
+      @data_offset += name_length
     end
 
-    def writeOperationForOperationType(operation)
-      # Buffer.Int32ToBytes(4), @dataBuffer, @dataOffset
-      @dataBuffer.write_int32(4, @dataOffset)
-      @dataOffset += 4
-      @dataBuffer.write_byte(operation, @dataOffset)
-      @dataOffset += 1
-      @dataBuffer.write_byte(0, @dataOffset)
-      @dataOffset += 1
-      @dataBuffer.write_byte(0, @dataOffset)
-      @dataOffset += 1
-      @dataBuffer.write_byte(0, @dataOffset)
-      @dataOffset += 1
+    def write_operation_for_operation_type(operation)
+      # Buffer.Int32ToBytes(4), @data_buffer, @data_offset
+      @data_buffer.write_int32(4, @data_offset)
+      @data_offset += 4
+      @data_buffer.write_byte(operation, @data_offset)
+      @data_offset += 1
+      @data_buffer.write_byte(0, @data_offset)
+      @data_offset += 1
+      @data_buffer.write_byte(0, @data_offset)
+      @data_offset += 1
+      @data_buffer.write_byte(0, @data_offset)
+      @data_offset += 1
     end
 
-    def writeFieldValue(value, ftype)
-      offset = @dataOffset + FIELD_HEADER_SIZE
-      @dataBuffer.write_byte(value.type, offset)
+    def write_field_value(value, ftype)
+      offset = @data_offset + FIELD_HEADER_SIZE
+      @data_buffer.write_byte(value.type, offset)
       offset += 1
-      len = value.write(@dataBuffer, offset)
+      len = value.write(@data_buffer, offset)
       len += 1
-      writeFieldHeader(len, ftype)
-      @dataOffset += len
+      write_field_header(len, ftype)
+      @data_offset += len
     end
 
-    def writeFieldString(str, ftype)
-      len = @dataBuffer.write_binary(str, @dataOffset+FIELD_HEADER_SIZE)
-      writeFieldHeader(len, ftype)
-      @dataOffset += len
+    def write_field_string(str, ftype)
+      len = @data_buffer.write_binary(str, @data_offset+FIELD_HEADER_SIZE)
+      write_field_header(len, ftype)
+      @data_offset += len
     end
 
-    def writeFieldBytes(bytes, ftype)
-      @dataBuffer.write_binary(bytes, @dataOffset+FIELD_HEADER_SIZE)
+    def write_field_bytes(bytes, ftype)
+      @data_buffer.write_binary(bytes, @data_offset+FIELD_HEADER_SIZE)
 
-      writeFieldHeader(bytes.bytesize, ftype)
-      @dataOffset += bytes.bytesize
+      write_field_header(bytes.bytesize, ftype)
+      @data_offset += bytes.bytesize
     end
 
-    def writeFieldHeader(size, ftype)
-      # Buffer.Int32ToBytes(size+1), @dataBuffer, @dataOffset
-      @dataBuffer.write_int32(size+1, @dataOffset)
-      @dataOffset += 4
-      @dataBuffer.write_byte(ftype, @dataOffset)
-      @dataOffset += 1
+    def write_field_header(size, ftype)
+      # Buffer.Int32ToBytes(size+1), @data_buffer, @data_offset
+      @data_buffer.write_int32(size+1, @data_offset)
+      @data_offset += 4
+      @data_buffer.write_byte(ftype, @data_offset)
+      @data_offset += 1
     end
 
     def begin_cmd
-      @dataOffset = MSG_TOTAL_HEADER_SIZE
+      @data_offset = MSG_TOTAL_HEADER_SIZE
     end
 
-    def sizeBuffer
-      sizeBufferSz(@dataOffset)
+    def size_buffer
+      size_buffer_sz(@data_offset)
     end
 
-    def sizeBufferSz(size)
+    def size_buffer_sz(size)
       # Corrupted data streams can result in a hug.length.
       # Do a sanity check here.
       if size > Buffer::MAX_BUFFER_SIZE
         raise Apik::Exceptions::Aerospike.new(PARSE_ERROR, "Invalid size for buffer: #{size}")
       end
 
-      @dataBuffer.resize(size)
+      @data_buffer.resize(size)
     end
 
     def end_cmd
-      size = (@dataOffset-8) | Integer(CL_MSG_VERSION << 56) | Integer(AS_MSG_TYPE << 48)
-      @dataBuffer.write_int64(size, 0)
+      size = (@data_offset-8) | Integer(CL_MSG_VERSION << 56) | Integer(AS_MSG_TYPE << 48)
+      @data_buffer.write_int64(size, 0)
     end
 
   end # class

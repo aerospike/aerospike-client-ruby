@@ -35,17 +35,17 @@ module Apik
 
     protected
 
-    def emptySocket
+    def empty_socket
       # There should not be any more bytes.
       # Empty the socket to be safe.
-      sz = @dataBuffer.read_int64( 0)
-      headerLength = @dataBuffer.read(8).ord
-      receiveSize = Integer(sz&0xFFFFFFFFFFFF) - headerLength
+      sz = @data_buffer.read_int64( 0)
+      header_length = @data_buffer.read(8).ord
+      receive_size = Integer(sz&0xFFFFFFFFFFFF) - header_length
 
       # Read remaining message bytes.
-      if receiveSize > 0
-        sizeBufferSz(receiveSize)
-        @conn.read(@dataBuffer, receiveSize)
+      if receive_size > 0
+        size_buffer_sz(receive_size)
+        @conn.read(@data_buffer, receive_size)
       end
     end
 

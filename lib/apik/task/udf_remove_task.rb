@@ -40,8 +40,8 @@ module Apik
 
       nodes.each do |node|
         conn = node.get_connection(1)
-        responseMap = Info.request(conn, command)
-        _, response = responseMap.first
+        response_map = Info.request(conn, command)
+        _, response = response_map.first
         index = response.index("filename=#{@package_name}")
 
         return false if index

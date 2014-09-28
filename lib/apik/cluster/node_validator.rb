@@ -19,10 +19,10 @@ module Apik
 
   class NodeValidator
 
-    attr_reader :host, :aliases, :name, :useNewInfo
+    attr_reader :host, :aliases, :name, :use_new_info
 
     def initialize(host, timeout)
-      @useNewInfo = true
+      @use_new_info = true
       @host = host
 
       set_aliases(host)
@@ -49,14 +49,14 @@ module Apik
           conn = Connection.new(aliass.name, aliass.port, 1)
           conn.set_timeout(timeout)
 
-          infoMap= Info.request(conn, 'node', 'build')
-          if nodeName = infoMap['node']
-            @name = nodeName
+          info_map= Info.request(conn, 'node', 'build')
+          if node_name = info_map['node']
+            @name = node_name
 
             # Check new info protocol support for >= 2.6.6 build
-            if buildVersion = infoMap['build']
-              v1, v2, v3 = parse_version_string(buildVersion)
-              @useNewInfo = v1.to_i > 2 || (v1.to_i == 2 && (v2.to_i > 6 || (v2.to_i == 6 && v3.to_i >= 6)))
+            if build_version = info_map['build']
+              v1, v2, v3 = parse_version_string(build_version)
+              @use_new_info = v1.to_i > 2 || (v1.to_i == 2 && (v2.to_i > 6 || (v2.to_i == 6 && v3.to_i >= 6)))
             end
           end
         ensure

@@ -37,7 +37,7 @@ module Apik
       @aliases = {}
       @nodes = []
       @partition_write_map = {}
-      @nodeIndex = Atomic.new(0)
+      @node_index = Atomic.new(0)
       @closed = Atomic.new(false)
       @mutex = Mutex.new
 
@@ -71,15 +71,15 @@ module Apik
 
     def connected?
       # Must copy array reference for copy on write semantics to work.
-      nodeArray = get_nodes
-      (nodeArray.length > 0) && !@closed.value
+      node_array = get_nodes
+      (node_array.length > 0) && !@closed.value
     end
 
     def get_node(partition)
       # Must copy hashmap reference for copy on write semantics to work.
       nmap = get_partitions
-      if nodeArray = nmap[partition.namespace]
-        node = nodeArray.value[partition.partition_id]
+      if node_array = nmap[partition.namespace]
+        node = node_array.value[partition.partition_id]
 
         if node && node.active?
           return node
@@ -92,12 +92,12 @@ module Apik
     # Returns a random node on the cluster
     def get_random_node
       # Must copy array reference for copy on write semantics to work.
-      nodeArray = get_nodes
-      length = nodeArray.length
+      node_array = get_nodes
+      length = node_array.length
       for i in 0..length
-        # Must handle concurrency with other non-tending goroutines, so nodeIndex is consistent.
-        index = (@nodeIndex.update{|v| v+1} % nodeArray.length).abs
-        node = nodeArray[index]
+        # Must handle concurrency with other non-tending goroutines, so node_index is consistent.
+        index = (@node_index.update{|v| v+1} % node_array.length).abs
+        node = node_array[index]
 
         if node.active?
           # Logger.Debug("Node `%s` is active. index=%d", node, index)
@@ -109,18 +109,18 @@ module Apik
 
     # Returns a list of all nodes in the cluster
     def get_nodes
-      nodeArray = nil
+      node_array = nil
       @mutex.synchronize do
         # Must copy array reference for copy on write semantics to work.
-        nodeArray = @nodes.dup
+        node_array = @nodes.dup
       end
 
-      nodeArray
+      node_array
     end
 
     # Find a node by name and returns an error if not found
     def get_node_by_name(node_name)
-      node = find_node_by_name(nodeName)
+      node = find_node_by_name(node_name)
 
       raise Apik::Exceptions::InvalidNode.new unless node
 
@@ -205,21 +205,21 @@ module Apik
 
       # Clear node reference counts.
       nodes.each do |node|
-        node.referenceCount.value = 0
+        node.reference_count.value = 0
         node.responded.value = false
       end
 
       # Refresh all known nodes.
-      friendList = []
-      refreshCount = 0
+      friend_list = []
+      refresh_count = 0
 
       nodes.each do |node|
         if node.active?
           begin
             friends = node.refresh
-            refreshCount += 1
+            refresh_count += 1
             if friends
-              friendList.concat(friends)
+              friend_list.concat(friends)
             end
           rescue Exception => e
             Apik.logger.warn("Node `#{node}` refresh failed: #{e.to_s}")
@@ -229,15 +229,15 @@ module Apik
 
       # Handle nodes changes determined from refreshes.
       # Remove nodes in a batch.
-      removeList = find_nodes_to_remove(refreshCount)
-      if removeList.length > 0
-        remove_nodes(removeList)
+      remove_list = find_nodes_to_remove(refresh_count)
+      if remove_list.length > 0
+        remove_nodes(remove_list)
       end
 
       # Add nodes in a batch.
-      addList = find_nodes_to_add(friendList)
-      if addList.length > 0
-        add_nodes(addList)
+      add_list = find_nodes_to_add(friend_list)
+      if add_list.length > 0
+        add_nodes(add_list)
       end
 
       # get_nodes.each do |n|
@@ -278,9 +278,9 @@ module Apik
 
     end
 
-    def set_partitions(partMap)
+    def set_partitions(part_map)
       @mutex.synchronize do
-        @partition_write_map = partMap
+        @partition_write_map = part_map
       end
     end
 
@@ -302,7 +302,7 @@ module Apik
 
       seed_array.each do |seed|
         begin
-          seedNodeValidator = NodeValidator.new(seed, @connection_timeout)
+          seed_node_validator = NodeValidator.new(seed, @connection_timeout)
         rescue Exception => e
           Apik.logger.warn("Seed #{seed.to_s} failed: #{e}")
           next
@@ -310,10 +310,10 @@ module Apik
 
         nv = nil
         # Seed host may have multiple aliases in the case of round-robin dns configurations.
-        seedNodeValidator.aliases.each do |aliass|
+        seed_node_validator.aliases.each do |aliass|
 
           if aliass == seed
-            nv = seedNodeValidator
+            nv = seed_node_validator
           else
             begin
               nv = NodeValidator.new(aliass, @connection_timeout)
@@ -383,7 +383,7 @@ module Apik
             # services list contains both internal and external IP addresses
             # for the same node.  Add new host to list of alias filters
             # and do not add new node.
-            node.referenceCount.update{|v| v + 1}
+            node.reference_count.update{|v| v + 1}
             node.add_alias(host)
             add_alias(host, node)
             next
@@ -407,30 +407,30 @@ module Apik
     def find_nodes_to_remove(refresh_count)
       nodes = get_nodes
 
-      removeList = []
+      remove_list = []
 
       nodes.each do |node|
         if !node.active?
           # Inactive nodes must be removed.
-          removeList << node
+          remove_list << node
           next
         end
 
         case nodes.length
         when 1
           # Single node clusters rely solely on node health.
-          removeList << node if node.unhealthy?
+          remove_list << node if node.unhealthy?
 
         when 2
           # Two node clusters require at least one successful refresh before removing.
-          if refresh_count == 1 && node.referenceCount.value == 0 && !node.responded.value
+          if refresh_count == 1 && node.reference_count.value == 0 && !node.responded.value
             # Node is not referenced nor did it respond.
-            removeList << node
+            remove_list << node
           end
 
         else
           # Multi-node clusters require two successful node refreshes before removing.
-          if refresh_count >= 2 && node.referenceCount.value == 0
+          if refresh_count >= 2 && node.reference_count.value == 0
             # Node is not referenced by other nodes.
             # Check if node responded to info request.
             if node.responded.value
@@ -438,27 +438,27 @@ module Apik
               if !find_node_in_partition_map(node)
                 # Node doesn't have any partitions mapped to it.
                 # There is not point in keeping it in the cluster.
-                removeList << node
+                remove_list << node
               end
             else
               # Node not responding. Remove it.
-              removeList << node
+              remove_list << node
             end
           end
         end
       end
 
-      removeList
+      remove_list
     end
 
     def find_node_in_partition_map(filter)
       partitions = get_partitions
 
-      partitions.each do |nodeArray|
-        max = nodeArray.length
+      partitions.each do |node_array|
+        max = node_array.length
 
         for i in 0...max
-          node = nodeArray[i]
+          node = node_array[i]
           # Use reference equality for performance.
           if node == filter
             return true
@@ -468,13 +468,13 @@ module Apik
       false
     end
 
-    def add_nodes(nodesToAdd)
+    def add_nodes(nodes_to_add)
       # Add all nodes at once to avoid copying entire array multiple times.
-      nodesToAdd.each do |node|
+      nodes_to_add.each do |node|
         add_aliases(node)
       end
 
-      add_nodes_copy(nodesToAdd)
+      add_nodes_copy(nodes_to_add)
     end
 
     def add_aliases(node)
@@ -485,19 +485,19 @@ module Apik
       end
     end
 
-    def add_nodes_copy(nodesToAdd)
+    def add_nodes_copy(nodes_to_add)
       @mutex.synchronize do
-        @nodes.concat(nodesToAdd)
+        @nodes.concat(nodes_to_add)
       end
     end
 
-    def remove_nodes(nodesToRemove)
-      # There is no need to delete nodes from partitionWriteMap because the nodes
+    def remove_nodes(nodes_to_remove)
+      # There is no need to delete nodes from partition_write_map because the nodes
       # have already been set to inactive. Further connection requests will result
       # in an exception and a different node will be tried.
 
       # Cleanup node resources.
-      nodesToRemove.each do |node|
+      nodes_to_remove.each do |node|
         # Remove node's aliases from cluster alias set.
         # Aliases are only used in tend goroutine, so synchronization is not necessary.
         node.get_aliases.each do |aliass|
@@ -509,7 +509,7 @@ module Apik
       end
 
       # Remove all nodes at once to avoid copying entire array multiple times.
-      remove_nodes_copy(nodesToRemove)
+      remove_nodes_copy(nodes_to_remove)
     end
 
     def set_nodes(nodes)
@@ -519,38 +519,38 @@ module Apik
       end
     end
 
-    def remove_nodes_copy(nodesToRemove)
+    def remove_nodes_copy(nodes_to_remove)
       # Create temporary nodes array.
       # Since nodes are only marked for deletion using node references in the nodes array,
       # and the tend goroutine is the only goroutine modifying nodes, we are guaranteed that nodes
-      # in nodesToRemove exist.  Therefore, we know the final array size.
+      # in nodes_to_remove exist.  Therefore, we know the final array size.
       nodes = get_nodes
-      nodeArray = []
+      node_array = []
       count = 0
 
       # Add nodes that are not in remove list.
       nodes.each do |node|
-        if node_exists(node, nodesToRemove)
+        if node_exists(node, nodes_to_remove)
           Apik.logger.info("Removed node `#{node}`")
         else
-          nodeArray[count] = node
+          node_array[count] = node
           count += 1
         end
       end
 
       # Do sanity check to make sure assumptions are correct.
-      if count < nodeArray.length
-        Apik.logger.warn("Node remove mismatch. Expected #{nodeArray.length}, Received #{count}")
+      if count < node_array.length
+        Apik.logger.warn("Node remove mismatch. Expected #{node_array.length}, Received #{count}")
 
         # Resize array.
-        nodeArray = nodeArray.dup[0..count-1]
+        node_array = node_array.dup[0..count-1]
       end
 
-      set_nodes(nodeArray)
+      set_nodes(node_array)
     end
 
-    def nodeExists(search, nodeList)
-      nodeList.any? {|node| node.equals(search) }
+    def node_exists(search, node_list)
+      node_list.any? {|node| node.equals(search) }
     end
 
     def find_node_by_name(node_name)

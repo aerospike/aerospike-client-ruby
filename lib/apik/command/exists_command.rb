@@ -32,23 +32,23 @@ module Apik
       self
     end
 
-    def writeBuffer
-      setExists(@key)
+    def write_buffer
+      set_exists(@key)
     end
 
-    def parseResult
+    def parse_result
       # Read header.
-      @conn.read(@dataBuffer, MSG_TOTAL_HEADER_SIZE)
+      @conn.read(@data_buffer, MSG_TOTAL_HEADER_SIZE)
 
-      resultCode = @dataBuffer.read(13).ord & 0xFF
+      result_code = @data_buffer.read(13).ord & 0xFF
 
-      if (resultCode != 0) && (resultCode != Apik::ResultCode::KEY_NOT_FOUND_ERROR)
-        raise Apik::Exceptions::Aerospike.new(resultCode)
+      if (result_code != 0) && (result_code != Apik::ResultCode::KEY_NOT_FOUND_ERROR)
+        raise Apik::Exceptions::Aerospike.new(result_code)
       end
 
-      @exists = (resultCode == 0)
+      @exists = (result_code == 0)
 
-      emptySocket
+      empty_socket
     end
 
   end # class

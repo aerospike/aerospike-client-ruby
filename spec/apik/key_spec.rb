@@ -6,11 +6,11 @@ describe Apik::Key do
 
     it "should make a new key successfully" do
 
-      k = described_class.new('namespace', 'set', 'stringValue')
+      k = described_class.new('namespace', 'set', 'string_value')
 
       expect(k.namespace).to eq 'namespace'
-      expect(k.setName).to eq 'set'
-      expect(k.userKey).to eq 'stringValue'
+      expect(k.set_name).to eq 'set'
+      expect(k.user_key).to eq 'string_value'
 
     end
 

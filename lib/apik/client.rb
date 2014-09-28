@@ -94,7 +94,7 @@ module Apik
     #  The policy specifies the transaction timeout, record expiration and how the transaction is
     #  handled when the record already exists.
     # def put(policy *WritePolicy, key *Key, bins BinMap) error {
-    #   PutBins(policy, key, binMapToBins(bins)...)
+    #   PutBins(policy, key, bin_map_to_bins(bins)...)
     # }
 
     #  Write record bin(s).
@@ -115,7 +115,7 @@ module Apik
     #  handled when the record already exists.
     #  This call only works for string values.
     # def Append(policy *WritePolicy, key *Key, bins BinMap) error {
-    #   return clnt.AppendBins(policy, key, binMapToBins(bins)...)
+    #   return clnt.AppendBins(policy, key, bin_map_to_bins(bins)...)
     # }
 
     def append_bins(policy, key, bins)
@@ -129,7 +129,7 @@ module Apik
     #  handled when the record already exists.
     #  This call works only for string values.
     # def Prepend(policy *WritePolicy, key *Key, bins BinMap) error {
-    #   return clnt.PrependBins(policy, key, binMapToBins(bins)...)
+    #   return clnt.PrependBins(policy, key, bin_map_to_bins(bins)...)
     # }
 
     def prepend_bins(policy, key, bins)
@@ -147,7 +147,7 @@ module Apik
     #  handled when the record already exists.
     #  This call only works for integer values.
     # def Add(policy *WritePolicy, key *Key, bins BinMap) error {
-    #   return clnt.AddBins(policy, key, binMapToBins(bins)...)
+    #   return clnt.AddBins(policy, key, bin_map_to_bins(bins)...)
     # }
 
     def add_bins(policy, key, bins)
@@ -202,16 +202,16 @@ module Apik
 
       # same array can be used without sychronization;
       # when a key exists, the corresponding index will be marked true
-      existsArray = Array.new(keys.length)
+      exists_array = Array.new(keys.length)
 
-      keyMap = BatchItem.generate_map(keys)
+      key_map = BatchItem.generate_map(keys)
 
-      cmdGen = Proc.new do |node, bns|
-        BatchCommandExists.new(node, bns, policy, keyMap, existsArray)
+      cmd_gen = Proc.new do |node, bns|
+        BatchCommandExists.new(node, bns, policy, key_map, exists_array)
       end
 
-      batch_execute(keys, &cmdGen)
-      existsArray
+      batch_execute(keys, &cmd_gen)
+      exists_array
     end
 
     #-------------------------------------------------------
@@ -220,10 +220,10 @@ module Apik
 
     #  Read record header and bins for specified key.
     #  The policy can be used to specify timeouts.
-    def get(policy, key, *binNames)
+    def get(policy, key, *bin_names)
       policy ||= Policy.new
 
-      command = ReadCommand.new(@cluster, policy, key, binNames)
+      command = ReadCommand.new(@cluster, policy, key, bin_names)
       command.execute
       command.record
     end
@@ -245,7 +245,7 @@ module Apik
     #  The returned records are in positional order with the original key array order.
     #  If a key is not found, the positional record will be nil.
     #  The policy can be used to specify timeouts.
-    def batch_get(policy, keys, *binNames)
+    def batch_get(policy, keys, *bin_names)
       policy ||= Policy.new
 
       # wait until all migrations are finished
@@ -256,18 +256,18 @@ module Apik
       # when a key exists, the corresponding index will be set to record
       records = Array.new(keys.length)
 
-      keyMap = BatchItem.generate_map(keys)
-      binSet = {}
-      binNames.each do |bn|
-        binSet[bn] = {}
+      key_map = BatchItem.generate_map(keys)
+      bin_set = {}
+      bin_names.each do |bn|
+        bin_set[bn] = {}
       end
 
 
-      cmdGen = Proc.new do |node, bns|
-        BatchCommandGet.new(node, bns, policy, keyMap, nil, records, INFO1_READ|INFO1_NOBINDATA)
+      cmd_gen = Proc.new do |node, bns|
+        BatchCommandGet.new(node, bns, policy, key_map, nil, records, INFO1_READ|INFO1_NOBINDATA)
       end
 
-      batch_execute(keys, &cmdGen)
+      batch_execute(keys, &cmd_gen)
       records
     end
 
@@ -286,13 +286,13 @@ module Apik
       # when a key exists, the corresponding index will be set to record
       records = Array.new(keys.length)
 
-      keyMap = BatchItem.generate_map(keys)
-      binSet = {}
-      binNames.each do |bn|
-        binSet[bn] = {}
+      key_map = BatchItem.generate_map(keys)
+      bin_set = {}
+      bin_names.each do |bn|
+        bin_set[bn] = {}
       end
 
-      command = BatchCommandGet.new(node, bns, policy, keyMap, binSet, records, INFO1_READ | INFO_NOBINDATA)
+      command = BatchCommandGet.new(node, bns, policy, key_map, bin_set, records, INFO1_READ | INFO_NOBINDATA)
       command.execute
     end
 
@@ -322,32 +322,32 @@ module Apik
     #  within a single bin.
     #
     #  This method is only supported by Aerospike 3 servers.
-    def get_large_list(policy, key, binName, userModule=nil)
-      LargeList.new(self, policy, key, binName, userModule)
+    def get_large_list(policy, key, bin_name, user_module=nil)
+      LargeList.new(self, policy, key, bin_name, user_module)
     end
 
     #  Initialize large map operator.  This operator can be used to create and manage a map
     #  within a single bin.
     #
     #  This method is only supported by Aerospike 3 servers.
-    def get_large_map(policy, key, binName, userModule=nil)
-      LargeMap.new(self, policy, key, binName, userModule)
+    def get_large_map(policy, key, bin_name, user_module=nil)
+      LargeMap.new(self, policy, key, bin_name, user_module)
     end
 
     #  Initialize large set operator.  This operator can be used to create and manage a set
     #  within a single bin.
     #
     #  This method is only supported by Aerospike 3 servers.
-    def get_large_set(policy, key, binName, userModule=nil)
-      LargeSet.new(self, policy, key, binName, userModule)
+    def get_large_set(policy, key, bin_name, user_module=nil)
+      LargeSet.new(self, policy, key, bin_name, user_module)
     end
 
     #  Initialize large stack operator.  This operator can be used to create and manage a stack
     #  within a single bin.
     #
     #  This method is only supported by Aerospike 3 servers.
-    def get_large_stack(policy, key, binName, userModule=nil)
-      LargeStack.new(self, policy, key, binName, userModule)
+    def get_large_stack(policy, key, bin_name, user_module=nil)
+      LargeStack.new(self, policy, key, bin_name, user_module)
     end
 
     #---------------------------------------------------------------
@@ -360,9 +360,9 @@ module Apik
     #  RegisterTask instance.
     #
     #  This method is only supported by Aerospike 3 servers.
-    def register_udf_from_file(policy, clientPath, serverPath, language)
-      udfBody = File.read(clientPath)
-      register_udf(policy, udfBody, serverPath, language)
+    def register_udf_from_file(policy, client_path, server_path, language)
+      udf_body = File.read(client_path)
+      register_udf(policy, udf_body, server_path, language)
     end
 
     #  Register package containing user defined functions with server.
@@ -371,17 +371,17 @@ module Apik
     #  RegisterTask instance.
     #
     #  This method is only supported by Aerospike 3 servers.
-    def register_udf(policy, udfBody, serverPath, language)
-      content = Base64.strict_encode64(udfBody).force_encoding('binary')
+    def register_udf(policy, udf_body, server_path, language)
+      content = Base64.strict_encode64(udf_body).force_encoding('binary')
 
-      strCmd = "udf-put:filename=#{serverPath};content=#{content};"
-      strCmd += "content-len=#{content.length};udf-type=#{language};"
+      str_cmd = "udf-put:filename=#{server_path};content=#{content};"
+      str_cmd += "content-len=#{content.length};udf-type=#{language};"
       # Send UDF to one node. That node will distribute the UDF to other nodes.
       node = @cluster.get_random_node
       conn = node.get_connection(@cluster.connection_timeout)
 
-      responseMap = Info.request(conn, strCmd)
-      response, _ = responseMap.first
+      response_map = Info.request(conn, str_cmd)
+      response, _ = response_map.first
 
       res = {}
       vals = response.split(';')
@@ -395,7 +395,7 @@ module Apik
       end
 
       node.put_connection(conn)
-      UdfRegisterTask.new(@cluster, serverPath)
+      UdfRegisterTask.new(@cluster, server_path)
     end
 
     #  RemoveUDF removes a package containing user defined functions in the server.
@@ -404,20 +404,20 @@ module Apik
     #  RemoveTask instance.
     #
     #  This method is only supported by Aerospike 3 servers.
-    def remove_udf(policy, udfName)
+    def remove_udf(policy, udf_name)
       # errors are to remove errcheck warnings
       # they will always be nil as stated in golang docs
-      strCmd = "udf-remove:filename=#{udfName};"
+      str_cmd = "udf-remove:filename=#{udf_name};"
 
       # Send command to one node. That node will distribute it to other nodes.
       node = @cluster.get_random_node
       conn = node.get_connection(@cluster.connection_timeout)
 
-      responseMap = Info.request(conn, strCmd)
-      _, response = responseMap.first
+      response_map = Info.request(conn, str_cmd)
+      _, response = response_map.first
 
       if response == 'ok'
-        UdfRemoveTask.new(@cluster, udfName)
+        UdfRemoveTask.new(@cluster, udf_name)
       else
         raise Apik::Exceptions::Aerospike.new(Apik::ResultCode::SERVER_ERROR, response)
       end
@@ -428,23 +428,23 @@ module Apik
     def list_udf(policy=nil)
       # errors are to remove errcheck warnings
       # they will always be nil as stated in golang docs
-      strCmd = 'udf-list'
+      str_cmd = 'udf-list'
 
       # Send command to one node. That node will distribute it to other nodes.
       node = @cluster.get_random_node
       conn = node.get_connection(@cluster.connection_timeout)
 
-      responseMap = Info.request(conn, strCmd)
-      _, response = responseMap.first
+      response_map = Info.request(conn, str_cmd)
+      _, response = response_map.first
 
       vals = response.split(';')
 
-      res = vals.map do |udfInfo|
-        next if udfInfo.strip! == ''
+      res = vals.map do |udf_info|
+        next if udf_info.strip! == ''
 
-        udfParts = udfInfo.split(',')
+        udf_parts = udf_info.split(',')
         udf = UDF.new
-        udfParts.each do |values|
+        udf_parts.each do |values|
           k, v = values.split('=', 2)
           case k
           when 'filename'
@@ -471,25 +471,25 @@ module Apik
     #  udf file = <server udf dir>/<package name>.lua
     #
     #  This method is only supported by Aerospike 3 servers.
-    def execute_udf(policy, key, packageName, functionName, *args)
+    def execute_udf(policy, key, package_name, function_name, *args)
       policy ||= WritePolicy.new
 
-      command = ExecuteCommand.new(@cluster, policy, key, packageName, functionName, args)
+      command = ExecuteCommand.new(@cluster, policy, key, package_name, function_name, args)
       command.execute
 
       record = command.record
 
       return nil if !record || record.bins.length == 0
 
-      resultMap = record.bins
+      result_map = record.bins
 
       # User defined functions don't have to return a value.
-      key, obj = resultMap.detect{|k, v| k.include?('SUCCESS')}
+      key, obj = result_map.detect{|k, v| k.include?('SUCCESS')}
       if key
         return obj
       end
 
-      key, obj = resultMap.detect{|k, v| k.include?('FAILURE')}
+      key, obj = result_map.detect{|k, v| k.include?('FAILURE')}
       if key
         raise Apik::Exceptions::Aerospike.new(UDF_BAD_RESPONSE, "#{obj}")
       end
@@ -499,17 +499,17 @@ module Apik
 
     private
 
-    def batch_execute(keys, &cmdGen)
-      batchNodes = BatchNode.generate_list(@cluster, keys)
+    def batch_execute(keys, &cmd_gen)
+      batch_nodes = BatchNode.generate_list(@cluster, keys)
       threads = []
 
       # Use a thread per namespace per node
-      batchNodes.each do |batchNode|
+      batch_nodes.each do |batch_node|
         # copy to avoid race condition
-        bn = batchNode
+        bn = batch_node
         bn.batch_namespaces.each do |bns|
           threads << Thread.new do
-            command = cmdGen.call(bn.node, bns)
+            command = cmd_gen.call(bn.node, bns)
             command.execute
           end
         end

@@ -20,8 +20,8 @@ module Apik
   # Buffer class to ease the work around
   class Buffer
 
-    @@bufPool = Pool.new
-    @@bufPool.create_block = Proc.new { Buffer.new }
+    @@buf_pool = Pool.new
+    @@buf_pool.create_block = Proc.new { Buffer.new }
 
     attr_accessor :buf
 
@@ -40,11 +40,11 @@ module Apik
     end
 
     def self.get
-      @@bufPool.poll
+      @@buf_pool.poll
     end
 
     def self.put(buffer)
-      @@bufPool.offer(buffer)
+      @@buf_pool.offer(buffer)
     end
 
     def size

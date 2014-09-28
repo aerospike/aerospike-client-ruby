@@ -19,46 +19,46 @@ module Apik
 
   class Large
 
-    def initialize(client, policy, key, binName, userModule=nil)
+    def initialize(client, policy, key, bin_name, user_module=nil)
       @client = client
       @policy = policy
       @key = key
-      @binName = Apik::ParticleType::STRING.chr + binName
-      @userModule = Apik::ParticleType::STRING.chr + userModule unless userModule.nil?
+      @bin_name = Apik::ParticleType::STRING.chr + bin_name
+      @user_module = Apik::ParticleType::STRING.chr + user_module unless user_module.nil?
 
       self
     end
 
     # Delete bin containing the object.
     def destroy
-      @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'destroy', @binName)
+      @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'destroy', @bin_name)
     end
 
     # Return size of object.
     def size
-      @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'size', @binName)
+      @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'size', @bin_name)
     end
 
     # Return map of object configuration parameters.
     def config
-      @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'get_config', @binName)
+      @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'get_config', @bin_name)
     end
 
     # Set maximum number of entries in the object.
     #
     # capacity      max entries in set
     def capacity=(capacity)
-      @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'set_capacity', @binName, capacity)
+      @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'set_capacity', @bin_name, capacity)
     end
 
     # Return maximum number of entries in the object.
     def capacity
-      @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'get_capacity', @binName)
+      @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'get_capacity', @bin_name)
     end
 
     # Return list of all objects on the stack.
     def scan
-      @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'scan', @binName)
+      @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'scan', @bin_name)
     end
 
   end # class

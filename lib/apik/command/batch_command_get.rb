@@ -21,53 +21,53 @@ module Apik
 
   class BatchCommandGet < BatchCommand
 
-    def initialize(node, batchNamespace, policy, keyMap, binNames, records, readAttr)
+    def initialize(node, batch_namespace, policy, key_map, bin_names, records, read_attr)
       super(node)
 
-      @batchNamespace = batchNamespace
+      @batch_namespace = batch_namespace
       @policy = policy
-      @keyMap = keyMap
-      @binNames = binNames
+      @key_map = key_map
+      @bin_names = bin_names
       @records = records
-      @readAttr = readAttr
+      @read_attr = read_attr
     end
 
-    def writeBuffer
-      setBatchGet(@batchNamespace, @binNames, @readAttr)
+    def write_buffer
+      set_batch_get(@batch_namespace, @bin_names, @read_attr)
     end
 
     # Parse all results in the batch.  Add records to shared list.
     # If the record was not found, the bins will be nil.
-    def parseRecordResults(receiveSize)
+    def parse_record_results(receive_size)
       #Parse each message response and add it to the result array
-      @dataOffset = 0
+      @data_offset = 0
 
-      while @dataOffset < receiveSize
-        readBytes(MSG_REMAINING_HEADER_SIZE)
-        resultCode = @dataBuffer.read(5).ord & 0xFF
+      while @data_offset < receive_size
+        read_bytes(MSG_REMAINING_HEADER_SIZE)
+        result_code = @data_buffer.read(5).ord & 0xFF
 
         # The only valid server return codes are "ok" and "not found".
         # If other return codes are received, then abort the batch.
-        if resultCode != 0 && resultCode != Apik::ResultCode::KEY_NOT_FOUND_ERROR
-          raise Apik::Exceptions::Aerospike(resultCode)
+        if result_code != 0 && result_code != Apik::ResultCode::KEY_NOT_FOUND_ERROR
+          raise Apik::Exceptions::Aerospike(result_code)
         end
 
-        info3 = @dataBuffer.read(3).ord
+        info3 = @data_buffer.read(3).ord
 
         # If cmd is the end marker of the response, do not proceed further
         return false if (info3 & INFO3_LAST) == INFO3_LAST
 
-        generation = @dataBuffer.read_int32(6).ord
-        expiration = @dataBuffer.read_int32(10).ord
-        fieldCount = @dataBuffer.read_int16(18).ord
-        opCount = @dataBuffer.read_int16(20).ord
-        key = parseKey(fieldCount)
-        item = @keyMap[key.digest]
+        generation = @data_buffer.read_int32(6).ord
+        expiration = @data_buffer.read_int32(10).ord
+        field_count = @data_buffer.read_int16(18).ord
+        op_count = @data_buffer.read_int16(20).ord
+        key = parse_key(field_count)
+        item = @key_map[key.digest]
 
         if item
-          if resultCode == 0
+          if result_code == 0
             index = item.get_index
-            @records[index] = parseRecord(key, opCount, generation, expiration)
+            @records[index] = parse_record(key, op_count, generation, expiration)
           end
         else
           Apik.logger.debug("Unexpected batch key returned: #{key.namespace}, #{key.digest}")
@@ -80,31 +80,31 @@ module Apik
 
     # Parses the given byte buffer and populate the result object.
     # Returns the number of bytes that were parsed from the given buffer.
-    def parseRecord(key, opCount, generation, expiration)
+    def parse_record(key, op_count, generation, expiration)
       bins = nil
       duplicates = nil
 
-      for i in 0...opCount
+      for i in 0...op_count
         raise Apik::Exceptions::QueryTerminated.new unless cmd.valid?
 
-        readBytes(8)
+        read_bytes(8)
 
-        opSize = @dataBuffer.read_int32(0).ord
-        particleType = @dataBuffer.read(5).ord
-        version = @dataBuffer.read(6).ord
-        nameSize = @dataBuffer.read(75).ord
+        op_size = @data_buffer.read_int32(0).ord
+        particle_type = @data_buffer.read(5).ord
+        version = @data_buffer.read(6).ord
+        name_size = @data_buffer.read(75).ord
 
-        readBytes(nameSize)
-        name = @dataBuffer.read(0, nameSize).force_encoding('utf-8')
+        read_bytes(name_size)
+        name = @data_buffer.read(0, name_size).force_encoding('utf-8')
 
-        particleBytesSize = opSize - (4 + nameSize)
-        readBytes(particleBytesSize)
-        value = Value.bytesToParticle(particleType, @dataBuffer, 0, particleBytesSize)
+        particle_bytes_size = op_size - (4 + name_size)
+        read_bytes(particle_bytes_size)
+        value = Value.bytes_to_particle(particle_type, @data_buffer, 0, particle_bytes_size)
 
         # Currently, the batch command returns all the bins even if a subset of
         # the bins are requested. We have to filter it on the client side.
         # TODO: Filter batch bins on server!
-        if !binNames || @binNames.any?{|bn| bn == name}
+        if !bin_names || @bin_names.any?{|bn| bn == name}
           vmap = nil
 
           if version > 0 || duplicates

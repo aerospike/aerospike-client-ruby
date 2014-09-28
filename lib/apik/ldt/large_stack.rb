@@ -19,49 +19,49 @@ module Apik
 
   class LargeStack < Large
 
-    def initialize(client, policy, key, binName, userModule=nil)
+    def initialize(client, policy, key, bin_name, user_module=nil)
       @PACKAGE_NAME = 'lstack'
 
-      super(client, policy, key, binName, userModule)
+      super(client, policy, key, bin_name, user_module)
 
       self
     end
 
-    # Push values onto stack.  If the stack does not exist, create it using specified userModule configuration.
+    # Push values onto stack.  If the stack does not exist, create it using specified user_module configuration.
     #
     # values      values to push
     def push(*values)
       if values.length == 1
-        @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'push', @binName, values[0], @userModule)
+        @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'push', @bin_name, values[0], @user_module)
       else
-        @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'push_all', @binName, values, @userModule)
+        @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'push_all', @bin_name, values, @user_module)
       end
     end
 
     # Select items from top of stack.
     #
-    # peekCount     number of items to select.
+    # peek_count     number of items to select.
     # returns          list of items selected
-    def peek(peekCount)
-      @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'peek', @binName, peekCount)
+    def peek(peek_count)
+      @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'peek', @bin_name, peek_count)
     end
 
     # Select items from top of stack.
     #
-    # peekCount     number of items to select.
+    # peek_count     number of items to select.
     # returns          list of items selected
     def pop(count)
-      @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'pop', @binName, count)
+      @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'pop', @bin_name, count)
     end
 
     # Select items from top of stack.
     #
-    # peekCount     number of items to select.
-    # filterName    Lua function name which applies filter to returned list
-    # filterArgs    arguments to Lua function name
+    # peek_count     number of items to select.
+    # filter_name    Lua function name which applies filter to returned list
+    # filter_args    arguments to Lua function name
     # returns          list of items selected
-    def filter(peekCount, filterName, *filterArgs)
-      @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'filter', @binName, peekCount, @userModule, filterName, filterArgs)
+    def filter(peek_count, filter_name, *filter_args)
+      @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'filter', @bin_name, peek_count, @user_module, filter_name, filter_args)
     end
 
   end # class

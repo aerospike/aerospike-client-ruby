@@ -19,9 +19,9 @@ module Apik
 
     attr_accessor :name
 
-    def initialize(binName, binValue)
-      @name = binName
-      @value = Value.of(binValue)
+    def initialize(bin_name, bin_value)
+      @name = bin_name
+      @value = Value.of(bin_value)
     end
 
     def value=(val)

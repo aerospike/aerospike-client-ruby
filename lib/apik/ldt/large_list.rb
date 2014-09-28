@@ -19,35 +19,35 @@ module Apik
 
   class LargeList < Large
 
-    def initialize(client, policy, key, binName, userModule=nil)
+    def initialize(client, policy, key, bin_name, user_module=nil)
       @PACKAGE_NAME = 'llist'
 
-      super(client, policy, key, binName, userModule)
+      super(client, policy, key, bin_name, user_module)
 
       self
     end
 
-    # Add values to the list.  If the list does not exist, create it using specified userModule configuration.
+    # Add values to the list.  If the list does not exist, create it using specified user_module configuration.
     #
     # values      values to add
     def add(*values)
       if values.length == 1
-        @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'add', @binName, values[0], @userModule)
+        @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'add', @bin_name, values[0], @user_module)
       else
-        @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'add_all', @binName, values, @userModule)
+        @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'add_all', @bin_name, values, @user_module)
       end
     end
 
     # Update/Add each value in array depending if key exists or not.
     # If value is a map, the key is identified by "key" entry.  Otherwise, the value is the key.
-    # If large list does not exist, create it using specified userModule configuration.
+    # If large list does not exist, create it using specified user_module configuration.
     #
     # values      values to update
     def update(*values)
       if values.length == 1
-        @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'update', @binName, values[0], @userModule)
+        @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'update', @bin_name, values[0], @user_module)
       else
-        @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'update_all', @binName, values, @userModule)
+        @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'update_all', @bin_name, values, @user_module)
       end
     end
 
@@ -55,7 +55,7 @@ module Apik
     #
     # value       value to delete
     def remove(value)
-      @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'remove', @binName, value)
+      @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'remove', @bin_name, value)
     end
 
     # Select values from list.
@@ -64,7 +64,7 @@ module Apik
     # returns          list of entries selected
     def find(value)
       begin
-        @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'find', @binName, value)
+        @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'find', @bin_name, value)
       rescue Apik::Exceptions::Aerospike => e
         unless e.result_code == Apik::ResultCode::UDF_BAD_RESPONSE && e.message.index("Item Not Found")
           raise e
@@ -76,20 +76,20 @@ module Apik
     # Select values from list and apply specified Lua filter.
     #
     # value       value to select
-    # filterName    Lua function name which applies filter to returned list
-    # filterArgs    arguments to Lua function name
+    # filter_name    Lua function name which applies filter to returned list
+    # filter_args    arguments to Lua function name
     # returns          list of entries selected
-    def find_then_filter(value, filterName, *filterArgs)
-      @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'find_then_filter', @binName, value, @userModule, filterName, filterArgs)
+    def find_then_filter(value, filter_name, *filter_args)
+      @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'find_then_filter', @bin_name, value, @user_module, filter_name, filter_args)
     end
 
     # Select values from list and apply specified Lua filter.
     #
-    # filterName    Lua function name which applies filter to returned list
-    # filterArgs    arguments to Lua function name
+    # filter_name    Lua function name which applies filter to returned list
+    # filter_args    arguments to Lua function name
     # returns          list of entries selected
-    def filter(filterName, *filterArgs)
-      @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'filter', @binName, @userModule, filterName, filterArgs)
+    def filter(filter_name, *filter_args)
+      @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'filter', @bin_name, @user_module, filter_name, filter_args)
     end
 
   end # class

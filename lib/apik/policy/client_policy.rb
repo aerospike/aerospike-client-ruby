@@ -27,7 +27,7 @@ module Apik
       # Size of the Connection Queue cache.
       @ConnectionQueueSize = connection_queue_size || 64
 
-      # Throw exception if host connection fails during addHost.
+      # Throw exception if host connection fails during add_host.
       @FailIfNotConnected = fail_if_not_connected || true
     end
 

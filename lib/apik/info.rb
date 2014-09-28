@@ -43,7 +43,7 @@ module Apik
         offset += 1
       end
 
-      buf_length = sendCommand(conn, offset, buffer)
+      buf_length = send_command(conn, offset, buffer)
       res = parse_multiple_response(buf_length, buffer)
       Buffer.put(buffer)
       res
@@ -60,7 +60,7 @@ module Apik
 
     private
 
-    def self.sendCommand(conn, offset, buffer)
+    def self.send_command(conn, offset, buffer)
       begin
         # Write size field.
         size = (offset - 8) | (2 << 56) | (1 << 48)

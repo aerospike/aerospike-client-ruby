@@ -36,27 +36,27 @@ module Apik
         raise Apik::Exceptions::Connection.new("command failed because cluster is empty.")
       end
 
-      nodeCount = nodes.length
-      keysPerNode = (keys.length/nodeCount).to_i + 10
+      node_count = nodes.length
+      keys_per_node = (keys.length/node_count).to_i + 10
 
       # Split keys by server node.
-      batchNodes = []
+      batch_nodes = []
 
       keys.each do |key|
         partition = Partition.new_by_key(key)
 
         # error not required
         node = cluster.get_node(partition)
-        batchNode = batchNodes.detect{|bn| bn.node == node}
+        batch_node = batch_nodes.detect{|bn| bn.node == node}
 
-        unless batchNode
-          batchNodes << BatchNode.new(node, keysPerNode, key)
+        unless batch_node
+          batch_nodes << BatchNode.new(node, keys_per_node, key)
         else
-          batchNode.add_key(key)
+          batch_node.add_key(key)
         end
       end
 
-      batchNodes
+      batch_nodes
     end
 
 
@@ -67,12 +67,12 @@ module Apik
     end
 
     def add_key(key)
-      batchNamespace = @batch_namespaces.detect{|bn| bn.namespace == key.namespace }
+      batch_namespace = @batch_namespaces.detect{|bn| bn.namespace == key.namespace }
 
-      unless batchNamespace
+      unless batch_namespace
         @batch_namespaces << BatchNamespace.new(key.namespace, [key])
       else
-        batchNamespace.keys << key
+        batch_namespace.keys << key
       end
     end
 

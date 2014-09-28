@@ -21,64 +21,64 @@ module Apik
 
   class BatchCommandExists < BatchCommand
 
-    def initialize(node, batchNamespace, policy, keyMap, existsArray)
+    def initialize(node, batch_namespace, policy, key_map, exists_array)
       super(node)
 
-      @batchNamespace = batchNamespace
+      @batch_namespace = batch_namespace
       @policy = policy
-      @keyMap = keyMap
-      @existsArray = existsArray
+      @key_map = key_map
+      @exists_array = exists_array
 
       self
     end
 
-    def writeBuffer
-      setBatchExists(@batchNamespace)
+    def write_buffer
+      set_batch_exists(@batch_namespace)
     end
 
     # Parse all results in the batch.  Add records to shared list.
     # If the record was not found, the bins will be nil.
-    def parseRecordResults(receiveSize)
+    def parse_record_results(receive_size)
       #Parse each message response and add it to the result array
-      @dataOffset = 0
+      @data_offset = 0
 
-      while @dataOffset < receiveSize
+      while @data_offset < receive_size
         if !valid?
           raise Apik::Exceptions::QueryTerminated.new
         end
 
-        readBytes(MSG_REMAINING_HEADER_SIZE)
+        read_bytes(MSG_REMAINING_HEADER_SIZE)
 
-        resultCode = @dataBuffer.read(5).ord & 0xFF
+        result_code = @data_buffer.read(5).ord & 0xFF
 
         # The only valid server return codes are "ok" and "not found".
         # If other return codes are received, then abort the batch.
-        if resultCode != 0 && resultCode != Apik::ResultCode::KEY_NOT_FOUND_ERROR
-          raise Apik::Exceptions::Aerospike.new(resultCode)
+        if result_code != 0 && result_code != Apik::ResultCode::KEY_NOT_FOUND_ERROR
+          raise Apik::Exceptions::Aerospike.new(result_code)
         end
 
-        info3 = @dataBuffer.read(3).ord
+        info3 = @data_buffer.read(3).ord
 
         # If cmd is the end marker of the response, do not proceed further
         if info3 & INFO3_LAST == INFO3_LAST
           return false
         end
 
-        fieldCount = @dataBuffer.read_int16(18)
-        opCount = @dataBuffer.read_int16(20)
+        field_count = @data_buffer.read_int16(18)
+        op_count = @data_buffer.read_int16(20)
 
-        if opCount > 0
+        if op_count > 0
           raise Apik::Exceptions::Parse('Received bins that were not requested!')
         end
 
-        key = parseKey(fieldCount)
-        item = @keyMap[key.digest]
+        key = parse_key(field_count)
+        item = @key_map[key.digest]
 
         if item
           index = item.get_index
 
           # only set the results to true; as a result, no synchronization is needed
-          @existsArray[index] = (resultCode == 0)
+          @exists_array[index] = (result_code == 0)
         else
           Apik::logger.debug("Unexpected batch key returned: #{key.namespace}, #{key.digest}")
         end

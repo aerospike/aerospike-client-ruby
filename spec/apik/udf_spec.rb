@@ -21,7 +21,7 @@ describe Apik::Client do
     end
 
     let(:udf_body_delete) do
-      @udf_body_delete = "function deleteRecord(rec)
+      @udf_body_delete = "function delete_record(rec)
          aerospike:remove(rec)                   -- Delete main record, Populate the return status
       end"
     end
@@ -60,7 +60,7 @@ describe Apik::Client do
 
       it "should execute a udf successfully" do
 
-        register_task = client.register_udf(nil, udf_body_delete, "udfDelete.lua", Apik::Language::LUA)
+        register_task = client.register_udf(nil, udf_body_delete, "udf_delete.lua", Apik::Language::LUA)
 
         register_task.wait_till_completed
         expect(register_task.completed?).to be true
@@ -75,9 +75,9 @@ describe Apik::Client do
 
         expect(client.batch_exists(nil, [key1, key2, key3])).to eq [true, true, true]
 
-        client.execute_udf(nil, key1, 'udfDelete', 'deleteRecord')
-        client.execute_udf(nil, key2, 'udfDelete', 'deleteRecord')
-        client.execute_udf(nil, key3, 'udfDelete', 'deleteRecord')
+        client.execute_udf(nil, key1, 'udf_delete', 'delete_record')
+        client.execute_udf(nil, key2, 'udf_delete', 'delete_record')
+        client.execute_udf(nil, key3, 'udf_delete', 'delete_record')
 
         expect(client.batch_exists(nil, [key1, key2, key3])).to eq [false, false, false]
 

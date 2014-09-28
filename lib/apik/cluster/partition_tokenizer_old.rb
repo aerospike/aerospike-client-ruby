@@ -25,14 +25,14 @@ module Apik
       # Use low-level info methods and parse byte array directly for maximum performance.
       # Send format:    replicas-master\n
       # Receive format: replicas-master\t<ns1>:<base 64 encoded bitmap>;<ns2>:<base 64 encoded bitmap>... \n
-      infoMap = Info.request(conn, REPLICAS_NAME)
+      info_map = Info.request(conn, REPLICAS_NAME)
 
-      info = infoMap[REPLICAS_NAME]
+      info = info_map[REPLICAS_NAME]
 
       @length = info ? info.length : 0
 
       if !info || @length == 0
-        raise Apik::Exceptions::Connection.new("#{replicasName} is empty")
+        raise Apik::Exceptions::Connection.new("#{replicas_name} is empty")
       end
 
       @buffer = info
@@ -45,7 +45,7 @@ module Apik
       amap = nil
       copied = false
 
-      while partition = getNext
+      while partition = get_next
         exists = nmap[partition.namespace]
 
         if !exists
@@ -56,12 +56,12 @@ module Apik
             copied = true
           end
 
-          nodeArray = Atomic.new(Array.new(Apik::Node::PARTITIONS))
-          amap[partition.namespace] = nodeArray
+          node_array = Atomic.new(Array.new(Apik::Node::PARTITIONS))
+          amap[partition.namespace] = node_array
         end
 
         Apik.logger.debug("#{partition.to_s}, #{node.name}")
-        nodeArray.update{|v| v[partition.Partition_id] = node; v }
+        node_array.update{|v| v[partition.Partition_id] = node; v }
       end
 
       copied ? amap : nil
@@ -69,7 +69,7 @@ module Apik
 
     private
 
-    def getNext
+    def get_next
       beginning = @offset
 
       while @offset < @length
@@ -78,7 +78,7 @@ module Apik
           namespace = @buffer[beginning...@offset].strip!
 
           if namespace.length <= 0 || namespace.length >= 32
-            response = getTruncatedResponse
+            response = get_truncated_response
             raise Apik::Exceptions::Parse.new(
               "Invalid partition namespace #{namespace}. Response=#{response}"
             )
@@ -96,25 +96,25 @@ module Apik
           end
 
           if @offset == beginning
-            response = getTruncatedResponse
+            response = get_truncated_response
             raise Apik::Exceptions::Parse.new(
               "Empty partition id for namespace #{namespace}. Response=#{response}"
             )
           end
 
-          partitionId = @buffer[beginning...@offset].to_i
-          if partitionId < 0 || partitionId >= Apik::Node::PARTITIONS
-            response = getTruncatedResponse
-            partitionString = @buffer[beginning...@offset]
+          partition_id = @buffer[beginning...@offset].to_i
+          if partition_id < 0 || partition_id >= Apik::Node::PARTITIONS
+            response = get_truncated_response
+            partition_string = @buffer[beginning...@offset]
             aise Apik::Exceptions::Parse.new(
-              "Invalid partition id #{partitionString} for namespace #{namespace}. Response=#{response}"
+              "Invalid partition id #{partition_string} for namespace #{namespace}. Response=#{response}"
             )
           end
 
           @offset+=1
           beginning = @offset
 
-          return Partition.new(namespace, partitionId)
+          return Partition.new(namespace, partition_id)
         end
         @offset+=1
       end
@@ -122,7 +122,7 @@ module Apik
     end
 
 
-    def getTruncatedResponse
+    def get_truncated_response
       max = @length
       @length = max if @length > 200
       @buffer[0...max]

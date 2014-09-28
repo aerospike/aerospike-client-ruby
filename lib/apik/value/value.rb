@@ -24,17 +24,17 @@ module Apik
   # Polymorphic value classes used to efficiently serialize objects into the wire protocol.
   class Value
 
-    @@packerPool = Pool.new
-    @@packerPool.create_block = Proc.new { MessagePack::Packer.new }
+    @@packer_pool = Pool.new
+    @@packer_pool.create_block = Proc.new { MessagePack::Packer.new }
 
     def self.get_packer
-      res = @@packerPool.poll
+      res = @@packer_pool.poll
       res.clear
       res
     end
 
     def self.put_packer(packer)
-      @@packerPool.offer(packer)
+      @@packer_pool.offer(packer)
     end
 
     def self.of(value)
@@ -57,7 +57,7 @@ module Apik
       when Array
         res = ListValue.new(value)
       else
-        # panic for anything that is not supported.
+        # throw an exception for anything that is not supported.
         raise Apik::Exceptions::Aerospike.new(TYPE_NOT_SUPPORTED, "Value type #{value.class} not supported.").freeze
       end
 
@@ -87,7 +87,7 @@ module Apik
     end
 
 
-    def estimateSize
+    def estimate_size
       0
     end
 
@@ -98,10 +98,6 @@ module Apik
     def pack(packer)
       packer.write_nil
     end
-
-    # GetLuaValue LuaValue {
-    #  LuaNil.NIL
-    # }
 
     def to_bytes
       ''
@@ -130,15 +126,11 @@ module Apik
       @bytes.to_s
     end
 
-    # def GetLuaValue LuaValue {
-    #  LuaString.valueOf(@bytes)
-    # end
-
     def to_bytes
       @bytes.bytes
     end
 
-    def estimateSize
+    def estimate_size
       @bytes.bytesize
     end
 
@@ -163,7 +155,7 @@ module Apik
       self
     end
 
-    def estimateSize
+    def estimate_size
       @value.bytesize
     end
 
@@ -182,10 +174,6 @@ module Apik
     def get
       @value
     end
-
-    # def GetLuaValue LuaValue {
-    #  LuaString.valueOf(@value)
-    # }
 
     def to_bytes
       @value
@@ -207,7 +195,7 @@ module Apik
       self
     end
 
-    def estimateSize
+    def estimate_size
       8
     end
 
@@ -227,10 +215,6 @@ module Apik
     def get
       @value
     end
-
-    # def GetLuaValue LuaValue {
-    #  LuaInteger.valueOf(@value)
-    # }
 
     def to_bytes
       [@value].pack('Q<'.freeze)
@@ -256,7 +240,7 @@ module Apik
       self
     end
 
-    def estimateSize
+    def estimate_size
       @bytes.bytesize
     end
 
@@ -279,10 +263,6 @@ module Apik
     def get
       @list
     end
-
-    # def GetLuaValue LuaValue {
-    #  nil
-    # }
 
     def to_bytes
       @bytes
@@ -311,7 +291,7 @@ module Apik
       self
     end
 
-    def estimateSize
+    def estimate_size
       @bytes.bytesize
     end
 
@@ -336,10 +316,6 @@ module Apik
       @vmap
     end
 
-    # def GetLuaValue LuaValue {
-    #  nil
-    # }
-
     def to_bytes
       @bytes
     end
@@ -354,7 +330,7 @@ module Apik
 
   protected
 
-  def self.bytesToParticle(type, buf , offset, length)
+  def self.bytes_to_particle(type, buf , offset, length)
 
     case type
     when Apik::ParticleType::STRING
@@ -377,7 +353,7 @@ module Apik
     end
   end
 
-  def self.bytesToKeyValue(type, buf, offset, len)
+  def self.bytes_to_key_value(type, buf, offset, len)
 
     case type
     when Apik::ParticleType::STRING
