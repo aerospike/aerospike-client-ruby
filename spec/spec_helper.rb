@@ -12,11 +12,11 @@ require "support/utils"
 
 $:.unshift((Pathname(__FILE__).dirname.parent + 'lib').to_s)
 
-require 'apik'
+require 'aerospike'
 
 # Log to a StringIO instance to make sure no exceptions are rasied by our
 # logging code.
-Apik.logger = Logger.new(StringIO.new, Logger::DEBUG)
+Aerospike.logger = Logger.new(StringIO.new, Logger::DEBUG)
 
 RSpec.configure do |config|
 

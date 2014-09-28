@@ -1,22 +1,22 @@
 require "rspec/core/rake_task"
 
 $LOAD_PATH.unshift File.expand_path("../lib", __FILE__)
-require "apik/version"
+require "aerospike/version"
 
 task :gem => :build
 task :build do
-  system "gem build apik.gemspec"
+  system "gem build aerospike.gemspec"
 end
 
 task :install => :build do
-  system "sudo gem install apik-#{Apik::VERSION}.gem"
+  system "sudo gem install aerospike-#{Aerospike::VERSION}.gem"
 end
 
 task :release => :build do
-  system "git tag -a v#{Apik::VERSION} -m 'Tagging #{Apik::VERSION}'"
+  system "git tag -a v#{Aerospike::VERSION} -m 'Tagging #{Aerospike::VERSION}'"
   system "git push --tags"
-  system "gem push apik-#{Apik::VERSION}.gem"
-  system "rm apik-#{Apik::VERSION}.gem"
+  system "gem push aerospike-#{Aerospike::VERSION}.gem"
+  system "rm aerospike-#{Aerospike::VERSION}.gem"
 end
 
 RSpec::Core::RakeTask.new(:spec) do |spec|

@@ -1,4 +1,4 @@
-require 'apik/key'
+require 'aerospike/key'
 
 module Support
 
@@ -9,7 +9,7 @@ module Support
   end
 
   def self.gen_random_key(len=50)
-    Apik::Key.new('test', 'test', rand_string(len))
+    Aerospike::Key.new('test', 'test', rand_string(len))
   end
 
 
