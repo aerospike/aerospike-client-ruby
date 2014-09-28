@@ -101,7 +101,7 @@ module Apik
     #  The policy specifies the transaction timeout, record expiration and how the transaction is
     #  handled when the record already exists.
     def put_bins(policy, key, *bins)
-      policy ||= WritePolicy.new(0, 0)
+      policy ||= WritePolicy.new
       command = WriteCommand.new(@cluster, policy, key, bins, Apik::Operation::WRITE)
       command.execute
     end
@@ -119,7 +119,7 @@ module Apik
     # }
 
     def append_bins(policy, key, bins)
-      policy ||= WritePolicy.new(0, 0)
+      policy ||= WritePolicy.new
       command = WriteCommand.new(@cluster, policy, key, bins, Apik::Operation::APPEND)
       command.execute
     end
@@ -133,7 +133,7 @@ module Apik
     # }
 
     def prepend_bins(policy, key, bins)
-      policy ||= WritePolicy.new(0, 0)
+      policy ||= WritePolicy.new
       command = WriteCommand.new(@cluster, policy, key, bins, Apik::Operation::PREPEND)
       command.execute
     end
@@ -151,7 +151,7 @@ module Apik
     # }
 
     def add_bins(policy, key, bins)
-      policy ||= WritePolicy.new(0, 0)
+      policy ||= WritePolicy.new
       command = WriteCommand.new(@cluster, policy, key, bins, Apik::Operation::ADD)
       command.execute
     end
@@ -163,7 +163,7 @@ module Apik
     #  Delete record for specified key.
     #  The policy specifies the transaction timeout.
     def delete(policy, key)
-      policy ||= WritePolicy.new(0, 0)
+      policy ||= WritePolicy.new
       command = DeleteCommand.new(@cluster, policy, key)
       command.execute
       command.existed
@@ -176,7 +176,7 @@ module Apik
     #  Create record if it does not already exist.  If the record exists, the record's
     #  time to expiration will be reset to the policy's expiration.
     def touch(policy, key)
-      policy ||= WritePolicy.new(0, 0)
+      policy ||= WritePolicy.new
       command = TouchCommand.new(@cluster, policy, key)
       command.execute
     end
@@ -307,7 +307,7 @@ module Apik
     #  Write operations are always performed first, regardless of operation order
     #  relative to read operations.
     def operate(policy, key, *operations)
-      policy ||= WritePolicy.new(0, 0)
+      policy ||= WritePolicy.new
 
       command = OperateCommand.new(@cluster, policy, key, operations)
       command.execute
@@ -472,7 +472,7 @@ module Apik
     #
     #  This method is only supported by Aerospike 3 servers.
     def execute_udf(policy, key, packageName, functionName, *args)
-      policy ||= WritePolicy.new(0, 0)
+      policy ||= WritePolicy.new
 
       command = ExecuteCommand.new(@cluster, policy, key, packageName, functionName, args)
       command.execute

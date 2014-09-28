@@ -24,11 +24,11 @@ module Apik
     attr_accessor :RecordExistsAction, :GenerationPolicy,
       :Generation, :Expiration, :SendKey
 
-    def initialize(gen_policy=nil, generation=nil, expiration=nil)
+    def initialize(record_exists_action=nil, gen_policy=nil, generation=nil, expiration=nil, send_key=nil)
       super()
 
       # Qualify how to handle writes where the record already exists.
-      @RecordExistsAction = RecordExistsAction::UPDATE
+      @RecordExistsAction = record_exists_action || RecordExistsAction::UPDATE
 
       # Qualify how to handle record writes based on record generation. The default (NONE)
       # indicates that the generation is not used to restrict writes.
@@ -50,7 +50,7 @@ module Apik
 
       # Send user defined key in addition to hash digest on a record put.
       # The default is to send the user defined key.
-      @SendKey = true
+      @SendKey = send_key.nil? ? true : send_key
 
       self
     end

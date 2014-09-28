@@ -38,6 +38,19 @@ module Apik
       end
     end
 
+    # Update/Add each value in array depending if key exists or not.
+    # If value is a map, the key is identified by "key" entry.  Otherwise, the value is the key.
+    # If large list does not exist, create it using specified userModule configuration.
+    #
+    # values      values to update
+    def update(*values)
+      if values.length == 1
+        @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'update', @binName, values[0], @userModule)
+      else
+        @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'update_all', @binName, values, @userModule)
+      end
+    end
+
     # Delete value from list.
     #
     # value       value to delete

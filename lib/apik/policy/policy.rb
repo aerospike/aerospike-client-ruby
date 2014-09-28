@@ -22,30 +22,29 @@ module Apik
 
     attr_accessor :Priority, :Timeout, :MaxRetries, :SleepBetweenRetries
 
-
-    def initialize
+    def initialize(priority=nil, timeout=nil, max_retiries=nil, sleep_between_retries=nil)
       # Container object for transaction policy attributes used in all database
       # operation calls.
 
       # Priority of request relative to other transactions.
       # Currently, only used for scans.
-      @Priority = Priority::DEFAULT
+      @Priority = priority || Priority::DEFAULT
 
       # Transaction timeout.
       # This timeout is used to set the socket timeout and is also sent to the
       # server along with the transaction in the wire protocol.
       # Default to no timeout (0).
-      @Timeout = 0
+      @Timeout = timeout || 0
 
       # Maximum number of retries before aborting the current transaction.
       # A retry is attempted when there is a network error other than timeout.
       # If maxRetries is exceeded, the abort will occur even if the timeout
       # has not yet been exceeded.
-      @MaxRetries = 2
+      @MaxRetries = max_retiries || 2
 
       # Duration to sleep between retries if a transaction fails and the
       # timeout was not exceeded. Enter zero to skip sleep.
-      @SleepBetweenRetries = 0.5
+      @SleepBetweenRetries = sleep_between_retries || 0.5
     end
 
 

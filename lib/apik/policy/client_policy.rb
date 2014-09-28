@@ -19,16 +19,16 @@ module Apik
 
     attr_accessor :Timeout, :ConnectionQueueSize, :FailIfNotConnected
 
-    def initialize
+    def initialize(timeout=nil, connection_queue_size=nil, fail_if_not_connected=nil)
       # Initial host connection timeout in seconds. The timeout when opening a connection
       # to the server host for the first time.
-      @Timeout = 1.0 # 1 second
+      @Timeout = timeout || 1.0 # 1 second
 
       # Size of the Connection Queue cache.
-      @ConnectionQueueSize = 64
+      @ConnectionQueueSize = connection_queue_size || 64
 
       # Throw exception if host connection fails during addHost.
-      @FailIfNotConnected = true
+      @FailIfNotConnected = fail_if_not_connected || true
     end
 
   end # class
