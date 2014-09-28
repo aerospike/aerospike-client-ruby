@@ -21,7 +21,7 @@ module Aerospike
   # Container object for client policy command.
   class Policy
 
-    attr_accessor :Priority, :Timeout, :MaxRetries, :SleepBetweenRetries
+    attr_accessor :priority, :timeout, :max_retries, :sleep_between_retries
 
     def initialize(priority=nil, timeout=nil, max_retiries=nil, sleep_between_retries=nil)
       # Container object for transaction policy attributes used in all database
@@ -29,23 +29,23 @@ module Aerospike
 
       # Priority of request relative to other transactions.
       # Currently, only used for scans.
-      @Priority = priority || Priority::DEFAULT
+      @priority = priority || Priority::DEFAULT
 
       # Transaction timeout.
       # This timeout is used to set the socket timeout and is also sent to the
       # server along with the transaction in the wire protocol.
       # Default to no timeout (0).
-      @Timeout = timeout || 0
+      @timeout = timeout || 0
 
       # Maximum number of retries before aborting the current transaction.
       # A retry is attempted when there is a network error other than timeout.
       # If max_retries is exceeded, the abort will occur even if the timeout
       # has not yet been exceeded.
-      @MaxRetries = max_retiries || 2
+      @max_retries = max_retiries || 2
 
       # Duration to sleep between retries if a transaction fails and the
       # timeout was not exceeded. Enter zero to skip sleep.
-      @SleepBetweenRetries = sleep_between_retries || 0.5
+      @sleep_between_retries = sleep_between_retries || 0.5
     end
 
 

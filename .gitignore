@@ -10,3 +10,5 @@ tmp/
 .replica
 TODO
 .DS_Store
+.ruby-version
+

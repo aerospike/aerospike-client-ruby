@@ -33,9 +33,9 @@ module Aerospike
     # values      values to push
     def push(*values)
       if values.length == 1
-        @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'push', @bin_name, values[0], @user_module)
+        @client.execute_udf(@key, @PACKAGE_NAME, 'push', [@bin_name, values[0], @user_module], @policy)
       else
-        @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'push_all', @bin_name, values, @user_module)
+        @client.execute_udf(@key, @PACKAGE_NAME, 'push_all', [@bin_name, values, @user_module], @policy)
       end
     end
 
@@ -44,7 +44,7 @@ module Aerospike
     # peek_count     number of items to select.
     # returns          list of items selected
     def peek(peek_count)
-      @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'peek', @bin_name, peek_count)
+      @client.execute_udf(@key, @PACKAGE_NAME, 'peek', [@bin_name, peek_count], @policy)
     end
 
     # Select items from top of stack.
@@ -52,7 +52,7 @@ module Aerospike
     # peek_count     number of items to select.
     # returns          list of items selected
     def pop(count)
-      @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'pop', @bin_name, count)
+      @client.execute_udf(@key, @PACKAGE_NAME, 'pop', [@bin_name, count], @policy)
     end
 
     # Select items from top of stack.
@@ -62,7 +62,7 @@ module Aerospike
     # filter_args    arguments to Lua function name
     # returns          list of items selected
     def filter(peek_count, filter_name, *filter_args)
-      @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'filter', @bin_name, peek_count, @user_module, filter_name, filter_args)
+      @client.execute_udf(@key, @PACKAGE_NAME, 'filter', [@bin_name, peek_count, @user_module, filter_name, filter_args], @policy)
     end
 
   end # class

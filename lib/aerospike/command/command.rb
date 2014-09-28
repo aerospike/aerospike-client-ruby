@@ -78,7 +78,7 @@ module Aerospike
       begin_cmd
       field_count = estimate_key_size(key)
 
-      if policy.SendKey
+      if policy.send_key
         # field header size + key size
         @data_offset += key.user_key_as_value.estimate_size + FIELD_HEADER_SIZE
         field_count += 1
@@ -93,7 +93,7 @@ module Aerospike
       write_header_with_policy(policy, 0, INFO2_WRITE, field_count, bins.length)
       write_key(key)
 
-      if policy.SendKey
+      if policy.send_key
         write_field_value(key.user_key_as_value, Aerospike::FieldType::KEY)
       end
 
@@ -321,22 +321,22 @@ module Aerospike
       iterations = 0
 
       # set timeout outside the loop
-      limit = Time.now + @policy.Timeout
+      limit = Time.now + @policy.timeout
 
       # Execute command until successful, timed out or maximum iterations have been reached.
       while true
         # too many retries
         iterations += 1
-        break if (@policy.MaxRetries > 0) && (iterations > @policy.MaxRetries+1)
+        break if (@policy.max_retries > 0) && (iterations > @policy.max_retries+1)
 
         # Sleep before trying again, after the first iteration
-        sleep(@policy.SleepBetweenRetries) if iterations > 1 && @policy.SleepBetweenRetries > 0
+        sleep(@policy.sleep_between_retries) if iterations > 1 && @policy.sleep_between_retries > 0
 
         # check for command timeout
-        break if @policy.Timeout > 0 && Time.now > limit
+        break if @policy.timeout > 0 && Time.now > limit
 
         begin
-          @conn = @node.get_connection(@policy.Timeout)
+          @conn = @node.get_connection(@policy.timeout)
         rescue Exception => e
           # Socket connection error has occurred. Decrease health and retry.
           @node.decrease_health
@@ -360,7 +360,7 @@ module Aerospike
           end
 
           # Reset timeout in send buffer (destined for server) and socket.
-          @data_buffer.write_int32((@policy.Timeout * 1000).to_i, 22)
+          @data_buffer.write_int32((@policy.timeout * 1000).to_i, 22)
 
           # Send command.
           begin
@@ -488,7 +488,7 @@ module Aerospike
       generation = Integer(0)
       info_attr = Integer(0)
 
-      case policy.RecordExistsAction
+      case policy.record_exists_action
       when Aerospike::RecordExistsAction::UPDATE
       when Aerospike::RecordExistsAction::UPDATE_ONLY
         info_attr |= INFO3_UPDATE_ONLY
@@ -500,16 +500,16 @@ module Aerospike
         write_attr |= INFO2_CREATE_ONLY
       end
 
-      case policy.GenerationPolicy
+      case policy.generation_policy
       when Aerospike::GenerationPolicy::NONE
       when Aerospike::GenerationPolicy::EXPECT_GEN_EQUAL
-        generation = policy.Generation
+        generation = policy.generation
         write_attr |= INFO2_GENERATION
       when Aerospike::GenerationPolicy::EXPECT_GEN_GT
-        generation = policy.Generation
+        generation = policy.generation
         write_attr |= INFO2_GENERATION_GT
       when Aerospike::GenerationPolicy::DUPLICATE
-        generation = policy.Generation
+        generation = policy.generation
         write_attr |= INFO2_GENERATION_DUP
       end
 
@@ -522,8 +522,8 @@ module Aerospike
       @data_buffer.write_byte(0, 13) # clear the result code
       # Buffer.Int32ToBytes(generation, @data_buffer, 14)
       @data_buffer.write_int32(generation, 14)
-      # Buffer.Int32ToBytes(policy.Expiration, @data_buffer, 18)
-      @data_buffer.write_int32(policy.Expiration, 18)
+      # Buffer.Int32ToBytes(policy.expiration, @data_buffer, 18)
+      @data_buffer.write_int32(policy.expiration, 18)
 
       # Initialize timeout. It will be written later.
       @data_buffer.write_byte(0, 22)

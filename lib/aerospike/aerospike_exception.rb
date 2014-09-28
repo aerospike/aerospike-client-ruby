@@ -14,6 +14,8 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
+require 'aerospike/result_code'
+
 module Aerospike
 
   module Exceptions
@@ -24,7 +26,7 @@ module Aerospike
 
       def initialize(result_code, message = nil)
         @result_code = result_code
-        message ||= Aerospike::ResultCode.message(result_code)
+        message ||= ResultCode.message(result_code)
         super(message)
 
         self
@@ -43,7 +45,7 @@ module Aerospike
         @failed_nodes = failed_nodes
         @failed_connections = failed_connections
 
-        super(Aerospike::ResultCode::TIMEOUT)
+        super(ResultCode::TIMEOUT)
 
       end
 
@@ -52,7 +54,7 @@ module Aerospike
     class Serialize < Aerospike
 
       def initialize(msg=nil)
-        super(Aerospike::ResultCode::SERIALIZE_ERROR, msg)
+        super(ResultCode::SERIALIZE_ERROR, msg)
       end
 
     end
@@ -60,7 +62,7 @@ module Aerospike
     class Parse < Aerospike
 
       def initialize(msg=nil)
-        super(Aerospike::ResultCode::PARSE_ERROR, msg)
+        super(ResultCode::PARSE_ERROR, msg)
       end
 
     end
@@ -68,7 +70,7 @@ module Aerospike
     class Connection < Aerospike
 
       def initialize(msg=nil)
-        super(Aerospike::ResultCode::SERVER_NOT_AVAILABLE, msg)
+        super(ResultCode::SERVER_NOT_AVAILABLE, msg)
       end
 
     end
@@ -76,7 +78,7 @@ module Aerospike
     class InvalidNode < Aerospike
 
       def initialize(msg=nil)
-        super(Aerospike::ResultCode::INVALID_NODE_ERROR, msg)
+        super(ResultCode::INVALID_NODE_ERROR, msg)
       end
 
     end
@@ -84,7 +86,7 @@ module Aerospike
     class ScanTerminated < Aerospike
 
       def initialize(msg=nil)
-        super(Aerospike::ResultCode::SCAN_TERMINATED, msg)
+        super(ResultCode::SCAN_TERMINATED, msg)
       end
 
     end
@@ -92,7 +94,7 @@ module Aerospike
     class QueryTerminated < Aerospike
 
       def initialize(msg=nil)
-        super(Aerospike::ResultCode::QUERY_TERMINATED, msg)
+        super(ResultCode::QUERY_TERMINATED, msg)
       end
 
     end
@@ -100,7 +102,7 @@ module Aerospike
     class CommandRejected < Aerospike
 
       def initialize(msg=nil)
-        super(Aerospike::ResultCode::COMMAND_REJECTED, msg)
+        super(ResultCode::COMMAND_REJECTED, msg)
       end
 
     end

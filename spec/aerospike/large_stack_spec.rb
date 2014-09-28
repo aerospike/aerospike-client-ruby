@@ -7,7 +7,7 @@ describe Aerospike::Client do
     describe "LargeStack operations" do
 
       let(:client) do
-        described_class.new(nil, "127.0.0.1", 3000)
+        described_class.new("127.0.0.1", 3000)
       end
 
       after do
@@ -15,7 +15,7 @@ describe Aerospike::Client do
       end
 
       let(:lstack) do
-        client.get_large_stack(nil, Support.gen_random_key, 'bbb')
+        client.get_large_stack(Support.gen_random_key, 'bbb')
       end
 
       context "a large stack object" do

@@ -33,14 +33,14 @@ module Aerospike
     # name        entry key
     # value       entry value
     def put(name, value)
-      @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'put', @bin_name, name, value, @user_module)
+      @client.execute_udf(@key, @PACKAGE_NAME, 'put', [@bin_name, name, value, @user_module], @policy)
     end
 
     # Add map values to map.  If the map does not exist, create it using specified user_module configuration.
     #
     # map       map values to push
     def put_map(the_map)
-      @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'put_all', @bin_name, the_map, @user_module)
+      @client.execute_udf(@key, @PACKAGE_NAME, 'put_all', [@bin_name, the_map, @user_module], @policy)
     end
 
     # Get value from map given name key.
@@ -49,7 +49,7 @@ module Aerospike
     # return          map of items selected
     def get(name)
       begin
-        @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'get', @bin_name, name, @user_module)
+        @client.execute_udf(@key, @PACKAGE_NAME, 'get', [@bin_name, name, @user_module], @policy)
       rescue Aerospike::Exceptions::Aerospike => e
         unless e.result_code == Aerospike::ResultCode::UDF_BAD_RESPONSE && e.message.index("Item Not Found")
           raise e
@@ -63,7 +63,7 @@ module Aerospike
     # name        key.
     # return          map of items selected
     def remove(name)
-      @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'remove', @bin_name, name, @user_module)
+      @client.execute_udf(@key, @PACKAGE_NAME, 'remove', [@bin_name, name, @user_module], @policy)
     end
 
     # Select items from map.
@@ -72,7 +72,7 @@ module Aerospike
     # filter_args    arguments to Lua function name
     # return          list of items selected
     def filter(filter_name, *filter_args)
-      @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'filter', @bin_name, @user_module, filter_name, filter_args)
+      @client.execute_udf(@key, @PACKAGE_NAME, 'filter', [@bin_name, @user_module, filter_name, filter_args], @policy)
     end
 
   end # class

@@ -183,171 +183,171 @@ module Aerospike
 
     def self.message(code)
       case code
-        when COMMAND_REJECTED
-          "Command rejected"
+      when COMMAND_REJECTED
+        "Command rejected"
 
-        when QUERY_TERMINATED
-          "Query terminated"
+      when QUERY_TERMINATED
+        "Query terminated"
 
-        when SCAN_TERMINATED
-          "Scan terminated"
+      when SCAN_TERMINATED
+        "Scan terminated"
 
-        when INVALID_NODE_ERROR
-          "Invalid node"
+      when INVALID_NODE_ERROR
+        "Invalid node"
 
-        when PARSE_ERROR
-          "Parse error"
+      when PARSE_ERROR
+        "Parse error"
 
-        when SERIALIZE_ERROR
-          "Serialize error"
+      when SERIALIZE_ERROR
+        "Serialize error"
 
-        when OK
-          "ok"
+      when OK
+        "ok"
 
-        when SERVER_ERROR
-          "Server error"
+      when SERVER_ERROR
+        "Server error"
 
-        when KEY_NOT_FOUND_ERROR
-          "Key not found"
+      when KEY_NOT_FOUND_ERROR
+        "Key not found"
 
-        when GENERATION_ERROR
-          "Generation error"
+      when GENERATION_ERROR
+        "Generation error"
 
-        when PARAMETER_ERROR
-          "Parameter error"
+      when PARAMETER_ERROR
+        "Parameter error"
 
-        when KEY_EXISTS_ERROR
-          "Key already exists"
+      when KEY_EXISTS_ERROR
+        "Key already exists"
 
-        when BIN_EXISTS_ERROR
-          "Bin already exists"
+      when BIN_EXISTS_ERROR
+        "Bin already exists"
 
-        when CLUSTER_KEY_MISMATCH
-          "Cluster key mismatch"
+      when CLUSTER_KEY_MISMATCH
+        "Cluster key mismatch"
 
-        when SERVER_MEM_ERROR
-          "Server memory error"
+      when SERVER_MEM_ERROR
+        "Server memory error"
 
-        when TIMEOUT
-          "Timeout"
+      when TIMEOUT
+        "Timeout"
 
-        when NO_XDS
-          "XDS not available"
+      when NO_XDS
+        "XDS not available"
 
-        when SERVER_NOT_AVAILABLE
-          "Server not available"
+      when SERVER_NOT_AVAILABLE
+        "Server not available"
 
-        when BIN_TYPE_ERROR
-          "Bin type error"
+      when BIN_TYPE_ERROR
+        "Bin type error"
 
-        when RECORD_TOO_BIG
-          "Record too big"
+      when RECORD_TOO_BIG
+        "Record too big"
 
-        when KEY_BUSY
-          "Hot key"
+      when KEY_BUSY
+        "Hot key"
 
-        when SCAN_ABORT
-          "Scan aborted"
+      when SCAN_ABORT
+        "Scan aborted"
 
-        when UNSUPPORTED_FEATURE
-          "Unsupported Server Feature"
+      when UNSUPPORTED_FEATURE
+        "Unsupported Server Feature"
 
-        when BIN_NOT_FOUND
-          "Bin not found"
+      when BIN_NOT_FOUND
+        "Bin not found"
 
-        when DEVICE_OVERLOAD
-          "Device overload"
+      when DEVICE_OVERLOAD
+        "Device overload"
 
-        when KEY_MISMATCH
-          "Key mismatch"
+      when KEY_MISMATCH
+        "Key mismatch"
 
-        when QUERY_END
-          "Query end"
+      when QUERY_END
+        "Query end"
 
-        when SECURITY_NOT_SUPPORTED
-          "Security not supported"
+      when SECURITY_NOT_SUPPORTED
+        "Security not supported"
 
-        when SECURITY_NOT_ENABLED
-          "Security not enabled"
+      when SECURITY_NOT_ENABLED
+        "Security not enabled"
 
-        when SECURITY_SCHEME_NOT_SUPPORTED
-          "Security scheme not supported"
+      when SECURITY_SCHEME_NOT_SUPPORTED
+        "Security scheme not supported"
 
-        when INVALID_COMMAND
-          "Invalid command"
+      when INVALID_COMMAND
+        "Invalid command"
 
-        when INVALID_FIELD
-          "Invalid field"
+      when INVALID_FIELD
+        "Invalid field"
 
-        when ILLEGAL_STATE
-          "Illegal state"
+      when ILLEGAL_STATE
+        "Illegal state"
 
-        when INVALID_USER
-          "Invalid user"
+      when INVALID_USER
+        "Invalid user"
 
-        when USER_ALREADY_EXISTS
-          "User already exists"
+      when USER_ALREADY_EXISTS
+        "User already exists"
 
-        when INVALID_PASSWORD
-          "Invalid password"
+      when INVALID_PASSWORD
+        "Invalid password"
 
-        when INVALID_CREDENTIAL
-          "Invalid credential"
+      when INVALID_CREDENTIAL
+        "Invalid credential"
 
-        when INVALID_ROLE
-          "Invalid role"
+      when INVALID_ROLE
+        "Invalid role"
 
-        when INVALID_PRIVILEGE
-          "Invalid privilege"
+      when INVALID_PRIVILEGE
+        "Invalid privilege"
 
-        when NOT_AUTHENTICATED
-          "Not authenticated"
+      when NOT_AUTHENTICATED
+        "Not authenticated"
 
-        when ROLE_VIOLATION
-          "Role violation"
+      when ROLE_VIOLATION
+        "Role violation"
 
-        when UDF_BAD_RESPONSE
-          "UDF d error"
+      when UDF_BAD_RESPONSE
+        "UDF d error"
 
-        when INDEX_FOUND
-          "Index already exists"
+      when INDEX_FOUND
+        "Index already exists"
 
-        when INDEX_NOTFOUND
-          "Index not found"
+      when INDEX_NOTFOUND
+        "Index not found"
 
-        when INDEX_OOM
-          "Index out of memory"
+      when INDEX_OOM
+        "Index out of memory"
 
-        when INDEX_NOTREADABLE
-          "Index not readable"
+      when INDEX_NOTREADABLE
+        "Index not readable"
 
-        when INDEX_GENERIC
-          "Index error"
+      when INDEX_GENERIC
+        "Index error"
 
-        when INDEX_NAME_MAXLEN
-          "Index name max length exceeded"
+      when INDEX_NAME_MAXLEN
+        "Index name max length exceeded"
 
-        when INDEX_MAXCOUNT
-          "Index count exceeds max"
+      when INDEX_MAXCOUNT
+        "Index count exceeds max"
 
-        when QUERY_ABORTED
-          "Query aborted"
+      when QUERY_ABORTED
+        "Query aborted"
 
-        when QUERY_QUEUEFULL
-          "Query queue full"
+      when QUERY_QUEUEFULL
+        "Query queue full"
 
-        when QUERY_TIMEOUT
-          "Query timeout"
+      when QUERY_TIMEOUT
+        "Query timeout"
 
-        when QUERY_GENERIC
-          "Query error"
+      when QUERY_GENERIC
+        "Query error"
 
-        else
-          ""
+      else
+        "ResultCode unknown in the client. Please file a github issue."
       end # case
 
     end
 
-  end
+  end # class
 
-end
+end # module

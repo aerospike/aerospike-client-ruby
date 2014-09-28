@@ -18,6 +18,8 @@ require 'socket'
 
 module Aerospike
 
+  protected
+
   class Connection
 
     def initialize(host, port, timeout = 30)
@@ -32,25 +34,14 @@ module Aerospike
     def connect(host, port, timeout)
       socket = Socket.new(Socket::AF_INET, Socket::SOCK_STREAM, 0)
       sockaddr = Socket.sockaddr_in(port, host)
-      tries = 10
       begin
         socket.connect_nonblock(sockaddr)
       rescue Errno::EINPROGRESS
         # Block until the socket is ready, then try again
         IO.select([socket], [socket], [socket], timeout.to_f)
+        @sockaddr = sockaddr
+        return socket
       end
-
-      begin
-        socket.connect_nonblock(sockaddr)
-      rescue Errno::EISCONN
-        # we are connected
-      rescue Errno::EINPROGRESS, Errno::EALREADY
-        socket.close
-        return nil
-      end
-
-      @sockaddr = sockaddr
-      return socket
     end
 
     def write(buffer, length)
@@ -59,7 +50,7 @@ module Aerospike
         begin
           written = @socket.write_nonblock(buffer.read(total, length - total))
           total += written
-        rescue Errno::EAGAIN
+        rescue IO::WaitWriteable, Errno::EAGAIN
           IO.select(nil, [@socket])
           retry
         end
@@ -73,7 +64,7 @@ module Aerospike
           bytes = @socket.recv_nonblock(length - total)
           buffer.write_binary(bytes, total) if bytes.bytesize > 0
           total += bytes.bytesize
-        rescue IO::WaitReadable
+        rescue IO::WaitReadable,  Errno::EAGAIN
           IO.select([@socket], nil)
           retry
         end
@@ -94,7 +85,7 @@ module Aerospike
     end
 
     def timeout=(timeout)
-        if timeout > 0
+      if timeout > 0
         if IO.select([@socket], [@socket], [@socket], timeout.to_f)
           begin
             # Verify there is now a good connection

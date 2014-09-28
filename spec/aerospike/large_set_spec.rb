@@ -7,7 +7,7 @@ describe Aerospike::Client do
     describe "LargeSet operations" do
 
       let(:client) do
-        described_class.new(nil, "127.0.0.1", 3000)
+        described_class.new("127.0.0.1", 3000)
       end
 
       after do
@@ -15,7 +15,7 @@ describe Aerospike::Client do
       end
 
       let(:lset) do
-        client.get_large_set(nil, Support.gen_random_key, 'bbb')
+        client.get_large_set(Support.gen_random_key, 'bbb')
       end
 
       context "a large set object" do

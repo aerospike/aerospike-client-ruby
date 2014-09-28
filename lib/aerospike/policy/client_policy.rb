@@ -18,18 +18,18 @@ module Aerospike
   # Container object for client policy command.
   class ClientPolicy
 
-    attr_accessor :Timeout, :ConnectionQueueSize, :FailIfNotConnected
+    attr_accessor :timeout, :connection_queue_size, :fail_if_not_connected
 
     def initialize(timeout=nil, connection_queue_size=nil, fail_if_not_connected=nil)
       # Initial host connection timeout in seconds. The timeout when opening a connection
       # to the server host for the first time.
-      @Timeout = timeout || 1.0 # 1 second
+      @timeout = timeout || 1.0 # 1 second
 
       # Size of the Connection Queue cache.
-      @ConnectionQueueSize = connection_queue_size || 64
+      @connection_queue_size = connection_queue_size || 64
 
       # Throw exception if host connection fails during add_host.
-      @FailIfNotConnected = fail_if_not_connected || true
+      @fail_if_not_connected = fail_if_not_connected || true
     end
 
   end # class

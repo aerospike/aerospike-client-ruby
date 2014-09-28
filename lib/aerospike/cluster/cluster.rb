@@ -33,8 +33,8 @@ module Aerospike
 
     def initialize(policy, *hosts)
       @cluster_seeds = hosts
-      @connection_queue_size = policy.ConnectionQueueSize
-      @connection_timeout = policy.Timeout
+      @connection_queue_size = policy.connection_queue_size
+      @connection_timeout = policy.timeout
       @aliases = {}
       @cluster_nodes = []
       @partition_write_map = {}
@@ -44,7 +44,7 @@ module Aerospike
 
       wait_till_stablized
 
-      if policy.FailIfNotConnected && !connected?
+      if policy.fail_if_not_connected && !connected?
         raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::SERVER_NOT_AVAILABLE)
       end
 

@@ -33,9 +33,9 @@ module Aerospike
     # values      values to add
     def add(*values)
       if values.length == 1
-        @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'add', @bin_name, values[0], @user_module)
+        @client.execute_udf(@key, @PACKAGE_NAME, 'add', [@bin_name, values[0], @user_module], @policy)
       else
-        @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'add_all', @bin_name, values, @user_module)
+        @client.execute_udf(@key, @PACKAGE_NAME, 'add_all', [@bin_name, values, @user_module], @policy)
       end
     end
 
@@ -43,7 +43,7 @@ module Aerospike
     #
     # value       value to delete
     def remove(value)
-      @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'remove', @bin_name, value)
+      @client.execute_udf(@key, @PACKAGE_NAME, 'remove', [@bin_name, value], @policy)
     end
 
     # Select values from list.
@@ -51,7 +51,7 @@ module Aerospike
     # value       value to select
     # returns          list of entries selected
     def get(value)
-      @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'get', @bin_name, value)
+      @client.execute_udf(@key, @PACKAGE_NAME, 'get', [@bin_name, value], @policy)
     end
 
     # Check existence of value in the set.
@@ -59,7 +59,7 @@ module Aerospike
     # value       value to check
     # returns          true if found, otherwise false
     def exists(value)
-      1 == @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'exists', @bin_name, value)
+      1 == @client.execute_udf(@key, @PACKAGE_NAME, 'exists', [@bin_name, value], @policy)
     end
 
     # Select values from list and apply specified Lua filter.
@@ -68,7 +68,7 @@ module Aerospike
     # filter_args    arguments to Lua function name
     # returns          list of entries selected
     def filter(filter_name, *filter_args)
-      @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'filter', @bin_name, @user_module, filter_name, filter_args)
+      @client.execute_udf(@key, @PACKAGE_NAME, 'filter', [@bin_name, @user_module, filter_name, filter_args], @policy)
     end
 
   end # class

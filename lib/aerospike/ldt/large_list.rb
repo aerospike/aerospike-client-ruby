@@ -33,9 +33,9 @@ module Aerospike
     # values      values to add
     def add(*values)
       if values.length == 1
-        @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'add', @bin_name, values[0], @user_module)
+        @client.execute_udf(@key, @PACKAGE_NAME, 'add', [@bin_name, values[0], @user_module], @policy)
       else
-        @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'add_all', @bin_name, values, @user_module)
+        @client.execute_udf(@key, @PACKAGE_NAME, 'add_all', [@bin_name, values, @user_module], @policy)
       end
     end
 
@@ -46,9 +46,9 @@ module Aerospike
     # values      values to update
     def update(*values)
       if values.length == 1
-        @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'update', @bin_name, values[0], @user_module)
+        @client.execute_udf(@key, @PACKAGE_NAME, 'update', [@bin_name, values[0], @user_module], @policy)
       else
-        @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'update_all', @bin_name, values, @user_module)
+        @client.execute_udf(@key, @PACKAGE_NAME, 'update_all', [@bin_name, values, @user_module], @policy)
       end
     end
 
@@ -56,7 +56,7 @@ module Aerospike
     #
     # value       value to delete
     def remove(value)
-      @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'remove', @bin_name, value)
+      @client.execute_udf(@key, @PACKAGE_NAME, 'remove', [@bin_name, value], @policy)
     end
 
     # Select values from list.
@@ -65,7 +65,7 @@ module Aerospike
     # returns          list of entries selected
     def find(value)
       begin
-        @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'find', @bin_name, value)
+        @client.execute_udf(@key, @PACKAGE_NAME, 'find', [@bin_name, value], @policy)
       rescue Aerospike::Exceptions::Aerospike => e
         unless e.result_code == Aerospike::ResultCode::UDF_BAD_RESPONSE && e.message.index("Item Not Found")
           raise e
@@ -81,7 +81,7 @@ module Aerospike
     # filter_args    arguments to Lua function name
     # returns          list of entries selected
     def find_then_filter(value, filter_name, *filter_args)
-      @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'find_then_filter', @bin_name, value, @user_module, filter_name, filter_args)
+      @client.execute_udf(@key, @PACKAGE_NAME, 'find_then_filter', [@bin_name, value, @user_module, filter_name, filter_args], @policy)
     end
 
     # Select values from list and apply specified Lua filter.
@@ -90,7 +90,7 @@ module Aerospike
     # filter_args    arguments to Lua function name
     # returns          list of entries selected
     def filter(filter_name, *filter_args)
-      @client.execute_udf(@policy, @key, @PACKAGE_NAME, 'filter', @bin_name, @user_module, filter_name, filter_args)
+      @client.execute_udf(@key, @PACKAGE_NAME, 'filter', [@bin_name, @user_module, filter_name, filter_args], @policy)
     end
 
   end # class
