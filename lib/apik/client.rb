@@ -71,13 +71,13 @@ module Apik
     end
 
     #  Return array of active server nodes in the cluster.
-    def get_nodes
-      @cluster.get_nodes
+    def nodes
+      @cluster.nodes
     end
 
     #  Return list of active server node names in the cluster.
-    def get_node_names
-      nodes = @cluster.get_nodes
+    def node_names
+      nodes = @cluster.nodes
       names = []
 
       nodes.each do |node|
@@ -378,7 +378,7 @@ module Apik
       str_cmd = "udf-put:filename=#{server_path};content=#{content};"
       str_cmd += "content-len=#{content.length};udf-type=#{language};"
       # Send UDF to one node. That node will distribute the UDF to other nodes.
-      node = @cluster.get_random_node
+      node = @cluster.random_node
       conn = node.get_connection(@cluster.connection_timeout)
 
       response_map = Info.request(conn, str_cmd)
@@ -411,7 +411,7 @@ module Apik
       str_cmd = "udf-remove:filename=#{udf_name};"
 
       # Send command to one node. That node will distribute it to other nodes.
-      node = @cluster.get_random_node
+      node = @cluster.random_node
       conn = node.get_connection(@cluster.connection_timeout)
 
       response_map = Info.request(conn, str_cmd)
@@ -432,7 +432,7 @@ module Apik
       str_cmd = 'udf-list'
 
       # Send command to one node. That node will distribute it to other nodes.
-      node = @cluster.get_random_node
+      node = @cluster.random_node
       conn = node.get_connection(@cluster.connection_timeout)
 
       response_map = Info.request(conn, str_cmd)

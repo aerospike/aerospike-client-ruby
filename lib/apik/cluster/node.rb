@@ -84,7 +84,7 @@ module Apik
       while true
         conn = @connections.poll
         if conn.connected?
-          conn.set_timeout(timeout.to_f)
+          conn.timeout = timeout.to_f
           return conn
         end
       end

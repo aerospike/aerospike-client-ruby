@@ -56,7 +56,7 @@ module Apik
       @duplicates << idx
     end
 
-    def get_index
+    def index
       return @index unless @duplicates
 
       r = @duplicates[@index]

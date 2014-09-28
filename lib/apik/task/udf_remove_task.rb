@@ -36,7 +36,7 @@ module Apik
 
     def all_nodes_done?
       command = 'udf-list'
-      nodes = @cluster.get_nodes
+      nodes = @cluster.nodes
       done = false
 
       nodes.each do |node|

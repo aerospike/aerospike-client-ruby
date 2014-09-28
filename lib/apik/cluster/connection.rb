@@ -37,7 +37,7 @@ module Apik
         socket.connect_nonblock(sockaddr)
       rescue Errno::EINPROGRESS
         # Block until the socket is ready, then try again
-        IO.select([socket], [socket], [socket], timeout)
+        IO.select([socket], [socket], [socket], timeout.to_f)
       end
 
       begin
@@ -70,7 +70,6 @@ module Apik
       total = 0
       while total < length
         begin
-          # bytes = @socket.recv(length - total)
           bytes = @socket.recv_nonblock(length - total)
           buffer.write_binary(bytes, total) if bytes.bytesize > 0
           total += bytes.bytesize
@@ -94,8 +93,8 @@ module Apik
       @socket = nil
     end
 
-    def set_timeout(timeout = 5)
-      if timeout > 0
+    def timeout=(timeout)
+        if timeout > 0
         if IO.select([@socket], [@socket], [@socket], timeout.to_f)
           begin
             # Verify there is now a good connection

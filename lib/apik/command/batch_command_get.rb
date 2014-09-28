@@ -67,7 +67,7 @@ module Apik
 
         if item
           if result_code == 0
-            index = item.get_index
+            index = item.index
             @records[index] = parse_record(key, op_count, generation, expiration)
           end
         else

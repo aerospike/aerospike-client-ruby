@@ -24,13 +24,13 @@ describe Apik::Client do
 
     it "should have at least one node" do
 
-      expect(client.get_nodes.length).to be >= 1
+      expect(client.nodes.length).to be >= 1
 
     end
 
     it "should have at least one name in node name list" do
 
-      expect(client.get_node_names.length).to be >= 1
+      expect(client.node_names.length).to be >= 1
 
     end
 

@@ -32,11 +32,11 @@ module Apik
     attr_reader :connection_timeout, :connection_queue_size
 
     def initialize(policy, *hosts)
-      @seeds = hosts
+      @cluster_seeds = hosts
       @connection_queue_size = policy.ConnectionQueueSize
       @connection_timeout = policy.Timeout
       @aliases = {}
-      @nodes = []
+      @cluster_nodes = []
       @partition_write_map = {}
       @node_index = Atomic.new(0)
       @closed = Atomic.new(false)
@@ -57,14 +57,14 @@ module Apik
 
     def add_seeds(hosts)
       @mutex.synchronize do
-        @seeds << hosts
+        @cluster_seeds << hosts
       end
     end
 
-    def get_seeds
+    def seeds
       res = []
       @mutex.synchronize do
-        res = @seeds.dup
+        res = @cluster_seeds.dup
       end
 
       res
@@ -72,13 +72,13 @@ module Apik
 
     def connected?
       # Must copy array reference for copy on write semantics to work.
-      node_array = get_nodes
+      node_array = nodes
       (node_array.length > 0) && !@closed.value
     end
 
     def get_node(partition)
       # Must copy hashmap reference for copy on write semantics to work.
-      nmap = get_partitions
+      nmap = partitions
       if node_array = nmap[partition.namespace]
         node = node_array.value[partition.partition_id]
 
@@ -87,13 +87,13 @@ module Apik
         end
       end
 
-      return get_random_node
+      return random_node
     end
 
     # Returns a random node on the cluster
-    def get_random_node
+    def random_node
       # Must copy array reference for copy on write semantics to work.
-      node_array = get_nodes
+      node_array = nodes
       length = node_array.length
       for i in 0..length
         # Must handle concurrency with other non-tending goroutines, so node_index is consistent.
@@ -109,11 +109,11 @@ module Apik
     end
 
     # Returns a list of all nodes in the cluster
-    def get_nodes
+    def nodes
       node_array = nil
       @mutex.synchronize do
         # Must copy array reference for copy on write semantics to work.
-        node_array = @nodes.dup
+        node_array = @cluster_nodes.dup
       end
 
       node_array
@@ -135,7 +135,7 @@ module Apik
         @closed.value = true
         @tend_thread.kill
 
-        get_nodes.each do |node|
+        nodes.each do |node|
           node.close
         end
       end
@@ -158,11 +158,11 @@ module Apik
         Apik.logger.info("Updating partitions using new protocol...")
 
         tokens = PartitionTokenizerNew.new(conn)
-        nmap = tokens.update_partition(get_partitions, node)
+        nmap = tokens.update_partition(partitions, node)
       else
         Apik.logger.info("Updating partitions using old protocol...")
         tokens = PartitionTokenizerOld.new(conn)
-        nmap = tokens.update_partition(get_partitions, node)
+        nmap = tokens.update_partition(partitions, node)
       end
 
       # update partition write map
@@ -192,7 +192,7 @@ module Apik
     end
 
     def tend
-      nodes = get_nodes
+      nodes = self.nodes
 
       # All node additions/deletions are performed in tend goroutine.
       # If active nodes don't exist, seed cluster.
@@ -201,7 +201,7 @@ module Apik
         seed_nodes
 
         # refresh nodes list after seeding
-        nodes = get_nodes
+        nodes = self.nodes
       end
 
       # Clear node reference counts.
@@ -241,11 +241,7 @@ module Apik
         add_nodes(add_list)
       end
 
-      # get_nodes.each do |n|
-      #   p n.name
-      # end
-
-      Apik.logger.info("Tend finished. Live node count: #{get_nodes.length}")
+      Apik.logger.info("Tend finished. Live node count: #{nodes.length}")
     end
 
     def wait_till_stablized
@@ -258,13 +254,13 @@ module Apik
 
           # Check to see if cluster has changed since the last Tend.
           # If not, assume cluster has stabilized and return.
-          if count == get_nodes.length
+          if count == nodes.length
             break
           end
 
           sleep(0.001) # sleep for a miliseconds
 
-          count = get_nodes.length
+          count = nodes.length
         end
       end
 
@@ -285,7 +281,7 @@ module Apik
       end
     end
 
-    def get_partitions
+    def partitions
       res = nil
       @mutex.synchronize do
         res = @partition_write_map
@@ -295,7 +291,7 @@ module Apik
     end
 
     def seed_nodes
-      seed_array = get_seeds
+      seed_array = seeds
 
       Apik.logger.info("Seeding the cluster. Seeds count: #{seed_array.length}")
 
@@ -406,18 +402,18 @@ module Apik
     end
 
     def find_nodes_to_remove(refresh_count)
-      nodes = get_nodes
+      node_list = nodes
 
       remove_list = []
 
-      nodes.each do |node|
+      node_list.each do |node|
         if !node.active?
           # Inactive nodes must be removed.
           remove_list << node
           next
         end
 
-        case nodes.length
+        case node_list.length
         when 1
           # Single node clusters rely solely on node health.
           remove_list << node if node.unhealthy?
@@ -453,7 +449,7 @@ module Apik
     end
 
     def find_node_in_partition_map(filter)
-      partitions = get_partitions
+      partitions = self.partitions
 
       partitions.each do |node_array|
         max = node_array.length
@@ -488,7 +484,7 @@ module Apik
 
     def add_nodes_copy(nodes_to_add)
       @mutex.synchronize do
-        @nodes.concat(nodes_to_add)
+        @cluster_nodes.concat(nodes_to_add)
       end
     end
 
@@ -516,7 +512,7 @@ module Apik
     def set_nodes(nodes)
       @mutex.synchronize do
         # Replace nodes with copy.
-        @nodes = nodes
+        @cluster_nodes = nodes
       end
     end
 
@@ -525,7 +521,7 @@ module Apik
       # Since nodes are only marked for deletion using node references in the nodes array,
       # and the tend goroutine is the only goroutine modifying nodes, we are guaranteed that nodes
       # in nodes_to_remove exist.  Therefore, we know the final array size.
-      nodes = get_nodes
+      nodes = nodes
       node_array = []
       count = 0
 
@@ -556,7 +552,7 @@ module Apik
 
     def find_node_by_name(node_name)
       # Must copy array reference for copy on write semantics to work.
-      get_nodes.detect{|node| node.name == node_name }
+      nodes.detect{|node| node.name == node_name }
     end
 
   end

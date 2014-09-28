@@ -31,7 +31,7 @@ module Apik
     attr_accessor :node, :batch_namespaces, :key_capacity
 
     def self.generate_list(cluster, keys)
-      nodes = cluster.get_nodes
+      nodes = cluster.nodes
 
       if nodes.length == 0
         raise Apik::Exceptions::Connection.new("command failed because cluster is empty.")

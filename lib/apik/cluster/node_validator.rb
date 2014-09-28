@@ -48,7 +48,7 @@ module Apik
       @aliases.each do |aliass|
         begin
           conn = Connection.new(aliass.name, aliass.port, 1)
-          conn.set_timeout(timeout)
+          conn.timeout = timeout
 
           info_map= Info.request(conn, 'node', 'build')
           if node_name = info_map['node']

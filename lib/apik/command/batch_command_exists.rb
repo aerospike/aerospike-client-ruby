@@ -76,7 +76,7 @@ module Apik
         item = @key_map[key.digest]
 
         if item
-          index = item.get_index
+          index = item.index
 
           # only set the results to true; as a result, no synchronization is needed
           @exists_array[index] = (result_code == 0)
