@@ -27,7 +27,10 @@ module Aerospike
     end
 
     def self.new_by_key(key)
-      Partition.new(key.namespace, key.digest_to_intel_int)
+      Partition.new(
+        key.namespace,
+        (key.digest[0..3].unpack('l<')[0] & 0xFFFF) % Node::PARTITIONS
+      )
     end
 
     def to_s

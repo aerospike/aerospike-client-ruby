@@ -308,6 +308,24 @@ describe Aerospike::Client do
 
   context "Batch commands" do
 
+    it "should successfully check existence of many keys" do
+
+      KEY_CNT = 3000
+      keys = Array.new(KEY_CNT)
+      (0...KEY_CNT).to_a.each do |i|
+        keys[i] = Support.gen_random_key
+        client.put(keys[i], Aerospike::Bin.new('bin', 'value')) if i % 2 == 0
+      end
+
+      exists = client.batch_exists(keys)
+
+      expect(exists.length).to eq KEY_CNT
+
+      exists.each_with_index do |elem, i|
+        expect(elem).to be (i % 2 == 0)
+      end
+    end
+
     it "should successfully check existence of keys" do
 
       key1 = Support.gen_random_key

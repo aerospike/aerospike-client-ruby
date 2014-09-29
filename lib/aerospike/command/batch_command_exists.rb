@@ -61,9 +61,7 @@ module Aerospike
         info3 = @data_buffer.read(3).ord
 
         # If cmd is the end marker of the response, do not proceed further
-        if info3 & INFO3_LAST == INFO3_LAST
-          return false
-        end
+        return false if info3 & INFO3_LAST == INFO3_LAST
 
         field_count = @data_buffer.read_int16(18)
         op_count = @data_buffer.read_int16(20)

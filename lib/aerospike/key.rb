@@ -49,7 +49,7 @@ module Aerospike
     end
 
     def to_s
-      @namespace + ':' + @set_name + ':' + @user_key.to_s
+      "#{@namespace}:#{@set_name}:#{@user_key}"
     end
 
     def user_key
@@ -64,13 +64,6 @@ module Aerospike
       other && other.is_a?(Key) &&
         other.digest == @digest &&
         other.namespace == @namespace
-    end
-
-    def digest_to_intel_int
-      ((@digest.byteslice(3).ord & 0xFF) << 24) |
-      ((@digest.byteslice(2).ord & 0xFF) << 16) |
-      ((@digest.byteslice(1).ord & 0xFF) << 8) |
-      (@digest.byteslice(0).ord & 0xFF)
     end
 
     private
