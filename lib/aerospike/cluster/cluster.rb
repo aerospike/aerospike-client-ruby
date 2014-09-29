@@ -450,9 +450,9 @@ module Aerospike
     end
 
     def find_node_in_partition_map(filter)
-      partitions = self.partitions
+      partitions_list = partitions
 
-      partitions.each do |node_array|
+      partitions_list.each do |node_array|
         max = node_array.length
 
         for i in 0...max
@@ -522,12 +522,12 @@ module Aerospike
       # Since nodes are only marked for deletion using node references in the nodes array,
       # and the tend goroutine is the only goroutine modifying nodes, we are guaranteed that nodes
       # in nodes_to_remove exist.  Therefore, we know the final array size.
-      nodes = nodes
+      nodes_list = nodes
       node_array = []
       count = 0
 
       # Add nodes that are not in remove list.
-      nodes.each do |node|
+      nodes_list.each do |node|
         if node_exists(node, nodes_to_remove)
           Aerospike.logger.info("Removed node `#{node}`")
         else
@@ -548,7 +548,7 @@ module Aerospike
     end
 
     def node_exists(search, node_list)
-      node_list.any? {|node| node.equals(search) }
+      node_list.any? {|node| node == search }
     end
 
     def find_node_by_name(node_name)

@@ -53,7 +53,7 @@ module Aerospike
       while @offset < @length
         if @buffer[@offset] == ':'
           # Parse namespace.
-          namespace = @buffer[beginning...@offset].strip!
+          namespace = @buffer[beginning...@offset].strip
 
           if namespace.length <= 0 || namespace.length >= 32
             response = get_truncated_response
@@ -69,7 +69,7 @@ module Aerospike
           while @offset < @length
             b = @buffer[@offset]
 
-            break if b == ";" || b == "\n"
+            break if b == ';' || b == "\n"
             @offset+=1
           end
 
@@ -96,7 +96,6 @@ module Aerospike
 
           bit_map_length = @offset - beginning
           restore_buffer = Base64.strict_decode64(@buffer[beginning, bit_map_length])
-
           for i in 0...Aerospike::Node::PARTITIONS
             if (restore_buffer[i>>3].ord & (0x80 >> (i & 7))) != 0
               # Logger.Info("Map: `" + namespace + "`," + strconv.Itoa(i) + "," + node.String)

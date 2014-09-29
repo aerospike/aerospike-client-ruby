@@ -201,9 +201,7 @@ module Aerospike
       friend_string = info_map['services']
       friends = []
 
-      if !friend_string
-        return friends
-      end
+      return [] if friend_string.to_s.empty?
 
       friend_names = friend_string.split(';')
 
@@ -217,11 +215,7 @@ module Aerospike
         if node
           node.reference_count.update{|v| v + 1}
         else
-          if !find_alias(friends, aliass)
-            if !friends
-              friends = []
-            end
-
+          unless friends.any? {|host| host == aliass}
             friends << aliass
           end
         end
@@ -230,14 +224,10 @@ module Aerospike
       friends
     end
 
-    def find_alias(friends, aliass)
-      friends.any? {|host| host == aliass}
-    end
-
     def update_partitions(conn, info_map)
       gen_string = info_map['partition-generation']
 
-      raise Aerospike::Exceptions.Aerospike.new("partition-generation is empty") if !gen_string
+      raise Aerospike::Exceptions::Parse.new("partition-generation is empty") if gen_string.to_s.empty?
 
       generation = gen_string.to_i
 

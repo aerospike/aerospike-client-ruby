@@ -286,7 +286,7 @@ module Aerospike
         FIELD_HEADER_SIZE + byte_size + FIELD_HEADER_SIZE
 
       if bin_names
-        bin_names.eahc do |bin_name|
+        bin_names.each do |bin_name|
           estimate_operation_size_for_bin_name(bin_name)
         end
       end
@@ -669,7 +669,7 @@ module Aerospike
       # Corrupted data streams can result in a hug.length.
       # Do a sanity check here.
       if size > Buffer::MAX_BUFFER_SIZE
-        raise Aerospike::Exceptions::Aerospike.new(PARSE_ERROR, "Invalid size for buffer: #{size}")
+        raise Aerospike::Exceptions::Parse.new("Invalid size for buffer: #{size}")
       end
 
       @data_buffer.resize(size)

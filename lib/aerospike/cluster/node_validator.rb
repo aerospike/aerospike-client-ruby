@@ -77,7 +77,7 @@ module Aerospike
         return v['v1'], v['v2'], v['v3']
       end
 
-      raise Aerospike::Exceptions::Aerospike.new("Invalid build version string in Info: #{version}")
+      raise Aerospike::Exceptions::Parse.new("Invalid build version string in Info: #{version}")
     end
 
   end # class

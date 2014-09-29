@@ -74,9 +74,9 @@ module Aerospike
       beginning = @offset
 
       while @offset < @length
-        if @buffer[@offset] == ":"
+        if @buffer[@offset] == ':'
           # Parse namespace.
-          namespace = @buffer[beginning...@offset].strip!
+          namespace = @buffer[beginning...@offset].strip
 
           if namespace.length <= 0 || namespace.length >= 32
             response = get_truncated_response
@@ -92,7 +92,7 @@ module Aerospike
           while @offset < @length
             b = @buffer[@offset]
 
-            break if b == ";" || b == "\n"
+            break if b == ';' || b == "\n"
             @offset+=1
           end
 
@@ -107,7 +107,7 @@ module Aerospike
           if partition_id < 0 || partition_id >= Aerospike::Node::PARTITIONS
             response = get_truncated_response
             partition_string = @buffer[beginning...@offset]
-            aise Aerospike::Exceptions::Parse.new(
+            raise Aerospike::Exceptions::Parse.new(
               "Invalid partition id #{partition_string} for namespace #{namespace}. Response=#{response}"
             )
           end

@@ -267,7 +267,7 @@ module Aerospike
 
 
       cmd_gen = Proc.new do |node, bns|
-        BatchCommandGet.new(node, bns, policy, key_map, nil, records, INFO1_READ|INFO1_NOBINDATA)
+        BatchCommandGet.new(node, bns, policy, key_map, bin_set.keys, records, INFO1_READ|INFO1_NOBINDATA)
       end
 
       batch_execute(keys, &cmd_gen)
@@ -295,7 +295,7 @@ module Aerospike
         bin_set[bn] = {}
       end
 
-      command = BatchCommandGet.new(node, bns, policy, key_map, bin_set, records, INFO1_READ | INFO_NOBINDATA)
+      command = BatchCommandGet.new(node, bns, policy, key_map, nil, records, INFO1_READ | INFO_NOBINDATA)
       command.execute
     end
 
