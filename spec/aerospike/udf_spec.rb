@@ -38,10 +38,10 @@ describe Aerospike::Client do
 
       it "should register UDFs, list them and and then successfully drop them" do
 
-        [1, 2, 3].each do |i|
+        (1..10).to_a.each do |i|
           register_task = client.register_udf(udf_body, "udf#{i}.lua", Aerospike::Language::LUA)
 
-          register_task.wait_till_completed
+          expect(register_task.wait_till_completed).to be true
           expect(register_task.completed?).to be true
         end
 
@@ -49,10 +49,10 @@ describe Aerospike::Client do
         udf_list = client.list_udf
         expect(udf_list.select { |item| item.filename =~ /udf(1|2|3)\.lua/ }.length).to eq 3
 
-        [1, 2, 3].each do |i|
+        (1..10).to_a.each do |i|
           remove_task = client.remove_udf("udf#{i}.lua")
 
-          remove_task.wait_till_completed
+          expect(remove_task.wait_till_completed).to be true
           expect(remove_task.completed?).to be true
         end
 

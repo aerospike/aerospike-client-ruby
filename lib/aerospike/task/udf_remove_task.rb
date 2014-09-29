@@ -37,7 +37,6 @@ module Aerospike
     def all_nodes_done?
       command = 'udf-list'
       nodes = @cluster.nodes
-      done = false
 
       nodes.each do |node|
         conn = node.get_connection(1)
@@ -46,12 +45,9 @@ module Aerospike
         index = response.index("filename=#{@package_name}")
 
         return false if index
-
-        @done.value = true
-        @done_event.broadcast
       end
 
-      return done
+      return true
     end
 
   end # class

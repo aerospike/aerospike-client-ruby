@@ -47,9 +47,6 @@ require 'aerospike/ldt/large_stack'
 
 module Aerospike
 
-  # make sure threads abort on exceptions
-  Thread.abort_on_exception=true
-
   class Client
 
     attr_accessor :default_policy, :default_write_policy
@@ -573,6 +570,7 @@ module Aerospike
         bn = batch_node
         bn.batch_namespaces.each do |bns|
           threads << Thread.new do
+            abort_on_exception=true
             command = cmd_gen.call(bn.node, bns)
             command.execute
           end

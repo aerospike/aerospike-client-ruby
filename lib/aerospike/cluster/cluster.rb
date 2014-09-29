@@ -249,6 +249,7 @@ module Aerospike
 
       # will run until the cluster is stablized
       thr = Thread.new do
+        abort_on_exception=true
         while true
           tend
 

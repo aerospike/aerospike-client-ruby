@@ -27,40 +27,44 @@ module Aerospike
     def initialize(cluster, done)
       @cluster = cluster
       @done = Atomic.new(done)
-      @mutex = Mutex.new
-      @done_event = ConditionVariable.new
-      @done_thread = nil
+      @done_thread = Atomic.new(nil)
 
       self
     end
 
     def wait_till_completed(poll_interval = 0.1, allowed_failures = 3)
-      unless @done_thread
-        @mutex.synchronize do
-          @done_thread = Thread.new do
-            failures = 0
-            while true
-              begin
-                break if completed?
-                sleep(poll_interval.to_f)
-              rescue
-                failures += 1
-                if failures > allowed_failures
-                  @done_event.broadcast
-                  break
-                end
-              end
+      return true if @done.value
+
+      # make sure there will be only ONE thread polling for completetion status
+      @done_thread.update do |dt|
+        dt ? dt : Thread.new do
+          abort_on_exception=true
+          failures = 0
+          while true
+            begin
+              break if completed?
+              sleep(poll_interval.to_f)
+            rescue Exception => e
+              p e
+              break if failures > allowed_failures
+              failures += 1
             end
           end
-
-          @done_event.wait(@mutex)
-          @done.value
         end
       end
+
+      # wait for the poll thread to finish
+      @done_thread.value.join
+      # in case of errors and exceptions, the @done value might be false
+      @done.value
     end
 
     def completed?
-      @done.value ? @done.value : all_nodes_done?
+      if @done.value == true
+        true
+      else
+        @done.value = all_nodes_done?
+      end
     end
 
   end # class

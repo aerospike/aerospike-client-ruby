@@ -7,7 +7,7 @@ module Aerospike
 
     attr_accessor :create_block, :cleanup_block
 
-    def initialize(max_size = 128, &block)
+    def initialize(max_size = 256, &block)
       @create_block = block
       @cleanup_block = nil
 
