@@ -22,6 +22,16 @@ module Aerospike
 
   class Key
 
+    @@digest_pool = Pool.new
+    @@digest_pool.create_block = Proc.new do
+      unless RUBY_PLATFORM == 'java'
+        Digest::RMD160.new
+      else
+        h = OpenSSL::Digest::RIPEMD160.new
+      end
+    end
+
+
     attr_reader :namespace, :set_name, :digest
 
     def initialize(ns, set, val, digest=nil)
@@ -66,11 +76,17 @@ module Aerospike
     private
 
     def compute_digest
+      # get a hash from pool and make it ready for work
+      h = @@digest_pool.poll
+      h.reset
+
       # Compute a complete digest
-      h = Digest::RMD160.new
       h.update(@set_name)
       h.update(@user_key.to_bytes)
       @digest = h.digest
+
+      # put the hash object back to the pool
+      @@digest_pool.offer(h)
     end
 
   end
