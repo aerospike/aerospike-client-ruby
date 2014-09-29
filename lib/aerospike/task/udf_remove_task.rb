@@ -41,8 +41,8 @@ module Aerospike
       nodes.each do |node|
         conn = node.get_connection(1)
         response_map = Info.request(conn, command)
-        _, response = response_map.first.to_s
-        index = response.index("filename=#{@package_name}")
+        _, response = response_map.first
+        index = response.to_s.index("filename=#{@package_name}")
 
         return false if index
       end
