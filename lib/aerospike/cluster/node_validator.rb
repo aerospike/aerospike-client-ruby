@@ -61,7 +61,7 @@ module Aerospike
             end
           end
         ensure
-          conn.close
+          conn.close if conn
         end
 
       end

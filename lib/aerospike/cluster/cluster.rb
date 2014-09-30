@@ -51,17 +51,14 @@ module Aerospike
 
     def add_seeds(hosts)
       @mutex.synchronize do
-        @cluster_seeds << hosts
+        @cluster_seeds.concat(hosts)
       end
     end
 
     def seeds
-      res = []
       @mutex.synchronize do
-        res = @cluster_seeds.dup
+        @cluster_seeds.dup
       end
-
-      res
     end
 
     def connected?
@@ -104,13 +101,10 @@ module Aerospike
 
     # Returns a list of all nodes in the cluster
     def nodes
-      node_array = nil
       @mutex.synchronize do
         # Must copy array reference for copy on write semantics to work.
-        node_array = @cluster_nodes.dup
+        @cluster_nodes.dup
       end
-
-      node_array
     end
 
     # Find a node by name and returns an error if not found
@@ -137,11 +131,9 @@ module Aerospike
     end
 
     def find_alias(aliass)
-      res = nil
       @mutex.synchronize do
-        res = @aliases[aliass]
+        @aliases[aliass]
       end
-      res
     end
 
     def update_partitions(conn, node)
@@ -160,9 +152,7 @@ module Aerospike
       end
 
       # update partition write map
-      if nmap
-        set_partitions(nmap)
-      end
+      set_partitions(nmap) if nmap
 
       Aerospike.logger.info("Partitions updated...")
     end
@@ -190,7 +180,7 @@ module Aerospike
 
       # All node additions/deletions are performed in tend thread.
       # If active nodes don't exist, seed cluster.
-      if nodes.length == 0
+      if nodes.empty?
         Aerospike.logger.info("No connections available; seeding...")
         seed_nodes
 
@@ -198,42 +188,34 @@ module Aerospike
         nodes = self.nodes
       end
 
-      # Clear node reference counts.
-      nodes.each do |node|
-        node.reference_count.value = 0
-        node.responded.value = false
-      end
-
       # Refresh all known nodes.
       friend_list = []
       refresh_count = 0
 
+      # Clear node reference counts.
       nodes.each do |node|
+        node.reference_count.value = 0
+        node.responded.value = false
+
         if node.active?
           begin
             friends = node.refresh
             refresh_count += 1
-            if friends
-              friend_list.concat(friends)
-            end
+            friend_list.concat(friends) if friends
           rescue Exception => e
             Aerospike.logger.warn("Node `#{node}` refresh failed: #{e.to_s}")
           end
         end
       end
 
+      # Add nodes in a batch.
+      add_list = find_nodes_to_add(friend_list)
+      add_nodes(add_list) unless add_list.empty?
+
       # Handle nodes changes determined from refreshes.
       # Remove nodes in a batch.
       remove_list = find_nodes_to_remove(refresh_count)
-      if remove_list.length > 0
-        remove_nodes(remove_list)
-      end
-
-      # Add nodes in a batch.
-      add_list = find_nodes_to_add(friend_list)
-      if add_list.length > 0
-        add_nodes(add_list)
-      end
+      remove_nodes(remove_list) unless remove_list.empty?
 
       Aerospike.logger.info("Tend finished. Live node count: #{nodes.length}")
     end
@@ -338,7 +320,7 @@ module Aerospike
     def add_alias(host, node)
       if host && node
         @mutex.synchronize do
-          aliases[host] = node
+          @aliases[host] = node
         end
       end
     end
@@ -358,18 +340,12 @@ module Aerospike
         begin
           nv = NodeValidator.new(host, @connection_timeout)
 
+          # if node is already in cluster's node list,
+          # or already included in the list to be added, we should skip it
           node = find_node_by_name(nv.name)
+          node ||= list.detect{|n| n.name == nv.name}
 
           # make sure node is not already in the list to add
-          if node
-            list.each do |n|
-              if n.name == nv.name
-                node = n
-                break
-              end
-            end
-          end
-
           if node
             # Duplicate node name found.  This usually occurs when the server
             # services list contains both internal and external IP addresses
@@ -546,7 +522,6 @@ module Aerospike
     end
 
     def find_node_by_name(node_name)
-      # Must copy array reference for copy on write semantics to work.
       nodes.detect{|node| node.name == node_name }
     end
 

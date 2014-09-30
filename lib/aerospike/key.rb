@@ -65,6 +65,11 @@ module Aerospike
         other.digest == @digest &&
         other.namespace == @namespace
     end
+    alias eql? ==
+
+    def hash
+      @digest.hash
+    end
 
     private
 

@@ -41,6 +41,15 @@ module Aerospike
       other && other.is_a?(Partition) && @partition_id == other.partition_id &&
         @namespace == other.namespace
     end
+    alias eql? ==
+
+    def hash
+      to_s.hash
+    end
+
+    def hash
+      to_s.hash
+    end
 
   end # class
 

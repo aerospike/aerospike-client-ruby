@@ -47,9 +47,9 @@ module Aerospike
       copied = false
 
       while partition = get_next
-        exists = nmap[partition.namespace]
+        node_array = nmap[partition.namespace]
 
-        if !exists
+        if !node_array
           if !copied
             # Make shallow copy of map.
             amap = {}
@@ -62,7 +62,7 @@ module Aerospike
         end
 
         Aerospike.logger.debug("#{partition.to_s}, #{node.name}")
-        node_array.update{|v| v[partition.Partition_id] = node; v }
+        node_array.update{|v| v[partition.partition_id] = node; v }
       end
 
       copied ? amap : nil

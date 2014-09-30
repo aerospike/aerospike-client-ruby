@@ -81,7 +81,9 @@ module Aerospike
             )
           end
 
-          if !nmap[namespace]
+          node_array = nmap[namespace]
+
+          if !node_array
             if !copied
               # Make shallow copy of map.
               amap = {}
@@ -89,7 +91,6 @@ module Aerospike
               copied = true
             end
 
-            # p "WE WERE HERE!"
             node_array = Atomic.new(Array.new(Aerospike::Node::PARTITIONS))
             amap[namespace] = node_array
           end

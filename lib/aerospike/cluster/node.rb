@@ -155,15 +155,20 @@ module Aerospike
 
     # Implements stringer interface
     def to_s
-      "#{@name} : #{@host}"
+      "#{@name}:#{@host}"
     end
 
     def ==(other)
       other && other.is_a?(Node) && (@name == other.name)
     end
+    alias eql? ==
 
     def use_new_info?
       @use_new_info.value
+    end
+
+    def hash
+      @name.hash
     end
 
     private
@@ -234,7 +239,7 @@ module Aerospike
       if @partition_generation.value != generation
         Aerospike.logger.info("Node #{get_name} partition generation #{generation} changed")
         @cluster.update_partitions(conn, self)
-        @partition_generation.update{|v| generation}
+        @partition_generation.value = generation
       end
     end
 

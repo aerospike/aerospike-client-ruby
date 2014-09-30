@@ -32,6 +32,11 @@ module Aerospike
     def ==(other)
       other && other.is_a?(Host) && other.name == @name && other.port == @port
     end
+    alias eql? ==
+
+    def hash
+      to_s.hash
+    end
 
   end
 
