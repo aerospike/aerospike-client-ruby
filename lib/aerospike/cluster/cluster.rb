@@ -19,12 +19,6 @@ require 'timeout'
 
 require 'atomic'
 
-require 'aerospike/cluster/node_validator'
-require 'aerospike/cluster/node'
-
-require 'aerospike/cluster/partition_tokenizer_new'
-require 'aerospike/cluster/partition_tokenizer_old'
-
 module Aerospike
 
   class Cluster
@@ -96,7 +90,7 @@ module Aerospike
       node_array = nodes
       length = node_array.length
       for i in 0..length
-        # Must handle concurrency with other non-tending goroutines, so node_index is consistent.
+        # Must handle concurrency with other non-tending threads, so node_index is consistent.
         index = (@node_index.update{|v| v+1} % node_array.length).abs
         node = node_array[index]
 
@@ -128,7 +122,7 @@ module Aerospike
       node
     end
 
-    # Closes all cached connections to the cluster nodes and stops the tend goroutine
+    # Closes all cached connections to the cluster nodes and stops the tend thread
     def close
       unless @closed.value
         # send close signal to maintenance channel
@@ -194,7 +188,7 @@ module Aerospike
     def tend
       nodes = self.nodes
 
-      # All node additions/deletions are performed in tend goroutine.
+      # All node additions/deletions are performed in tend thread.
       # If active nodes don't exist, seed cluster.
       if nodes.length == 0
         Aerospike.logger.info("No connections available; seeding...")
@@ -477,7 +471,7 @@ module Aerospike
 
     def add_aliases(node)
       # Add node's aliases to global alias set.
-      # Aliases are only used in tend goroutine, so synchronization is not necessary.
+      # Aliases are only used in tend thread, so synchronization is not necessary.
       node.get_aliases.each do |aliass|
         @aliases[aliass] = node
       end
@@ -497,7 +491,7 @@ module Aerospike
       # Cleanup node resources.
       nodes_to_remove.each do |node|
         # Remove node's aliases from cluster alias set.
-        # Aliases are only used in tend goroutine, so synchronization is not necessary.
+        # Aliases are only used in tend thread, so synchronization is not necessary.
         node.get_aliases.each do |aliass|
           Aerospike.logger.debug("Removing alias #{aliass}")
           remove_alias(aliass)
@@ -520,7 +514,7 @@ module Aerospike
     def remove_nodes_copy(nodes_to_remove)
       # Create temporary nodes array.
       # Since nodes are only marked for deletion using node references in the nodes array,
-      # and the tend goroutine is the only goroutine modifying nodes, we are guaranteed that nodes
+      # and the tend thread is the only thread modifying nodes, we are guaranteed that nodes
       # in nodes_to_remove exist.  Therefore, we know the final array size.
       nodes_list = nodes
       node_array = []

@@ -17,34 +17,6 @@
 require 'digest'
 require 'base64'
 
-require 'aerospike/operation'
-require 'aerospike/udf'
-
-require 'aerospike/cluster/cluster'
-require 'aerospike/policy/client_policy'
-
-require 'aerospike/command/read_command'
-require 'aerospike/command/read_header_command'
-require 'aerospike/command/write_command'
-require 'aerospike/command/delete_command'
-require 'aerospike/command/exists_command'
-require 'aerospike/command/touch_command'
-require 'aerospike/command/operate_command'
-require 'aerospike/command/execute_command'
-
-require 'aerospike/command/batch_command_get'
-require 'aerospike/command/batch_command_exists'
-require 'aerospike/command/batch_node'
-require 'aerospike/command/batch_item'
-
-require 'aerospike/task/udf_register_task'
-require 'aerospike/task/udf_remove_task'
-
-require 'aerospike/ldt/large_list'
-require 'aerospike/ldt/large_map'
-require 'aerospike/ldt/large_set'
-require 'aerospike/ldt/large_stack'
-
 module Aerospike
 
   class Client
@@ -408,8 +380,6 @@ module Aerospike
     #
     #  This method is only supported by Aerospike 3 servers.
     def remove_udf(udf_name, opt=nil)
-      # errors are to remove errcheck warnings
-      # they will always be nil as stated in golang docs
       str_cmd = "udf-remove:filename=#{udf_name};"
 
       # Send command to one node. That node will distribute it to other nodes.
@@ -429,8 +399,6 @@ module Aerospike
     #  ListUDF lists all packages containing user defined functions in the server.
     #  This method is only supported by Aerospike 3 servers.
     def list_udf(opt=nil)
-      # errors are to remove errcheck warnings
-      # they will always be nil as stated in golang docs
       str_cmd = 'udf-list'
 
       # Send command to one node. That node will distribute it to other nodes.
@@ -500,7 +468,66 @@ module Aerospike
       raise Aerospike::Exception::Aerospike.new(UDF_BAD_RESPONSE, "Invalid UDF return value")
     end
 
+    #  Create secondary index.
+    #  This asynchronous server call will return before command is complete.
+    #  The user can optionally wait for command completion by using the returned
+    #  IndexTask instance.
+    #
+    #  This method is only supported by Aerospike 3 servers.
+    #  index_type should be between :string or :numeric
+    def create_index(namespace, set_name, index_name, bin_name, index_type, opt=nil)
+      policy = opt_to_write_policy(opt)
+      str_cmd = "sindex-create:ns=#{namespace}"
+      str_cmd += ";set=#{set_name}" unless set_name.to_s.strip.empty?
+      str_cmd += ";indexname=#{index_name};numbins=1;indexdata=#{bin_name},#{index_type.to_s.upcase}"
+      str_cmd += ";priority=normal"
+
+      # Send index command to one node. That node will distribute the command to other nodes.
+      response_map = send_info_command(policy, str_cmd)
+      _, response = response_map.first
+      response = response.to_s.upcase
+
+      if response == 'OK'
+        # Return task that could optionally be polled for completion.
+        return IndexTask.new(@cluster, namespace, index_name)
+      end
+
+      if response.start_with?('FAIL:200')
+        # Index has already been created.  Do not need to poll for completion.
+        return
+      end
+
+      raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::INDEX_GENERIC, "Create index failed: #{response}")
+    end
+
+    #  Delete secondary index.
+    #  This method is only supported by Aerospike 3 servers.
+    def drop_index(namespace, set_name, index_name, opt=nil)
+      policy = opt_to_write_policy(opt)
+      str_cmd = "sindex-delete:ns=#{namespace}"
+      str_cmd += ";set=#{set_name}" unless set_name.to_s.strip.empty?
+      str_cmd += ";indexname=#{index_name}"
+
+      # Send index command to one node. That node will distribute the command to other nodes.
+      response_map = send_info_command(policy, str_cmd)
+      _, response = response_map.first
+      response = response.to_s.upcase
+
+      return if response == 'OK'
+
+      # Index did not previously exist. Return without error.
+      return if response.start_with?('FAIL:201')
+
+      raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::INDEX_GENERICINDEX_GENERIC, "Drop index failed: #{response}")
+    end
+
     private
+
+    def send_info_command(policy, command)
+      node = @cluster.random_node
+      conn = node.get_connection(policy.timeout)
+      Info.request(conn, command).tap { node.put_connection(conn) }
+    end
 
     def hash_to_bins(hash)
       if hash.is_a?(Bin)

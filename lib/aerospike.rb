@@ -58,10 +58,12 @@ require 'aerospike/info'
 require 'aerospike/udf'
 require 'aerospike/bin'
 require 'aerospike/aerospike_exception'
+require 'aerospike/task/index_task'
 require 'aerospike/task/udf_remove_task'
 require 'aerospike/task/udf_register_task'
 require 'aerospike/task/task'
 require 'aerospike/language'
+
 module Aerospike
   extend Loggable
 end

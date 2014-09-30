@@ -23,6 +23,10 @@ module Aerospike
       Aerospike.logger.warn([ prefix, payload, "runtime: #{runtime}" ].join(' '))
     end
 
+    def self.info(prefix, payload, runtime)
+      Aerospike.logger.info([ prefix, payload, "runtime: #{runtime}" ].join(' '))
+    end
+
     def logger
       return @logger if defined?(@logger)
       @logger = rails_logger || default_logger
