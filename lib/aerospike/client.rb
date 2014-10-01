@@ -352,10 +352,7 @@ module Aerospike
       str_cmd = "udf-put:filename=#{server_path};content=#{content};"
       str_cmd += "content-len=#{content.length};udf-type=#{language};"
       # Send UDF to one node. That node will distribute the UDF to other nodes.
-      node = @cluster.random_node
-      conn = node.get_connection(@cluster.connection_timeout)
-
-      response_map = Info.request(conn, str_cmd)
+      response_map = @cluster.request_info(@default_policy, str_cmd)
       response, _ = response_map.first
 
       res = {}
@@ -369,7 +366,6 @@ module Aerospike
         raise Aerospike::Exceptions::CommandRejected.new("Registration failed: #{res['error']}\nFile: #{res['file']}\nLine: #{res['line']}\nMessage: #{res['message']}")
       end
 
-      node.put_connection(conn)
       UdfRegisterTask.new(@cluster, server_path)
     end
 
@@ -383,10 +379,8 @@ module Aerospike
       str_cmd = "udf-remove:filename=#{udf_name};"
 
       # Send command to one node. That node will distribute it to other nodes.
-      node = @cluster.random_node
-      conn = node.get_connection(@cluster.connection_timeout)
-
-      response_map = Info.request(conn, str_cmd)
+      # Send UDF to one node. That node will distribute the UDF to other nodes.
+      response_map = @cluster.request_info(@default_policy, str_cmd)
       _, response = response_map.first
 
       if response == 'ok'
@@ -402,15 +396,12 @@ module Aerospike
       str_cmd = 'udf-list'
 
       # Send command to one node. That node will distribute it to other nodes.
-      node = @cluster.random_node
-      conn = node.get_connection(@cluster.connection_timeout)
-
-      response_map = Info.request(conn, str_cmd)
+      response_map = @cluster.request_info(@default_policy, str_cmd)
       _, response = response_map.first
 
       vals = response.split(';')
 
-      res = vals.map do |udf_info|
+      vals.map do |udf_info|
         next if udf_info.strip! == ''
 
         udf_parts = udf_info.split(',')
@@ -428,11 +419,6 @@ module Aerospike
         end
         udf
       end
-
-
-      node.put_connection(conn)
-
-      res
     end
 
     #  Execute user defined function on server and return results.
@@ -524,9 +510,7 @@ module Aerospike
     private
 
     def send_info_command(policy, command)
-      node = @cluster.random_node
-      conn = node.get_connection(policy.timeout)
-      Info.request(conn, command).tap { node.put_connection(conn) }
+      @cluster.request_info(@default_policy, command)
     end
 
     def hash_to_bins(hash)

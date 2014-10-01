@@ -69,7 +69,7 @@ include Aerospike
   end
 
   opts.on("-t", "--timeout MILISECONDS", "Read/Write timeout in milliseconds.") do |v|
-    @options[:timeout] = v.to_i
+    @options[:timeout] = v.to_i / 1000.to_f
   end
 
   opts.on("-m", "--max-retries COUNT", "Maximum number of retries before aborting the current transaction.") do |v|
@@ -123,7 +123,7 @@ def printBenchmarkParams
   puts("workload:\t#{workloadToString}")
   puts("concurrency:\t#{@options[:concurrency]}")
   puts("max throughput:\t#{throughputToString}")
-  puts("timeout:\t#{@options[:timeout]} ms")
+  puts("timeout:\t#{@options[:timeout] > 0 ? (@options[:timeout] * 1000).to_i : '-'} ms")
   puts("max retries:\t#{@options[:maxRetries]}")
   puts("debug:\t\t#{@options[:debugMode]}")
   puts
@@ -146,7 +146,7 @@ def readFlags
 
   Aerospike.logger.level = Logger::ERROR
   if @options[:debugMode]
-    logger.level = Logger::INFO
+    Aerospike.logger.level = Logger::INFO
   end
 
   @binDataType, binDataSz = parseValuedParam(@options[:binDef])
@@ -201,7 +201,7 @@ end
 
 def run_bench(client, ident, times)
   writepolicy = WritePolicy.new
-  client.default_write_policy.timeout = @options[:timeout] / 1000.to_f
+  client.default_write_policy.timeout = @options[:timeout]
   client.default_write_policy.max_retries = @options[:maxRetries]
 
   client.default_policy = writepolicy
@@ -225,9 +225,9 @@ def run_bench(client, ident, times)
     bin = getBin(rnd) if randbins
     key = Key.new(namespace, set, ident*times+(iters%times))
     if (@workloadType == 'I') || (rand(100) >= @workloadPercent)
-      w_count+=1
       begin
         client.put(key, bin)
+        w_count+=1
       rescue Exception => err
         if err.is_a?(Aerospike::Exceptions::Timeout)
           write_to_err+=1
@@ -236,9 +236,9 @@ def run_bench(client, ident, times)
         end
       end
     else
-      r_count+=1
       begin
         client.get(key, [bin.name])
+        r_count+=1
       rescue Exception => err
         if err.is_a?(Aerospike::Exceptions::Timeout)
           read_to_err +=1
@@ -286,9 +286,9 @@ def reporter
           str = "write(tps=#{w} timeouts=#{wto} errors=#{werr})"
           str += " read(tps=#{r} timeouts=#{rto} errors=#{rerr})"
           str += " total(tps=#{w+r} timeouts=#{wto+rto} errors=#{werr+rerr}, count=#{@totalWCount+@totalRCount})"
-          puts str
+          @logger.info str
         else
-          puts "write(tps=#{@totalWCount - last_totalWCount} timeouts=#{@totalWTOCount - last_totalWTOCount} errors=#{@totalWErrCount - last_totalWErrCount} totalCount=#{@totalWCount})"
+          @logger.info "write(tps=#{@totalWCount - last_totalWCount} timeouts=#{@totalWTOCount - last_totalWTOCount} errors=#{@totalWErrCount - last_totalWErrCount} totalCount=#{@totalWCount})"
         end
 
         last_totalWCount = @totalWCount
@@ -306,19 +306,21 @@ def reporter
   end
 end
 
+@logger = Logger.new(STDOUT)
+@logger.level = Logger::INFO
+
 readFlags
 printBenchmarkParams
 
-client = Client.new('127.0.0.1', 3000)
+client = Client.new(@options[:host], @options[:port])
 
 threads = []
 
-Thread.abort_on_exception = true
 r_thread = Thread.new { reporter }
 
 for i in (1..@options[:concurrency]) do
-  threads << Thread.new { run_bench(client, i - 1, @options[:keyCount] / @options[:concurrency]) }
-end
+    threads << Thread.new {run_bench(client, i - 1, @options[:keyCount] / @options[:concurrency]) }
+  end
 
-threads.each {|t| t.join}
-r_thread.kill
+  threads.each {|t| t.join}
+  r_thread.kill

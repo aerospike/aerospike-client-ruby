@@ -18,6 +18,8 @@ require 'aerospike/utils/buffer'
 
 module Aerospike
 
+  private
+
   # Polymorphic value classes used to efficiently serialize objects into the wire protocol.
   class Info
 
@@ -44,8 +46,14 @@ module Aerospike
         offset += 1
       end
 
-      buf_length = send_command(conn, offset, buffer)
-      parse_multiple_response(buf_length, buffer).tap { Buffer.put(buffer) }
+      begin
+        buf_length = send_command(conn, offset, buffer)
+        parse_multiple_response(buf_length, buffer)
+      rescue => e
+        Aerospike.logger.error("#{e}")
+      ensure
+        Buffer.put(buffer)
+      end
     end
 
     def self.parse_multiple_response(buf_length, buffer)
@@ -77,7 +85,7 @@ module Aerospike
 
         conn.read(buffer, length)
         return length
-      rescue Exception => e
+      rescue => e
         conn.close
         raise e
       end

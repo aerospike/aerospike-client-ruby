@@ -60,7 +60,7 @@ module Aerospike
 
       begin
         info_map = Info.request(conn, "node", "partition-generation", "services")
-      rescue Exception => e
+      rescue => e
         conn.close
         decrease_health
 
@@ -131,7 +131,7 @@ module Aerospike
 
     # Returns node aliases
     def get_aliases
-      @aliases.value.dup
+      @aliases.value
     end
 
     # Adds an alias for the node
@@ -139,9 +139,7 @@ module Aerospike
       # Aliases are only referenced in the cluster tend threads,
       # so synchronization is not necessary.
       aliases = get_aliases
-      if aliases
-        aliases = []
-      end
+      aliases ||= []
 
       aliases << alias_to_add
       set_aliases(aliases)

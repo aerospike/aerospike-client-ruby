@@ -44,7 +44,7 @@ module Aerospike
             begin
               break if completed?
               sleep(poll_interval.to_f)
-            rescue Exception => e
+            rescue => e
               p e
               break if failures > allowed_failures
               failures += 1

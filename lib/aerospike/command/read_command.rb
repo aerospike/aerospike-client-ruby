@@ -46,8 +46,8 @@ module Aerospike
       # Logger.Debug("read_command Parse Result: trying to read %d bytes from the connection...", int(_MSG_TOTAL_HEADER_SIZE))
       begin
         @conn.read(@data_buffer, MSG_TOTAL_HEADER_SIZE)
-      rescue Exception => e
-        Aerospike.logger.warn("parse result error: #{e}")
+      rescue => e
+        Aerospike.logger.error("parse result error: #{e}")
         raise e
       end
 
@@ -70,7 +70,7 @@ module Aerospike
 
         begin
           @conn.read(@data_buffer, receive_size)
-        rescue Exception => e
+        rescue => e
           Aerospike.logger.warn("parse result error: #{e}")
           raise e
         end
@@ -84,7 +84,7 @@ module Aerospike
           begin
             @record = parse_record(op_count, field_count, generation, expiration)
             handle_udf_error(result_code)
-          rescue Exception => e
+          rescue => e
             Aerospike.logger.warn("UDF execution error: #{e}")
             raise e
           end

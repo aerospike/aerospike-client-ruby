@@ -39,7 +39,12 @@ module Aerospike
 
     def parse_result
       # Read header.
-      @conn.read(@data_buffer, MSG_TOTAL_HEADER_SIZE)
+      begin
+        @conn.read(@data_buffer, MSG_TOTAL_HEADER_SIZE)
+      rescue => e
+        Aerospike.logger.error("#{e}")
+        raise e
+      end
 
       result_code = @data_buffer.read(13).ord & 0xFF
 

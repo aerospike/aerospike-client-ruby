@@ -42,7 +42,7 @@ module Aerospike
         raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::SERVER_NOT_AVAILABLE)
       end
 
-      launch_cluster_boss
+      launch_tend_thread
 
       Aerospike.logger.debug('New cluster initialized and ready to be used...')
 
@@ -157,22 +157,28 @@ module Aerospike
       Aerospike.logger.info("Partitions updated...")
     end
 
+    def request_info(policy, *commands)
+      node = random_node
+      conn = node.get_connection(policy.timeout)
+      Info.request(conn, *commands).tap do
+        node.put_connection(conn)
+      end
+    end
+
     private
 
-    def launch_cluster_boss
-
+    def launch_tend_thread
       @tend_thread = Thread.new do
-
+        abort_on_exception = false
         while true
           begin
             tend
             sleep 1 # 1 second
-          rescue Exception => e
-            Aerospike.logger.error(e)
+          rescue => e
+            Aerospike.logger.error("Exception occured during tend: #{e}")
           end
         end
       end
-
     end
 
     def tend
@@ -202,7 +208,7 @@ module Aerospike
             friends = node.refresh
             refresh_count += 1
             friend_list.concat(friends) if friends
-          rescue Exception => e
+          rescue => e
             Aerospike.logger.warn("Node `#{node}` refresh failed: #{e.to_s}")
           end
         end
@@ -277,7 +283,7 @@ module Aerospike
       seed_array.each do |seed|
         begin
           seed_node_validator = NodeValidator.new(seed, @connection_timeout)
-        rescue Exception => e
+        rescue => e
           Aerospike.logger.warn("Seed #{seed.to_s} failed: #{e}")
           next
         end
@@ -360,7 +366,7 @@ module Aerospike
           node = create_node(nv)
           list << node
 
-        rescue Exception => e
+        rescue => e
           Aerospike.logger.warn("Add node #{node.to_s} failed: #{e}")
         end
       end

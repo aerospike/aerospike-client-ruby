@@ -337,7 +337,7 @@ module Aerospike
 
         begin
           @conn = @node.get_connection(@policy.timeout)
-        rescue Exception => e
+        rescue => e
           # Socket connection error has occurred. Decrease health and retry.
           @node.decrease_health
 
@@ -352,7 +352,7 @@ module Aerospike
           # Set command buffer.
           begin
             write_buffer
-          rescue Exception => e
+          rescue => e
             # All runtime exceptions are considered fatal. Do not retry.
             # Close socket to flush out possible garbage. Do not put back in pool.
             @conn.close
@@ -365,7 +365,7 @@ module Aerospike
           # Send command.
           begin
             @conn.write(@data_buffer, @data_offset)
-          rescue Exception => e
+          rescue => e
             # IO errors are considered temporary anomalies. Retry.
             # Close socket to flush out possible garbage. Do not put back in pool.
             @conn.close
@@ -380,7 +380,7 @@ module Aerospike
           # Parse results.
           begin
             parse_result
-          rescue Exception => e
+          rescue => e
             # close the connection
             # cancelling/closing the batch/multi commands will return an error, which will
             # close the connection to throw away its data and signal the server about the

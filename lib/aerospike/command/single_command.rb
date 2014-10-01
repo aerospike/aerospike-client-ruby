@@ -46,7 +46,12 @@ module Aerospike
       # Read remaining message bytes.
       if receive_size > 0
         size_buffer_sz(receive_size)
-        @conn.read(@data_buffer, receive_size)
+        begin
+          @conn.read(@data_buffer, receive_size)
+        rescue => e
+          Aerospike.logger.error("#{e}")
+          raise e
+        end
       end
     end
 

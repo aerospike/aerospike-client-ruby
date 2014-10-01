@@ -20,7 +20,7 @@ module Aerospike
 
   module Exceptions
 
-    class Aerospike < Exception
+    class Aerospike < StandardError
 
       attr_reader :result_code
 

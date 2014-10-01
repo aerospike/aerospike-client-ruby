@@ -26,6 +26,7 @@ module Aerospike
 
       connect(host, port, timeout).tap do |socket|
         @socket = socket
+        @timeout = timeout
       end
 
       self
@@ -53,6 +54,8 @@ module Aerospike
         rescue IO::WaitWriteable, Errno::EAGAIN
           IO.select(nil, [@socket])
           retry
+        rescue => e
+          Aerospike::Exceptions::Connection.new("#{e}")
         end
       end
     end
@@ -67,6 +70,8 @@ module Aerospike
         rescue IO::WaitReadable,  Errno::EAGAIN
           IO.select([@socket], nil)
           retry
+        rescue => e
+          Aerospike::Exceptions::Connection.new("#{e}")
         end
       end
     end
@@ -80,22 +85,24 @@ module Aerospike
     end
 
     def close
-      @socket.tap { |s| s.close }
+      @socket.close if @socket
       @socket = nil
     end
 
     def timeout=(timeout)
-      if timeout > 0
-        if IO.select([@socket], [@socket], [@socket], timeout.to_f)
+      if timeout > 0 && timeout != @timeout
+        @timeout = timeout
+        # if IO.select([@socket], [@socket], [@socket], timeout.to_f)
+        if IO.select(nil, nil, nil, timeout.to_f)
           begin
             # Verify there is now a good connection
             @socket.connect_nonblock(@sockaddr)
           rescue Errno::EISCONN
             # operation successful
-          rescue Exception => e
+          rescue => e
             # An unexpected exception was raised - the connection is no good.
             close
-            raise e
+            raise Aerospike::Exceptions::Connection.new("#{e}")
           end
         end
       end
