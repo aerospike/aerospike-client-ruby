@@ -507,6 +507,10 @@ module Aerospike
       raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::INDEX_GENERICINDEX_GENERIC, "Drop index failed: #{response}")
     end
 
+    def request_info(*commands)
+      @cluster.request_info(@default_policy, *commands)
+    end
+
     private
 
     def send_info_command(policy, command)
