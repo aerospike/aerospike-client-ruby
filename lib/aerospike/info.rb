@@ -45,9 +45,7 @@ module Aerospike
       end
 
       buf_length = send_command(conn, offset, buffer)
-      res = parse_multiple_response(buf_length, buffer)
-      Buffer.put(buffer)
-      res
+      parse_multiple_response(buf_length, buffer).tap { Buffer.put(buffer) }
     end
 
     def self.parse_multiple_response(buf_length, buffer)

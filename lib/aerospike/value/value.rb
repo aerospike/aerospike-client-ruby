@@ -338,7 +338,7 @@ module Aerospike
       StringValue.new(buf.read(offset, length))
 
     when Aerospike::ParticleType::INTEGER
-      Value.of(buf.read_int64(offset))
+      IntegerValue.new(buf.read_int64(offset))
 
     when Aerospike::ParticleType::BLOB
       BytesValue.new(buf.read(offse,length))

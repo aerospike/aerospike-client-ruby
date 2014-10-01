@@ -35,7 +35,6 @@ module Aerospike
 
     def initialize(size=DEFAULT_BUFFER_SIZE)
       @buf = "%0#{size}d" % 0
-      @buf.force_encoding('binary')
 
       @slice_end = @buf.bytesize
     end
@@ -61,14 +60,11 @@ module Aerospike
     end
 
     def write_byte(byte, offset)
-      @buf[offset] = byte.chr
+      @buf.setbyte(offset, byte.ord)
       1
     end
 
     def write_binary(data, offset)
-      if data.encoding != Encoding.find('binary')
-        data = data.dup.force_encoding('binary')
-      end
       @buf[offset, data.bytesize] = data
       data.bytesize
     end
@@ -93,33 +89,27 @@ module Aerospike
       8
     end
 
-    def read(offset, len=nil)
-      len ||= 1
-      is_single_byte = (len == 1)
-      validate_read(offset, len)
+    def read(offset, len=1)
       start = offset
 
-      if is_single_byte
-        @buf[start]
+      if len == 1
+        @buf.getbyte(start)
       else
-        @buf[start, len]#.unpack("C*")
+        @buf[start, len]
       end
     end
 
     def read_int16(offset)
-      validate_read(offset, 2)
       vals = @buf[offset..offset+1]
       vals.unpack(INT16)[0]
     end
 
     def read_int32(offset)
-      validate_read(offset, 4)
       vals = @buf[offset..offset+3]
       vals.unpack(INT32)[0]
     end
 
     def read_int64(offset)
-      validate_read(offset, 8)
       vals = @buf[offset..offset+7]
       vals.unpack(INT64)[0]
     end
@@ -131,14 +121,6 @@ module Aerospike
         val |= @buf[offset+i].ord & 0xFF
       end
       val
-    end
-
-    def to_a(format="C*")
-      @buf.unpack(format)
-    end
-
-    def unpack(format="C*")
-      to_a(format)
     end
 
     def to_s
@@ -153,20 +135,6 @@ module Aerospike
         print c.ord.to_s(16)
         putc ' '
       end
-    end
-
-    private
-
-    def chr(byte)
-      if byte.is_a?(FixedNum) && byte < 0
-        [byte].pack('c')
-      else
-        byte.chr
-      end
-    end
-
-    def validate_read(offset, len)
-      raise "buffer overflow error" if offset + len > @buf.length
     end
 
   end # buffer
