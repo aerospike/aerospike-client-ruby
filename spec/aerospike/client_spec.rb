@@ -76,6 +76,26 @@ describe Aerospike::Client do
 
       end
 
+      it "should put a hash with bins and get only some bins" do
+
+        key = Support.gen_random_key
+
+        bin_map = {
+          'bin1' => 'value1',
+          'bin2' => 2,
+          'bin4' => ['value4', {'map1' => 'map val'}],
+          'bin5' => {'value5' => [124, "string value"]},
+        }
+
+        client.put(key, bin_map)
+
+        expect(client.connected?).to be true
+
+        record = client.get(key, ['bin1', 'bin2'])
+        expect(record.bins).to eq ({'bin1' => 'value1', 'bin2' => 2})
+
+      end
+
       it "should put a STRING and get it successfully" do
 
         key = Support.gen_random_key
@@ -227,6 +247,53 @@ describe Aerospike::Client do
 
   end
 
+  describe "#put and change" do
+
+    let(:key) do
+      Support.gen_random_key
+    end
+
+    before do
+
+      exists = client.exists(key)
+      expect(exists).to be false
+
+      client.put(key, {'str' => 'value', 'int' => 10})
+
+      exists = client.exists(key)
+      expect(exists).to be true
+    end
+
+    it "should append to a key successfully" do
+
+      client.append(key, {'str' => '1' })
+      record = client.get(key)
+      expect(record.bins['str']).to eq 'value1'
+
+    end
+
+    it "should prepend to a key successfully" do
+
+      client.prepend(key, {'str' => '0' })
+      record = client.get(key)
+      expect(record.bins['str']).to eq '0value'
+
+    end
+
+    it "should add to a key successfully" do
+
+      client.add(key, {'int' => 10 })
+      record = client.get(key)
+      expect(record.bins['int']).to eq 20
+
+      client.add(key, {'int' => -10 })
+      record = client.get(key)
+      expect(record.bins['int']).to eq 10
+
+    end
+
+  end
+
   describe "#operate" do
 
     let(:key) do
@@ -245,17 +312,17 @@ describe Aerospike::Client do
     it "should #put, #append" do
 
       rec = client.operate(key, [
-                           Aerospike::Operation.put(bin_str),
-                           Aerospike::Operation.get,
-                           ])
+                             Aerospike::Operation.put(bin_str),
+                             Aerospike::Operation.get,
+      ])
 
       expect(rec.bins[bin_str.name]).to eq bin_str.value
       expect(rec.generation).to eq 1
 
       rec = client.operate(key, [
-                           Aerospike::Operation.append(bin_str),
-                           Aerospike::Operation.get,
-                           ])
+                             Aerospike::Operation.append(bin_str),
+                             Aerospike::Operation.get,
+      ])
 
       expect(rec.bins[bin_str.name]).to eq bin_str.value * 2
       expect(rec.generation).to eq 2
@@ -265,17 +332,17 @@ describe Aerospike::Client do
     it "should #put, #prepend" do
 
       rec = client.operate(key, [
-                           Aerospike::Operation.put(bin_str),
-                           Aerospike::Operation.get,
-                           ])
+                             Aerospike::Operation.put(bin_str),
+                             Aerospike::Operation.get,
+      ])
 
       expect(rec.bins[bin_str.name]).to eq bin_str.value
       expect(rec.generation).to eq 1
 
       rec = client.operate(key, [
-                           Aerospike::Operation.prepend(bin_str),
-                           Aerospike::Operation.get,
-                           ])
+                             Aerospike::Operation.prepend(bin_str),
+                             Aerospike::Operation.get,
+      ])
 
       expect(rec.bins[bin_str.name]).to eq bin_str.value * 2
       expect(rec.generation).to eq 2
@@ -284,17 +351,17 @@ describe Aerospike::Client do
     it "should #put, #add" do
 
       rec = client.operate(key, [
-                           Aerospike::Operation.put(bin_int),
-                           Aerospike::Operation.get,
-                           ])
+                             Aerospike::Operation.put(bin_int),
+                             Aerospike::Operation.get,
+      ])
 
       expect(rec.bins[bin_int.name]).to eq bin_int.value
       expect(rec.generation).to eq 1
 
       rec = client.operate(key, [
-                           Aerospike::Operation.add(bin_int),
-                           Aerospike::Operation.get,
-                           ])
+                             Aerospike::Operation.add(bin_int),
+                             Aerospike::Operation.get,
+      ])
 
       expect(rec.bins[bin_str.name]).to eq bin_int.value * 2
       expect(rec.generation).to eq 2
@@ -304,17 +371,17 @@ describe Aerospike::Client do
     it "should #put, #touch" do
 
       rec = client.operate(key, [
-                           Aerospike::Operation.put(bin_int),
-                           Aerospike::Operation.get,
-                           ])
+                             Aerospike::Operation.put(bin_int),
+                             Aerospike::Operation.get,
+      ])
 
       expect(rec.bins[bin_int.name]).to eq bin_int.value
       expect(rec.generation).to eq 1
 
       rec = client.operate(key, [
-                           Aerospike::Operation.touch,
-                           Aerospike::Operation.get_header,
-                           ])
+                             Aerospike::Operation.touch,
+                             Aerospike::Operation.get_header,
+      ])
 
       # expect(rec.bins).to be nil
       expect(rec.generation).to eq 2
@@ -367,16 +434,47 @@ describe Aerospike::Client do
       key2 = Support.gen_random_key
       key3 = Support.gen_random_key
 
-      client.put(key1, Aerospike::Bin.new('bin', 'value'))
-      client.put(key3, Aerospike::Bin.new('bin', 'value'))
+      bin = Aerospike::Bin.new('bin', 'value')
+      client.put(key1, bin)
+      client.put(key3, bin)
 
-      records = client.batch_get([key1, key2, key3])
+      records = client.batch_get([key1, key2, key3], ['bin'])
 
       expect(records.length).to eq 3
 
       expect(records[0].key).to eq key1
+      expect(records[0].bins).to eq ({bin.name => bin.value})
+
       expect(records[1]).to be nil
+
       expect(records[2].key).to eq key3
+      expect(records[2].bins).to eq ({bin.name => bin.value})
+
+    end
+
+    it "should successfully get headers for keys" do
+
+      key1 = Support.gen_random_key
+      key2 = Support.gen_random_key
+      key3 = Support.gen_random_key
+
+      bin = Aerospike::Bin.new('bin', 'value')
+      client.put(key1, bin)
+      client.put(key3, bin)
+
+      records = client.batch_get_header([key1, key2, key3])
+
+      expect(records.length).to eq 3
+
+      expect(records[0].key).to eq key1
+      expect(records[0].bins).to be nil
+      expect(records[0].generation).to be 1
+
+      expect(records[1]).to be nil
+
+      expect(records[2].key).to eq key3
+      expect(records[2].bins).to be nil
+      expect(records[2].generation).to be 1
 
     end
 

@@ -47,7 +47,7 @@ module Aerospike
           res = IntegerValue.new(value)
         else
           # big nums > 2**63 are not supported
-          raise Aerospike::Exceptions::Aerospike.new(TYPE_NOT_SUPPORTED, "Value type #{value.class} not supported.").freeze
+          raise Aerospike::Exceptions::Aerospike.new(TYPE_NOT_SUPPORTED, "Value type #{value.class} not supported.")
         end
       when String
         res = StringValue.new(value)
@@ -59,7 +59,7 @@ module Aerospike
         res = ListValue.new(value)
       else
         # throw an exception for anything that is not supported.
-        raise Aerospike::Exceptions::Aerospike.new(TYPE_NOT_SUPPORTED, "Value type #{value.class} not supported.").freeze
+        raise Aerospike::Exceptions::Aerospike.new(TYPE_NOT_SUPPORTED, "Value type #{value.class} not supported.")
       end
 
       res
@@ -218,7 +218,7 @@ module Aerospike
     end
 
     def to_bytes
-      [@value].pack('Q<'.freeze)
+      [@value].pack('Q<')
     end
 
     def to_s
@@ -252,7 +252,8 @@ module Aerospike
 
     def pack(packer)
       packer.write_array_header(@list.length)
-      @list.each do |val|
+      # @list.each do |val|
+      for val in @list
         Value.of(val).pack(packer)
       end
     end
@@ -303,7 +304,8 @@ module Aerospike
 
     def pack(packer)
       packer.write_map_header(@vmap.length)
-      @vmap.each do |key, val|
+      # @vmap.each do |key, val|
+      for key, val in @vmap
         Value.of(key).pack(packer)
         Value.of(val).pack(packer)
       end
@@ -335,19 +337,21 @@ module Aerospike
 
     case type
     when Aerospike::ParticleType::STRING
-      StringValue.new(buf.read(offset, length))
+      # StringValue.new(buf.read(offset, length))
+      buf.read(offset, length)
 
     when Aerospike::ParticleType::INTEGER
-      IntegerValue.new(buf.read_int64(offset))
+      # IntegerValue.new(buf.read_int64(offset))
+      buf.read_int64(offset)
 
     when Aerospike::ParticleType::BLOB
-      BytesValue.new(buf.read(offse,length))
+      buf.read(offse,length)
 
     when Aerospike::ParticleType::LIST
-      ListValue.new(MessagePack.unpack(buf.read(offset, length)))
+      MessagePack.unpack(buf.read(offset, length))
 
     when Aerospike::ParticleType::MAP
-      MapValue.new(MessagePack.unpack(buf.read(offset, length)))
+      MessagePack.unpack(buf.read(offset, length))
 
     else
       nil

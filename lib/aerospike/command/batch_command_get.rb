@@ -18,7 +18,7 @@ require 'aerospike/command/batch_command'
 
 module Aerospike
 
-  protected
+  private
 
   class BatchCommandGet < BatchCommand
 
@@ -86,26 +86,26 @@ module Aerospike
       duplicates = nil
 
       for i in 0...op_count
-        raise Aerospike::Exceptions::QueryTerminated.new unless cmd.valid?
+        raise Aerospike::Exceptions::QueryTerminated.new unless valid?
 
         read_bytes(8)
 
         op_size = @data_buffer.read_int32(0).ord
         particle_type = @data_buffer.read(5).ord
         version = @data_buffer.read(6).ord
-        name_size = @data_buffer.read(75).ord
+        name_size = @data_buffer.read(7).ord
 
         read_bytes(name_size)
         name = @data_buffer.read(0, name_size).force_encoding('utf-8')
 
         particle_bytes_size = op_size - (4 + name_size)
         read_bytes(particle_bytes_size)
-        value = Value.bytes_to_particle(particle_type, @data_buffer, 0, particle_bytes_size)
+        value = Aerospike.bytes_to_particle(particle_type, @data_buffer, 0, particle_bytes_size)
 
         # Currently, the batch command returns all the bins even if a subset of
         # the bins are requested. We have to filter it on the client side.
         # TODO: Filter batch bins on server!
-        if !bin_names || @bin_names.any?{|bn| bn == name}
+        if !@bin_names || @bin_names.any?{|bn| bn == name}
           vmap = nil
 
           if version > 0 || duplicates

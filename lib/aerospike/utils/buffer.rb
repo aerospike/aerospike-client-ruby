@@ -26,9 +26,9 @@ module Aerospike
 
     attr_accessor :buf
 
-    INT16 = 's>'.freeze
-    INT32 = 'l>'.freeze
-    INT64 = 'q>'.freeze
+    INT16 = 's>'
+    INT32 = 'l>'
+    INT64 = 'q>'
 
     DEFAULT_BUFFER_SIZE = 16 * 1024
     MAX_BUFFER_SIZE = 10 * 1024 * 1024
@@ -67,11 +67,6 @@ module Aerospike
     def write_binary(data, offset)
       @buf[offset, data.bytesize] = data
       data.bytesize
-    end
-
-    def write_array(array, offset)
-      @buf[offset, array.length] = array.pack("C*")
-      array.length
     end
 
     def write_int16(i, offset)

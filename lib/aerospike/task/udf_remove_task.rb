@@ -21,7 +21,7 @@ require 'aerospike/task/task'
 
 module Aerospike
 
-  protected
+  private
 
   class UdfRemoveTask < Task
 

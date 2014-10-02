@@ -18,7 +18,7 @@ require 'base64'
 
 module Aerospike
 
-  protected
+  private
 
   class PartitionTokenizerOld
 

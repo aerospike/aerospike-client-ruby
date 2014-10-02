@@ -18,7 +18,7 @@ require 'aerospike/command/single_command'
 
 module Aerospike
 
-  protected
+  private
 
   class WriteCommand < SingleCommand
 

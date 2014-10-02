@@ -21,6 +21,8 @@ require 'atomic'
 
 module Aerospike
 
+  private
+
   class Cluster
 
     attr_reader :connection_timeout, :connection_queue_size
@@ -44,7 +46,7 @@ module Aerospike
 
       launch_tend_thread
 
-      Aerospike.logger.debug('New cluster initialized and ready to be used...')
+      Aerospike.logger.info('New cluster initialized and ready to be used...')
 
       self
     end
@@ -92,7 +94,6 @@ module Aerospike
         node = node_array[index]
 
         if node.active?
-          # Logger.Debug("Node `%s` is active. index=%d", node, index)
           return node
         end
       end

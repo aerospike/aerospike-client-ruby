@@ -23,7 +23,7 @@ require 'aerospike/command/field_type'
 
 module Aerospike
 
-  protected
+  private
 
   # Flags commented out are not supported by cmd client.
   # Contains a read operation.
@@ -269,9 +269,8 @@ module Aerospike
       write_field_header(byte_size, Aerospike::FieldType::DIGEST_RIPE_ARRAY)
 
       keys.each do |key|
-        digest = key.digest
-        @data_buffer.write_binary(digest, @data_offset)
-        @data_offset += digest.bytesize
+        @data_buffer.write_binary(key.digest, @data_offset)
+        @data_offset += key.digest.bytesize
       end
       end_cmd
     end
@@ -279,8 +278,7 @@ module Aerospike
     def set_batch_get(batch_namespace, bin_names, read_attr)
       # Estimate buffer size
       begin_cmd
-      keys = batch_namespace.keys
-      byte_size = keys.length * DIGEST_SIZE
+      byte_size = batch_namespace.keys.length * DIGEST_SIZE
 
       @data_offset += batch_namespace.namespace.bytesize +
         FIELD_HEADER_SIZE + byte_size + FIELD_HEADER_SIZE
@@ -302,10 +300,9 @@ module Aerospike
       write_field_string(batch_namespace.namespace, Aerospike::FieldType::NAMESPACE)
       write_field_header(byte_size, Aerospike::FieldType::DIGEST_RIPE_ARRAY)
 
-      keys.each do |key|
-        digest = key.digest
-        @data_buffer.write_binary(digest, @data_offset)
-        @data_offset += digest.length
+      batch_namespace.keys.each do |key|
+        @data_buffer.write_binary(key.digest, @data_offset)
+        @data_offset += key.digest.bytesize
       end
 
       if bin_names
@@ -470,12 +467,10 @@ module Aerospike
       @data_buffer.write_byte(read_attr, 9)
       @data_buffer.write_byte(write_attr, 10)
 
-      for i in 11...26
+      for i in 11..25
         @data_buffer.write_byte(0, i)
       end
 
-      # Buffer.Int16ToBytes(field_count, @data_buffer, 26)
-      # Buffer.Int16ToBytes(operation_count, @data_buffer, 28)
       @data_buffer.write_int16(field_count, 26)
       @data_buffer.write_int16(operation_count, 28)
 

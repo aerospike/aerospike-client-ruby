@@ -343,7 +343,7 @@ module Aerospike
         "Query error"
 
       else
-        "ResultCode unknown in the client. Please file a github issue."
+        "ResultCode #{code} unknown in the client. Please file a github issue."
       end # case
 
     end

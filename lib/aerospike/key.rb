@@ -49,7 +49,7 @@ module Aerospike
     end
 
     def to_s
-      "#{@namespace}:#{@set_name}:#{@user_key}"
+      "#{@namespace}:#{@set_name}:#{@user_key}:#{@digest.nil? ? '' : @digest.bytes}"
     end
 
     def user_key
@@ -74,12 +74,19 @@ module Aerospike
     private
 
     def compute_digest
+      key_type = @user_key.type
+
+      if key_type == Aerospike::ParticleType::NULL
+        raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::PARAMETER_ERROR, "Invalid key: nil")
+      end
+
       # get a hash from pool and make it ready for work
       h = @@digest_pool.poll
       h.reset
 
       # Compute a complete digest
       h.update(@set_name)
+      h.update(key_type.chr)
       h.update(@user_key.to_bytes)
       @digest = h.digest
 

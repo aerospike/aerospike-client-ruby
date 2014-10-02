@@ -19,7 +19,7 @@ require 'aerospike/result_code'
 
 module Aerospike
 
-  protected
+  private
 
   class ReadHeaderCommand < SingleCommand
 

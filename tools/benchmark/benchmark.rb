@@ -14,17 +14,16 @@ include Aerospike
   :port => 3000,
   :namespace => 'test',
   :set => 'benchmark',
-  :keyCount => 100000,
-  :binDef => 'I',
+  :key_count => 100000,
+  :bin_def => 'I',
   :concurrency => 1,
-  :workloadDef => 'I:100',
+  :workload_def => 'I:100',
   :throughput => 0,
   :timeout => 0,
-  :maxRetries => 2,
-  :connQueueSize => 64,
-  :randBinData => false,
-  :debugMode => false,
-  :showUsage => false,
+  :max_retries => 2,
+  :conn_queue_size => 64,
+  :rand_bin_data => false,
+  :debug_mode => false,
 }
 
 @mutex = Mutex.new
@@ -49,11 +48,11 @@ include Aerospike
   end
 
   opts.on("-k", "--keys KEYS", "Key/record count or key/record range.") do |v|
-    @options[:keyCount] = v.to_i
+    @options[:key_count] = v.to_i
   end
 
   opts.on("-o", "--object OBJECT", "Bin object specification.\n\t\t\t\t\tI\t: Read/write integer bin.\n\t\t\t\t\tB:200\t: Read/write byte array bin of length 200.\n\t\t\t\t\tS:50\t: Read/write string bin of length 50.") do |v|
-    @options[:binDef] = v
+    @options[:bin_def] = v
   end
 
   opts.on("-c", "--concurrency COUNT", "Number of threads to generate load.") do |v|
@@ -61,7 +60,7 @@ include Aerospike
   end
 
   opts.on("-w", "--workload TYPE", "Desired workload.\n\t\t\t\t\tI:60\t: Linear 'insert' workload initializing 60% of the keys.\n\t\t\t\t\tRU:80\t: Random read/update workload with 80% reads and 20% writes.") do |v|
-    @options[:workloadDef] = v
+    @options[:workload_def] = v
   end
 
   opts.on("-g", "--throttle VALUE", "Throttle transactions per second to a maximum value.\n\t\t\t\t\tIf tps is zero, do not throttle throughput.\n\t\t\t\t\tUsed in read/write mode only.") do |v|
@@ -73,19 +72,19 @@ include Aerospike
   end
 
   opts.on("-m", "--max-retries COUNT", "Maximum number of retries before aborting the current transaction.") do |v|
-    @options[:maxRetries] = v.to_i
+    @options[:max_retries] = v.to_i
   end
 
   opts.on("-q", "--queue-size SIZE", "Maximum number of connections to pool.") do |v|
-    @options[:connQueueSize] = v.to_i
+    @options[:conn_queue_size] = v.to_i
   end
 
   opts.on("-R", "--random-bins", "Use dynamically generated random bin values instead of default static fixed bin values.") do |v|
-    @options[:randBinData] = v
+    @options[:rand_bin_data] = v
   end
 
   opts.on("-d", "--debug", "Run benchmarks in debug mode.") do |v|
-    @options[:debugMode] = v
+    @options[:debug_mode] = v
   end
 
   opts.on("-u", "--usage", "Show usage information.") do |v|
@@ -117,15 +116,15 @@ def printBenchmarkParams
   puts("port:\t\t#{@options[:port]}")
   puts("namespace:\t#{@options[:namespace]}")
   puts("set:\t\t#{@options[:set]}")
-  puts("keys/records:\t#{@options[:keyCount]}")
+  puts("keys/records:\t#{@options[:key_count]}")
   puts("object spec:\t#{@binDataType}, size: #{@binDataSize}")
-  puts("random bins:\t#{@options[:randBinData]}")
+  puts("random bins:\t#{@options[:rand_bin_data]}")
   puts("workload:\t#{workloadToString}")
   puts("concurrency:\t#{@options[:concurrency]}")
   puts("max throughput:\t#{throughputToString}")
   puts("timeout:\t#{@options[:timeout] > 0 ? (@options[:timeout] * 1000).to_i : '-'} ms")
-  puts("max retries:\t#{@options[:maxRetries]}")
-  puts("debug:\t\t#{@options[:debugMode]}")
+  puts("max retries:\t#{@options[:max_retries]}")
+  puts("debug:\t\t#{@options[:debug_mode]}")
   puts
 end
 
@@ -145,11 +144,11 @@ def readFlags
   @opt_parser.parse!
 
   Aerospike.logger.level = Logger::ERROR
-  if @options[:debugMode]
+  if @options[:debug_mode]
     Aerospike.logger.level = Logger::INFO
   end
 
-  @binDataType, binDataSz = parseValuedParam(@options[:binDef])
+  @binDataType, binDataSz = parseValuedParam(@options[:bin_def])
   if binDataSz
     @binDataSize = @options[:binDataSz]
   else
@@ -161,7 +160,7 @@ def readFlags
     end
   end
 
-  @workloadType, workloadPct = parseValuedParam(@options[:workloadDef])
+  @workloadType, workloadPct = parseValuedParam(@options[:workload_def])
   if workloadPct
     @workloadPercent = workloadPct.to_i
   else
@@ -202,7 +201,7 @@ end
 def run_bench(client, ident, times)
   writepolicy = WritePolicy.new
   client.default_write_policy.timeout = @options[:timeout]
-  client.default_write_policy.max_retries = @options[:maxRetries]
+  client.default_write_policy.max_retries = @options[:max_retries]
 
   client.default_policy = writepolicy
 
@@ -217,7 +216,7 @@ def run_bench(client, ident, times)
   bin = defaultBin
   namespace = @options[:namespace]
   set = @options[:set]
-  randbins = @options[:randBinData]
+  randbins = @options[:rand_bin_data]
 
   iters = 1
   while @workloadType == 'RU' || iters <= times
@@ -284,8 +283,8 @@ def reporter
           wto, rto = @totalWTOCount - last_totalWTOCount, @totalRTOCount - last_totalRTOCount
           werr, rerr = @totalWErrCount - last_totalWErrCount, @totalRErrCount - last_totalRErrCount
           str = "write(tps=#{w} timeouts=#{wto} errors=#{werr})"
-          str += " read(tps=#{r} timeouts=#{rto} errors=#{rerr})"
-          str += " total(tps=#{w+r} timeouts=#{wto+rto} errors=#{werr+rerr}, count=#{@totalWCount+@totalRCount})"
+          str << " read(tps=#{r} timeouts=#{rto} errors=#{rerr})"
+          str << " total(tps=#{w+r} timeouts=#{wto+rto} errors=#{werr+rerr}, count=#{@totalWCount+@totalRCount})"
           @logger.info str
         else
           @logger.info "write(tps=#{@totalWCount - last_totalWCount} timeouts=#{@totalWTOCount - last_totalWTOCount} errors=#{@totalWErrCount - last_totalWErrCount} totalCount=#{@totalWCount})"
@@ -319,8 +318,8 @@ threads = []
 r_thread = Thread.new { reporter }
 
 for i in (1..@options[:concurrency]) do
-    threads << Thread.new {run_bench(client, i - 1, @options[:keyCount] / @options[:concurrency]) }
-  end
+    threads << Thread.new {run_bench(client, i - 1, @options[:key_count] / @options[:concurrency]) }
+end
 
-  threads.each {|t| t.join}
-  r_thread.kill
+threads.each {|t| t.join}
+r_thread.kill

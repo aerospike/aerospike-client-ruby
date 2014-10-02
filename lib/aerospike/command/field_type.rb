@@ -15,6 +15,8 @@
 
 module Aerospike
 
+  private
+
   module FieldType
 
     NAMESPACE = 0

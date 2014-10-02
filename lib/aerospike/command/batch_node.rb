@@ -22,7 +22,7 @@ require 'aerospike/command/command'
 
 module Aerospike
 
-  protected
+  private
 
   BatchNamespace = Struct.new :namespace, :keys
 

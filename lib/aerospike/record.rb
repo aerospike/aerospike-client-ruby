@@ -15,7 +15,11 @@
 # the License.
 
 module Aerospike
+
+  private
+
   class Record
+
     attr_reader :key, :bins, :generation, :expiration, :node, :dups
 
     def initialize(node, rec_key, rec_bins, dups, rec_gen, rec_exp)

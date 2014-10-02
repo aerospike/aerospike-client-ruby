@@ -232,14 +232,9 @@ module Aerospike
       records = Array.new(keys.length)
 
       key_map = BatchItem.generate_map(keys)
-      bin_set = {}
-      bin_names.each do |bn|
-        bin_set[bn] = {}
-      end
-
 
       cmd_gen = Proc.new do |node, bns|
-        BatchCommandGet.new(node, bns, policy, key_map, bin_set.keys, records, INFO1_READ|INFO1_NOBINDATA)
+        BatchCommandGet.new(node, bns, policy, key_map, bin_names.uniq, records, INFO1_READ)
       end
 
       batch_execute(keys, &cmd_gen)
@@ -262,13 +257,13 @@ module Aerospike
       records = Array.new(keys.length)
 
       key_map = BatchItem.generate_map(keys)
-      bin_set = {}
-      bin_names.each do |bn|
-        bin_set[bn] = {}
+
+      cmd_gen = Proc.new do |node, bns|
+        BatchCommandGet.new(node, bns, policy, key_map, nil, records, INFO1_READ | INFO1_NOBINDATA)
       end
 
-      command = BatchCommandGet.new(node, bns, policy, key_map, nil, records, INFO1_READ | INFO_NOBINDATA)
-      command.execute
+      batch_execute(keys, &cmd_gen)
+      records
     end
 
     #-------------------------------------------------------
@@ -350,7 +345,7 @@ module Aerospike
       content = Base64.strict_encode64(udf_body).force_encoding('binary')
 
       str_cmd = "udf-put:filename=#{server_path};content=#{content};"
-      str_cmd += "content-len=#{content.length};udf-type=#{language};"
+      str_cmd << "content-len=#{content.length};udf-type=#{language};"
       # Send UDF to one node. That node will distribute the UDF to other nodes.
       response_map = @cluster.request_info(@default_policy, str_cmd)
       response, _ = response_map.first
@@ -464,9 +459,9 @@ module Aerospike
     def create_index(namespace, set_name, index_name, bin_name, index_type, opt=nil)
       policy = opt_to_write_policy(opt)
       str_cmd = "sindex-create:ns=#{namespace}"
-      str_cmd += ";set=#{set_name}" unless set_name.to_s.strip.empty?
-      str_cmd += ";indexname=#{index_name};numbins=1;indexdata=#{bin_name},#{index_type.to_s.upcase}"
-      str_cmd += ";priority=normal"
+      str_cmd << ";set=#{set_name}" unless set_name.to_s.strip.empty?
+      str_cmd << ";indexname=#{index_name};numbins=1;indexdata=#{bin_name},#{index_type.to_s.upcase}"
+      str_cmd << ";priority=normal"
 
       # Send index command to one node. That node will distribute the command to other nodes.
       response_map = send_info_command(policy, str_cmd)
@@ -480,7 +475,7 @@ module Aerospike
 
       if response.start_with?('FAIL:200')
         # Index has already been created.  Do not need to poll for completion.
-        return
+        return IndexTask.new(@cluster, namespace, index_name, true)
       end
 
       raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::INDEX_GENERIC, "Create index failed: #{response}")
@@ -491,8 +486,8 @@ module Aerospike
     def drop_index(namespace, set_name, index_name, opt=nil)
       policy = opt_to_write_policy(opt)
       str_cmd = "sindex-delete:ns=#{namespace}"
-      str_cmd += ";set=#{set_name}" unless set_name.to_s.strip.empty?
-      str_cmd += ";indexname=#{index_name}"
+      str_cmd << ";set=#{set_name}" unless set_name.to_s.strip.empty?
+      str_cmd << ";indexname=#{index_name}"
 
       # Send index command to one node. That node will distribute the command to other nodes.
       response_map = send_info_command(policy, str_cmd)
@@ -535,7 +530,7 @@ module Aerospike
         ClientPolicy.new
       elsif opt.is_a?(ClientPolicy)
         opt
-      else
+      elsif opt.is_a?(Hash)
         ClientPolicy.new(
           opt[:timeout],
           opt[:connection_queue_size],
@@ -546,10 +541,10 @@ module Aerospike
 
     def opt_to_policy(opt)
       if opt.nil?
-        @default_write_policy
+        @default_policy
       elsif opt.is_a?(Policy)
         opt
-      else
+      elsif opt.is_a?(Hash)
         Policy.new(
           opt[:priority],
           opt[:timeout],
@@ -564,7 +559,7 @@ module Aerospike
         @default_write_policy
       elsif opt.is_a?(WritePolicy)
         opt
-      else
+      elsif opt.is_a?(Hash)
         WritePolicy.new(
           opt[:record_exists_action],
           opt[:gen_policy],

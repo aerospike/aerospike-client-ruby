@@ -22,7 +22,7 @@ require 'aerospike/value/value'
 
 module Aerospike
 
-  protected
+  private
 
   class ReadCommand < SingleCommand
 
@@ -43,7 +43,6 @@ module Aerospike
 
     def parse_result
       # Read header.
-      # Logger.Debug("read_command Parse Result: trying to read %d bytes from the connection...", int(_MSG_TOTAL_HEADER_SIZE))
       begin
         @conn.read(@data_buffer, MSG_TOTAL_HEADER_SIZE)
       rescue => e
@@ -61,8 +60,6 @@ module Aerospike
       field_count = @data_buffer.read_int16(26) # almost certainly 0
       op_count = @data_buffer.read_int16(28)
       receive_size = (sz & 0xFFFFFFFFFFFF) - header_length
-
-      # Aerospike.logger.debug("read_command Parse Result: result_code: %d, header_length: %d, generation: %d, expiration: %d, field_count: %d, op_count: %d, receive_size: %d", result_code, header_length, generation, expiration, field_count, op_count, receive_size)
 
       # Read remaining message bytes.
       if receive_size > 0
@@ -116,11 +113,9 @@ module Aerospike
 
       # There can be fields in the response (setname etc).
       # But for now, ignore them. Expose them to the API if needed in the future.
-      # Logger.Debug("field count: %d, databuffer: %v", field_count, @data_buffer)
       if field_count != 0
         # Just skip over all the fields
         for i in 0...field_count
-          # Logger.Debug("%d", receive_offset)
           field_size = @data_buffer.read_int32(receive_offset)
           receive_offset += (4 + field_size)
         end
@@ -165,7 +160,7 @@ module Aerospike
           bins = {} unless bins
           vmap = bins
         end
-        vmap[name] = value.get if value
+        vmap[name] = value
       end
 
       # Remove nil duplicates just in case there were holes in the version number space.

@@ -20,7 +20,7 @@ require 'atomic'
 
 module Aerospike
 
-  protected
+  private
 
   class Task
 
@@ -45,7 +45,6 @@ module Aerospike
               break if completed?
               sleep(poll_interval.to_f)
             rescue => e
-              p e
               break if failures > allowed_failures
               failures += 1
             end

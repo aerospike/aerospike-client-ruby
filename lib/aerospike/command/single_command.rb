@@ -19,7 +19,7 @@ require 'aerospike/command/command'
 
 module Aerospike
 
-  protected
+  private
 
   class SingleCommand < Command
 

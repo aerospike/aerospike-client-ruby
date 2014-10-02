@@ -16,7 +16,7 @@
 
 module Aerospike
 
-  protected
+  private
 
   class NodeValidator
 

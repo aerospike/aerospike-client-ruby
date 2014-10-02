@@ -18,7 +18,7 @@ require 'socket'
 
 module Aerospike
 
-  protected
+  private
 
   class Connection
 

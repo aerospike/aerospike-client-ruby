@@ -16,6 +16,8 @@
 
 module Aerospike
 
+  private
+
   class Partition
     attr_reader :namespace, :partition_id
 
@@ -42,10 +44,6 @@ module Aerospike
         @namespace == other.namespace
     end
     alias eql? ==
-
-    def hash
-      to_s.hash
-    end
 
     def hash
       to_s.hash

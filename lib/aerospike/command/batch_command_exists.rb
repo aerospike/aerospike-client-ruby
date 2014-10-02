@@ -18,7 +18,7 @@ require 'aerospike/command/batch_command'
 
 module Aerospike
 
-  protected
+  private
 
   class BatchCommandExists < BatchCommand
 

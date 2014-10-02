@@ -18,6 +18,8 @@ require 'aerospike/value/particle_type'
 
 module Aerospike
 
+  private
+
   class Large
 
     def initialize(client, policy, key, bin_name, user_module=nil)

@@ -18,6 +18,8 @@ require 'atomic'
 
 module Aerospike
 
+  private
+
   class Node
 
     attr_reader :reference_count, :responded, :name

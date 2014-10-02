@@ -18,6 +18,8 @@ require 'aerospike/ldt/large'
 
 module Aerospike
 
+  private
+
   class LargeMap < Large
 
     def initialize(client, policy, key, bin_name, user_module=nil)

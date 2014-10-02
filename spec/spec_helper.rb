@@ -3,6 +3,9 @@
 require 'rspec'
 require "support/utils"
 
+require 'simplecov'
+SimpleCov.start
+
 $:.unshift((Pathname(__FILE__).dirname.parent + 'lib').to_s)
 
 require 'aerospike'

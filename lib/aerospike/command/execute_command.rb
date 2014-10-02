@@ -19,7 +19,7 @@ require 'aerospike/command/read_command'
 
 module Aerospike
 
-  protected
+  private
 
   class ExecuteCommand < ReadCommand
 

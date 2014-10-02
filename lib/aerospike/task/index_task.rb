@@ -21,14 +21,14 @@ require 'aerospike/task/task'
 
 module Aerospike
 
-  protected
+  private
 
   class IndexTask < Task
 
     MATCHER = /.*load_pct=(?<load_pct>\d+(\.\d+)?).*/
 
-    def initialize(cluster, namespace, index_name)
-      super(cluster, false)
+    def initialize(cluster, namespace, index_name, done=false)
+      super(cluster, done)
       @namespace = namespace
       @index_name = index_name
 
