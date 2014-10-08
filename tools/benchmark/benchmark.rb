@@ -247,7 +247,7 @@ def run_bench(client, ident, times)
       end
     end
 
-    if Time.now - t >= 0.1
+    if Time.now - t >= 0.3
       @mutex.synchronize do
         @totalWCount += w_count
         @totalRCount += r_count

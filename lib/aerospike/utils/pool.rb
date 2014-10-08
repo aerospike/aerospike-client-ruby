@@ -19,6 +19,8 @@ require 'timeout'
 
 module Aerospike
 
+  private
+
   class Pool
 
     attr_accessor :create_block, :cleanup_block

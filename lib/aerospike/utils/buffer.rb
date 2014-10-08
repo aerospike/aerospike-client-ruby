@@ -18,6 +18,8 @@ require 'aerospike/utils/pool'
 
 module Aerospike
 
+  private
+
   # Buffer class to ease the work around
   class Buffer
 

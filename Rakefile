@@ -1,4 +1,5 @@
 require "rspec/core/rake_task"
+require "rdoc/task"
 
 $LOAD_PATH.unshift File.expand_path("../lib", __FILE__)
 require "aerospike/version"
@@ -24,3 +25,8 @@ RSpec::Core::RakeTask.new(:spec) do |spec|
 end
 
 task :default => :spec
+
+RDoc::Task.new do |rd|
+  rd.rdoc_files.include("lib/**/*.rb")
+  rd.options + ['--inline-source', '--charset=UTF-8']
+end

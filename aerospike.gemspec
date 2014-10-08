@@ -16,4 +16,6 @@ Gem::Specification.new do |s|
   s.license       = "Apache2.0"
   s.files = Dir.glob("lib/**/*") + %w(CHANGELOG.md LICENSE README.md)
   s.require_path = "lib"
+  s.add_dependency("atomic", '~> 1.1')
+  s.add_dependency("msgpack", '~> 0.5')
 end

@@ -19,64 +19,84 @@ require 'base64'
 
 module Aerospike
 
+  ##
+  # Client class manages the Aerospike cluster nodes under the hood, and
+  # provides methods to access the database.
+  #
+  # All internal code is thread-safe, and can be used from multiple threads
+  # without any need for synchronization.
+
+  # Examples:
+  #
+  # # connect to the database
+  # client = Client.new('192.168.0.1', 3000)
+  #
+  # #=> raises Aerospike::Exceptions::Timeout if a +:timeout+ is specified and
+  # +:fail_if_not_connected+ set to true
+
   class Client
 
     attr_accessor :default_policy, :default_write_policy
 
-    def initialize(host, port, opt=nil)
+    def initialize(host, port, options={})
       @default_policy = Policy.new
       @default_write_policy = WritePolicy.new
 
-      policy = opt_to_client_policy(opt)
+      policy = opt_to_client_policy(options)
 
       @cluster = Cluster.new(policy, Host.new(host, port))
 
       self
     end
 
-    #  Close all client connections to database server nodes.
+    ##
+    #  Closes all client connections to database server nodes.
+
     def close
       @cluster.close
     end
 
-    #  Determine if we are ready to talk to the database server cluster.
+    ##
+    #  Determines if there are active connections to the database server cluster.
+    #  Returns +true+ if connections exist.
+
     def connected?
       @cluster.connected?
     end
 
-    #  Return array of active server nodes in the cluster.
+    ##
+    #  Returns array of active server nodes in the cluster.
+
     def nodes
       @cluster.nodes
     end
 
-    #  Return list of active server node names in the cluster.
+    ##
+    #  Returns list of active server node names in the cluster.
+
     def node_names
-      nodes = @cluster.nodes
-      names = []
-
-      nodes.each do |node|
-        names << node.get_name
+      @cluster.nodes.map do |node|
+        node.get_name
       end
-
-      names
     end
 
     #-------------------------------------------------------
     # Write Record Operations
     #-------------------------------------------------------
 
-    #  Write record bin(s).
-    #  The policy specifies the transaction timeout, record expiration and how the transaction is
-    #  handled when the record already exists.
-    # def put(policy *WritePolicy, key *Key, bins BinMap) error {
-    #   PutBins(policy, key, bin_map_to_bins(bins)...)
-    # }
+    ##
+    #  Writes record bin(s).
+    #  The policy options specifiy the transaction timeout, record expiration
+    #  and how the transaction is handled when the record already exists.
+    #
+    #  If no policy options are provided, +@default_write_policy+ will be used.
 
-    #  Write record bin(s).
-    #  The policy specifies the transaction timeout, record expiration and how the transaction is
-    #  handled when the record already exists.
-    def put(key, bins, opt=nil)
-      policy = opt_to_write_policy(opt)
+    #  Examples:
+    #
+    #  client.put key, {'bin', 'value string'}, :timeout => 0.001
+
+    def put(key, bins, options={})
+      policy = opt_to_write_policy(options)
       command = WriteCommand.new(@cluster, policy, key, hash_to_bins(bins), Aerospike::Operation::WRITE)
       command.execute
     end
@@ -85,30 +105,40 @@ module Aerospike
     # Operations string
     #-------------------------------------------------------
 
-    #  Append bin values string to existing record bin values.
-    #  The policy specifies the transaction timeout, record expiration and how the transaction is
-    #  handled when the record already exists.
+    ##
+    #  Appends bin values string to existing record bin values.
+    #  The policy specifies the transaction timeout, record expiration and
+    #  how the transaction is handled when the record already exists.
+    #
     #  This call only works for string values.
-    # def Append(policy *WritePolicy, key *Key, bins BinMap) error {
-    #   return clnt.AppendBins(policy, key, bin_map_to_bins(bins)...)
-    # }
+    #
+    #  If no policy options are provided, +@default_write_policy+ will be used.
 
-    def append(key, bins, opt=nil)
-      policy = opt_to_write_policy(opt)
+    #  Examples:
+    #
+    #  client.append key, {'bin', 'value to append'}, :timeout => 0.001
+
+    def append(key, bins, options={})
+      policy = opt_to_write_policy(options)
       command = WriteCommand.new(@cluster, policy, key, hash_to_bins(bins), Aerospike::Operation::APPEND)
       command.execute
     end
 
-    #  Prepend bin values string to existing record bin values.
-    #  The policy specifies the transaction timeout, record expiration and how the transaction is
-    #  handled when the record already exists.
+    ##
+    #  Prepends bin values string to existing record bin values.
+    #  The policy specifies the transaction timeout, record expiration and
+    #  how the transaction is handled when the record already exists.
+    #
     #  This call works only for string values.
-    # def Prepend(policy *WritePolicy, key *Key, bins BinMap) error {
-    #   return clnt.PrependBins(policy, key, bin_map_to_bins(bins)...)
-    # }
+    #
+    #  If no policy options are provided, +@default_write_policy+ will be used.
 
-    def prepend(key, bins, opt=nil)
-      policy = opt_to_write_policy(opt)
+    #  Examples:
+    #
+    #  client.prepend key, {'bin', 'value to prepend'}, :timeout => 0.001
+
+    def prepend(key, bins, options={})
+      policy = opt_to_write_policy(options)
       command = WriteCommand.new(@cluster, policy, key, hash_to_bins(bins), Aerospike::Operation::PREPEND)
       command.execute
     end
@@ -117,16 +147,21 @@ module Aerospike
     # Arithmetic Operations
     #-------------------------------------------------------
 
-    #  Add integer bin values to existing record bin values.
-    #  The policy specifies the transaction timeout, record expiration and how the transaction is
-    #  handled when the record already exists.
+    ##
+    #  Adds integer bin values to existing record bin values.
+    #  The policy specifies the transaction timeout, record expiration and
+    #  how the transaction is handled when the record already exists.
+    #
     #  This call only works for integer values.
-    # def Add(policy *WritePolicy, key *Key, bins BinMap) error {
-    #   return clnt.AddBins(policy, key, bin_map_to_bins(bins)...)
-    # }
+    #
+    #  If no policy options are provided, +@default_write_policy+ will be used.
 
-    def add(key, bins, opt=nil)
-      policy = opt_to_write_policy(opt)
+    #  Examples:
+    #
+    #  client.add key, {'bin', -1}, :timeout => 0.001
+
+    def add(key, bins, options={})
+      policy = opt_to_write_policy(options)
       command = WriteCommand.new(@cluster, policy, key, hash_to_bins(bins), Aerospike::Operation::ADD)
       command.execute
     end
@@ -135,10 +170,20 @@ module Aerospike
     # Delete Operations
     #-------------------------------------------------------
 
-    #  Delete record for specified key.
+    ##
+    #  Deletes record for specified key.
+    #
     #  The policy specifies the transaction timeout.
-    def delete(key, opt=nil)
-      policy = opt_to_write_policy(opt)
+    #
+    #  If no policy options are provided, +@default_write_policy+ will be used.
+    #  Returns +true+ if a record with corresponding +key+ existed.
+
+    #  Examples:
+    #
+    #  existed = client.delete key, :timeout => 0.001
+
+    def delete(key, options={})
+      policy = opt_to_write_policy(options)
       command = DeleteCommand.new(@cluster, policy, key)
       command.execute
       command.existed
@@ -148,10 +193,18 @@ module Aerospike
     # Touch Operations
     #-------------------------------------------------------
 
-    #  Create record if it does not already exist.  If the record exists, the record's
-    #  time to expiration will be reset to the policy's expiration.
-    def touch(key, opt=nil)
-      policy = opt_to_write_policy(opt)
+    ##
+    #  Creates record if it does not already exist.  If the record exists,
+    #  the record's time to expiration will be reset to the policy's expiration.
+    #
+    #  If no policy options are provided, +@default_write_policy+ will be used.
+
+    #  Examples:
+    #
+    #  client.touch key, :timeout => 0.001
+
+    def touch(key, options={})
+      policy = opt_to_write_policy(options)
       command = TouchCommand.new(@cluster, policy, key)
       command.execute
     end
@@ -160,10 +213,11 @@ module Aerospike
     # Existence-Check Operations
     #-------------------------------------------------------
 
-    #  Determine if a record key exists.
+    ##
+    #  Determines if a record key exists.
     #  The policy can be used to specify timeouts.
-    def exists(key, opt=nil)
-      policy = opt_to_policy(opt)
+    def exists(key, options={})
+      policy = opt_to_policy(options)
       command = ExistsCommand.new(@cluster, policy, key)
       command.execute
       command.exists
@@ -172,8 +226,8 @@ module Aerospike
     #  Check if multiple record keys exist in one batch call.
     #  The returned array bool is in positional order with the original key array order.
     #  The policy can be used to specify timeouts.
-    def batch_exists(keys, opt=nil)
-      policy = opt_to_policy(opt)
+    def batch_exists(keys, options={})
+      policy = opt_to_policy(options)
 
       # same array can be used without sychronization;
       # when a key exists, the corresponding index will be marked true
@@ -195,8 +249,8 @@ module Aerospike
 
     #  Read record header and bins for specified key.
     #  The policy can be used to specify timeouts.
-    def get(key, bin_names=[], opt=nil)
-      policy = opt_to_policy(opt)
+    def get(key, bin_names=[], options={})
+      policy = opt_to_policy(options)
 
       command = ReadCommand.new(@cluster, policy, key, bin_names)
       command.execute
@@ -205,8 +259,8 @@ module Aerospike
 
     #  Read record generation and expiration only for specified key.  Bins are not read.
     #  The policy can be used to specify timeouts.
-    def get_header(key, opt=nil)
-      policy = opt_to_policy(opt)
+    def get_header(key, options={})
+      policy = opt_to_policy(options)
       command = ReadHeaderCommand.new(@cluster, policy, key)
       command.execute
       command.record
@@ -220,8 +274,8 @@ module Aerospike
     #  The returned records are in positional order with the original key array order.
     #  If a key is not found, the positional record will be nil.
     #  The policy can be used to specify timeouts.
-    def batch_get(keys, bin_names=[], opt=nil)
-      policy = opt_to_policy(opt)
+    def batch_get(keys, bin_names=[], options={})
+      policy = opt_to_policy(options)
 
       # wait until all migrations are finished
       # TODO: implement
@@ -245,8 +299,8 @@ module Aerospike
     #  The returned records are in positional order with the original key array order.
     #  If a key is not found, the positional record will be nil.
     #  The policy can be used to specify timeouts.
-    def batch_get_header(keys, opt=nil)
-      policy = opt_to_policy(opt)
+    def batch_get_header(keys, options={})
+      policy = opt_to_policy(options)
 
       # wait until all migrations are finished
       # TODO: Fix this and implement
@@ -276,8 +330,8 @@ module Aerospike
     #
     #  Write operations are always performed first, regardless of operation order
     #  relative to read operations.
-    def operate(key, operations, opt=nil)
-      policy = opt_to_write_policy(opt)
+    def operate(key, operations, options={})
+      policy = opt_to_write_policy(options)
 
       command = OperateCommand.new(@cluster, policy, key, operations)
       command.execute
@@ -292,32 +346,32 @@ module Aerospike
     #  within a single bin.
     #
     #  This method is only supported by Aerospike 3 servers.
-    def get_large_list(key, bin_name, user_module=nil, opt=nil)
-      LargeList.new(self, opt_to_write_policy(opt), key, bin_name, user_module)
+    def get_large_list(key, bin_name, user_module=nil, options={})
+      LargeList.new(self, opt_to_write_policy(options), key, bin_name, user_module)
     end
 
     #  Initialize large map operator.  This operator can be used to create and manage a map
     #  within a single bin.
     #
     #  This method is only supported by Aerospike 3 servers.
-    def get_large_map(key, bin_name, user_module=nil, opt=nil)
-      LargeMap.new(self, opt_to_write_policy(opt), key, bin_name, user_module)
+    def get_large_map(key, bin_name, user_module=nil, options={})
+      LargeMap.new(self, opt_to_write_policy(options), key, bin_name, user_module)
     end
 
     #  Initialize large set operator.  This operator can be used to create and manage a set
     #  within a single bin.
     #
     #  This method is only supported by Aerospike 3 servers.
-    def get_large_set(key, bin_name, user_module=nil, opt=nil)
-      LargeSet.new(self, opt_to_write_policy(opt), key, bin_name, user_module)
+    def get_large_set(key, bin_name, user_module=nil, options={})
+      LargeSet.new(self, opt_to_write_policy(options), key, bin_name, user_module)
     end
 
     #  Initialize large stack operator.  This operator can be used to create and manage a stack
     #  within a single bin.
     #
     #  This method is only supported by Aerospike 3 servers.
-    def get_large_stack(key, bin_name, user_module=nil, opt=nil)
-      LargeStack.new(self, opt_to_write_policy(opt), key, bin_name, user_module)
+    def get_large_stack(key, bin_name, user_module=nil, options={})
+      LargeStack.new(self, opt_to_write_policy(options), key, bin_name, user_module)
     end
 
     #---------------------------------------------------------------
@@ -330,9 +384,9 @@ module Aerospike
     #  RegisterTask instance.
     #
     #  This method is only supported by Aerospike 3 servers.
-    def register_udf_from_file(client_path, server_path, language, opt=nil)
+    def register_udf_from_file(client_path, server_path, language, options={})
       udf_body = File.read(client_path)
-      register_udf(udf_body, server_path, language, opt=nil)
+      register_udf(udf_body, server_path, language, options={})
     end
 
     #  Register package containing user defined functions with server.
@@ -341,7 +395,7 @@ module Aerospike
     #  RegisterTask instance.
     #
     #  This method is only supported by Aerospike 3 servers.
-    def register_udf(udf_body, server_path, language, opt=nil)
+    def register_udf(udf_body, server_path, language, options={})
       content = Base64.strict_encode64(udf_body).force_encoding('binary')
 
       str_cmd = "udf-put:filename=#{server_path};content=#{content};"
@@ -370,7 +424,7 @@ module Aerospike
     #  RemoveTask instance.
     #
     #  This method is only supported by Aerospike 3 servers.
-    def remove_udf(udf_name, opt=nil)
+    def remove_udf(udf_name, options={})
       str_cmd = "udf-remove:filename=#{udf_name};"
 
       # Send command to one node. That node will distribute it to other nodes.
@@ -387,7 +441,7 @@ module Aerospike
 
     #  ListUDF lists all packages containing user defined functions in the server.
     #  This method is only supported by Aerospike 3 servers.
-    def list_udf(opt=nil)
+    def list_udf(options={})
       str_cmd = 'udf-list'
 
       # Send command to one node. That node will distribute it to other nodes.
@@ -423,8 +477,8 @@ module Aerospike
     #  udf file = <server udf dir>/<package name>.lua
     #
     #  This method is only supported by Aerospike 3 servers.
-    def execute_udf(key, package_name, function_name, args=[], opt=nil)
-      policy = opt_to_write_policy(opt)
+    def execute_udf(key, package_name, function_name, args=[], options={})
+      policy = opt_to_write_policy(options)
 
       command = ExecuteCommand.new(@cluster, policy, key, package_name, function_name, args)
       command.execute
@@ -456,8 +510,8 @@ module Aerospike
     #
     #  This method is only supported by Aerospike 3 servers.
     #  index_type should be between :string or :numeric
-    def create_index(namespace, set_name, index_name, bin_name, index_type, opt=nil)
-      policy = opt_to_write_policy(opt)
+    def create_index(namespace, set_name, index_name, bin_name, index_type, options={})
+      policy = opt_to_write_policy(options)
       str_cmd = "sindex-create:ns=#{namespace}"
       str_cmd << ";set=#{set_name}" unless set_name.to_s.strip.empty?
       str_cmd << ";indexname=#{index_name};numbins=1;indexdata=#{bin_name},#{index_type.to_s.upcase}"
@@ -483,8 +537,8 @@ module Aerospike
 
     #  Delete secondary index.
     #  This method is only supported by Aerospike 3 servers.
-    def drop_index(namespace, set_name, index_name, opt=nil)
-      policy = opt_to_write_policy(opt)
+    def drop_index(namespace, set_name, index_name, options={})
+      policy = opt_to_write_policy(options)
       str_cmd = "sindex-delete:ns=#{namespace}"
       str_cmd << ";set=#{set_name}" unless set_name.to_s.strip.empty?
       str_cmd << ";indexname=#{index_name}"
@@ -525,47 +579,47 @@ module Aerospike
       end
     end
 
-    def opt_to_client_policy(opt)
-      if opt.nil?
+    def opt_to_client_policy(options)
+      if options == {} || options.nil?
         ClientPolicy.new
-      elsif opt.is_a?(ClientPolicy)
-        opt
-      elsif opt.is_a?(Hash)
+      elsif options.is_a?(ClientPolicy)
+        options
+      elsif options.is_a?(Hash)
         ClientPolicy.new(
-          opt[:timeout],
-          opt[:connection_queue_size],
-          opt[:fail_if_not_connected],
+          options[:timeout],
+          options[:connection_queue_size],
+          options[:fail_if_not_connected],
         )
       end
     end
 
-    def opt_to_policy(opt)
-      if opt.nil?
+    def opt_to_policy(options)
+      if options == {} || options.nil?
         @default_policy
-      elsif opt.is_a?(Policy)
-        opt
-      elsif opt.is_a?(Hash)
+      elsif options.is_a?(Policy)
+        options
+      elsif options.is_a?(Hash)
         Policy.new(
-          opt[:priority],
-          opt[:timeout],
-          opt[:max_retiries],
-          opt[:sleep_between_retries],
+          options[:priority],
+          options[:timeout],
+          options[:max_retiries],
+          options[:sleep_between_retries],
         )
       end
     end
 
-    def opt_to_write_policy(opt)
-      if opt.nil?
+    def opt_to_write_policy(options)
+      if options == {} || options.nil?
         @default_write_policy
-      elsif opt.is_a?(WritePolicy)
-        opt
-      elsif opt.is_a?(Hash)
+      elsif options.is_a?(WritePolicy)
+        options
+      elsif options.is_a?(Hash)
         WritePolicy.new(
-          opt[:record_exists_action],
-          opt[:gen_policy],
-          opt[:generation],
-          opt[:expiration],
-          opt[:send_key]
+          options[:record_exists_action],
+          options[:gen_policy],
+          options[:generation],
+          options[:expiration],
+          options[:send_key]
         )
       end
     end

@@ -22,6 +22,8 @@ require 'aerospike/aerospike_exception'
 
 module Aerospike
 
+  private
+
   # Polymorphic value classes used to efficiently serialize objects into the wire protocol.
   class Value
 
