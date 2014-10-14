@@ -1,0 +1,36 @@
+language: ruby
+bundler_args: --without development
+rvm:
+  - 1.9.3
+  - 2.0.0
+  - 2.1.0
+  - ruby-head
+  - rbx
+  # - jruby
+  # - jruby-head
+env: CI="travis"
+matrix:
+  # allow_failures:
+    # - rvm: jruby-head
+  fast_finish: true
+
+install:
+  - wget -O aerospike-server.tgz http://aerospike.com/download/server/latest/artifact/tgz
+  - tar xvzf aerospike-server.tgz
+  - cp -f .travis/aerospike.conf ./aerospike-server/share/etc
+  - cd aerospike-server
+  - mkdir instance1
+  - mkdir instance2
+  - ./bin/aerospike init --home instance1 --instance 1 --service-port 3000
+  - ./bin/aerospike init --home instance2 --instance 2 --service-port 3010
+  - cd instance1
+  - sudo ./bin/aerospike start
+  - cd ..
+  - cd instance2
+  - sudo ./bin/aerospike start
+  - cd ../..
+  - pwd
+  - sleep 5
+  # dump keep server log for debugging
+  - sudo tail -n 1000 aerospike-server/instance1/var/log/aerospike.log
+  - bundle install
