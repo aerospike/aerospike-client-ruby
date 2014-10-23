@@ -23,7 +23,7 @@ describe Aerospike::Client do
     describe "LargeStack operations" do
 
       let(:client) do
-        described_class.new("127.0.0.1", 3000)
+        described_class.new(Support.host, Support.port)
       end
 
       after do

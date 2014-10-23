@@ -22,7 +22,7 @@ describe Aerospike::Info do
   describe "#request" do
 
     it "should connect and request info from the server" do
-      conn = Aerospike::Connection.new("127.0.0.1", 3000)
+      conn = Aerospike::Connection.new(Support.host, Support.port)
       Aerospike::Info.request(conn)
 
       Benchmark.bm do |bm|
