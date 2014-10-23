@@ -28,7 +28,7 @@ include Aerospike
 
 client = Client.new("127.0.0.1", 3000)
 
-key = Key.new('test', 'test', 'key value')
+key = Key.new('test', 'set name', 'key value')
 bins = {
   'bin1' => 'value1',
   'bin2' => 2,
