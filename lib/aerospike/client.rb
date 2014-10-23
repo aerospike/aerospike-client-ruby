@@ -79,7 +79,7 @@ module Aerospike
         node.get_name
       end
     end
-
+    
     #-------------------------------------------------------
     # Write Record Operations
     #-------------------------------------------------------
@@ -95,11 +95,6 @@ module Aerospike
     #
     #  client.put key, {'bin', 'value string'}, :timeout => 0.001
 
-    def put(key, bins, options={})
-      policy = opt_to_write_policy(options)
-      command = WriteCommand.new(@cluster, policy, key, hash_to_bins(bins), Aerospike::Operation::WRITE)
-      command.execute
-    end
 
     #-------------------------------------------------------
     # Operations string
@@ -118,12 +113,7 @@ module Aerospike
     #
     #  client.append key, {'bin', 'value to append'}, :timeout => 0.001
 
-    def append(key, bins, options={})
-      policy = opt_to_write_policy(options)
-      command = WriteCommand.new(@cluster, policy, key, hash_to_bins(bins), Aerospike::Operation::APPEND)
-      command.execute
-    end
-
+    
     ##
     #  Prepends bin values string to existing record bin values.
     #  The policy specifies the transaction timeout, record expiration and
@@ -137,12 +127,7 @@ module Aerospike
     #
     #  client.prepend key, {'bin', 'value to prepend'}, :timeout => 0.001
 
-    def prepend(key, bins, options={})
-      policy = opt_to_write_policy(options)
-      command = WriteCommand.new(@cluster, policy, key, hash_to_bins(bins), Aerospike::Operation::PREPEND)
-      command.execute
-    end
-
+    
     #-------------------------------------------------------
     # Arithmetic Operations
     #-------------------------------------------------------
@@ -160,10 +145,14 @@ module Aerospike
     #
     #  client.add key, {'bin', -1}, :timeout => 0.001
 
-    def add(key, bins, options={})
-      policy = opt_to_write_policy(options)
-      command = WriteCommand.new(@cluster, policy, key, hash_to_bins(bins), Aerospike::Operation::ADD)
-      command.execute
+    methods = {put: "write", append: "append", prepend: "prepend", add: "add"}
+
+    methods.keys.each do |m|
+      define_method(m) do |key, bins, options={}|
+        policy = opt_to_write_policy(options)
+        command = WriteCommand.new(@cluster, policy, key, hash_to_bins(bins), eval("Aerospike::Operation::#{methods[m].upcase}"))
+        command.execute
+      end
     end
 
     #-------------------------------------------------------
