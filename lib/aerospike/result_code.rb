@@ -20,6 +20,9 @@ module Aerospike
 
     attr_reader :code
 
+    # Value type not supported by Aerospike server
+    TYPE_NOT_SUPPORTED = -7
+
     # Asynchronous max concurrent database commands have been exceeded and therefore rejected.
     COMMAND_REJECTED = -6
 
