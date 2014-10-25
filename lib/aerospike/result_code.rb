@@ -315,6 +315,9 @@ module Aerospike
       when UDF_BAD_RESPONSE
         "UDF d error"
 
+      when LARGE_ITEM_NOT_FOUND
+         "Large collection item not found"
+
       when INDEX_FOUND
         "Index already exists"
 
