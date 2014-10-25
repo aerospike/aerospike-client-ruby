@@ -151,6 +151,9 @@ module Aerospike
     # A user defined function returned an error code.
     UDF_BAD_RESPONSE = 100
 
+    # The requested item in a large collection was not found.
+    LARGE_ITEM_NOT_FOUND = 125
+
     # Secondary index already exists.
     INDEX_FOUND = 200
 
