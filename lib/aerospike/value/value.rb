@@ -337,7 +337,7 @@ module Aerospike
   def self.normalize_elem(elem)
     case elem
     when String
-     elem[1..-1] 
+     elem[1..-1]
     when Array
       normalize_strings_in_array(elem)
     when Hash

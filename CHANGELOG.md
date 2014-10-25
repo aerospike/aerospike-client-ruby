@@ -1,3 +1,11 @@
+## Oct 25 2014 (0.1.2)
+
+  Minor fix.
+
+  * **Changes**:
+
+    * Fixed String unpacking for single byte strings.
+
 ## Oct 25 2014 (0.1.1)
 
   Minor fixes.
