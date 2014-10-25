@@ -14,6 +14,9 @@ require 'aerospike'
 # logging code.
 Aerospike.logger = Logger.new(StringIO.new, Logger::DEBUG)
 
+require 'simplecov'
+SimpleCov.start
+
 RSpec.configure do |config|
 
 end

@@ -24,7 +24,7 @@ require 'aerospike/language'
 describe Aerospike::Client do
 
   let(:client) do
-    described_class.new("127.0.0.1", 3000)
+    described_class.new(Support.host, Support.port)
   end
 
   let(:str_bin_name) do
