@@ -26,8 +26,8 @@ module Aerospike
       @client = client
       @policy = policy
       @key = key
-      @bin_name = Aerospike::ParticleType::STRING.chr + bin_name
-      @user_module = Aerospike::ParticleType::STRING.chr + user_module unless user_module.nil?
+      @bin_name = bin_name
+      @user_module = user_module unless user_module.nil?
 
       self
     end

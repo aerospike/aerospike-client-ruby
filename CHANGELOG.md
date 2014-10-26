@@ -1,3 +1,11 @@
+## Oct 27 2014 (0.1.3)
+
+  Minor fix.
+
+  * **Changes**:
+
+    * Fixed LDT bin and module name packing.
+
 ## Oct 25 2014 (0.1.2)
 
   Minor fix.
