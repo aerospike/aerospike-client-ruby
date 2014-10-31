@@ -22,7 +22,14 @@ module Aerospike
 
   # Converts an Expiration time to TTL in seconds
   def self.TTL(secs_from_citrus_leaf_epoc)
-    CITRUSLEAF_EPOCH+secs_from_citrus_leaf_epoc - Time.now.to_i
+    if secs_from_citrus_leaf_epoc == 0
+      0xFFFFFFFF
+    else
+      now = Time.now.to_i - CITRUSLEAF_EPOCH
+      # Record was not expired at server but if it looks expired at client
+      # because of delay or clock differences, present it as not-expired.
+      secs_from_citrus_leaf_epoc > now ? secs_from_citrus_leaf_epoc - now : 1
+    end
   end
 
 end # module
