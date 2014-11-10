@@ -314,6 +314,75 @@ module Aerospike
       end_cmd
     end
 
+    def set_scan(policy, namespace, set_name, bin_names)
+      # Estimate buffer size
+      begin_cmd
+      field_count = 0
+
+      if namespace
+        @data_offset += namespace.bytesize + FIELD_HEADER_SIZE
+        field_count += 1
+      end
+
+      if set_name
+        @data_offset += set_name.bytesize + FIELD_HEADER_SIZE
+        field_count += 1
+      end
+
+      # Estimate scan options size.
+      @data_offset += 2 + FIELD_HEADER_SIZE
+      field_count += 1
+
+      if bin_names
+        bin_names.each do |bin_name|
+          estimate_operation_size_for_bin_name(bin_name)
+        end
+      end
+
+      size_buffer
+      read_attr = INFO1_READ
+
+      if !policy.include_bin_data
+        read_attr |= INFO1_NOBINDATA
+      end
+
+      operation_count = 0
+      if bin_names
+        operation_count = bin_names.length
+      end
+
+      write_header(read_attr, 0, field_count, operation_count)
+
+      if namespace
+        write_field_string(namespace, Aerospike::FieldType::NAMESPACE)
+      end
+
+      if set_name
+        write_field_string(set_name, Aerospike::FieldType::TABLE)
+      end
+
+      write_field_header(2, Aerospike::FieldType::SCAN_OPTIONS)
+
+      priority = policy.priority & 0xFF
+      priority <<= 4
+      if policy.fail_on_cluster_change
+        priority |= 0x08
+      end
+
+      @data_buffer.write_byte(priority, @data_offset)
+      @data_offset += 1
+      @data_buffer.write_byte(policy.scan_percent, @data_offset)
+      @data_offset += 1
+
+      if bin_names
+        bin_names.each do |bin_name|
+          write_operation_for_bin_name(bin_name, Aerospike::Operation::READ)
+        end
+      end
+
+      end_cmd
+    end
+
     def execute
       iterations = 0
 

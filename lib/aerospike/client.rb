@@ -41,6 +41,7 @@ module Aerospike
     def initialize(host, port, options={})
       @default_policy = Policy.new
       @default_write_policy = WritePolicy.new
+      @default_scan_policy = ScanPolicy.new
 
       policy = opt_to_client_policy(options)
 
@@ -560,6 +561,70 @@ module Aerospike
       @cluster.request_info(@default_policy, *commands)
     end
 
+    #-------------------------------------------------------
+    # Scan Operations
+    #-------------------------------------------------------
+
+    def scan_all(namespace, set_name, bin_names=[], options={}, &block)
+      policy = opt_to_scan_policy(options)
+
+      # wait until all migrations are finished
+      # TODO: implement
+      # @cluster.WaitUntillMigrationIsFinished(policy.timeout)
+
+      # Retry policy must be one-shot for scans.
+      # copy on write for policy
+      new_policy = policy.clone
+      new_policy.max_retries = 0
+
+      nodes = @cluster.nodes
+      if nodes.length == 0
+        raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::SERVER_NOT_AVAILABLE, "Scan failed because cluster is empty.")
+      end
+
+      if policy.concurrent_nodes
+        threads = []
+
+        # Use a thread per node
+        nodes.each do |node|
+          threads << Thread.new do
+            abort_on_exception = true
+            command = ScanCommand.new(node, new_policy, namespace, set_name, bin_names, block)
+            command.execute
+          end
+        end
+
+        threads.each { |thr| thr.join }
+      else
+        nodes.each do |node|
+          command = ScanCommand.new(node, new_policy, namespace, set_name, bin_names, block)
+          command.execute
+        end
+      end
+
+
+    end
+
+    # ScanNode reads all records in specified namespace and set, from one node only.
+    # The policy can be used to specify timeouts.
+    def scan_node(node, namespace, set_name, bin_names=[], options={}, &block)
+      policy = opt_to_scan_policy(options)
+
+      # wait until all migrations are finished
+      # TODO: implement
+      # @cluster.WaitUntillMigrationIsFinished(policy.timeout)
+
+      # Retry policy must be one-shot for scans.
+      # copy on write for policy
+      new_policy = policy.clone
+      new_policy.max_retries = 0
+
+      node = @cluster.get_node_by_name(node) if !node.is_a?(Aerospike::Node)
+
+      command = ScanCommand.new(node, new_policy, namespace, set_name, bin_names, block)
+      command.execute
+    end
+
     private
 
     def send_info_command(policy, command)
@@ -642,6 +707,21 @@ module Aerospike
       end
 
       threads.each { |thr| thr.join }
+    end
+
+    def opt_to_scan_policy(options)
+      if options == {} || options.nil?
+        @default_scan_policy
+      elsif options.is_a?(ScanPolicy)
+        options
+      elsif options.is_a?(Hash)
+        ScanPolicy.new(
+          options[:scan_percent],
+          options[:concurrent_nodes],
+          options[:include_bin_data],
+          options[:fail_on_cluster_change]
+        )
+      end
     end
 
   end # class
