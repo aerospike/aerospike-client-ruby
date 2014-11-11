@@ -49,7 +49,7 @@ module Aerospike
           res = IntegerValue.new(value)
         else
           # big nums > 2**63 are not supported
-          raise Aerospike::Exceptions::Aerospike.new(TYPE_NOT_SUPPORTED, "Value type #{value.class} not supported.")
+          raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::TYPE_NOT_SUPPORTED, "Value type #{value.class} not supported.")
         end
       when String
         res = StringValue.new(value)
@@ -61,7 +61,7 @@ module Aerospike
         res = ListValue.new(value)
       else
         # throw an exception for anything that is not supported.
-        raise Aerospike::Exceptions::Aerospike.new(TYPE_NOT_SUPPORTED, "Value type #{value.class} not supported.")
+        raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::TYPE_NOT_SUPPORTED, "Value type #{value.class} not supported.")
       end
 
       res
@@ -143,7 +143,7 @@ module Aerospike
     end
 
     def pack(packer)
-      packer.write(@bytes.bytes)
+      packer.write(Aerospike::ParticleType::BLOB.chr + @bytes)
     end
 
   end # BytesValue
@@ -167,7 +167,7 @@ module Aerospike
     end
 
     def pack(packer)
-      packer.write(@value)
+      packer.write(Aerospike::ParticleType::STRING.chr + @value)
     end
 
     def type
@@ -254,7 +254,6 @@ module Aerospike
 
     def pack(packer)
       packer.write_array_header(@list.length)
-      # @list.each do |val|
       for val in @list
         Value.of(val).pack(packer)
       end
@@ -335,25 +334,46 @@ module Aerospike
 
   protected
 
-  def self.bytes_to_particle(type, buf , offset, length)
+  def self.normalize_elem(elem)
+    case elem
+    when String
+     elem[1..-1]
+    when Array
+      normalize_strings_in_array(elem)
+    when Hash
+      normalize_strings_in_map(elem)
+    else
+      elem
+    end
+  end
+
+  def self.normalize_strings_in_array(arr)
+    arr.map! { |elem| normalize_elem(elem) }
+  end
+
+  def self.normalize_strings_in_map(hash)
+    hash.inject({}) do |h, (k,v)|
+      h.update({ normalize_elem(k) => normalize_elem(v) })
+    end
+  end
+
+  def self.bytes_to_particle(type, buf, offset, length)
 
     case type
     when Aerospike::ParticleType::STRING
-      # StringValue.new(buf.read(offset, length))
       buf.read(offset, length)
 
     when Aerospike::ParticleType::INTEGER
-      # IntegerValue.new(buf.read_int64(offset))
       buf.read_int64(offset)
 
     when Aerospike::ParticleType::BLOB
-      buf.read(offse,length)
+      buf.read(offset,length)
 
     when Aerospike::ParticleType::LIST
-      MessagePack.unpack(buf.read(offset, length))
+      normalize_strings_in_array(MessagePack.unpack(buf.read(offset, length)))
 
     when Aerospike::ParticleType::MAP
-      MessagePack.unpack(buf.read(offset, length))
+      normalize_strings_in_map(MessagePack.unpack(buf.read(offset, length)))
 
     else
       nil

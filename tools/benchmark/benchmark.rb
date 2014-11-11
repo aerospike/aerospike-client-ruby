@@ -16,7 +16,7 @@ include Aerospike
   :set => 'benchmark',
   :key_count => 100000,
   :bin_def => 'I',
-  :concurrency => 1,
+  :concurrency => 4,
   :workload_def => 'I:100',
   :throughput => 0,
   :timeout => 0,

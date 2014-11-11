@@ -86,13 +86,13 @@ module Aerospike
       8
     end
 
-    def read(offset, len=1)
+    def read(offset, len=nil)
       start = offset
 
-      if len == 1
-        @buf.getbyte(start)
-      else
+      if len
         @buf[start, len]
+      else
+        @buf.getbyte(start)
       end
     end
 

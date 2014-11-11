@@ -75,8 +75,8 @@ module Aerospike
       end
 
       if result_code != 0
-        return if result_code == Aerospike::ResultCode::KEY_NOT_FOUND_ERROR
-
+        return nil if result_code == Aerospike::ResultCode::KEY_NOT_FOUND_ERROR
+        return nil if result_code == Aerospike::ResultCode::LARGE_ITEM_NOT_FOUND
         if result_code == Aerospike::ResultCode::UDF_BAD_RESPONSE
           begin
             @record = parse_record(op_count, field_count, generation, expiration)

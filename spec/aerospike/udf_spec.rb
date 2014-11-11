@@ -26,13 +26,19 @@ describe Aerospike::Client do
   describe "UDF operations" do
 
     let(:udf_body) do
-      "function testFunc1(rec, div)
+      "function testFunc1(rec, div, str)
          local ret = map                     -- Initialize the return value (a map)
          local x = rec['bin1']                 -- Get the value from record bin named 'bin1'
          rec['bin2'] = (x / div)               -- Set the value in record bin named 'bin2'
          aerospike:update(rec)                 -- Update the main record
-         ret['status'] = 'OK'                   -- Populate the return status
-         return ret                             -- Return the Return value and/or status
+
+         return str                              -- Return the Return value and/or status
+      end"
+    end
+
+    let(:udf_body_string) do
+      "function testStr(rec, str)
+         return str                              -- Return the Return value and/or status
       end"
     end
 
@@ -73,6 +79,31 @@ describe Aerospike::Client do
         end
 
       end # it
+
+      it "should execute a udf with string parameters successfully" do
+        STR = 'a long and serious looking string'
+        register_task = client.register_udf(udf_body_string, "udf_str.lua", Aerospike::Language::LUA)
+
+        expect(register_task.wait_till_completed).to be true
+        expect(register_task.completed?).to be true
+
+        key = Support.gen_random_key
+
+        client.put(key, Aerospike::Bin.new('bin', 'value'))
+
+        expect(client.batch_exists([key])).to eq [true]
+
+        res = client.execute_udf(key, 'udf_str', 'testStr', [STR])
+        expect(res).to eq STR
+
+        res = client.execute_udf(key, 'udf_str', 'testStr', [])
+        expect(res).to eq nil
+
+        res = client.execute_udf(key, 'udf_str', 'testStr', ['A'])
+        expect(res).to eq "A"
+
+      end # it
+
 
       it "should execute a udf successfully" do
 
