@@ -70,7 +70,7 @@ module Aerospike
     protected
 
     # parses a version string
-    @@version_regexp = /(?<v1>\d+)\.(?<v2>\d+)\.(?<v3>\d+).*/
+    @@version_regexp = Oniguruma::ORegexp.new("(?<v1>\d+)\.(?<v2>\d+)\.(?<v3>\d+).*")
 
     def parse_version_string(version)
       if v = @@version_regexp.match(version)

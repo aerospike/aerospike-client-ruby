@@ -24,8 +24,7 @@ module Aerospike
   private
 
   class IndexTask < Task
-
-    MATCHER = /.*load_pct=(?<load_pct>\d+(\.\d+)?).*/
+    MATCHER = Oniguruma::ORegexp.new(".*load_pct=(?<load_pct>\d+(\.\d+)?).*")
 
     def initialize(cluster, namespace, index_name, done=false)
       super(cluster, done)

@@ -62,7 +62,7 @@ module Aerospike
     end
 
     def write_byte(byte, offset)
-      @buf.setbyte(offset, byte.ord)
+      @buf[offset] = byte.ord
       1
     end
 
@@ -92,7 +92,7 @@ module Aerospike
       if len
         @buf[start, len]
       else
-        @buf.getbyte(start)
+        @buf[start]
       end
     end
 

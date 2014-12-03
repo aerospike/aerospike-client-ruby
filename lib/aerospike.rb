@@ -7,6 +7,12 @@ require 'resolv'
 require 'msgpack'
 require 'atomic'
 
+class String
+  def force_encoding(enc)
+    self
+  end
+end
+
 require 'aerospike/client'
 require 'aerospike/utils/pool'
 require 'aerospike/utils/epoc'

@@ -67,7 +67,7 @@ module Aerospike
           bytes = @socket.recv_nonblock(length - total)
           buffer.write_binary(bytes, total) if bytes.bytesize > 0
           total += bytes.bytesize
-        rescue IO::WaitReadable,  Errno::EAGAIN
+        rescue Errno::EAGAIN
           IO.select([@socket], nil)
           retry
         rescue => e
