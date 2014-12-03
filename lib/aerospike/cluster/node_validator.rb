@@ -70,11 +70,11 @@ module Aerospike
     protected
 
     # parses a version string
-    @@version_regexp = Oniguruma::ORegexp.new("(?<v1>\d+)\.(?<v2>\d+)\.(?<v3>\d+).*")
+    @@version_regexp = /(\d+)\.(\d+)\.(\d+).*/
 
     def parse_version_string(version)
       if v = @@version_regexp.match(version)
-        return v['v1'], v['v2'], v['v3']
+        return v[0], v[1], v[2]
       end
 
       raise Aerospike::Exceptions::Parse.new("Invalid build version string in Info: #{version}")
