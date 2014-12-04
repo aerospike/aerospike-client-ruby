@@ -72,12 +72,14 @@ module Aerospike
     end
 
     def write_int16(i, offset)
-      @buf[offset, 2] = [i].pack(INT16)
+      packed = [i].pack(INT16).reverse
+      @buf[offset, 2] = packed #[i].pack(INT16)
       2
     end
 
     def write_int32(i, offset)
-      @buf[offset, 4] = [i].pack(INT32)
+      packed = [i].pack(INT32).reverse
+      @buf[offset, 4] = packed#[i].pack(INT32).reverse
       4
     end
 
@@ -100,12 +102,12 @@ module Aerospike
 
     def read_int16(offset)
       vals = @buf[offset..offset+1]
-      vals.unpack(INT16)[0]
+      vals.reverse.unpack(INT16)[0]
     end
 
     def read_int32(offset)
       vals = @buf[offset..offset+3]
-      vals.unpack(INT32)[0]
+      vals.reverse.unpack(INT32)[0]
     end
 
     def read_int64(offset)
