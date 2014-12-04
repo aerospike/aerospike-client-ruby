@@ -51,7 +51,7 @@ module Aerospike
         begin
           written = @socket.write_nonblock(buffer.read(total, length - total))
           total += written
-        rescue IO::WaitWriteable, Errno::EAGAIN
+        rescue Errno::EAGAIN => e
           IO.select(nil, [@socket])
           retry
         rescue => e
@@ -67,7 +67,7 @@ module Aerospike
           bytes = @socket.recv_nonblock(length - total)
           buffer.write_binary(bytes, total) if bytes.bytesize > 0
           total += bytes.bytesize
-        rescue Errno::EAGAIN
+        rescue Errno::EAGAIN => e
           IO.select([@socket], nil)
           retry
         rescue => e
