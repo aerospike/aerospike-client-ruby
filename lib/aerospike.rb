@@ -11,6 +11,10 @@ class String
   def force_encoding(enc)
     self
   end
+  
+  def ord
+    self[0]
+  end
 end
 
 require 'aerospike/client'
