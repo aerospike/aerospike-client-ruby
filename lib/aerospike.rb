@@ -6,6 +6,17 @@ require "timeout"
 require 'resolv'
 require 'msgpack'
 require 'atomic'
+require 'oniguruma'
+
+class String
+  def force_encoding(enc)
+    self
+  end
+  
+  def ord
+    self[0]
+  end
+end
 
 require 'aerospike/client'
 require 'aerospike/utils/pool'

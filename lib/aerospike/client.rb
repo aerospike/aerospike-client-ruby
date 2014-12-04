@@ -588,8 +588,7 @@ module Aerospike
         ClientPolicy.new(
           options[:timeout],
           options[:connection_queue_size],
-          options[:fail_if_not_connected],
-        )
+          options[:fail_if_not_connected])
       end
     end
 
@@ -603,8 +602,7 @@ module Aerospike
           options[:priority],
           options[:timeout],
           options[:max_retiries],
-          options[:sleep_between_retries],
-        )
+          options[:sleep_between_retries])
       end
     end
 

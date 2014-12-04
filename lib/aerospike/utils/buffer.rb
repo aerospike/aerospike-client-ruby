@@ -62,7 +62,7 @@ module Aerospike
     end
 
     def write_byte(byte, offset)
-      @buf.setbyte(offset, byte.ord)
+      @buf[offset] = byte.ord
       1
     end
 
@@ -72,17 +72,21 @@ module Aerospike
     end
 
     def write_int16(i, offset)
-      @buf[offset, 2] = [i].pack(INT16)
+      packed = [i].pack(INT16).reverse
+      @buf[offset, 2] = packed #[i].pack(INT16)
       2
     end
 
     def write_int32(i, offset)
-      @buf[offset, 4] = [i].pack(INT32)
+      packed = [i].pack(INT32).reverse
+      @buf[offset, 4] = packed#[i].pack(INT32).reverse
       4
     end
 
     def write_int64(i, offset)
-      @buf[offset, 8] = [i].pack(INT64)
+      #ref: https://plus.google.com/+OriPeleg/posts/P6YX4ETREpf
+      packed = [(i>>32) & 0xffffffff, i & 0xffffffff].pack('NN')
+      @buf[offset, 8] = packed
       8
     end
 
@@ -92,23 +96,23 @@ module Aerospike
       if len
         @buf[start, len]
       else
-        @buf.getbyte(start)
+        @buf[start]
       end
     end
 
     def read_int16(offset)
       vals = @buf[offset..offset+1]
-      vals.unpack(INT16)[0]
+      vals.reverse.unpack(INT16)[0]
     end
 
     def read_int32(offset)
       vals = @buf[offset..offset+3]
-      vals.unpack(INT32)[0]
+      vals.reverse.unpack(INT32)[0]
     end
 
     def read_int64(offset)
       vals = @buf[offset..offset+7]
-      vals.unpack(INT64)[0]
+      vals.reverse.unpack(INT64)[0]
     end
 
     def read_var_int64(offset, len)
@@ -124,6 +128,10 @@ module Aerospike
       @buf[0..@slice_end-1]
     end
 
+    def inspect
+      to_s
+    end
+    
     def dump(from=nil, to=nil)
       from ||= 0
       to ||= @slice_end - 1

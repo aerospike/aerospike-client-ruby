@@ -47,12 +47,11 @@ describe Aerospike::Client do
     key = Support.gen_random_key
     client.drop_index(key.namespace,
                       key.set_name,
-                      "index_str_#{key.set_name}",
-                      )
+                      "index_str_#{key.set_name}")
+    
     client.drop_index(key.namespace,
                       key.set_name,
-                      "index_int_#{key.set_name}",
-                      )
+                      "index_int_#{key.set_name}")
 
     client.close
   end

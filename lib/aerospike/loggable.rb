@@ -8,7 +8,11 @@ module Aerospike
       if ops.length == 1
         Aerospike.logger.debug([ prefix, ops.first.log_inspect, "runtime: #{runtime}" ].join(' '))
       else
-        first, *middle, last = ops
+
+        first, *tail = ops
+        last = tail[-1]
+        middle = tail[0..-2]
+        
         Aerospike.logger.debug([ prefix, first.log_inspect ].join(' '))
         middle.each { |m| Aerospike.logger.debug([ indent, m.log_inspect ].join(' ')) }
         Aerospike.logger.debug([ indent, last.log_inspect, "runtime: #{runtime}" ].join(' '))
