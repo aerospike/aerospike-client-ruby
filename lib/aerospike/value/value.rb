@@ -138,7 +138,7 @@ module Aerospike
     end
 
     def write(buffer, offset)
-      buffer.write_binary(bytes, offset)
+      buffer.write_binary(@bytes, offset)
       buffer.length
     end
 
