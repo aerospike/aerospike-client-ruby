@@ -1,3 +1,16 @@
+## Dec 8 2014 (0.1.5)
+
+  Major features added, minor fixes and improvements.
+
+  * **New Features**:
+
+    * Added `Client.scan_node`, `Client.scan_all`
+    * Added `Client.query`
+
+  * **Fixes**
+
+    * Fixed getting back results only for specified bin names.
+
 ## Oct 27 2014 (0.1.3)
 
   Minor fix.
