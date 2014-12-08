@@ -402,13 +402,14 @@ module Aerospike
       str_cmd << "content-len=#{content.length};udf-type=#{language};"
       # Send UDF to one node. That node will distribute the UDF to other nodes.
       response_map = @cluster.request_info(@default_policy, str_cmd)
-      response, _ = response_map.first
 
       res = {}
-      vals = response.split(';')
-      vals.each do |pair|
-        k, v = pair.split("=", 2)
-        res[k] = v
+      response_map.each do |k, response|
+        vals = response.to_s.split(';')
+        vals.each do |pair|
+          k, v = pair.split("=", 2)
+          res[k] = v
+        end
       end
 
       if res['error']

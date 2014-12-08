@@ -16,7 +16,7 @@ include Aerospike
   :set => 'benchmark',
   :key_count => 100000,
   :bin_def => 'I',
-  :concurrency => 1,
+  :concurrency => 4,
   :workload_def => 'I:100',
   :throughput => 0,
   :timeout => 0,
@@ -133,7 +133,7 @@ def parseValuedParam(param)
   re = /(?<type>\w+)([:,](?<value>\d+))?/
   values = re.match(param)
   if values
-    [values[:type], values[:value]]
+    [values[:type], values[:value].to_i]
   else
     [nil, nil]
   end
@@ -190,7 +190,7 @@ end
 # generates a random strings of specified length
 @RAND_CHARS = ('a'..'z').to_a.concat(('A'..'Z').to_a).concat(('0'..'9').to_a)
 def randString(size)
-  @RAND_CHARS.shuffle[0,len].join
+  @RAND_CHARS.shuffle[0,size].join
 end
 
 
@@ -221,7 +221,7 @@ def run_bench(client, ident, times)
   iters = 1
   while @workloadType == 'RU' || iters <= times
     # if randomBin data has been requested
-    bin = getBin(rnd) if randbins
+    bin = getBin if randbins
     key = Key.new(namespace, set, ident*times+(iters%times))
     if (@workloadType == 'I') || (rand(100) >= @workloadPercent)
       begin

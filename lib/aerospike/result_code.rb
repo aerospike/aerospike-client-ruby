@@ -20,6 +20,9 @@ module Aerospike
 
     attr_reader :code
 
+    # Value type not supported by Aerospike server
+    TYPE_NOT_SUPPORTED = -7
+
     # Asynchronous max concurrent database commands have been exceeded and therefore rejected.
     COMMAND_REJECTED = -6
 
@@ -147,6 +150,9 @@ module Aerospike
 
     # A user defined function returned an error code.
     UDF_BAD_RESPONSE = 100
+
+    # The requested item in a large collection was not found.
+    LARGE_ITEM_NOT_FOUND = 125
 
     # Secondary index already exists.
     INDEX_FOUND = 200
@@ -308,6 +314,9 @@ module Aerospike
 
       when UDF_BAD_RESPONSE
         "UDF d error"
+
+      when LARGE_ITEM_NOT_FOUND
+         "Large collection item not found"
 
       when INDEX_FOUND
         "Index already exists"
