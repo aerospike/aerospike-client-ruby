@@ -42,7 +42,7 @@ module Aerospike
       begin
         @conn.read(@data_buffer, MSG_TOTAL_HEADER_SIZE)
       rescue => e
-        Aerospike.logger.error("#{e}")
+        Aerospike.logger.error(e)
         raise e
       end
 

@@ -18,7 +18,7 @@ require "spec_helper"
 
 describe Aerospike::Client do
 
-  describe "LDT operations" do
+  describe "LDT operations", :skip => true do
 
     describe "LargeStack operations" do
 

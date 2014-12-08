@@ -14,7 +14,7 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-require 'atomic'
+require 'aerospike/atomic/atomic'
 
 module Aerospike
 
@@ -63,6 +63,8 @@ module Aerospike
       begin
         info_map = Info.request(conn, "node", "partition-generation", "services")
       rescue => e
+        Aerospike.logger.error(e)
+
         conn.close
         decrease_health
 

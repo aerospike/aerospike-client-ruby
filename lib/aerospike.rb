@@ -5,7 +5,8 @@ require "monitor"
 require "timeout"
 require 'resolv'
 require 'msgpack'
-require 'atomic'
+
+require 'aerospike/atomic/atomic'
 
 require 'aerospike/client'
 require 'aerospike/utils/pool'
@@ -36,12 +37,16 @@ require 'aerospike/command/read_command'
 require 'aerospike/command/delete_command'
 require 'aerospike/key'
 require 'aerospike/operation'
+
 require 'aerospike/policy/client_policy'
 require 'aerospike/policy/priority'
 require 'aerospike/policy/record_exists_action'
 require 'aerospike/policy/generation_policy'
 require 'aerospike/policy/policy'
 require 'aerospike/policy/write_policy'
+require 'aerospike/policy/scan_policy'
+require 'aerospike/policy/query_policy'
+
 require 'aerospike/cluster/connection'
 require 'aerospike/cluster/cluster'
 require 'aerospike/cluster/node_validator'
@@ -63,6 +68,12 @@ require 'aerospike/task/udf_remove_task'
 require 'aerospike/task/udf_register_task'
 require 'aerospike/task/task'
 require 'aerospike/language'
+
+require 'aerospike/query/recordset'
+require 'aerospike/query/filter'
+require 'aerospike/query/stream_command'
+require 'aerospike/query/query_command'
+require 'aerospike/query/scan_command'
 
 module Aerospike
   extend Loggable

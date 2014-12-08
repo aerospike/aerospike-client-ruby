@@ -16,7 +16,7 @@
 
 require 'thread'
 require 'time'
-require 'atomic'
+require 'aerospike/atomic/atomic'
 
 module Aerospike
 
@@ -45,6 +45,7 @@ module Aerospike
               break if completed?
               sleep(poll_interval.to_f)
             rescue => e
+              Aerospike.logger.error(e)
               break if failures > allowed_failures
               failures += 1
             end

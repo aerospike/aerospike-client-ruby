@@ -68,7 +68,7 @@ module Aerospike
         begin
           @conn.read(@data_buffer, receive_size)
         rescue => e
-          Aerospike.logger.warn("parse result error: #{e}")
+          Aerospike.logger.error("parse result error: #{e}")
           raise e
         end
 
@@ -82,7 +82,7 @@ module Aerospike
             @record = parse_record(op_count, field_count, generation, expiration)
             handle_udf_error(result_code)
           rescue => e
-            Aerospike.logger.warn("UDF execution error: #{e}")
+            Aerospike.logger.error("UDF execution error: #{e}")
             raise e
           end
 

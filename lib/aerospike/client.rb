@@ -41,6 +41,8 @@ module Aerospike
     def initialize(host, port, options={})
       @default_policy = Policy.new
       @default_write_policy = WritePolicy.new
+      @default_scan_policy = ScanPolicy.new
+      @default_query_policy = QueryPolicy.new
 
       policy = opt_to_client_policy(options)
 
@@ -501,7 +503,7 @@ module Aerospike
         raise Aerospike::Exceptions::Aerospike.new(UDF_BAD_RESPONSE, "#{obj}")
       end
 
-      raise Aerospike::Exception::Aerospike.new(UDF_BAD_RESPONSE, "Invalid UDF return value")
+      raise Aerospike::Exceptions::Aerospike.new(UDF_BAD_RESPONSE, "Invalid UDF return value")
     end
 
     #  Create secondary index.
@@ -561,6 +563,141 @@ module Aerospike
       @cluster.request_info(@default_policy, *commands)
     end
 
+    #-------------------------------------------------------
+    # Scan Operations
+    #-------------------------------------------------------
+
+    def scan_all(namespace, set_name, bin_names=[], options={})
+      policy = opt_to_scan_policy(options)
+
+      # wait until all migrations are finished
+      # TODO: implement
+      # @cluster.WaitUntillMigrationIsFinished(policy.timeout)
+
+      # Retry policy must be one-shot for scans.
+      # copy on write for policy
+      new_policy = policy.clone
+
+      nodes = @cluster.nodes
+      if nodes.length == 0
+        raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::SERVER_NOT_AVAILABLE, "Scan failed because cluster is empty.")
+      end
+
+      recordset = Recordset.new(policy.record_queue_size, nodes.length, :scan)
+
+      if policy.concurrent_nodes
+        # Use a thread per node
+        nodes.each do |node|
+          Thread.new do
+            abort_on_exception = true
+            command = ScanCommand.new(node, new_policy, namespace, set_name, bin_names, recordset)
+            begin
+              command.execute
+            rescue => e
+              Aerospike.logger.error(e) unless e == Rescordset::SCAN_TERMINATED_EXCEPTION 
+              recordset.cancel(e)
+            ensure
+              recordset.thread_finished
+            end
+          end
+        end
+      else
+        Thread.new do
+          abort_on_exception = true
+          nodes.each do |node|
+            command = ScanCommand.new(node, new_policy, namespace, set_name, bin_names, recordset)
+            begin
+              command.execute
+            rescue => e
+              Aerospike.logger.error(e) unless e == Rescordset::SCAN_TERMINATED_EXCEPTION 
+              recordset.cancel(e)
+            ensure
+              recordset.thread_finished
+            end
+          end
+        end
+      end
+
+      recordset
+    end
+
+    # ScanNode reads all records in specified namespace and set, from one node only.
+    # The policy can be used to specify timeouts.
+    def scan_node(node, namespace, set_name, bin_names=[], options={})
+      policy = opt_to_scan_policy(options)
+      # wait until all migrations are finished
+      # TODO: implement
+      # @cluster.WaitUntillMigrationIsFinished(policy.timeout)
+
+      # Retry policy must be one-shot for scans.
+      # copy on write for policy
+      new_policy = policy.clone
+      new_policy.max_retries = 0
+
+      node = @cluster.get_node_by_name(node) if !node.is_a?(Aerospike::Node)
+
+      recordset = Recordset.new(policy.record_queue_size, 1, :scan)
+
+      Thread.new do
+        abort_on_exception = true
+        command = ScanCommand.new(node, new_policy, namespace, set_name, bin_names, recordset)
+        begin
+          command.execute
+        rescue => e
+          Aerospike.logger.error(e) unless e == Rescordset::SCAN_TERMINATED_EXCEPTION 
+          recordset.cancel(e)
+        ensure
+          recordset.thread_finished
+        end
+      end
+
+      recordset
+    end
+
+    #--------------------------------------------------------
+    # Query functions (Supported by Aerospike 3 servers only)
+    #--------------------------------------------------------
+
+    # Query executes a query and returns a recordset.
+    # The query executor puts records on a channel from separate goroutines.
+    # The caller can concurrently pops records off the channel through the
+    # record channel.
+    #
+    # This method is only supported by Aerospike 3 servers.
+    # If the policy is nil, a default policy will be generated.
+    def query(statement, options={})
+      policy = opt_to_query_policy(options)
+      new_policy = policy.clone
+
+      # Always set a taskId
+      statement.task_id = Time.now.to_i if statement.task_id == 0
+
+      nodes = @cluster.nodes
+      if nodes.length == 0
+        raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::SERVER_NOT_AVAILABLE, "Scan failed because cluster is empty.")
+      end
+
+      recordset = Recordset.new(policy.record_queue_size, nodes.length, :query)
+
+      # Use a thread per node
+      nodes.each do |node|
+        Thread.new do
+          abort_on_exception = true
+          command = QueryCommand.new(node, new_policy, statement, recordset)
+          begin
+            command.execute
+          rescue => e
+            Aerospike.logger.error(e) unless e == Rescordset::QUERY_TERMINATED_EXCEPTION 
+            recordset.cancel(e)
+          ensure
+            recordset.thread_finished
+          end
+        end
+      end
+
+      recordset
+    end
+
     private
 
     def send_info_command(policy, command)
@@ -581,7 +718,7 @@ module Aerospike
     end
 
     def opt_to_client_policy(options)
-      if options == {} || options.nil?
+      if options.nil? || options == {}
         ClientPolicy.new
       elsif options.is_a?(ClientPolicy)
         options
@@ -595,7 +732,7 @@ module Aerospike
     end
 
     def opt_to_policy(options)
-      if options == {} || options.nil?
+      if options.nil? || options == {}
         @default_policy
       elsif options.is_a?(Policy)
         options
@@ -610,7 +747,7 @@ module Aerospike
     end
 
     def opt_to_write_policy(options)
-      if options == {} || options.nil?
+      if options.nil? || options == {}
         @default_write_policy
       elsif options.is_a?(WritePolicy)
         options
@@ -622,6 +759,31 @@ module Aerospike
           options[:expiration],
           options[:send_key]
         )
+      end
+    end
+
+    def opt_to_scan_policy(options)
+      if options.nil? || options == {}
+        @default_scan_policy
+      elsif options.is_a?(ScanPolicy)
+        options
+      elsif options.is_a?(Hash)
+        ScanPolicy.new(
+          options[:scan_percent],
+          options[:concurrent_nodes],
+          options[:include_bin_data],
+          options[:fail_on_cluster_change]
+        )
+      end
+    end
+
+    def opt_to_query_policy(options)
+      if options.nil? || options == {}
+        @default_query_policy
+      elsif options.is_a?(QueryPolicy)
+        options
+      elsif options.is_a?(Hash)
+        QueryPolicy.new()
       end
     end
 

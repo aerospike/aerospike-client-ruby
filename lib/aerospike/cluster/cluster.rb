@@ -17,7 +17,7 @@
 require 'thread'
 require 'timeout'
 
-require 'atomic'
+require 'aerospike/atomic/atomic'
 
 module Aerospike
 
@@ -210,7 +210,7 @@ module Aerospike
             refresh_count += 1
             friend_list.concat(friends) if friends
           rescue => e
-            Aerospike.logger.warn("Node `#{node}` refresh failed: #{e.to_s}")
+            Aerospike.logger.error("Node `#{node}` refresh failed: #{e.to_s}")
           end
         end
       end
@@ -285,7 +285,7 @@ module Aerospike
         begin
           seed_node_validator = NodeValidator.new(seed, @connection_timeout)
         rescue => e
-          Aerospike.logger.warn("Seed #{seed.to_s} failed: #{e}")
+          Aerospike.logger.error("Seed #{seed.to_s} failed: #{e}")
           next
         end
 
@@ -299,7 +299,7 @@ module Aerospike
             begin
               nv = NodeValidator.new(aliass, @connection_timeout)
             rescue Exection => e
-              Aerospike.logger.warn("Seed #{seed.to_s} failed: #{e}")
+              Aerospike.logger.error("Seed #{seed.to_s} failed: #{e}")
               next
             end
           end
@@ -368,7 +368,7 @@ module Aerospike
           list << node
 
         rescue => e
-          Aerospike.logger.warn("Add node #{node.to_s} failed: #{e}")
+          Aerospike.logger.error("Add node #{node.to_s} failed: #{e}")
         end
       end
 
@@ -398,7 +398,7 @@ module Aerospike
 
         when 2
           # Two node clusters require at least one successful refresh before removing.
-          if refresh_count == 1 && node.reference_count.value == 0 && !node.responded.value
+          if refresh_count == 2 && node.reference_count.value == 0 && !node.responded.value
             # Node is not referenced nor did it respond.
             remove_list << node
           end

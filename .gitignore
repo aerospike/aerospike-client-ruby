@@ -11,4 +11,4 @@ tmp/
 TODO
 .DS_Store
 .ruby-version
-
+*.gem

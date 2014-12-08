@@ -54,6 +54,7 @@ module Aerospike
         @client.execute_udf(@key, @PACKAGE_NAME, 'get', [@bin_name, name, @user_module], @policy)
       rescue Aerospike::Exceptions::Aerospike => e
         unless e.result_code == Aerospike::ResultCode::UDF_BAD_RESPONSE && e.message.index("Item Not Found")
+          Aerospike.logger.error(e)
           raise e
         end
         nil

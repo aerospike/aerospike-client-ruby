@@ -14,33 +14,19 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-require 'aerospike/command/batch_command'
+require 'thread'
+
+require 'aerospike/record'
+
+require 'aerospike/command/command'
 
 module Aerospike
 
   private
 
-  class BatchCommandGet < BatchCommand
+  class StreamCommand < BatchCommand
 
-    def initialize(node, batch_namespace, policy, key_map, bin_names, records, read_attr)
-      super(node)
-
-      @batch_namespace = batch_namespace
-      @policy = policy
-      @key_map = key_map
-      @bin_names = bin_names
-      @records = records
-      @read_attr = read_attr
-    end
-
-    def write_buffer
-      set_batch_get(@batch_namespace, @bin_names, @read_attr)
-    end
-
-    # Parse all results in the batch.  Add records to shared list.
-    # If the record was not found, the bins will be nil.
     def parse_record_results(receive_size)
-      #Parse each message response and add it to the result array
       @data_offset = 0
 
       while @data_offset < receive_size
@@ -49,7 +35,7 @@ module Aerospike
 
         # The only valid server return codes are "ok" and "not found".
         # If other return codes are received, then abort the batch.
-        if result_code != 0 && result_code != Aerospike::ResultCode::KEY_NOT_FOUND_ERROR
+        if result_code != 0
           raise Aerospike::Exceptions::Aerospike.new(result_code)
         end
 
@@ -58,22 +44,20 @@ module Aerospike
         # If cmd is the end marker of the response, do not proceed further
         return false if (info3 & INFO3_LAST) == INFO3_LAST
 
-        generation = @data_buffer.read_int32(6).ord
-        expiration = @data_buffer.read_int32(10).ord
-        field_count = @data_buffer.read_int16(18).ord
-        op_count = @data_buffer.read_int16(20).ord
+        generation = @data_buffer.read_int32(6)
+        expiration = @data_buffer.read_int32(10)
+        field_count = @data_buffer.read_int16(18)
+        op_count = @data_buffer.read_int16(20)
         key = parse_key(field_count)
-        item = @key_map[key.digest]
 
-        if item
-          if result_code == 0
-            index = item.index
-            @records[index] = parse_record(key, op_count, generation, expiration)
+        if result_code == 0
+          if @recordset.active?
+            @recordset.records.enq(parse_record(key, op_count, generation, expiration))
+          else
+            expn = @recordset.is_scan? ? SCAN_TERMINATED_EXCEPTION : QUERY_TERMINATED_EXCEPTION
+            raise expn
           end
-        else
-          Aerospike.logger.debug("Unexpected batch key returned: #{key.namespace}, #{key.digest}")
         end
-
       end # while
 
       true
