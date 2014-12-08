@@ -14,45 +14,27 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-require 'aerospike/command/single_command'
+require 'aerospike/query/stream_command'
+require 'aerospike/query/recordset'
 
 module Aerospike
 
   private
 
-  class WriteCommand < SingleCommand
+  class ScanCommand < StreamCommand
 
-    def initialize(cluster, policy, key, bins, operation)
+    def initialize(node, policy, namespace, set_name, bin_names, recordset)
+      super(node)
 
-      super(cluster, key)
-
-      @bins =          bins
-      @operation =     operation
       @policy = policy
-
-      self
+      @namespace = namespace
+      @set_name = set_name
+      @bin_names = bin_names
+      @recordset = recordset
     end
 
     def write_buffer
-      set_write(@policy, @operation, @key, @bins)
-    end
-
-    def parse_result
-      # Read header.
-      begin
-        @conn.read(@data_buffer, MSG_TOTAL_HEADER_SIZE)
-      rescue => e
-        Aerospike.logger.error(e)
-        raise e
-      end
-
-      result_code = @data_buffer.read(13).ord & 0xFF
-
-      if result_code != 0
-        raise Aerospike::Exceptions::Aerospike.new(result_code)
-      end
-
-      empty_socket
+      set_scan(@policy, @namespace, @set_name, @bin_names)
     end
 
   end # class

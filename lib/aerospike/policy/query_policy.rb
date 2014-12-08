@@ -18,18 +18,10 @@ require 'aerospike/policy/batch_policy'
 module Aerospike
 
   # Container object for scan policy command.
-  class ScanPolicy < BatchPolicy
+  class QueryPolicy < BatchPolicy
 
-    attr_accessor :scan_percent, :concurrent_nodes,
-      :include_bin_data, :fail_on_cluster_change
-
-    def initialize(scan_percent=nil, concurrent_nodes=nil, include_bin_data=nil, fail_on_cluster_change=nil)
+    def initialize()
       super()
-
-      @scan_percent = scan_percent || 100
-      @concurrent_nodes = concurrent_nodes.nil? ? true : concurrent_nodes
-      @include_bin_data = include_bin_data.nil? ? true : include_bin_data
-      @fail_on_cluster_change = fail_on_cluster_change.nil? ? true : fail_on_cluster_change
 
       @max_retries = 0
 

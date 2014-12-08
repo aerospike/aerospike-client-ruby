@@ -34,7 +34,7 @@ describe Aerospike::Client do
 
     it "should connect to the cluster successfully" do
 
-      expect(client.connected?).to be true
+      expect(client.connected?).to eq true
 
     end
 
@@ -69,7 +69,7 @@ describe Aerospike::Client do
 
         client.put(key, bin_map)
 
-        expect(client.connected?).to be true
+        expect(client.connected?).to eq true
 
         record = client.get(key)
         expect(record.bins).to eq bin_map
@@ -89,7 +89,7 @@ describe Aerospike::Client do
 
         client.put(key, bin_map)
 
-        expect(client.connected?).to be true
+        expect(client.connected?).to eq true
 
         record = client.get(key, ['bin1', 'bin2'])
         expect(record.bins).to eq ({'bin1' => 'value1', 'bin2' => 2})
@@ -101,7 +101,7 @@ describe Aerospike::Client do
         key = Support.gen_random_key
         client.put(key, Aerospike::Bin.new('bin', 'value'))
 
-        expect(client.connected?).to be true
+        expect(client.connected?).to eq true
 
         record = client.get(key)
         expect(record.bins['bin']).to eq 'value'
@@ -115,7 +115,7 @@ describe Aerospike::Client do
                          Aerospike::Bin.new('bin1', 'auxilary')]
                    )
 
-        expect(client.connected?).to be true
+        expect(client.connected?).to eq true
 
         record = client.get(key)
         expect(record.bins['bin']).to eq nil
@@ -128,7 +128,7 @@ describe Aerospike::Client do
         bin = Aerospike::Bin.new('bin', rand(2**63))
         client.put(key, bin)
 
-        expect(client.connected?).to be true
+        expect(client.connected?).to eq true
 
         record = client.get(key)
         expect(record.bins['bin']).to eq bin.value
@@ -148,7 +148,7 @@ describe Aerospike::Client do
         ])
         client.put(key, bin)
 
-        expect(client.connected?).to be true
+        expect(client.connected?).to eq true
 
         record = client.get(key)
         expect(record.bins['bin']).to eq bin.value
@@ -168,7 +168,7 @@ describe Aerospike::Client do
         })
         client.put(key, bin)
 
-        expect(client.connected?).to be true
+        expect(client.connected?).to eq true
 
         record = client.get(key)
         expect(record.bins['bin']).to eq bin.value
@@ -182,7 +182,7 @@ describe Aerospike::Client do
       key = Support.gen_random_key
       client.put(key, Aerospike::Bin.new('bin', 'value'))
 
-      expect(client.connected?).to be true
+      expect(client.connected?).to eq true
 
       record = client.get_header(key)
       expect(record.bins).to be nil
@@ -200,7 +200,7 @@ describe Aerospike::Client do
       client.put(key, Aerospike::Bin.new('bin', 'value'))
 
       existed = client.delete(key)
-      expect(existed).to be true
+      expect(existed).to eq true
 
     end
 
@@ -208,7 +208,7 @@ describe Aerospike::Client do
 
       key = Support.gen_random_key
       existed = client.delete(key)
-      expect(existed).to be false
+      expect(existed).to eq false
 
     end
 
@@ -236,12 +236,12 @@ describe Aerospike::Client do
       key = Support.gen_random_key
 
       exists = client.exists(key)
-      expect(exists).to be false
+      expect(exists).to eq false
 
       client.put(key, Aerospike::Bin.new('bin', 'value'))
 
       exists = client.exists(key)
-      expect(exists).to be true
+      expect(exists).to eq true
 
     end
 
@@ -256,12 +256,12 @@ describe Aerospike::Client do
     before do
 
       exists = client.exists(key)
-      expect(exists).to be false
+      expect(exists).to eq false
 
       client.put(key, {'str' => 'value', 'int' => 10})
 
       exists = client.exists(key)
-      expect(exists).to be true
+      expect(exists).to eq true
     end
 
     it "should append to a key successfully" do
@@ -422,9 +422,9 @@ describe Aerospike::Client do
 
       expect(exists.length).to eq 3
 
-      expect(exists[0]).to be true
-      expect(exists[1]).to be false
-      expect(exists[2]).to be true
+      expect(exists[0]).to eq(true)
+      expect(exists[1]).to eq(false)
+      expect(exists[2]).to eq(true)
 
     end
 

@@ -49,8 +49,6 @@ module Aerospike
       begin
         buf_length = send_command(conn, offset, buffer)
         parse_multiple_response(buf_length, buffer)
-      rescue => e
-        Aerospike.logger.error("#{e}")
       ensure
         Buffer.put(buffer)
       end
@@ -86,6 +84,7 @@ module Aerospike
         conn.read(buffer, length)
         return length
       rescue => e
+        Aerospike.logger.error(e)
         conn.close
         raise e
       end

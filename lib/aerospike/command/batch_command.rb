@@ -31,7 +31,6 @@ module Aerospike
 
       @valid = true
       @mutex = Mutex.new
-      @records = Queue.new
 
       self
     end
@@ -112,7 +111,10 @@ module Aerospike
         # Currently, the batch command returns all the bins even if a subset of
         # the bins are requested. We have to filter it on the client side.
         # TODO: Filter batch bins on server!
-        if !@bin_names || @bin_names.any?{|bn| bn == name}
+        # if !@bin_names || @bin_names.any?{|bn| bn == name}
+        # if !@bin_names || (@bin_names == []) || @bin_names.any?{|bn| bn == name}
+        if !@bin_names || (@bin_names.empty?) || @bin_names.any?{|bn| bn == name}
+
           vmap = nil
 
           if version > 0 || duplicates

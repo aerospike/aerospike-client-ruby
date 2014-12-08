@@ -49,7 +49,7 @@ module Aerospike
         begin
           @conn.read(@data_buffer, receive_size)
         rescue => e
-          Aerospike.logger.error("#{e}")
+          Aerospike.logger.error(e)
           raise e
         end
       end

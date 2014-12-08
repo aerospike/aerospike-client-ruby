@@ -371,7 +371,7 @@ module Aerospike
 
       @data_buffer.write_byte(priority, @data_offset)
       @data_offset += 1
-      @data_buffer.write_byte(policy.scan_percent, @data_offset)
+      @data_buffer.write_byte(policy.scan_percent.to_i.ord, @data_offset)
       @data_offset += 1
 
       if bin_names
@@ -407,7 +407,7 @@ module Aerospike
           # Socket connection error has occurred. Decrease health and retry.
           @node.decrease_health
 
-          Aerospike.logger.warn("Node #{@node.to_s}: #{e}")
+          Aerospike.logger.error("Node #{@node.to_s}: #{e}")
           next
         end
 
@@ -419,6 +419,8 @@ module Aerospike
           begin
             write_buffer
           rescue => e
+            Aerospike.logger.error(e)
+
             # All runtime exceptions are considered fatal. Do not retry.
             # Close socket to flush out possible garbage. Do not put back in pool.
             @conn.close
@@ -436,7 +438,7 @@ module Aerospike
             # Close socket to flush out possible garbage. Do not put back in pool.
             @conn.close
 
-            Aerospike.logger.warn("Node #{@node.to_s}: #{e}")
+            Aerospike.logger.error("Node #{@node.to_s}: #{e}")
             # IO error means connection to server @node is unhealthy.
             # Reflect cmd status.
             @node.decrease_health
@@ -447,6 +449,8 @@ module Aerospike
           begin
             parse_result
           rescue => e
+            Aerospike.logger.error(e)
+            
             # close the connection
             # cancelling/closing the batch/multi commands will return an error, which will
             # close the connection to throw away its data and signal the server about the
@@ -480,16 +484,16 @@ module Aerospike
       field_count = 0
 
       if key.namespace
-        @data_offset += key.namespace.length + FIELD_HEADER_SIZE
+        @data_offset += key.namespace.bytesize + FIELD_HEADER_SIZE
         field_count += 1
       end
 
       if key.set_name
-        @data_offset += key.set_name.length + FIELD_HEADER_SIZE
+        @data_offset += key.set_name.bytesize + FIELD_HEADER_SIZE
         field_count += 1
       end
 
-      @data_offset += key.digest.length + FIELD_HEADER_SIZE
+      @data_offset += key.digest.bytesize + FIELD_HEADER_SIZE
       field_count += 1
 
       return field_count
@@ -503,7 +507,7 @@ module Aerospike
     end
 
     def estimate_operation_size_for_bin(bin)
-      @data_offset += bin.name.length + OPERATION_HEADER_SIZE
+      @data_offset += bin.name.bytesize + OPERATION_HEADER_SIZE
       @data_offset += bin.value_object.estimate_size
     end
 
@@ -511,7 +515,7 @@ module Aerospike
       bin_len = 0
 
       if operation.bin_name
-        bin_len = operation.bin_name.length
+        bin_len = operation.bin_name.bytesize
       end
 
       @data_offset += bin_len + OPERATION_HEADER_SIZE
@@ -522,7 +526,7 @@ module Aerospike
     end
 
     def estimate_operation_size_for_bin_name(bin_name)
-      @data_offset += bin_name.length + OPERATION_HEADER_SIZE
+      @data_offset += bin_name.bytesize + OPERATION_HEADER_SIZE
     end
 
     def estimate_operation_size
