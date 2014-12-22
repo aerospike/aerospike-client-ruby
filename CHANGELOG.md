@@ -1,3 +1,17 @@
+## Dec 22 2014 (0.1.6)
+
+  Minor features added, minor fixes and improvements.
+
+  * **New Features**:
+
+    * Added `Policy.consistency_level`
+    * Added `WritePolicy.commit_level`
+
+  * **Fixes**
+
+    * Fixed setting timeout on connection
+    * Fixed exception handling typo for Connection#write 
+
 ## Dec 8 2014 (0.1.5)
 
   Major features added, minor fixes and improvements.
