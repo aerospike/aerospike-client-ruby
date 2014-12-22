@@ -34,7 +34,7 @@ module Aerospike
     end
 
     def write_buffer
-      set_exists(@key)
+      set_exists(@policy, @key)
     end
 
     def parse_result

@@ -14,6 +14,7 @@
 # limitations under the License.
 
 require 'aerospike/policy/priority'
+require 'aerospike/policy/consistency_level'
 
 
 module Aerospike
@@ -21,15 +22,20 @@ module Aerospike
   # Container object for client policy command.
   class Policy
 
-    attr_accessor :priority, :timeout, :max_retries, :sleep_between_retries
+    attr_accessor :priority, :timeout, :max_retries, :sleep_between_retries, :consistency_level
 
-    def initialize(priority=nil, timeout=nil, max_retiries=nil, sleep_between_retries=nil)
+    def initialize(priority=nil, timeout=nil, max_retiries=nil, sleep_between_retries=nil, consistency_level=nil)
       # Container object for transaction policy attributes used in all database
       # operation calls.
 
       # Priority of request relative to other transactions.
       # Currently, only used for scans.
       @priority = priority || Priority::DEFAULT
+
+      # How replicas should be consulted in a read operation to provide the desired
+      # consistency guarantee. Default to allowing one replica to be used in the
+      # read operation.
+      @consistency_level = consistency_level || Aerospike::ConsistencyLevel::CONSISTENCY_ONE
 
       # Transaction timeout.
       # This timeout is used to set the socket timeout and is also sent to the

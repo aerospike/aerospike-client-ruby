@@ -34,7 +34,7 @@ module Aerospike
     end
 
     def write_buffer
-      set_batch_exists(@batch_namespace)
+      set_batch_exists(@policy, @batch_namespace)
     end
 
     # Parse all results in the batch.  Add records to shared list.

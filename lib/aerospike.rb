@@ -46,6 +46,8 @@ require 'aerospike/policy/policy'
 require 'aerospike/policy/write_policy'
 require 'aerospike/policy/scan_policy'
 require 'aerospike/policy/query_policy'
+require 'aerospike/policy/consistency_level'
+require 'aerospike/policy/commit_level'
 
 require 'aerospike/cluster/connection'
 require 'aerospike/cluster/cluster'

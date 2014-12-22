@@ -14,6 +14,7 @@
 # limitations under the License.
 
 require 'aerospike/policy/policy'
+require 'aerospike/policy/commit_level'
 require 'aerospike/policy/generation_policy'
 require 'aerospike/policy/record_exists_action'
 
@@ -23,9 +24,9 @@ module Aerospike
   class WritePolicy < Policy
 
     attr_accessor :record_exists_action, :generation_policy,
-      :generation, :expiration, :send_key
+      :generation, :expiration, :send_key, :commit_level
 
-    def initialize(record_exists_action=nil, gen_policy=nil, generation=nil, expiration=nil, send_key=nil)
+    def initialize(record_exists_action=nil, gen_policy=nil, generation=nil, expiration=nil, send_key=nil, commit_level=nil)
       super()
 
       # Qualify how to handle writes where the record already exists.
@@ -34,6 +35,11 @@ module Aerospike
       # Qualify how to handle record writes based on record generation. The default (NONE)
       # indicates that the generation is not used to restrict writes.
       @generation_policy = gen_policy || GenerationPolicy::NONE
+
+      # Desired consistency guarantee when committing a transaction on the server. The default
+      # (COMMIT_ALL) indicates that the server should wait for master and all replica commits to
+      # be successful before returning success to the client.
+      @commit_level = commit_level || Aerospike::CommitLevel::COMMIT_ALL
 
       # Expected generation. Generation is the number of times a record has been modified
       # (including creation) on the server. If a write operation is creating a record,

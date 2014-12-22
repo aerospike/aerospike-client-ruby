@@ -34,7 +34,7 @@ module Aerospike
     end
 
     def write_buffer
-      set_read_header(@key)
+      set_read_header(@policy, @key)
     end
 
     def parse_result

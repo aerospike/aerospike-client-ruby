@@ -48,7 +48,7 @@ module Aerospike
       @function_args = nil
 
       # TaskId determines query task id. (Optional)
-      @task_id = 0
+      @task_id = rand(RAND_MAX)
 
       # determines if the query should return data
       @return_data = true
@@ -64,6 +64,16 @@ module Aerospike
   def is_scan?
     return (filters.nil? || (filters.empty?))
   end
+
+  def set_task_id
+    while @task_id == 0
+      @task_id = rand(RAND_MAX)
+    end
+  end
+
+  private
+
+  RAND_MAX = 2**63
 
   end # class
 

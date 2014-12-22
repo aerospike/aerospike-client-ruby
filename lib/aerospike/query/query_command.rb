@@ -81,7 +81,7 @@ module Aerospike
         fieldCount+=1
       end
 
-      @statement.task_id = Time.now.to_i + Time.usec if @statement.task_id == 0
+      @statement.set_task_id
 
       @data_offset += 8 + FIELD_HEADER_SIZE
       fieldCount+=1
@@ -113,7 +113,7 @@ module Aerospike
       readAttr = INFO1_READ
       operation_count = (@statement.filters.to_a.length == 0 && @statement.bin_names.to_a.length == 0) ? @statement.bin_names.length : 0
 
-      write_header(readAttr, 0, fieldCount, operation_count)
+      write_header(@policy, readAttr, 0, fieldCount, operation_count)
 
       if @statement.namespace
         write_field_string(@statement.namespace, Aerospike::FieldType::NAMESPACE)

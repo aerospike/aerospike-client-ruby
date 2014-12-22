@@ -51,7 +51,7 @@ module Aerospike
         begin
           written = @socket.write_nonblock(buffer.read(total, length - total))
           total += written
-        rescue IO::WaitWriteable, Errno::EAGAIN
+        rescue IO::WaitWritable, Errno::EAGAIN
           IO.select(nil, [@socket])
           retry
         rescue => e
@@ -92,8 +92,7 @@ module Aerospike
     def timeout=(timeout)
       if timeout > 0 && timeout != @timeout
         @timeout = timeout
-        # if IO.select([@socket], [@socket], [@socket], timeout.to_f)
-        if IO.select(nil, nil, nil, timeout.to_f)
+        if IO.select([@socket], [@socket], [@socket], timeout.to_f)
           begin
             # Verify there is now a good connection
             @socket.connect_nonblock(@sockaddr)

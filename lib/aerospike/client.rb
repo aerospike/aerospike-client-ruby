@@ -669,9 +669,6 @@ module Aerospike
       policy = opt_to_query_policy(options)
       new_policy = policy.clone
 
-      # Always set a taskId
-      statement.task_id = Time.now.to_i if statement.task_id == 0
-
       nodes = @cluster.nodes
       if nodes.length == 0
         raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::SERVER_NOT_AVAILABLE, "Scan failed because cluster is empty.")
@@ -726,7 +723,7 @@ module Aerospike
         ClientPolicy.new(
           options[:timeout],
           options[:connection_queue_size],
-          options[:fail_if_not_connected],
+          options[:fail_if_not_connected]
         )
       end
     end
@@ -742,6 +739,7 @@ module Aerospike
           options[:timeout],
           options[:max_retiries],
           options[:sleep_between_retries],
+          options[:consistency_level]
         )
       end
     end
@@ -757,7 +755,8 @@ module Aerospike
           options[:gen_policy],
           options[:generation],
           options[:expiration],
-          options[:send_key]
+          options[:send_key],
+          options[:commit_level]
         )
       end
     end

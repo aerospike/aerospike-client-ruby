@@ -34,7 +34,7 @@ module Aerospike
     end
 
     def write_buffer
-      set_udf(@key, @package_name, @function_name, @args)
+      set_udf(@policy, @key, @package_name, @function_name, @args)
     end
 
   end # class

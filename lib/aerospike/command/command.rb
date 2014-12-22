@@ -21,6 +21,9 @@ require 'msgpack'
 require 'aerospike/result_code'
 require 'aerospike/command/field_type'
 
+require 'aerospike/policy/consistency_level'
+require 'aerospike/policy/commit_level'
+
 module Aerospike
 
   private
@@ -33,6 +36,9 @@ module Aerospike
 
   # Do not read the bins
   INFO1_NOBINDATA = Integer(1 << 5)
+
+  # Involve all replicas in read operation.
+  INFO1_CONSISTENCY_ALL = Integer(1 << 6)
 
   # Create or update record
   INFO2_WRITE = Integer(1 << 0)
@@ -49,6 +55,8 @@ module Aerospike
 
   # This is the last of a multi-part message.
   INFO3_LAST = Integer(1 << 0)
+  # Commit to master only before declaring success.
+  INFO3_COMMIT_MASTER = Integer(1 << 1)  
   # Update only. Merge bins.
   INFO3_UPDATE_ONLY = Integer(1 << 3)
 
@@ -127,27 +135,27 @@ module Aerospike
     end
 
     # Writes the command for exist operations
-    def set_exists(key)
+    def set_exists(policy, key)
       begin_cmd
       field_count = estimate_key_size(key)
       size_buffer
-      write_header(INFO1_READ|INFO1_NOBINDATA, 0, field_count, 0)
+      write_header(policy, INFO1_READ|INFO1_NOBINDATA, 0, field_count, 0)
       write_key(key)
       end_cmd
     end
 
     # Writes the command for get operations (all bins)
-    def set_read_for_key_only(key)
+    def set_read_for_key_only(policy, key)
       begin_cmd
       field_count = estimate_key_size(key)
       size_buffer
-      write_header(INFO1_READ|INFO1_GET_ALL, 0, field_count, 0)
+      write_header(policy, INFO1_READ|INFO1_GET_ALL, 0, field_count, 0)
       write_key(key)
       end_cmd
     end
 
     # Writes the command for get operations (specified bins)
-    def set_read(key, bin_names)
+    def set_read(policy, key, bin_names)
       if bin_names && bin_names.length > 0
         begin_cmd
         field_count = estimate_key_size(key)
@@ -157,7 +165,7 @@ module Aerospike
         end
 
         size_buffer
-        write_header(INFO1_READ, 0, field_count, bin_names.length)
+        write_header(policy, INFO1_READ, 0, field_count, bin_names.length)
         write_key(key)
 
         bin_names.each do |bin_name|
@@ -166,12 +174,12 @@ module Aerospike
 
         end_cmd
       else
-        set_read_for_key_only(key)
+        set_read_for_key_only(policy, key)
       end
     end
 
     # Writes the command for getting metadata operations
-    def set_read_header(key)
+    def set_read_header(policy, key)
       begin_cmd
       field_count = estimate_key_size(key)
       estimate_operation_size_for_bin_name('')
@@ -181,7 +189,7 @@ module Aerospike
       # The workaround is to request a non-existent bin.
       # TODO: Fix this on server.
       #command.set_read(INFO1_READ | _INFO1_NOBINDATA);
-      write_header(INFO1_READ, 0, field_count, 1)
+      write_header(policy, INFO1_READ, 0, field_count, 1)
 
       write_key(key)
       write_operation_for_bin_name('', Aerospike::Operation::READ)
@@ -223,7 +231,7 @@ module Aerospike
       if write_attr != 0
         write_header_with_policy(policy, read_attr, write_attr, field_count, operations.length)
       else
-        write_header(read_attr, write_attr, field_count, operations.length)
+        write_header(policy, read_attr, write_attr, field_count, operations.length)
       end
       write_key(key)
 
@@ -236,7 +244,7 @@ module Aerospike
       end_cmd
     end
 
-    def set_udf(key, package_name, function_name, args)
+    def set_udf(policy, key, package_name, function_name, args)
       begin_cmd
       field_count = estimate_key_size(key)
       arg_bytes = args.to_bytes
@@ -244,7 +252,7 @@ module Aerospike
       field_count += estimate_udf_size(package_name, function_name, arg_bytes)
       size_buffer
 
-      write_header(0, INFO2_WRITE, field_count, 0)
+      write_header(policy, 0, INFO2_WRITE, field_count, 0)
       write_key(key)
       write_field_string(package_name, Aerospike::FieldType::UDF_PACKAGE_NAME)
       write_field_string(function_name, Aerospike::FieldType::UDF_FUNCTION)
@@ -253,7 +261,7 @@ module Aerospike
       end_cmd
     end
 
-    def set_batch_exists(batch_namespace)
+    def set_batch_exists(policy, batch_namespace)
       # Estimate buffer size
       begin_cmd
       keys = batch_namespace.keys
@@ -264,7 +272,7 @@ module Aerospike
 
       size_buffer
 
-      write_header(INFO1_READ|INFO1_NOBINDATA, 0, 2, 0)
+      write_header(policy, INFO1_READ|INFO1_NOBINDATA, 0, 2, 0)
       write_field_string(batch_namespace.namespace, Aerospike::FieldType::NAMESPACE)
       write_field_header(byte_size, Aerospike::FieldType::DIGEST_RIPE_ARRAY)
 
@@ -275,7 +283,7 @@ module Aerospike
       end_cmd
     end
 
-    def set_batch_get(batch_namespace, bin_names, read_attr)
+    def set_batch_get(policy, batch_namespace, bin_names, read_attr)
       # Estimate buffer size
       begin_cmd
       byte_size = batch_namespace.keys.length * DIGEST_SIZE
@@ -296,7 +304,7 @@ module Aerospike
         operation_count = bin_names.length
       end
 
-      write_header(read_attr, 0, 2, operation_count)
+      write_header(policy, read_attr, 0, 2, operation_count)
       write_field_string(batch_namespace.namespace, Aerospike::FieldType::NAMESPACE)
       write_field_header(byte_size, Aerospike::FieldType::DIGEST_RIPE_ARRAY)
 
@@ -351,7 +359,7 @@ module Aerospike
         operation_count = bin_names.length
       end
 
-      write_header(read_attr, 0, field_count, operation_count)
+      write_header(policy, read_attr, 0, field_count, operation_count)
 
       if namespace
         write_field_string(namespace, Aerospike::FieldType::NAMESPACE)
@@ -534,7 +542,9 @@ module Aerospike
     end
 
     # Generic header write.
-    def write_header(read_attr, write_attr, field_count, operation_count)
+    def write_header(policy, read_attr, write_attr, field_count, operation_count)
+      read_attr |= INFO1_CONSISTENCY_ALL if policy.consistency_level == Aerospike::ConsistencyLevel::CONSISTENCY_ALL
+
       # Write all header data except total size which must be written last.
       @data_buffer.write_byte(MSG_REMAINING_HEADER_SIZE, 8) # Message heade.length.
       @data_buffer.write_byte(read_attr, 9)
@@ -580,6 +590,9 @@ module Aerospike
         generation = policy.generation
         write_attr |= INFO2_GENERATION_DUP
       end
+
+      info_attr |= INFO3_COMMIT_MASTER if policy.commit_level == Aerospike::CommitLevel::COMMIT_MASTER
+      read_attr |= INFO1_CONSISTENCY_ALL if policy.consistency_level == Aerospike::ConsistencyLevel::CONSISTENCY_ALL
 
       # Write all header data except total size which must be written last.
       @data_buffer.write_byte(MSG_REMAINING_HEADER_SIZE, 8) # Message heade.length.
