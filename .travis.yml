@@ -2,16 +2,18 @@ language: ruby
 bundler_args: --without development
 rvm:
   - 1.9.3
-  - 2.0.0
-  - 2.1.0
+  - 2.0
+  - 2.1
+  - 2.2
   - ruby-head
   - rbx
   # - jruby
   # - jruby-head
 env: CI="travis"
 matrix:
-  # allow_failures:
-    # - rvm: jruby-head
+  allow_failures:
+    - rvm: ruby-head
+    - rvm: rbx
   fast_finish: true
 
 install:
