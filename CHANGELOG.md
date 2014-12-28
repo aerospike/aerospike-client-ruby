@@ -1,4 +1,4 @@
-## Dec 22 2014 (0.1.6)
+## Dec 28 2014 (0.1.6)
 
   Minor features added, minor fixes and improvements.
 
