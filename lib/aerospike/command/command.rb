@@ -601,10 +601,8 @@ module Aerospike
       @data_buffer.write_byte(info_attr, 11)
       @data_buffer.write_byte(0, 12) # unused
       @data_buffer.write_byte(0, 13) # clear the result code
-      # Buffer.Int32ToBytes(generation, @data_buffer, 14)
-      @data_buffer.write_int32(generation, 14)
-      # Buffer.Int32ToBytes(policy.expiration, @data_buffer, 18)
-      @data_buffer.write_int32(policy.expiration, 18)
+      @data_buffer.write_uint32(generation, 14)
+      @data_buffer.write_uint32(policy.expiration, 18)
 
       # Initialize timeout. It will be written later.
       @data_buffer.write_byte(0, 22)
@@ -613,9 +611,7 @@ module Aerospike
       @data_buffer.write_byte(0, 25)
 
 
-      # Buffer.Int16ToBytes(field_count, @data_buffer, 26)
       @data_buffer.write_int16(field_count, 26)
-      # Buffer.Int16ToBytes(operation_count, @data_buffer, 28)
       @data_buffer.write_int16(operation_count, 28)
 
       @data_offset = MSG_TOTAL_HEADER_SIZE

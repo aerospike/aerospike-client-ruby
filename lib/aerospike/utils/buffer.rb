@@ -29,8 +29,11 @@ module Aerospike
     attr_accessor :buf
 
     INT16 = 's>'
+    UINT16 = 'n'
     INT32 = 'l>'
+    UINT32 = 'N'
     INT64 = 'q>'
+    UINT64 = 'Q>'
 
     DEFAULT_BUFFER_SIZE = 16 * 1024
     MAX_BUFFER_SIZE = 10 * 1024 * 1024
@@ -76,13 +79,28 @@ module Aerospike
       2
     end
 
+    def write_uint16(i, offset)
+      @buf[offset, 2] = [i].pack(UINT16)
+      2
+    end
+
     def write_int32(i, offset)
       @buf[offset, 4] = [i].pack(INT32)
       4
     end
 
+    def write_uint32(i, offset)
+      @buf[offset, 4] = [i].pack(UINT32)
+      4
+    end
+
     def write_int64(i, offset)
       @buf[offset, 8] = [i].pack(INT64)
+      8
+    end
+
+    def write_uint64(i, offset)
+      @buf[offset, 8] = [i].pack(UINT64)
       8
     end
 
