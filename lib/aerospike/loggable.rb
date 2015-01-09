@@ -42,7 +42,7 @@ module Aerospike
 
     def default_logger
       logger = Logger.new(STDOUT)
-      logger.level = Logger::ERROR
+      logger.level = Logger::FATAL
       logger
     end
 
