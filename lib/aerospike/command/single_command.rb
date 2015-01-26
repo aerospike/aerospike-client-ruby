@@ -21,7 +21,7 @@ module Aerospike
 
   private
 
-  class SingleCommand < Command
+  class SingleCommand < Command #:nodoc:
 
     def initialize(cluster, key)
       @cluster = cluster

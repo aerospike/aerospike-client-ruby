@@ -20,7 +20,7 @@ module Aerospike
 
   private
 
-  class BatchCommandGet < BatchCommand
+  class BatchCommandGet < BatchCommand #:nodoc:
 
     def initialize(node, batch_namespace, policy, key_map, bin_names, records, read_attr)
       super(node)

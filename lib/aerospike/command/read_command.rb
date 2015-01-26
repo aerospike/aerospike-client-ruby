@@ -24,7 +24,7 @@ module Aerospike
 
   private
 
-  class ReadCommand < SingleCommand
+  class ReadCommand < SingleCommand #:nodoc:
 
     attr_reader :record
 
@@ -93,7 +93,7 @@ module Aerospike
 
       if op_count == 0
         # data Bin was not returned.
-        @record = Record.new(@node, @key, nil, nil, generation, expiration)
+        @record = Record.new(@node, @key, generation, expiration)
         return
       end
 
@@ -107,24 +107,25 @@ module Aerospike
     end
 
     def parse_record(op_count, field_count, generation, expiration)
-      bins = nil
-      duplicates = nil
+      bins = op_count > 0 ? {} : nil
       receive_offset = 0
 
       # There can be fields in the response (setname etc).
       # But for now, ignore them. Expose them to the API if needed in the future.
-      if field_count != 0
+      if field_count > 0
         # Just skip over all the fields
-        for i in 0...field_count
+        i = 0
+        while i < field_count
           field_size = @data_buffer.read_int32(receive_offset)
           receive_offset += (4 + field_size)
+          i = i.succ
         end
       end
 
-      for i in 0...op_count
+      i = 0
+      while i < op_count
         op_size = @data_buffer.read_int32(receive_offset)
         particle_type = @data_buffer.read(receive_offset+5).ord
-        version = @data_buffer.read(receive_offset+6).ord
         name_size = @data_buffer.read(receive_offset+7).ord
         name = @data_buffer.read(receive_offset+8, name_size).force_encoding('utf-8')
         receive_offset += 4 + 4 + name_size
@@ -134,39 +135,12 @@ module Aerospike
         value = Aerospike.bytes_to_particle(particle_type, @data_buffer, receive_offset, particle_bytes_size)
         receive_offset += particle_bytes_size
 
-        vmap = {}
+        bins[name] = value
 
-        if version > 0 || duplicates != nil
-          unless duplicates
-            duplicates = []
-            duplicates << bins
-            bins = nil
-
-            for j in 0..version-1
-              duplicates << nil
-            end
-          else
-            for j in duplicates.length..version
-              duplicates << nil
-            end
-          end
-
-          vmap = duplicates[version]
-          unless vmap
-            vmap = {}
-            duplicates[version] = vmap
-          end
-        else
-          bins = {} unless bins
-          vmap = bins
-        end
-        vmap[name] = value
+        i = i.succ
       end
 
-      # Remove nil duplicates just in case there were holes in the version number space.
-      duplicates.compact! if duplicates
-
-      Record.new(@node, @key, bins, duplicates, generation, expiration)
+      Record.new(@node, @key, bins, generation, expiration)
     end
 
   end # class

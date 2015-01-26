@@ -21,7 +21,7 @@ module Aerospike
 
   private
 
-  class ScanCommand < StreamCommand
+  class ScanCommand < StreamCommand #:nodoc:
 
     def initialize(node, policy, namespace, set_name, bin_names, recordset)
       super(node)

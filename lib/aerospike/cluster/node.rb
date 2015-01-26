@@ -47,12 +47,25 @@ module Aerospike
       @connections =         Pool.new(@cluster.connection_queue_size)
       @connections.create_block = Proc.new do
         while conn = Connection.new(@host.name, @host.port, @cluster.connection_timeout)
+
+          # need to authenticate
+          if @cluster.user && @cluster.user != ''
+            begin
+              command = AdminCommand.new
+              command.authenticate(conn, @cluster.user, @cluster.password)
+            rescue => e
+              # Socket not authenticated. Do not put back into pool.
+              conn.close if conn
+              raise e
+            end
+          end
+
           break if conn.connected?
         end
         conn
       end
 
-      @connections.cleanup_block = Proc.new { |conn| conn.close }
+      @connections.cleanup_block = Proc.new { |conn| conn.close if conn }
     end
 
     # Request current status from server node, and update node with the result
@@ -65,7 +78,7 @@ module Aerospike
       rescue => e
         Aerospike.logger.error(e)
 
-        conn.close
+        conn.close if conn
         decrease_health
 
         raise e
@@ -179,7 +192,7 @@ module Aerospike
       # drain connections and close all of them
       # non-blocking, does not call create_block when passed false
       while conn = @connections.poll(false)
-        conn.close
+        conn.close if conn
       end
     end
 

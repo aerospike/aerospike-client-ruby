@@ -24,7 +24,7 @@ module Aerospike
 
   private
 
-  class BatchCommand < Command
+  class BatchCommand < Command #:nodoc:
 
     def initialize(node)
       super(node)
@@ -61,7 +61,8 @@ module Aerospike
       set_name = nil
       user_key = nil
 
-      for i in 0...field_count
+      i = 0
+      while i < field_count
         read_bytes(4)
 
         fieldlen = @data_buffer.read_int32(0)
@@ -80,6 +81,8 @@ module Aerospike
         when Aerospike::FieldType::KEY
           user_key = Aerospike::bytes_to_key_value(@data_buffer.read(1).ord, @data_buffer, 2, size-1)
         end
+
+        i = i.succ
       end
 
       Aerospike::Key.new(namespace, set_name, user_key, digest)
@@ -88,17 +91,15 @@ module Aerospike
     # Parses the given byte buffer and populate the result object.
     # Returns the number of bytes that were parsed from the given buffer.
     def parse_record(key, op_count, generation, expiration)
-      bins = nil
-      duplicates = nil
-
-      for i in 0...op_count
+      bins = op_count > 0 ? {} : nil
+      i = 0
+      while i < op_count
         raise Aerospike::Exceptions::QueryTerminated.new unless valid?
 
         read_bytes(8)
 
         op_size = @data_buffer.read_int32(0).ord
         particle_type = @data_buffer.read(5).ord
-        version = @data_buffer.read(6).ord
         name_size = @data_buffer.read(7).ord
 
         read_bytes(name_size)
@@ -114,44 +115,13 @@ module Aerospike
         # if !@bin_names || @bin_names.any?{|bn| bn == name}
         # if !@bin_names || (@bin_names == []) || @bin_names.any?{|bn| bn == name}
         if !@bin_names || (@bin_names.empty?) || @bin_names.any?{|bn| bn == name}
-
-          vmap = nil
-
-          if version > 0 || duplicates
-            unless duplicates
-              duplicates = []
-              duplicates << bins
-              bins = nil
-
-              for j in 0...version
-                duplicates << nil
-              end
-            else
-              for j in duplicates.length..version
-                duplicates << nil
-              end
-            end
-
-            vmap = duplicates[version]
-            unless vmap
-              vmap = {}
-              duplicates[version] = vmap
-            end
-          else
-            unless bins
-              bins = {}
-            end
-            vmap = bins
-          end
-          vmap[name] = value
+          bins[name] = value
         end
+
+        i = i.succ
       end
 
-      # Remove nil duplicates just in case there were holes in the version number space.
-      # TODO: this seems to be a bad idea; O(n) algorithm after another O(n) algorithm
-      duplicates.compact! if duplicates
-
-      Record.new(@node, key, bins, duplicates, generation, expiration)
+      Record.new(@node, key, bins, generation, expiration)
     end
 
     def read_bytes(length)

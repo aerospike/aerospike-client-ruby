@@ -27,11 +27,6 @@ module Aerospike
     # This is useful for restore after backup.
     EXPECT_GEN_GT = 2
 
-    # Create duplicate record if expected generation is not equal to server generation.
-    # Duplicates are only created when the server configuration option "allow-versions"
-    # is true (default is false).
-    DUPLICATE = 3
-
   end # module
 
 end # module

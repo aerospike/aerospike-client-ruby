@@ -26,25 +26,25 @@ module Aerospike
     attr_accessor :record_exists_action, :generation_policy,
       :generation, :expiration, :send_key, :commit_level
 
-    def initialize(record_exists_action=nil, gen_policy=nil, generation=nil, expiration=nil, send_key=nil, commit_level=nil)
-      super()
+    def initialize(opt={})
+      super(opt)
 
       # Qualify how to handle writes where the record already exists.
-      @record_exists_action = record_exists_action || RecordExistsAction::UPDATE
+      @record_exists_action = opt[:record_exists_action] || RecordExistsAction::UPDATE
 
       # Qualify how to handle record writes based on record generation. The default (NONE)
       # indicates that the generation is not used to restrict writes.
-      @generation_policy = gen_policy || GenerationPolicy::NONE
+      @generation_policy = opt[:gen_policy] || GenerationPolicy::NONE
 
       # Desired consistency guarantee when committing a transaction on the server. The default
       # (COMMIT_ALL) indicates that the server should wait for master and all replica commits to
       # be successful before returning success to the client.
-      @commit_level = commit_level || Aerospike::CommitLevel::COMMIT_ALL
+      @commit_level = opt[:commit_level] || Aerospike::CommitLevel::COMMIT_ALL
 
       # Expected generation. Generation is the number of times a record has been modified
       # (including creation) on the server. If a write operation is creating a record,
       # the expected generation would be 0
-      @generation = generation || 0
+      @generation = opt[:generation] || 0
 
       # Record expiration. Also known as ttl (time to live).
       # Seconds record will live before being removed by the server.
@@ -53,11 +53,11 @@ module Aerospike
       # versions >= 3.1.4.  Do not use -1 for older servers.
       # 0: Default to namespace configuration variable "default-ttl" on the server.
       # > 0: Actual expiration in seconds.
-      @expiration = expiration || 0
+      @expiration = opt[:expiration] || 0
 
       # Send user defined key in addition to hash digest on a record put.
       # The default is to send the user defined key.
-      @send_key = send_key.nil? ? true : send_key
+      @send_key = opt[:send_key].nil? ? true : send_key
 
       self
     end

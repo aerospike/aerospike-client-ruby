@@ -20,7 +20,7 @@ module Aerospike
 
   private
 
-  class BatchCommandExists < BatchCommand
+  class BatchCommandExists < BatchCommand #:nodoc:
 
     def initialize(node, batch_namespace, policy, key_map, exists_array)
       super(node)

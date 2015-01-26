@@ -21,7 +21,7 @@ module Aerospike
 
   private
 
-  class ExistsCommand < SingleCommand
+  class ExistsCommand < SingleCommand #:nodoc:
 
     attr_reader :exists
 

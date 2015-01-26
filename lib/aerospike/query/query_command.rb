@@ -21,7 +21,7 @@ module Aerospike
 
   private
 
-  class QueryCommand < StreamCommand
+  class QueryCommand < StreamCommand #:nodoc:
 
     def initialize(node, policy, statement, recordset)
       super(node)

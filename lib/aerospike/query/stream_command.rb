@@ -24,7 +24,7 @@ module Aerospike
 
   private
 
-  class StreamCommand < BatchCommand
+  class StreamCommand < BatchCommand #:nodoc:
 
     def parse_record_results(receive_size)
       @data_offset = 0

@@ -73,7 +73,7 @@ module Aerospike
   CL_MSG_VERSION             = 2
   AS_MSG_TYPE                = 3
 
-  class Command
+  class Command #:nodoc:
 
     def initialize(node)
       @node = node
@@ -431,7 +431,7 @@ module Aerospike
 
             # All runtime exceptions are considered fatal. Do not retry.
             # Close socket to flush out possible garbage. Do not put back in pool.
-            @conn.close
+            @conn.close if conn
             raise e
           end
 
@@ -444,7 +444,7 @@ module Aerospike
           rescue => e
             # IO errors are considered temporary anomalies. Retry.
             # Close socket to flush out possible garbage. Do not put back in pool.
-            @conn.close
+            @conn.close if conn
 
             Aerospike.logger.error("Node #{@node.to_s}: #{e}")
             # IO error means connection to server @node is unhealthy.
@@ -463,7 +463,7 @@ module Aerospike
             # cancelling/closing the batch/multi commands will return an error, which will
             # close the connection to throw away its data and signal the server about the
             # situation. We will not put back the connection in the buffer.
-            @conn.close
+            @conn.close if conn
             raise e
           end
 
@@ -550,8 +550,10 @@ module Aerospike
       @data_buffer.write_byte(read_attr, 9)
       @data_buffer.write_byte(write_attr, 10)
 
-      for i in 11..25
+      i = 11
+      while i <= 25
         @data_buffer.write_byte(0, i)
+        i = i.succ
       end
 
       @data_buffer.write_int16(field_count, 26)
@@ -586,9 +588,6 @@ module Aerospike
       when Aerospike::GenerationPolicy::EXPECT_GEN_GT
         generation = policy.generation
         write_attr |= INFO2_GENERATION_GT
-      when Aerospike::GenerationPolicy::DUPLICATE
-        generation = policy.generation
-        write_attr |= INFO2_GENERATION_DUP
       end
 
       info_attr |= INFO3_COMMIT_MASTER if policy.commit_level == Aerospike::CommitLevel::COMMIT_MASTER

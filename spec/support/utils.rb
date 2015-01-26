@@ -3,8 +3,10 @@ require 'aerospike/key'
 module Support
 
   RAND_CHARS = ('a'..'z').to_a.concat(('A'..'Z').to_a).concat(('0'..'9').to_a)
-  HOST = "127.0.0.1"
+  HOST = "172.16.224.135"
   PORT = 3000
+  USER = ""
+  PASSWORD = ""
 
   def self.rand_string(len)
     RAND_CHARS.shuffle[0,len].join
@@ -21,4 +23,13 @@ module Support
   def self.port
     PORT
   end
+
+  def self.user
+    USER
+  end
+
+  def self.password
+    PASSWORD
+  end
+
 end

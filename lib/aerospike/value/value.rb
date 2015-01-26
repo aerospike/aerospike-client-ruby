@@ -25,7 +25,7 @@ module Aerospike
   private
 
   # Polymorphic value classes used to efficiently serialize objects into the wire protocol.
-  class Value
+  class Value #:nodoc:
 
     @@packer_pool = Pool.new
     @@packer_pool.create_block = Proc.new { MessagePack::Packer.new }
@@ -71,7 +71,7 @@ module Aerospike
 
 
   # Empty value.
-  class NullValue < Value
+  class NullValue < Value #:nodoc:
 
     def initialize
       self
@@ -108,7 +108,7 @@ module Aerospike
   end
 
   # Byte array value.
-  class BytesValue < Value
+  class BytesValue < Value #:nodoc:
 
     def initialize(value)
       @bytes = value
@@ -151,7 +151,7 @@ module Aerospike
   #######################################
 
   # value string.
-  class StringValue < Value
+  class StringValue < Value #:nodoc:
 
     def initialize(val)
       @value = val || ''
@@ -191,7 +191,7 @@ module Aerospike
   #######################################
 
   # Integer value.
-  class IntegerValue < Value
+  class IntegerValue < Value #:nodoc:
 
     def initialize(val)
       @value = val || 0
@@ -231,7 +231,7 @@ module Aerospike
 
   # List value.
   # Supported by Aerospike 3 servers only.
-  class ListValue < Value
+  class ListValue < Value #:nodoc:
 
     def initialize(list)
       @list = list || nil
@@ -281,7 +281,7 @@ module Aerospike
 
   # Map value.
   # Supported by Aerospike 3 servers only.
-  class MapValue < Value
+  class MapValue < Value #:nodoc:
 
     def initialize(vmap)
       @vmap = vmap || {}
@@ -334,7 +334,7 @@ module Aerospike
 
   protected
 
-  def self.normalize_elem(elem)
+  def self.normalize_elem(elem) # :nodoc:
     case elem
     when String
      elem[1..-1]
@@ -347,17 +347,17 @@ module Aerospike
     end
   end
 
-  def self.normalize_strings_in_array(arr)
+  def self.normalize_strings_in_array(arr) # :nodoc:
     arr.map! { |elem| normalize_elem(elem) }
   end
 
-  def self.normalize_strings_in_map(hash)
+  def self.normalize_strings_in_map(hash) # :nodoc:
     hash.inject({}) do |h, (k,v)|
       h.update({ normalize_elem(k) => normalize_elem(v) })
     end
   end
 
-  def self.bytes_to_particle(type, buf, offset, length)
+  def self.bytes_to_particle(type, buf, offset, length) # :nodoc:
 
     case type
     when Aerospike::ParticleType::STRING
@@ -380,7 +380,7 @@ module Aerospike
     end
   end
 
-  def self.bytes_to_key_value(type, buf, offset, len)
+  def self.bytes_to_key_value(type, buf, offset, len) # :nodoc:
 
     case type
     when Aerospike::ParticleType::STRING

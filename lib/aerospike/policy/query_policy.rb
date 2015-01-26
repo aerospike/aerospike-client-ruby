@@ -20,8 +20,8 @@ module Aerospike
   # Container object for scan policy command.
   class QueryPolicy < BatchPolicy
 
-    def initialize()
-      super()
+    def initialize(opt={})
+      super(opt)
 
       @max_retries = 0
 

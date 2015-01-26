@@ -21,7 +21,7 @@ module Aerospike
 
   private
 
-  class ExecuteCommand < ReadCommand
+  class ExecuteCommand < ReadCommand #:nodoc:
 
     def initialize(cluster, policy, key, package_name, function_name, args)
       super(cluster, policy, key, nil)

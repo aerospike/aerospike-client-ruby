@@ -23,7 +23,7 @@ describe Aerospike::Client do
 
     before :all do
 
-      @client = described_class.new(Support.host, Support.port)
+      @client = described_class.new(Support.host, Support.port, :user => Support.user, :password => Support.password)
       @record_count = 1000
 
       for i in 1..@record_count
