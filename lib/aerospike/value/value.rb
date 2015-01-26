@@ -139,7 +139,6 @@ module Aerospike
 
     def write(buffer, offset)
       buffer.write_binary(@bytes, offset)
-      @bytes.bytesize
     end
 
     def pack(packer)

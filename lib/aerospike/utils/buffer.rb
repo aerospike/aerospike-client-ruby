@@ -23,8 +23,6 @@ module Aerospike
   # Buffer class to ease the work around
   class Buffer #:nodoc:
 
-    attr_reader :buf
-
     @@buf_pool = Pool.new
     @@buf_pool.create_block = Proc.new { Buffer.new }
 

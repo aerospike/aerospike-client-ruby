@@ -19,9 +19,7 @@ require "aerospike/query/statement"
 
 describe Aerospike::Client do
 
-  if Support.user != ''
-
-    describe "Security operations" do
+    describe "Security operations", :skip_security => true do
 
       before :all do
         @client = described_class.new(Support.host, Support.port, :user => Support.user, :password => Support.password)
@@ -145,7 +143,5 @@ describe Aerospike::Client do
       end # describe users
 
     end # describe
-
-  end # if
 
 end # describe

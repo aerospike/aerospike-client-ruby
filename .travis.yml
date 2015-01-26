@@ -27,12 +27,24 @@ install:
   - ./bin/aerospike init --home instance2 --instance 2 --service-port 3010
   - cd instance1
   - sudo ./bin/aerospike start
-  - cd ..
-  - cd instance2
-  - sudo ./bin/aerospike start
   - cd ../..
   - pwd
   - sleep 5
   # dump keep server log for debugging
   - sudo tail -n 1000 aerospike-server/instance1/var/log/aerospike.log
   - bundle install
+
+script:
+  # run tests in single instance mode
+  - bundle exec rspec
+  # run tests in multiple instance mode
+  - cd aerospike-server/instance1
+  - sudo ./bin/aerospike restart
+  - cd ../instance2
+  - sudo ./bin/aerospike start
+  - cd ../..
+  # make sure the instances are up and clean
+  - sleep 5
+  - bundle exec rspec
+  # - rake install
+  # - .travis/proxy_check.sh

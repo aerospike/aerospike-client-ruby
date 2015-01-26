@@ -596,7 +596,7 @@ module Aerospike
             begin
               command.execute
             rescue => e
-              Aerospike.logger.error(e) unless e == Rescordset::SCAN_TERMINATED_EXCEPTION 
+              Aerospike.logger.error(e.backtrace.join("\n")) unless e == SCAN_TERMINATED_EXCEPTION 
               recordset.cancel(e)
             ensure
               recordset.thread_finished
@@ -611,7 +611,7 @@ module Aerospike
             begin
               command.execute
             rescue => e
-              Aerospike.logger.error(e) unless e == Rescordset::SCAN_TERMINATED_EXCEPTION 
+              Aerospike.logger.error(e.backtrace.join("\n")) unless e == SCAN_TERMINATED_EXCEPTION 
               recordset.cancel(e)
             ensure
               recordset.thread_finished
@@ -646,7 +646,7 @@ module Aerospike
         begin
           command.execute
         rescue => e
-          Aerospike.logger.error(e) unless e == Rescordset::SCAN_TERMINATED_EXCEPTION 
+          Aerospike.logger.error(e.backtrace.join("\n")) unless e == SCAN_TERMINATED_EXCEPTION 
           recordset.cancel(e)
         ensure
           recordset.thread_finished
@@ -686,7 +686,7 @@ module Aerospike
           begin
             command.execute
           rescue => e
-            Aerospike.logger.error(e) unless e == Rescordset::QUERY_TERMINATED_EXCEPTION 
+            Aerospike.logger.error(e.backtrace.join("\n")) unless e == QUERY_TERMINATED_EXCEPTION 
             recordset.cancel(e)
           ensure
             recordset.thread_finished
@@ -793,7 +793,7 @@ module Aerospike
     end
 
     def opt_to_client_policy(options)
-      if options.nil?
+      if options.nil? || options == {}
         ClientPolicy.new
       elsif options.is_a?(ClientPolicy)
         options

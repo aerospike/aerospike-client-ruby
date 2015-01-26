@@ -18,7 +18,7 @@
 
   * **Fixes**:
 
-    
+    * fixed size returned from `BytesValue.write`
 
 ## Dec 28 2014 (0.1.6)
 
