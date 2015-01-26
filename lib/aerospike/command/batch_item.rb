@@ -24,7 +24,7 @@ module Aerospike
 
   private
 
-  class BatchItem
+  class BatchItem #:nodoc:
 
     def self.generate_map(keys)
       key_map = {}

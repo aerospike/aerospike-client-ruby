@@ -21,7 +21,7 @@ module Aerospike
   private
 
   # Buffer class to ease the work around
-  class Buffer
+  class Buffer #:nodoc:
 
     @@buf_pool = Pool.new
     @@buf_pool.create_block = Proc.new { Buffer.new }
@@ -131,9 +131,11 @@ module Aerospike
 
     def read_var_int64(offset, len)
       val = 0
-      for i in 0...len
+      i = 0
+      while i < len
         val <<= 8
         val |= @buf[offset+i].ord & 0xFF
+        i = i.succ
       end
       val
     end

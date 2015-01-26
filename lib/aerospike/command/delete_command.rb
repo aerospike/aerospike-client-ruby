@@ -21,7 +21,7 @@ module Aerospike
 
   private
 
-  class DeleteCommand < SingleCommand
+  class DeleteCommand < SingleCommand #:nodoc:
 
     attr_reader :existed
 

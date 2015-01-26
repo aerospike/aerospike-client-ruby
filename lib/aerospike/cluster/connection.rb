@@ -20,7 +20,7 @@ module Aerospike
 
   private
 
-  class Connection
+  class Connection # :nodoc:
 
     def initialize(host, port, timeout = 30)
 

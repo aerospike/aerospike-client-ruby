@@ -85,7 +85,7 @@ module Aerospike
         return length
       rescue => e
         Aerospike.logger.error(e)
-        conn.close
+        conn.close if conn
         raise e
       end
     end

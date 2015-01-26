@@ -21,7 +21,7 @@ module Aerospike
 
   private
 
-  class Pool
+  class Pool #:nodoc:
 
     attr_accessor :create_block, :cleanup_block
 

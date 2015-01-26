@@ -20,7 +20,7 @@ module Aerospike
 
   private
 
-  class WriteCommand < SingleCommand
+  class WriteCommand < SingleCommand #:nodoc:
 
     def initialize(cluster, policy, key, bins, operation)
 

@@ -20,7 +20,7 @@ module Aerospike
 
   private
 
-  class PartitionTokenizerOld
+  class PartitionTokenizerOld #:nodoc:
 
     def initialize(conn)
       # Use low-level info methods and parse byte array directly for maximum performance.

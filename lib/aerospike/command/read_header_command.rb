@@ -21,7 +21,7 @@ module Aerospike
 
   private
 
-  class ReadHeaderCommand < SingleCommand
+  class ReadHeaderCommand < SingleCommand #:nodoc:
 
     attr_reader :record
 
@@ -46,7 +46,7 @@ module Aerospike
       if result_code == 0
         generation = @data_buffer.read_int32(14)
         expiration = Aerospike.TTL(@data_buffer.read_int32(18))
-        @record = Record.new(@node, @key, nil, nil, generation, expiration)
+        @record = Record.new(@node, @key, nil,  generation, expiration)
       else
         if result_code == Aerospike::ResultCode::KEY_NOT_FOUND_ERROR
           @record = nil

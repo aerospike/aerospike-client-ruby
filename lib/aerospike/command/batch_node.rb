@@ -26,7 +26,7 @@ module Aerospike
 
   BatchNamespace = Struct.new :namespace, :keys
 
-  class BatchNode
+  class BatchNode #:nodoc:
 
     attr_accessor :node, :batch_namespaces, :key_capacity
 

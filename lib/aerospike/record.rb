@@ -20,15 +20,14 @@ module Aerospike
 
   class Record
 
-    attr_reader :key, :bins, :generation, :expiration, :node, :dups
+    attr_reader :key, :bins, :generation, :expiration, :node
 
-    def initialize(node, rec_key, rec_bins, dups, rec_gen, rec_exp)
+    def initialize(node, rec_key, rec_bins, rec_gen, rec_exp)
       @key = rec_key
       @bins = rec_bins
       @generation = rec_gen
       @expiration = rec_exp
       @node = node
-      @dups = dups
     end
 
     def to_s

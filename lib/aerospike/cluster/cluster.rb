@@ -25,7 +25,7 @@ module Aerospike
 
   class Cluster
 
-    attr_reader :connection_timeout, :connection_queue_size
+    attr_reader :connection_timeout, :connection_queue_size, :user, :password
 
     def initialize(policy, *hosts)
       @cluster_seeds = hosts
@@ -37,6 +37,12 @@ module Aerospike
       @node_index = Atomic.new(0)
       @closed = Atomic.new(false)
       @mutex = Mutex.new
+
+      # setup auth info for cluster
+      if policy.requires_authentication
+        @user = policy.user
+        @password = AdminCommand.hash_password(policy.password)
+      end
 
       wait_till_stablized
 
@@ -88,7 +94,8 @@ module Aerospike
       # Must copy array reference for copy on write semantics to work.
       node_array = nodes
       length = node_array.length
-      for i in 0..length
+      i = 0
+      while i < length
         # Must handle concurrency with other non-tending threads, so node_index is consistent.
         index = (@node_index.update{|v| v+1} % node_array.length).abs
         node = node_array[index]
@@ -96,6 +103,8 @@ module Aerospike
         if node.active?
           return node
         end
+
+        i = i.succ
       end
       raise Aerospike::Exceptions::InvalidNode.new
     end
@@ -166,6 +175,11 @@ module Aerospike
       end
     end
 
+    def change_password(user, password)
+     # change password ONLY if the user is the same
+     @password = password if @user == user
+    end
+
     private
 
     def launch_tend_thread
@@ -210,7 +224,7 @@ module Aerospike
             refresh_count += 1
             friend_list.concat(friends) if friends
           rescue => e
-            Aerospike.logger.error("Node `#{node}` refresh failed: #{e.to_s}")
+            Aerospike.logger.error("Node `#{node}` refresh failed: #{e.backtrace.join("\n")}")
           end
         end
       end
@@ -283,9 +297,9 @@ module Aerospike
 
       seed_array.each do |seed|
         begin
-          seed_node_validator = NodeValidator.new(seed, @connection_timeout)
+          seed_node_validator = NodeValidator.new(self, seed, @connection_timeout)
         rescue => e
-          Aerospike.logger.error("Seed #{seed.to_s} failed: #{e}")
+          Aerospike.logger.error("Seed #{seed.to_s} failed: #{e.backtrace.join("\n")}")
           next
         end
 
@@ -297,7 +311,7 @@ module Aerospike
             nv = seed_node_validator
           else
             begin
-              nv = NodeValidator.new(aliass, @connection_timeout)
+              nv = NodeValidator.new(self, aliass, @connection_timeout)
             rescue Exection => e
               Aerospike.logger.error("Seed #{seed.to_s} failed: #{e}")
               next
@@ -345,7 +359,7 @@ module Aerospike
 
       hosts.each do |host|
         begin
-          nv = NodeValidator.new(host, @connection_timeout)
+          nv = NodeValidator.new(self, host, @connection_timeout)
 
           # if node is already in cluster's node list,
           # or already included in the list to be added, we should skip it
@@ -432,12 +446,15 @@ module Aerospike
       partitions_list.each do |node_array|
         max = node_array.length
 
-        for i in 0...max
+        i = 0
+        while i < max
           node = node_array[i]
           # Use reference equality for performance.
           if node == filter
             return true
           end
+
+          i = i.succ
         end
       end
       false

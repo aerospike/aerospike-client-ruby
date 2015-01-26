@@ -34,7 +34,7 @@ describe Aerospike::Client do
     end
 
     before :all do
-      @client = described_class.new(Support.host, Support.port)
+      @client = described_class.new(Support.host, Support.port, :user => Support.user, :password => Support.password)
       @record_count = 1000
 
       for i in 1..@record_count
@@ -97,31 +97,35 @@ describe Aerospike::Client do
         it "should cancel without deadlock" do
 
           rs_list = scan_method(type, nil, :record_queue_size => 10)
-          rs = rs_list.first
-          sleep(1)
-          rs.cancel
-          expect {rs.next_record}.to raise_exception(Aerospike::ResultCode.message(Aerospike::ResultCode::SCAN_TERMINATED))
+          rs_list.each do |rs|
+            sleep(1) # fill the queue to make sure deadlock doesn't happen
+            rs.cancel
+            expect {rs.next_record}.to raise_exception(Aerospike::ResultCode.message(Aerospike::ResultCode::SCAN_TERMINATED))
+          end
 
           rs_list = scan_method(type)
-          rs = rs_list.first
-          rs.cancel
-          expect {rs.next_record}.to raise_exception(Aerospike::ResultCode.message(Aerospike::ResultCode::SCAN_TERMINATED))
+          rs_list.each do |rs|
+            rs = rs_list.first
+            rs.cancel
+            expect {rs.next_record}.to raise_exception(Aerospike::ResultCode.message(Aerospike::ResultCode::SCAN_TERMINATED))
+          end
 
         end # it
 
         it "should cancel without deadlock inside each block" do
 
           rs_list = scan_method(type, nil, :record_queue_size => 10)
-          rs = rs_list.first
-          i = 0
-          rs.each do |rec|
-            i +=1
-            break if (i == 15)
-          end
-          expect(i).to eq 15
+          rs_list.each do |rs|
+            i = 0
+            rs.each do |rec|
+              i +=1
+              break if (i == 15)
+            end
+            expect(i).to eq 15
 
-          rs.cancel
-          expect {rs.next_record}.to raise_exception(Aerospike::ResultCode.message(Aerospike::ResultCode::SCAN_TERMINATED))
+            rs.cancel
+            expect {rs.next_record}.to raise_exception(Aerospike::ResultCode.message(Aerospike::ResultCode::SCAN_TERMINATED))
+          end
 
         end # it
 

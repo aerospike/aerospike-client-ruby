@@ -1,3 +1,25 @@
+## Jan 26 2014 (1.0.0)
+
+  Major release. With this release, Ruby client graduates to version 1.
+
+  * **Breaking Changes**:
+
+    * All `policy` initialize signatures have changed. Using policies was not documented, so it shouldn't affect most code. It will however, break any code initializing policies.
+    * Removed `Record.dups` and `GenerationPolicy::DUPLICATE`
+
+  * **New Features**:
+
+    * Added Security Features: Please consult [Security Docs](https://www.aerospike.com/docs/guide/security.html) on Aerospike website.
+      
+      * `ClientPolicy.User`, `ClientPolicy.Password`
+      * `Client.CreateUser()`, `Client.DropUser()`, `Client.ChangePassword()`
+      * `Client.GrantRoles()`, `Client.RevokeRoles()`, `Client.ReplaceRoles()`
+      * `Client.QueryUser()`, `Client.QueryUsers`
+
+  * **Fixes**:
+
+    * fixed size returned from `BytesValue.write`
+
 ## Dec 28 2014 (0.1.6)
 
   Minor features added, minor fixes and improvements.

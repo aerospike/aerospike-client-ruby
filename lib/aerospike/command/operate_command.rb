@@ -20,7 +20,7 @@ module Aerospike
 
   private
 
-  class OperateCommand < ReadCommand
+  class OperateCommand < ReadCommand #:nodoc:
 
     def initialize(cluster, policy, key, operations)
       super(cluster, policy, key, nil)

@@ -15,8 +15,10 @@
 
 module Aerospike
 
+  private
+
   # Container object for client policy command.
-  class Atomic
+  class Atomic # :nodoc:
 
     def initialize(value)
       @value = value

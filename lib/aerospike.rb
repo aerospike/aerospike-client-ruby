@@ -5,6 +5,7 @@ require "monitor"
 require "timeout"
 require 'resolv'
 require 'msgpack'
+require 'bcrypt'
 
 require 'aerospike/atomic/atomic'
 
@@ -35,6 +36,7 @@ require 'aerospike/command/touch_command'
 require 'aerospike/command/batch_command_exists'
 require 'aerospike/command/read_command'
 require 'aerospike/command/delete_command'
+require 'aerospike/command/admin_command'
 require 'aerospike/key'
 require 'aerospike/operation'
 
@@ -48,6 +50,7 @@ require 'aerospike/policy/scan_policy'
 require 'aerospike/policy/query_policy'
 require 'aerospike/policy/consistency_level'
 require 'aerospike/policy/commit_level'
+require 'aerospike/policy/admin_policy'
 
 require 'aerospike/cluster/connection'
 require 'aerospike/cluster/cluster'
@@ -65,6 +68,8 @@ require 'aerospike/info'
 require 'aerospike/udf'
 require 'aerospike/bin'
 require 'aerospike/aerospike_exception'
+require 'aerospike/user_role'
+
 require 'aerospike/task/index_task'
 require 'aerospike/task/udf_remove_task'
 require 'aerospike/task/udf_register_task'

@@ -18,11 +18,12 @@ module Aerospike
 
   private
 
-  class NodeValidator
+  class NodeValidator # :nodoc:
 
     attr_reader :host, :aliases, :name, :use_new_info
 
-    def initialize(host, timeout)
+    def initialize(cluster, host, timeout)
+      @cluster = cluster
       @use_new_info = true
       @host = host
 
@@ -47,8 +48,19 @@ module Aerospike
     def set_address(timeout)
       @aliases.each do |aliass|
         begin
-          conn = Connection.new(aliass.name, aliass.port, 1)
-          conn.timeout = timeout
+          conn = Connection.new(aliass.name, aliass.port, timeout)
+
+          # need to authenticate
+          if @cluster.user && @cluster.user != ''
+            begin
+              command = AdminCommand.new
+              command.authenticate(conn, @cluster.user, @cluster.password)
+            rescue => e
+              # Socket not authenticated. Do not put back into pool.
+              conn.close if conn
+              raise e
+            end
+          end
 
           info_map= Info.request(conn, 'node', 'build')
           if node_name = info_map['node']

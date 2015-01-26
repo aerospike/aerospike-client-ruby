@@ -18,7 +18,7 @@ module Aerospike
 
   private
 
-  class Partition
+  class Partition # :nodoc:
     attr_reader :namespace, :partition_id
 
     def initialize(namespace, partition_id)

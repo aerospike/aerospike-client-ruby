@@ -128,10 +128,14 @@ module Aerospike
     # User was previously created.
     USER_ALREADY_EXISTS = 61
 
-
     # Password is invalid.
     INVALID_PASSWORD = 62
 
+    # Password is invalid.
+    EXPIRED_PASSWORD = 63
+
+    # Password is invalid.
+    FORBIDDEN_PASSWORD = 64
 
     # Security credential is invalid.
     INVALID_CREDENTIAL = 63
@@ -296,6 +300,12 @@ module Aerospike
 
       when INVALID_PASSWORD
         "Invalid password"
+
+      when EXPIRED_PASSWORD
+        "Expired password"
+
+      when FORBIDDEN_PASSWORD
+        "Forbidden password"
 
       when INVALID_CREDENTIAL
         "Invalid credential"

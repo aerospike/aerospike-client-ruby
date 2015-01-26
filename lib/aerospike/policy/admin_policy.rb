@@ -14,24 +14,20 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-require 'time'
-
 module Aerospike
 
-  private
+	# Policy attributes used for user administration commands.
+	class AdminPolicy
 
-  CITRUSLEAF_EPOCH = 1262304000
+		# User administration command socket timeout in milliseconds.
+		# Default is one second timeout.
+		attr_accessor :timeout
 
-  # Converts an Expiration time to TTL in seconds
-  def self.TTL(secs_from_citrus_leaf_epoc) #:nodoc:
-    if secs_from_citrus_leaf_epoc == 0
-      0xFFFFFFFF
-    else
-      now = Time.now.to_i - CITRUSLEAF_EPOCH
-      # Record was not expired at server but if it looks expired at client
-      # because of delay or clock differences, present it as not-expired.
-      secs_from_citrus_leaf_epoc > now ? secs_from_citrus_leaf_epoc - now : 1
-    end
-  end
+		# NewAdminPolicy generates a new AdminPolicy with default values.
+		def initialize(opt={})
+			@timeout = opt[:timeout] || 1
+		end
+
+	end # class
 
 end # module

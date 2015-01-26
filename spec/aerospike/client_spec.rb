@@ -23,7 +23,7 @@ require 'aerospike/bin'
 describe Aerospike::Client do
 
   let(:client) do
-    described_class.new(Support.host, Support.port)
+    described_class.new(Support.host, Support.port, :user => Support.user, :password => Support.password)
   end
 
   after do

@@ -23,13 +23,13 @@ module Aerospike
     attr_accessor :scan_percent, :concurrent_nodes,
       :include_bin_data, :fail_on_cluster_change
 
-    def initialize(scan_percent=nil, concurrent_nodes=nil, include_bin_data=nil, fail_on_cluster_change=nil)
-      super()
+    def initialize(opt={})
+      super(opt)
 
-      @scan_percent = scan_percent || 100
-      @concurrent_nodes = concurrent_nodes.nil? ? true : concurrent_nodes
-      @include_bin_data = include_bin_data.nil? ? true : include_bin_data
-      @fail_on_cluster_change = fail_on_cluster_change.nil? ? true : fail_on_cluster_change
+      @scan_percent = opt[:scan_percent] || 100
+      @concurrent_nodes = opt[:concurrent_nodes].nil? ? true : concurrent_nodes
+      @include_bin_data = opt[:include_bin_data].nil? ? true : include_bin_data
+      @fail_on_cluster_change = opt[:fail_on_cluster_change].nil? ? true : fail_on_cluster_change
 
       @max_retries = 0
 

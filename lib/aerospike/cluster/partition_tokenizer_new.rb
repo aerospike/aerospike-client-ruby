@@ -22,7 +22,7 @@ module Aerospike
 
   REPLICAS_NAME = 'replicas-master'
 
-  class PartitionTokenizerNew
+  class PartitionTokenizerNew #:nodoc:
 
     def initialize(conn)
       # Use low-level info methods and parse byte array directly for maximum performance.
@@ -97,11 +97,13 @@ module Aerospike
 
           bit_map_length = @offset - beginning
           restore_buffer = Base64.strict_decode64(@buffer[beginning, bit_map_length])
-          for i in 0...Aerospike::Node::PARTITIONS
+          i = 0
+          while i < Aerospike::Node::PARTITIONS
             if (restore_buffer[i>>3].ord & (0x80 >> (i & 7))) != 0
               # Logger.Info("Map: `" + namespace + "`," + strconv.Itoa(i) + "," + node.String)
               node_array.update{|v| v[i] = node; v}
             end
+            i = i.succ
           end
 
           @offset+=1

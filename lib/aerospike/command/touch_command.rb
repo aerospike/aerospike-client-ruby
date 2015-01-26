@@ -20,7 +20,7 @@ module Aerospike
 
   private
 
-  class TouchCommand < SingleCommand
+  class TouchCommand < SingleCommand #:nodoc:
 
     def initialize(cluster, policy, key)
       super(cluster, key)
