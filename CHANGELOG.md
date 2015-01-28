@@ -1,4 +1,12 @@
-## Jan 26 2014 (1.0.0)
+## Jan 28 2015 (1.0.1)
+
+  Hot fix.
+
+  * **Fixes**:
+
+    * Added `bcrypt` to the gem dependencies.
+
+## Jan 26 2015 (1.0.0)
 
   Major release. With this release, Ruby client graduates to version 1.
 
