@@ -1,4 +1,4 @@
-# Aerospike Ruby Client (Alpha)
+# Aerospike Ruby Client
 
 An Aerospike library for Ruby.
 
