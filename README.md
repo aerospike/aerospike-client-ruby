@@ -2,7 +2,7 @@
 
 An Aerospike library for Ruby.
 
-This library is compatible with Ruby 1.9.3+ and supports Linux, Mac OS X and various other BSDs. Rubinius is supported, but not JRuby - yet. For the moment, query and scan operations are also not supported.
+This library is compatible with Ruby 1.9.3+ and supports Linux, Mac OS X and various other BSDs. Rubinius is supported, but not JRuby - yet.
 
 
 - [Usage](#Usage)
