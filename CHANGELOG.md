@@ -1,3 +1,11 @@
+## March 14 2015 (1.0.2)
+
+  Minor improvements.
+
+  * **New Features**:
+
+    * Added `:new_many` method to `Aerospike::Client`
+
 ## Jan 28 2015 (1.0.1)
 
   Hot fix.

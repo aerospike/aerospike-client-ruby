@@ -53,7 +53,7 @@ module Aerospike
       # versions >= 3.1.4.  Do not use -1 for older servers.
       # 0: Default to namespace configuration variable "default-ttl" on the server.
       # > 0: Actual expiration in seconds.
-      @expiration = opt[:expiration] || 0
+      @expiration = opt[:expiration] || opt[:ttl] || 0
 
       # Send user defined key in addition to hash digest on a record put.
       # The default is to send the user defined key.

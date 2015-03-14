@@ -335,7 +335,7 @@ module Aerospike
 
     # Finds a node by name in a list of nodes
     def find_node_name(list, name)
-      list.any?{|name| node.name == name}
+      list.any?{|node| node.name == name}
     end
 
     def add_alias(host, node)

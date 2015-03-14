@@ -52,6 +52,26 @@ describe Aerospike::Client do
 
   end
 
+  describe "#new_many" do
+
+    it "should connect to the cluster successfully" do
+
+      hosts = [
+        Aerospike::Host.new(Support.host, Support.port),
+      ]
+
+      mclient = described_class.new_many(hosts, :user => Support.user, :password => Support.password)
+
+      expect(mclient.connected?).to eq true
+      expect(mclient.nodes.length).to be >= 1
+      expect(mclient.node_names.length).to be >= 1
+
+      mclient.close
+
+    end
+
+  end
+
   describe "#put and #get" do
 
     context "data types" do

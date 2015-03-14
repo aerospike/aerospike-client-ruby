@@ -53,6 +53,23 @@ module Aerospike
       self
     end
 
+    def self.new_many(hosts, options={})
+      # Don't initiualize, just instantiate
+      client = Client.allocate
+
+      client.default_policy = Policy.new
+      client.default_write_policy = WritePolicy.new
+      client.default_scan_policy = ScanPolicy.new
+      client.default_query_policy = QueryPolicy.new
+      client.default_admin_policy = QueryPolicy.new
+
+      policy = client.send(:opt_to_client_policy , options)
+
+      client.send(:cluster=, Cluster.new(policy, *hosts))
+
+      client
+    end
+
     ##
     #  Closes all client connections to database server nodes.
 
@@ -850,6 +867,10 @@ module Aerospike
       elsif options.is_a?(Hash)
         AdminPolicy.new(options)
       end
+    end
+
+    def cluster=(cluster)
+      @cluster = cluster
     end
 
     def batch_execute(keys, &cmd_gen)
