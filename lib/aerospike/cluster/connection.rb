@@ -34,14 +34,18 @@ module Aerospike
 
     def connect(host, port, timeout)
       socket = Socket.new(Socket::AF_INET, Socket::SOCK_STREAM, 0)
-      sockaddr = Socket.sockaddr_in(port, host)
+      @sockaddr = Socket.sockaddr_in(port, host)
       begin
-        socket.connect_nonblock(sockaddr)
-      rescue Errno::EINPROGRESS
+        socket.connect_nonblock(@sockaddr)
+        socket
+      rescue IO::WaitWritable
         # Block until the socket is ready, then try again
-        IO.select([socket], [socket], [socket], timeout.to_f)
-        @sockaddr = sockaddr
-        return socket
+        IO.select(nil, [socket], nil, timeout.to_f)
+        begin
+          socket.connect_nonblock(@sockaddr)
+        rescue Errno::EISCONN
+        end
+        socket
       end
     end
 
