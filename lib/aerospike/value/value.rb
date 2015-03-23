@@ -53,6 +53,8 @@ module Aerospike
         end
       when String
         res = StringValue.new(value)
+      when Symbol
+        res = StringValue.new(value.to_s)
       when Value
         res = value
       when Hash
@@ -183,6 +185,10 @@ module Aerospike
 
     def to_s
       @value
+    end
+
+    def to_sym
+      @value.to_sym
     end
 
   end # StringValue
