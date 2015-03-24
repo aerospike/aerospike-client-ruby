@@ -1,3 +1,16 @@
+## March 24 2015 (1.0.3)
+
+  Minor fixes and improvements.
+
+  * **New Features**:
+
+    * Symbols are now accepted as key values. Keep in mind that symbols are converted to string automatically, and type information is lost.
+
+  * **Fixes**:
+
+    * Wait for a good connection on `socket.connect_nonblock` to prevent infinite loops on read/write operations.
+
+
 ## March 14 2015 (1.0.2)
 
   Minor improvements.

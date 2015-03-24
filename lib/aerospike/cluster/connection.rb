@@ -38,7 +38,7 @@ module Aerospike
       begin
         socket.connect_nonblock(@sockaddr)
         socket
-      rescue IO::WaitWritable
+      rescue IO::WaitWritable, Errno::EINPROGRESS
         # Block until the socket is ready, then try again
         IO.select(nil, [socket], nil, timeout.to_f)
         begin

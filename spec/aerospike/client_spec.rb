@@ -216,7 +216,7 @@ describe Aerospike::Client do
     end
 
     it "should write a key as symbol successfully - and read its header again. It should behave like a String" do
-      key = Support.gen_random_key(key_as_sym: true)
+      key = Support.gen_random_key(50, :key_as_sym => true)
 
       expect(key.user_key.is_a?(String))
 
