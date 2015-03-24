@@ -44,6 +44,9 @@ module Aerospike
         begin
           socket.connect_nonblock(@sockaddr)
         rescue Errno::EISCONN
+        rescue => e
+          socket.close
+          raise e
         end
         socket
       end
