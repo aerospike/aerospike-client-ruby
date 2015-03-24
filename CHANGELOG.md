@@ -1,3 +1,11 @@
+## March 24 2015 (1.0.4)
+
+  Hot fix.
+
+  * **Fixes**:
+
+    * Close a socket if connection raises an exception to avoid leaking the file descriptor.
+
 ## March 24 2015 (1.0.3)
 
   Minor fixes and improvements.
