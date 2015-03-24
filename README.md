@@ -2,7 +2,7 @@
 
 An Aerospike library for Ruby.
 
-This library is compatible with Ruby 1.9.3+ and supports Linux, Mac OS X and various other BSDs. Rubinius is supported, but not JRuby - yet. For the moment, query and scan operations are also not supported.
+This library is compatible with Ruby 1.9.3+ and supports Linux, Mac OS X and various other BSDs. Rubinius is supported, but not JRuby - yet.
 
 
 - [Usage](#Usage)
@@ -79,7 +79,7 @@ Supported operating systems:
 1. Install Ruby 1.9.3+
 2. Install RubyGems
 3. Install Bundler: ```gem install bundler```
-4. Install dependencies: ```bundle install```
+4. Install dependencies: ```bundler install```
 5. Build and Install the gem locally: ```rake build && rake install```
 6. Run the benchmark: ```./tools/benchmark/benchmark.rb -u```
 

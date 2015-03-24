@@ -1,50 +1,49 @@
 language: ruby
 bundler_args: --without development
 rvm:
-  - 1.9.3
-  - 2.0
-  - 2.1
-  - 2.2
-  - ruby-head
-  - rbx
-  # - jruby
-  # - jruby-head
+- 1.9.3
+- 2.0
+- 2.1
+- 2.2
+- ruby-head
+- rbx
 env: CI="travis"
 matrix:
   allow_failures:
-    - rvm: ruby-head
-    - rvm: rbx
+  - rvm: ruby-head
+  - rvm: rbx
   fast_finish: true
-
 install:
-  - wget -O aerospike-server.tgz http://aerospike.com/download/server/latest/artifact/tgz
-  - tar xvzf aerospike-server.tgz
-  - cp -f .travis/aerospike.conf ./aerospike-server/share/etc
-  - cd aerospike-server
-  - mkdir instance1
-  - mkdir instance2
-  - ./bin/aerospike init --home instance1 --instance 1 --service-port 3000
-  - ./bin/aerospike init --home instance2 --instance 2 --service-port 3010
-  - cd instance1
-  - sudo ./bin/aerospike start
-  - cd ../..
-  - pwd
-  - sleep 5
-  # dump keep server log for debugging
-  - sudo tail -n 1000 aerospike-server/instance1/var/log/aerospike.log
-  - bundle install
-
+- wget -O aerospike-server.tgz http://aerospike.com/download/server/latest/artifact/tgz
+- tar xvzf aerospike-server.tgz
+- cp -f .travis/aerospike.conf ./aerospike-server/share/etc
+- cd aerospike-server
+- mkdir instance1
+- mkdir instance2
+- ./bin/aerospike init --home instance1 --instance 1 --service-port 3000
+- ./bin/aerospike init --home instance2 --instance 2 --service-port 3010
+- cd instance1
+- sudo ./bin/aerospike start
+- cd ../..
+- pwd
+- sleep 5
+- sudo tail -n 1000 aerospike-server/instance1/var/log/aerospike.log
+- bundle install
 script:
-  # run tests in single instance mode
-  - bundle exec rspec
-  # run tests in multiple instance mode
-  - cd aerospike-server/instance1
-  - sudo ./bin/aerospike restart
-  - cd ../instance2
-  - sudo ./bin/aerospike start
-  - cd ../..
-  # make sure the instances are up and clean
-  - sleep 5
-  - bundle exec rspec
-  # - rake install
-  # - .travis/proxy_check.sh
+- bundle exec rspec
+- cd aerospike-server/instance1
+- sudo ./bin/aerospike restart
+- cd ../instance2
+- sudo ./bin/aerospike start
+- cd ../..
+- sleep 5
+- bundle exec rspec
+notifications:
+  hipchat:
+    rooms:
+      secure: H5qTvLxIBBinW4eE6D/x1+BBLUeOb+7dq3wkgSR8IUTGoBZ2bbVWwqNbKUJ1ueuKs4g9RvV7sDkG03dSze/lZJcE+bOMfIGkmBRl0InnTZdGvAs9QD2DCs6d+iNWBM9OvIPvjyTBJ2ryhmYcB2NFr2Nubl0xgdzFJA2BOAvHLK0=
+  slack:
+    secure: eTiZiYHWKgwzvR0VksJgaR3fOK4+HTT4vN+3N8/n4RUXAnzEEurvpAbwFwF0e47a5Pt1ro731Je/lgO6BXWsa8Cy/ZtuF/33VhKSaWsMopYfOcoGpGyc8GH3pz/7fnT9kz/f6ZSGpp+BV+hK8dYu3x5kKWCQ7VTq33CNEYLmcow=
+  email:
+  - qe-notices@aerospike.com
+  - qe-notices-clients@aerospike.com
