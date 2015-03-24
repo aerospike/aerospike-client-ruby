@@ -195,11 +195,31 @@ describe Aerospike::Client do
 
       end
 
+      it "should write a key as symbol successfully and get it well, even as text" do
+        key = Support.gen_random_key
+        bin = Aerospike::Bin.new('bin', {
+                                   "string" => nil,
+                                   rand(2**63) => {2 => 11},
+                                   [1, nil, 'this'] => {nil => "nihilism"},
+                                   nil => ["embedded array", 1984, nil, {2 => 'string'}],
+                                   {11 => [11, 'str']} => nil,
+                                   {} => {'array' => ["another string", 17]},
+        })
+        client.put(key, bin)
+
+        expect(client.connected?).to eq true
+
+        record = client.get(key)
+        expect(record.bins['bin']).to eq bin.value
+      end
+
     end
 
-    it "should write a key successfully - and read its header again" do
+    it "should write a key as symbol successfully - and read its header again. It should behave like a String" do
+      key = Support.gen_random_key(key_as_sym: true)
 
-      key = Support.gen_random_key
+      expect(key.user_key.is_a?(String))
+
       client.put(key, Aerospike::Bin.new('bin', 'value'))
 
       expect(client.connected?).to eq true
@@ -208,7 +228,9 @@ describe Aerospike::Client do
       expect(record.bins).to be nil
       expect(record.generation).to eq 1
       expect(record.expiration).to be > 0
+
     end
+
 
   end
 
