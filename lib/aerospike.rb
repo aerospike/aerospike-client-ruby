@@ -71,6 +71,7 @@ require 'aerospike/aerospike_exception'
 require 'aerospike/user_role'
 
 require 'aerospike/task/index_task'
+require 'aerospike/task/execute_task'
 require 'aerospike/task/udf_remove_task'
 require 'aerospike/task/udf_register_task'
 require 'aerospike/task/task'

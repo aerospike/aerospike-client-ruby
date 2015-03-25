@@ -525,6 +525,43 @@ module Aerospike
       raise Aerospike::Exceptions::Aerospike.new(UDF_BAD_RESPONSE, "Invalid UDF return value")
     end
 
+    # execute_udf_on_query applies user defined function on records that match the statement filter.
+    # Records are not returned to the client.
+    # This asynchronous server call will return before command is complete.
+    # The user can optionally wait for command completion by using the returned
+    # ExecuteTask instance.
+    #
+    # This method is only supported by Aerospike 3 servers.
+    # If the policy is nil, the default relevant policy will be used.
+    def execute_udf_on_query(statement, package_name, function_name, function_args=[], options={})
+      policy = opt_to_query_policy(options)
+
+      nodes = @cluster.nodes
+      if nodes.length == 0
+        raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::SERVER_NOT_AVAILABLE, "Executing UDF failed because cluster is empty.")
+      end
+
+      # TODO: wait until all migrations are finished
+      statement.set_aggregate_function(package_name, function_name, function_args, false)
+
+      # Use a thread per node
+      nodes.each do |node|
+        Thread.new do
+          abort_on_exception = true
+          begin
+            command = QueryCommand.new(node, policy, statement, nil)
+            command.execute
+          rescue => e
+            Aerospike.logger.error(e)
+            raise e
+          end
+        end
+      end
+
+      ExecuteTask.new(@cluster, statement)
+    end
+
+
     #  Create secondary index.
     #  This asynchronous server call will return before command is complete.
     #  The user can optionally wait for command completion by using the returned

@@ -56,81 +56,171 @@ describe Aerospike::Client do
       client.close
     end
 
-    describe "register" do
+    it "should register UDFs, list them and and then successfully drop them" do
 
-      it "should register UDFs, list them and and then successfully drop them" do
-
-        (1..10).to_a.each do |i|
-          register_task = client.register_udf(udf_body, "udf#{i}.lua", Aerospike::Language::LUA)
-
-          expect(register_task.wait_till_completed).to be true
-          expect(register_task.completed?).to be true
-        end
-
-        # should list the udfs
-        udf_list = client.list_udf
-        expect(udf_list.select { |item| item.filename =~ /udf(1|2|3)\.lua/ }.length).to eq 3
-
-        (1..10).to_a.each do |i|
-          remove_task = client.remove_udf("udf#{i}.lua")
-
-          expect(remove_task.wait_till_completed).to be true
-          expect(remove_task.completed?).to be true
-        end
-
-      end # it
-
-      it "should execute a udf with string parameters successfully" do
-        STR = 'a long and serious looking string'
-        register_task = client.register_udf(udf_body_string, "udf_str.lua", Aerospike::Language::LUA)
+      (1..10).to_a.each do |i|
+        register_task = client.register_udf(udf_body, "udf#{i}.lua", Aerospike::Language::LUA)
 
         expect(register_task.wait_till_completed).to be true
         expect(register_task.completed?).to be true
-
-        key = Support.gen_random_key
-
-        client.put(key, Aerospike::Bin.new('bin', 'value'))
-
-        expect(client.batch_exists([key])).to eq [true]
-
-        res = client.execute_udf(key, 'udf_str', 'testStr', [STR])
-        expect(res).to eq STR
-
-        res = client.execute_udf(key, 'udf_str', 'testStr', [])
-        expect(res).to eq nil
-
-        res = client.execute_udf(key, 'udf_str', 'testStr', ['A'])
-        expect(res).to eq "A"
-
-      end # it
-
-
-      it "should execute a udf successfully" do
-
-        register_task = client.register_udf(udf_body_delete, "udf_delete.lua", Aerospike::Language::LUA)
-
-        register_task.wait_till_completed
-        expect(register_task.completed?).to be true
-
-        key1 = Support.gen_random_key
-        key2 = Support.gen_random_key
-        key3 = Support.gen_random_key
-
-        client.put(key1, Aerospike::Bin.new('bin', 'value'))
-        client.put(key2, Aerospike::Bin.new('bin', 'value'))
-        client.put(key3, Aerospike::Bin.new('bin', 'value'))
-
-        expect(client.batch_exists([key1, key2, key3])).to eq [true, true, true]
-
-        client.execute_udf(key1, 'udf_delete', 'delete_record')
-        client.execute_udf(key2, 'udf_delete', 'delete_record')
-        client.execute_udf(key3, 'udf_delete', 'delete_record')
-
-        expect(client.batch_exists([key1, key2, key3])).to eq [false, false, false]
-
       end
 
-    end # describe
+      # should list the udfs
+      udf_list = client.list_udf
+      expect(udf_list.select { |item| item.filename =~ /udf(1|2|3)\.lua/ }.length).to eq 3
+
+      (1..10).to_a.each do |i|
+        remove_task = client.remove_udf("udf#{i}.lua")
+
+        expect(remove_task.wait_till_completed).to be true
+        expect(remove_task.completed?).to be true
+      end
+
+    end # it
+
+    it "should execute a udf with string parameters successfully" do
+      STR = 'a long and serious looking string'
+      register_task = client.register_udf(udf_body_string, "udf_str.lua", Aerospike::Language::LUA)
+
+      expect(register_task.wait_till_completed).to be true
+      expect(register_task.completed?).to be true
+
+      key = Support.gen_random_key
+
+      client.put(key, Aerospike::Bin.new('bin', 'value'))
+
+      expect(client.batch_exists([key])).to eq [true]
+
+      res = client.execute_udf(key, 'udf_str', 'testStr', [STR])
+      expect(res).to eq STR
+
+      res = client.execute_udf(key, 'udf_str', 'testStr', [])
+      expect(res).to eq nil
+
+      res = client.execute_udf(key, 'udf_str', 'testStr', ['A'])
+      expect(res).to eq "A"
+
+    end # it
+
+
+    it "should execute a udf successfully" do
+
+      register_task = client.register_udf(udf_body_delete, "udf_delete.lua", Aerospike::Language::LUA)
+
+      register_task.wait_till_completed
+      expect(register_task.completed?).to be true
+
+      key1 = Support.gen_random_key
+      key2 = Support.gen_random_key
+      key3 = Support.gen_random_key
+
+      client.put(key1, Aerospike::Bin.new('bin', 'value'))
+      client.put(key2, Aerospike::Bin.new('bin', 'value'))
+      client.put(key3, Aerospike::Bin.new('bin', 'value'))
+
+      expect(client.batch_exists([key1, key2, key3])).to eq [true, true, true]
+
+      client.execute_udf(key1, 'udf_delete', 'delete_record')
+      client.execute_udf(key2, 'udf_delete', 'delete_record')
+      client.execute_udf(key3, 'udf_delete', 'delete_record')
+
+      expect(client.batch_exists([key1, key2, key3])).to eq [false, false, false]
+
+    end
+
+    it "should execute a UDF on all records" do
+
+      ns = 'test'
+      set = Support.rand_string(10)
+
+      div = 2
+
+      1000.times do |i|
+        key = Support.gen_random_key(50, {:set => set})
+        bin1 = Aerospike::Bin.new('bin1', i * div)
+        bin2 = Aerospike::Bin.new('bin2', -1)
+        client.put(key, [bin1, bin2])
+      end
+
+      register_task = client.register_udf(udf_body, "udf1.lua", Aerospike::Language::LUA)
+
+      expect(register_task.wait_till_completed).to be true
+      expect(register_task.completed?).to be true
+
+      # run the UDF 3 times consecutively
+      statement = Aerospike::Statement.new(ns, set)
+      ex_task = client.execute_udf_on_query(statement, "udf1", "testFunc1", [div])
+
+      # wait until UDF is run on all records
+      expect(ex_task.wait_till_completed).to be true
+      expect(ex_task.completed?).to be true
+
+      # read all data and make sure it is consistent
+      recordset = client.scan_all(ns, set)
+
+      cnt = 0
+      recordset.each do |rec|
+        expect(rec.bins['bin2']).to eq (rec.bins['bin1'] / div)
+        cnt += 1
+      end
+
+      expect(cnt).to be > 0
+
+    end # it
+
+    it "should execute a UDF on only a range of records" do
+
+      ns = 'test'
+      set = Support.rand_string(10)
+
+      div = 2
+
+      1000.times do |i|
+        key = Support.gen_random_key(50, {:set => set})
+        bin1 = Aerospike::Bin.new('bin1', i * div)
+        bin2 = Aerospike::Bin.new('bin2', -1)
+        client.put(key, [bin1, bin2])
+      end
+
+      register_task = client.register_udf(udf_body, "udf1.lua", Aerospike::Language::LUA)
+
+      expect(register_task.wait_till_completed).to be true
+      expect(register_task.completed?).to be true
+
+      index_task = client.create_index(ns,
+                                       set,
+                                       "index_int_#{set}",
+                                       'bin1', :numeric
+                                       )
+
+      expect(index_task.wait_till_completed).to be true
+      expect(index_task.completed?).to be true
+
+      # run the UDF 3 times consecutively
+      statement = Aerospike::Statement.new(ns, set)
+      statement.filters << Aerospike::Filter.Range('bin1', 0, 500)
+      ex_task = client.execute_udf_on_query(statement, "udf1", "testFunc1", [div])
+
+      # wait until UDF is run on all records
+      expect(ex_task.wait_till_completed).to be true
+      expect(ex_task.completed?).to be true
+
+      # read all data and make sure it is consistent
+      recordset = client.scan_all(ns, set)
+
+      cnt = 0
+      recordset.each do |rec|
+        if rec.bins['bin1'] <= 500
+          expect(rec.bins['bin2']).to eq (rec.bins['bin1'] / div)
+        else
+          expect(rec.bins['bin2']).to eq -1
+        end
+        cnt += 1
+      end
+
+      expect(cnt).to be > 0
+
+    end # it
 
   end # describe
 

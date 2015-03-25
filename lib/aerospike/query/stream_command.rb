@@ -36,6 +36,11 @@ module Aerospike
         # The only valid server return codes are "ok" and "not found".
         # If other return codes are received, then abort the batch.
         if result_code != 0
+          # if there is no recordset defined, it means this is an Execute UDF On Query command
+          # return successfully
+          if (@recordset == nil) && (result_code == Aerospike::ResultCode::KEY_NOT_FOUND_ERROR)
+            return nil
+          end
           raise Aerospike::Exceptions::Aerospike.new(result_code)
         end
 

@@ -1,3 +1,11 @@
+## March 25 2015 (1.0.5)
+
+  Minor improvements.
+
+  * **New Features**:
+
+    * Added `:execute_udf_on_query` method to `Aerospike::Client`
+
 ## March 24 2015 (1.0.4)
 
   Hot fix.

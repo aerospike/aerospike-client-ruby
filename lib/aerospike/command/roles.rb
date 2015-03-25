@@ -29,7 +29,7 @@ module Aerospike
 		 READ_WRITE = 'read-write'
 
 		 # Allow read transactions with the database.
-		 READ = 'Read'
+		 READ = 'read'
 
 	end # module
 

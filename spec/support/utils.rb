@@ -12,10 +12,11 @@ module Support
     RAND_CHARS.shuffle[0,len].join
   end
 
-  def self.gen_random_key(len=50, opts = {:key_as_sym => false})
+  def self.gen_random_key(len=50, opts = {:set => 'test', :key_as_sym => false})
     key_val = rand_string(len)
     key_val = key_val.to_sym if opts[:key_as_sym]
-    Aerospike::Key.new('test', 'test', key_val)
+    set_name = opts[:set] || 'test'
+    Aerospike::Key.new('test', set_name, key_val)
   end
 
   def self.host

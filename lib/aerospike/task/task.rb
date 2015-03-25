@@ -42,8 +42,8 @@ module Aerospike
           failures = 0
           while true
             begin
-              break if completed?
               sleep(poll_interval.to_f)
+              break if completed?
             rescue => e
               Aerospike.logger.error(e)
               break if failures > allowed_failures
