@@ -34,7 +34,15 @@ module Aerospike
     end
 
     def set_aliases(host)
-      addresses = Resolv.getaddresses(host.name)
+      is_ip = !!((host =~ Resolv::IPv4::Regex) || (host =~ Resolv::IPv6::Regex))
+
+      if is_ip
+        # don't try to resolve IP addresses. May fail in different OS or network setups
+        addresses = host
+      else
+        addresses = Resolv.getaddresses(host.name)
+      end
+
       aliases = []
       addresses.each do |addr|
         aliases << Host.new(addr, host.port)
