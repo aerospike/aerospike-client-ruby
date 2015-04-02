@@ -56,6 +56,9 @@ module Aerospike
     end
 
     def parse_key(field_count)
+      # in Stream queries, there are no keys
+      return unless field_count > 0
+
       digest = nil
       namespace = nil
       set_name = nil

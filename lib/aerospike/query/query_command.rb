@@ -94,7 +94,7 @@ module Aerospike
         if @statement.function_args && @statement.function_args.length > 0
           functionArgBuffer = Value.of(@statement.function_args).to_bytes
         else
-          functionArgBuffer = 0.ord
+          functionArgBuffer = ''
         end
         @data_offset += FIELD_HEADER_SIZE + functionArgBuffer.bytesize
         fieldCount += 4
