@@ -1,3 +1,11 @@
+## April 2 2015 (1.0.6)
+
+  Minor fixes.
+
+  * **New Features**:
+
+    * Fixed running a stream query without parameters to the function.
+
 ## March 25 2015 (1.0.5)
 
   Minor improvements.
