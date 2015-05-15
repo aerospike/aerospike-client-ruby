@@ -119,13 +119,6 @@ module Aerospike
 			execute_command(cluster, policy)
 		end
 
-		def replace_roles(cluster, policy, user, roles)
-			write_header(REPLACE_ROLES, 2)
-			write_field_str(USER, user)
-			write_roles(roles)
-			execute_command(cluster, policy)
-		end
-
 		def query_user(cluster, policy, user)
 			# TODO: Remove the workaround in the future
 			sleep(0.010)

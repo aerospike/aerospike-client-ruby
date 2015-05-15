@@ -806,13 +806,6 @@ module Aerospike
       command.revoke_roles(@cluster, policy, user, roles)
     end
 
-    # Replace user's list of roles.
-    def replace_roles(user, roles, options={})
-      policy = opt_to_admin_policy(options)
-      command = AdminCommand.new
-      command.replace_roles(@cluster, policy, user, roles)
-    end
-
     # Retrieve roles for a given user.
     def query_user(user, options={})
       policy = opt_to_admin_policy(options)
