@@ -1,3 +1,23 @@
+## May 15 2015 (1.0.7)
+
+  Minor fixes.
+
+  NOTICE: All LDTs on server other than LLIST have been deprecated, and will be removed in the future. As Such, all API regarding those features are considered deprecated and will be removed in tandem.
+
+  * **Improvements**:
+
+    * Removed workaround in `BatchGet`. Bins are filtered on server now.
+
+    * Added New Error Codes. Fixes Issues #17 and #18
+
+    * Node validator won't lookup hostsif an IP is passed as a seed to it.
+
+  * ** Other Changes **
+
+    * Removed deprecated `ReplaceRoles()` method.
+
+    * Removed deprecated `SetCapacity()` and `GetCapacity()` methods for LDTs.
+
 ## April 2 2015 (1.0.6)
 
   Minor fixes.
