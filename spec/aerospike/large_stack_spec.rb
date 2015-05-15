@@ -60,19 +60,6 @@ describe Aerospike::Client do
 
         end # it
 
-        it "should get and set capacity" do
-
-          for i in 1..10
-            lstack.push(i)
-
-            expect(lstack.size).to eq i
-          end
-
-          lstack.capacity = 99
-          expect(lstack.capacity).to eq 99
-
-        end # it
-
       end # describe
 
     end # describe

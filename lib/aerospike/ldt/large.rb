@@ -47,18 +47,6 @@ module Aerospike
       @client.execute_udf(@key, @PACKAGE_NAME, 'get_config', [@bin_name], @policy)
     end
 
-    # Set maximum number of entries in the object.
-    #
-    # capacity      max entries in set
-    def capacity=(capacity)
-      @client.execute_udf(@key, @PACKAGE_NAME, 'set_capacity', [@bin_name, capacity], @policy)
-    end
-
-    # Return maximum number of entries in the object.
-    def capacity
-      @client.execute_udf(@key, @PACKAGE_NAME, 'get_capacity', [@bin_name], @policy)
-    end
-
     # Return list of all objects on the stack.
     def scan
       @client.execute_udf(@key, @PACKAGE_NAME, 'scan', [@bin_name], @policy)

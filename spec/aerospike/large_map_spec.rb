@@ -66,19 +66,6 @@ describe Aerospike::Client do
 
         end # it
 
-        it "should get and map capacity" do
-
-          for i in 1..10
-            lmap.put(i, i)
-
-            expect(lmap.size).to eq i
-          end
-
-          lmap.capacity = 99
-          expect(lmap.capacity).to eq 99
-
-        end # it
-
       end # describe
 
     end # describe

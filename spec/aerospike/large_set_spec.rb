@@ -64,19 +64,6 @@ describe Aerospike::Client do
 
         end # it
 
-        it "should get and set capacity" do
-
-          for i in 1..10
-            lset.add(i)
-
-            expect(lset.size).to eq i
-          end
-
-          lset.capacity = 99
-          expect(lset.capacity).to eq 99
-
-        end # it
-
       end # describe
 
     end # describe

@@ -46,7 +46,7 @@ describe Aerospike::Client do
             expect(llist.find(i)).to eq [i]
             llist.remove(i)
 
-            expect(llist.find(i)).to eq nil
+            expect(llist.find(i)).to eq []
           end
 
         end # it
@@ -60,19 +60,6 @@ describe Aerospike::Client do
           end
 
           expect(llist.scan).to eq (1..100).to_a
-
-        end # it
-
-        it "should get and set capacity" do
-
-          for i in 1..10
-            llist.add(i)
-
-            expect(llist.size).to eq i
-          end
-
-          llist.capacity = 99
-          expect(llist.capacity).to eq 99
 
         end # it
 
