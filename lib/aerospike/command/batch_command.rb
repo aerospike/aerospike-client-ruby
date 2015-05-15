@@ -112,14 +112,7 @@ module Aerospike
         read_bytes(particle_bytes_size)
         value = Aerospike.bytes_to_particle(particle_type, @data_buffer, 0, particle_bytes_size)
 
-        # Currently, the batch command returns all the bins even if a subset of
-        # the bins are requested. We have to filter it on the client side.
-        # TODO: Filter batch bins on server!
-        # if !@bin_names || @bin_names.any?{|bn| bn == name}
-        # if !@bin_names || (@bin_names == []) || @bin_names.any?{|bn| bn == name}
-        if !@bin_names || (@bin_names.empty?) || @bin_names.any?{|bn| bn == name}
-          bins[name] = value
-        end
+        bins[name] = value
 
         i = i.succ
       end
