@@ -110,7 +110,10 @@ module Aerospike
 
     # Sent too-long bin name (>14, should be impossible in this client) or exceeded
     # namespace's bin name quota.
-    ERR_BIN_NAME = 21
+    BIN_NAME_TOO_LONG = 21
+
+    # Operation not allowed at this time.
+    FAIL_FORBIDDEN = 22
 
     # There are no more records left for query.
     QUERY_END = 50
@@ -145,13 +148,16 @@ module Aerospike
     FORBIDDEN_PASSWORD = 64
 
     # Security credential is invalid.
-    INVALID_CREDENTIAL = 63
-
+    INVALID_CREDENTIAL = 65
 
     # Role name is invalid.
     INVALID_ROLE = 70
 
-    INVALID_PRIVILEGE = 71
+    # Role Already exists
+    ROLE_ALREADY_EXISTS = 71
+
+    # Privilege is invalid.
+    INVALID_PRIVILEGE = 72
 
     # User must be authentication before performing database operations.
     NOT_AUTHENTICATED = 80
@@ -281,8 +287,11 @@ module Aerospike
       when INVALID_NAMESPACE
         "Invalid namespace"
 
-      when ERR_BIN_NAME
+      when BIN_NAME_TOO_LONG
         "Sent too-long bin name or exceeded namespace's bin name quota."
+
+      when FAIL_FORBIDDEN
+        "Operation not allowed at this time"
 
       when QUERY_END
         "Query end"
@@ -325,6 +334,9 @@ module Aerospike
 
       when INVALID_ROLE
         "Invalid role"
+
+      when ROLE_ALREADY_EXISTS
+        "Role already exists"
 
       when INVALID_PRIVILEGE
         "Invalid privilege"
