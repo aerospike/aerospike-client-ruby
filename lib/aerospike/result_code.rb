@@ -105,6 +105,13 @@ module Aerospike
     # Key type mismatch.
     KEY_MISMATCH = 19
 
+    # Invalid namespace.
+    INVALID_NAMESPACE = 20
+
+    # Sent too-long bin name (>14, should be impossible in this client) or exceeded
+    # namespace's bin name quota.
+    ERR_BIN_NAME = 21
+
     # There are no more records left for query.
     QUERY_END = 50
 
@@ -270,6 +277,12 @@ module Aerospike
 
       when KEY_MISMATCH
         "Key mismatch"
+
+      when INVALID_NAMESPACE
+        "Invalid namespace"
+
+      when ERR_BIN_NAME
+        "Sent too-long bin name or exceeded namespace's bin name quota."
 
       when QUERY_END
         "Query end"
