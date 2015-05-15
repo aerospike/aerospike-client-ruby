@@ -375,6 +375,7 @@ module Aerospike
     #  within a single bin.
     #
     #  This method is only supported by Aerospike 3 servers.
+    #  DEPRECATED. This method will be removed from the client in the future.
     def get_large_map(key, bin_name, user_module=nil, options={})
       LargeMap.new(self, opt_to_write_policy(options), key, bin_name, user_module)
     end
@@ -383,6 +384,7 @@ module Aerospike
     #  within a single bin.
     #
     #  This method is only supported by Aerospike 3 servers.
+    #  DEPRECATED. This method will be removed from the client in the future.
     def get_large_set(key, bin_name, user_module=nil, options={})
       LargeSet.new(self, opt_to_write_policy(options), key, bin_name, user_module)
     end
@@ -391,6 +393,7 @@ module Aerospike
     #  within a single bin.
     #
     #  This method is only supported by Aerospike 3 servers.
+    #  DEPRECATED. This method will be removed from the client in the future.
     def get_large_stack(key, bin_name, user_module=nil, options={})
       LargeStack.new(self, opt_to_write_policy(options), key, bin_name, user_module)
     end
