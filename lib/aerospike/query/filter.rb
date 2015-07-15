@@ -53,6 +53,14 @@ module Aerospike
       offset
     end
 
+    #
+    # Show the filter as String. This is util to show filters in logs.
+    #
+    def to_s
+      return "#{@name} = #{@begin}" if @begin == @end
+      "#{@name} = #{@begin} - #{@end}"
+    end
+
     private
 
     def initialize(bin_name, begin_value, end_value)
