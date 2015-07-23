@@ -35,7 +35,7 @@ module Aerospike
       @cluster_nodes = []
       @partition_write_map = {}
       @node_index = Atomic.new(0)
-      @closed = Atomic.new(false)
+      @closed = Atomic.new(true)
       @mutex = Mutex.new
 
       # setup auth info for cluster
@@ -270,6 +270,8 @@ module Aerospike
       rescue Timeout::Error
         thr.kill if thr.alive?
       end
+
+      @closed.value = false if @cluster_nodes.length > 0
 
     end
 
