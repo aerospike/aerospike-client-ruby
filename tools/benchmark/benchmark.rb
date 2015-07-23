@@ -24,6 +24,8 @@ include Aerospike
   :conn_queue_size => 64,
   :rand_bin_data => false,
   :debug_mode => false,
+  :user => '',
+  :password => '',
 }
 
 @mutex = Mutex.new
@@ -37,6 +39,14 @@ include Aerospike
 
   opts.on("-p", "--port PORT", "Aerospike server seed hostname or IP address port number.") do |v|
     @options[:port] = v.to_i
+  end
+
+  opts.on("-U", "--user USER", "Aerospike user name") do |v|
+    @options[:user] = v
+  end
+
+  opts.on("-P", "--password PASSWORD", "Aerospike user password") do |v|
+    @options[:password] = v
   end
 
   opts.on("-n", "--namespace NAMESPACE", "Aerospike namespace.") do |v|
@@ -311,7 +321,11 @@ end
 readFlags
 printBenchmarkParams
 
-client = Client.new(@options[:host], @options[:port])
+begin
+  client = Client.new(@options[:host], @options[:port], :user => @options[:user], :password => @options[:password])
+rescue => e
+  abort(e.to_s)
+end
 
 threads = []
 
