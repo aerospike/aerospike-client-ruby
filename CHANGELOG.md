@@ -1,3 +1,13 @@
+## July 23 2015 (1.0.8)
+
+  Minor fix release.
+
+  * **Fixes**:
+
+    * Fixes an issue in write policy that would use an undefined variable if `:send_key` isn't `nil`.
+
+    * Fixes an issue in cluster.closed logic.
+
 ## May 15 2015 (1.0.7)
 
   Minor fixes.
