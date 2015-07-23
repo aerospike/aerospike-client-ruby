@@ -57,7 +57,7 @@ module Aerospike
 
       # Send user defined key in addition to hash digest on a record put.
       # The default is to send the user defined key.
-      @send_key = opt[:send_key].nil? ? true : send_key
+      @send_key = opt[:send_key].nil? ? true : opt[:send_key]
 
       self
     end

@@ -47,7 +47,7 @@ describe Aerospike::Client do
           'bin5' => {'value5' => [124, "string value"]},
         }
 
-        @client.put(key, bin_map)
+        @client.put(key, bin_map, :send_key => true)
 
         expect(@client.exists(key)).to eq true
       end
@@ -71,6 +71,9 @@ describe Aerospike::Client do
               i +=1
               expect(rec.bins['bin1']).to eq "value#{rec.bins['bin2']}"
               expect(rec.bins.length).to eq 4
+
+              # make sure the key was sent to the server
+              expect(rec.key.user_key).to eq rec.bins['bin2']
             end
           end
 
