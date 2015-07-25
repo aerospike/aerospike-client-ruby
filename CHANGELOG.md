@@ -2,11 +2,17 @@
 
   Minor fix release.
 
+  * **Improvements**:
+
+    * Adds 'Filter.to_s'. Thanks to [Ángel M](https://github.com/Angelmmiguel)
+
   * **Fixes**:
 
     * Fixes an issue in write policy that would use an undefined variable if `:send_key` isn't `nil`.
 
     * Fixes an issue in cluster.closed logic.
+
+    * Fixes an issue with including the `statement.rb` in the manifest. Thanks to [Ángel M](https://github.com/Angelmmiguel)
 
 ## May 15 2015 (1.0.7)
 
