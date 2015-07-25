@@ -82,6 +82,7 @@ require 'aerospike/query/filter'
 require 'aerospike/query/stream_command'
 require 'aerospike/query/query_command'
 require 'aerospike/query/scan_command'
+require 'aerospike/query/statement'
 
 module Aerospike
   extend Loggable
