@@ -90,6 +90,19 @@ We are bending all efforts to improve the client's performance. In out reference
 
 To read about performance variables, please refer to [`docs/performance.md`](docs/performance.md)
 
+<a name="Log"></a>
+## Log
+
+Aerospike show `INFO` messages on log with information about the status of the cluster. If you need to disable this messages, create a initializer file and set `tend_info`config variable to false. For example, if you are using Rails, you can create file on `config/initializers/aerospike.rb` and set this content:
+
+```ruby
+# Initialize material icons setup
+Aerospike.setup do |config|
+  # This will disable tend logs
+  config.tend_info = false
+end
+```
+
 <a name="Tests"></a>
 ## Tests
 

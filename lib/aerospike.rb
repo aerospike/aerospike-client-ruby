@@ -86,4 +86,36 @@ require 'aerospike/query/statement'
 
 module Aerospike
   extend Loggable
+
+  # Show Tend info in logger
+  @@tend_info = true
+
+  #
+  # Return the value of tend_info
+  #
+  # == Returns:
+  # Booleand indicating if tend_info must be showed
+  #
+  def self.tend_info
+    @@tend_info
+  end
+
+  #
+  # Set the value for tend_info
+  #
+  # == Parameters:
+  # tend::
+  #   Boolean to enable or disable tend_info logger
+  #
+  def self.tend_info=(tend)
+    @@tend_info = tend
+  end
+
+  #
+  # Initialize the config of Aerospike Ruby gem. Available config:
+  #   - tend_info
+  #
+  def self.setup
+    yield self
+  end
 end
