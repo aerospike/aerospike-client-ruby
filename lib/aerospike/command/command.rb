@@ -84,13 +84,7 @@ module Aerospike
     # Writes the command for write operations
     def set_write(policy, operation, key, bins)
       begin_cmd
-      field_count = estimate_key_size(key)
-
-      if policy.send_key
-        # field header size + key size
-        @data_offset += key.user_key_as_value.estimate_size + FIELD_HEADER_SIZE
-        field_count += 1
-      end
+      field_count = estimate_key_size(key, policy)
 
       bins.each do |bin|
         estimate_operation_size_for_bin(bin)
@@ -99,11 +93,7 @@ module Aerospike
       size_buffer
 
       write_header_with_policy(policy, 0, INFO2_WRITE, field_count, bins.length)
-      write_key(key)
-
-      if policy.send_key
-        write_field_value(key.user_key_as_value, Aerospike::FieldType::KEY)
-      end
+      write_key(key, policy)
 
       bins.each do |bin|
         write_operation_for_bin(bin, operation)
@@ -199,7 +189,7 @@ module Aerospike
     # Implements different command operations
     def set_operate(policy, key, operations)
       begin_cmd
-      field_count = estimate_key_size(key)
+      field_count = estimate_key_size(key, policy)
       read_attr = 0
       write_attr = 0
       read_header = false
@@ -233,7 +223,7 @@ module Aerospike
       else
         write_header(policy, read_attr, write_attr, field_count, operations.length)
       end
-      write_key(key)
+      write_key(key, policy)
 
       operations.each do |operation|
         write_operation_for_operation(operation)
@@ -246,14 +236,14 @@ module Aerospike
 
     def set_udf(policy, key, package_name, function_name, args)
       begin_cmd
-      field_count = estimate_key_size(key)
+      field_count = estimate_key_size(key, policy)
       arg_bytes = args.to_bytes
 
       field_count += estimate_udf_size(package_name, function_name, arg_bytes)
       size_buffer
 
       write_header(policy, 0, INFO2_WRITE, field_count, 0)
-      write_key(key)
+      write_key(key, policy)
       write_field_string(package_name, Aerospike::FieldType::UDF_PACKAGE_NAME)
       write_field_string(function_name, Aerospike::FieldType::UDF_FUNCTION)
       write_field_bytes(arg_bytes, Aerospike::FieldType::UDF_ARGLIST)
@@ -488,7 +478,7 @@ module Aerospike
     protected
 
 
-    def estimate_key_size(key)
+    def estimate_key_size(key, policy = nil)
       field_count = 0
 
       if key.namespace
@@ -503,6 +493,12 @@ module Aerospike
 
       @data_offset += key.digest.bytesize + FIELD_HEADER_SIZE
       field_count += 1
+
+      if policy && policy.respond_to?(:send_key) && policy.send_key == true
+        # field header size + key size
+        @data_offset += key.user_key_as_value.estimate_size + FIELD_HEADER_SIZE
+        field_count += 1
+      end
 
       return field_count
     end
@@ -616,7 +612,7 @@ module Aerospike
       @data_offset = MSG_TOTAL_HEADER_SIZE
     end
 
-    def write_key(key)
+    def write_key(key, policy = nil)
       # Write key into buffer.
       if key.namespace
         write_field_string(key.namespace, Aerospike::FieldType::NAMESPACE)
@@ -627,6 +623,11 @@ module Aerospike
       end
 
       write_field_bytes(key.digest, Aerospike::FieldType::DIGEST_RIPE)
+
+      if policy && policy.respond_to?(:send_key) && policy.send_key == true
+        write_field_value(key.user_key_as_value, Aerospike::FieldType::KEY)
+      end
+
     end
 
     def write_operation_for_bin(bin, operation)

@@ -48,6 +48,13 @@ describe Aerospike::Client do
       end"
     end
 
+    let(:udf_body_send_key) do
+      @udf_body_delete = "function create_record(rec, bin, value)
+        rec[bin] = value;
+        aerospike:create(rec);
+      end"
+    end
+
     let(:client) do
       described_class.new(Support.host, Support.port, :user => Support.user, :password => Support.password)
     end
@@ -125,6 +132,28 @@ describe Aerospike::Client do
       client.execute_udf(key3, 'udf_delete', 'delete_record')
 
       expect(client.batch_exists([key1, key2, key3])).to eq [false, false, false]
+
+    end
+
+    it "should create a record in udf with :send_key => true successfully" do
+
+      register_task = client.register_udf(udf_body_send_key, "udf_body_send_key.lua", Aerospike::Language::LUA)
+
+      register_task.wait_till_completed
+      expect(register_task.completed?).to be true
+
+      key1 = Support.gen_random_key(50, :set => 'test1')
+      key2 = Support.gen_random_key(50, :set => 'test1')
+
+      client.execute_udf(key1, 'udf_body_send_key', 'create_record', ['bin1', 1], :send_key => true)
+      client.execute_udf(key2, 'udf_body_send_key', 'create_record', ['bin1', 2], :send_key => true)
+
+      rs = client.scan_all('test', 'test1')
+
+      rs.each do |rec|
+        expect(rec.key.user_key).to eq key1.user_key if rec.key.digest == key1.digest
+        expect(rec.key.user_key).to eq key2.user_key if rec.key.digest == key2.digest
+      end
 
     end
 
