@@ -96,7 +96,7 @@ To read about performance variables, please refer to [`docs/performance.md`](doc
 Aerospike show `INFO` messages on log with information about the status of the cluster. If you need to disable this messages, create a initializer file and set `tend_info`config variable to false. For example, if you are using Rails, you can create file on `config/initializers/aerospike.rb` and set this content:
 
 ```ruby
-# Initialize material icons setup
+# Initialize Aerospike setup
 Aerospike.setup do |config|
   # This will disable tend logs
   config.tend_info = false
