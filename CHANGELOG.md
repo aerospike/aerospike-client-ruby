@@ -1,3 +1,11 @@
+## Augest 11 2015 (1.0.9)
+
+  Minor fix release.
+
+  * **Fixes**:
+
+    * Sends the original key value to the server for all relevant commands, including `operate` and `execute_udf`
+
 ## July 23 2015 (1.0.8)
 
   Minor fix release.
