@@ -238,6 +238,9 @@ module Aerospike
       remove_list = find_nodes_to_remove(refresh_count)
       remove_nodes(remove_list) unless remove_list.empty?
 
+      # Guard clause to prevent show tend_info because is disabled by config.
+      # See documentation
+      return unless Aerospike.tend_info
       Aerospike.logger.info("Tend finished. Live node count: #{nodes.length}")
     end
 
