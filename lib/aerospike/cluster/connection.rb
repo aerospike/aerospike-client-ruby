@@ -62,7 +62,7 @@ module Aerospike
           IO.select(nil, [@socket])
           retry
         rescue => e
-          Aerospike::Exceptions::Connection.new("#{e}")
+          raise Aerospike::Exceptions::Connection.new("#{e}")
         end
       end
     end
@@ -72,13 +72,18 @@ module Aerospike
       while total < length
         begin
           bytes = @socket.recv_nonblock(length - total)
-          buffer.write_binary(bytes, total) if bytes.bytesize > 0
+          if bytes.bytesize > 0
+            buffer.write_binary(bytes, total)
+          else
+            # connection is dead; return an error
+            raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::SERVER_NOT_AVAILABLE, "Connection to the server node is dead.")
+          end
           total += bytes.bytesize
         rescue IO::WaitReadable,  Errno::EAGAIN
           IO.select([@socket], nil)
           retry
         rescue => e
-          Aerospike::Exceptions::Connection.new("#{e}")
+          raise Aerospike::Exceptions::Connection.new("#{e}")
         end
       end
     end
