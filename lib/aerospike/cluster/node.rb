@@ -71,17 +71,17 @@ module Aerospike
     # Request current status from server node, and update node with the result
     def refresh
       friends = []
-      conn = get_connection(1)
 
       begin
+        conn = get_connection(1)
         info_map = Info.request(conn, "node", "partition-generation", "services")
       rescue => e
-        Aerospike.logger.error(e)
+        Aerospike.logger.error("Error during refresh for node #{self}: #{e}")
 
         conn.close if conn
         decrease_health
 
-        raise e
+        return friends
       end
 
       verify_node_name(info_map)
