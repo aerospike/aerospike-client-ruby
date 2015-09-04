@@ -1,3 +1,13 @@
+## September 4 2015 (1.0.10)
+
+  Minor fix release.
+
+  * **Fixes**:
+
+    * Fixes Node.Refresh logic.
+
+    * Fixes an issue with dead connections that would cause an infinite loop.
+
 ## Augest 11 2015 (1.0.9)
 
   Minor fix release.
