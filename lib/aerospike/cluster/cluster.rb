@@ -238,7 +238,7 @@ module Aerospike
       remove_list = find_nodes_to_remove(refresh_count)
       remove_nodes(remove_list) unless remove_list.empty?
 
-      Aerospike.logger.info("Tend finished. Live node count: #{nodes.length}")
+      Aerospike.logger.info("Tend finished. Live node count: #{nodes.length} #{nodes}")
     end
 
     def wait_till_stablized
@@ -246,7 +246,6 @@ module Aerospike
 
       # will run until the cluster is stablized
       thr = Thread.new do
-        abort_on_exception=true
         while true
           tend
 
@@ -445,19 +444,8 @@ module Aerospike
     def find_node_in_partition_map(filter)
       partitions_list = partitions
 
-      partitions_list.each do |node_array|
-        max = node_array.length
-
-        i = 0
-        while i < max
-          node = node_array[i]
-          # Use reference equality for performance.
-          if node == filter
-            return true
-          end
-
-          i = i.succ
-        end
+      partitions_list.values.each do |node_array|
+        return true if node_array.value.any? { |node| node == filter }
       end
       false
     end
