@@ -1,8 +1,10 @@
-## September 4 2015 (1.0.10)
+## September 22 2015 (1.0.10)
 
-  Minor fix release.
+  Major fix release.
 
   * **Fixes**:
+
+    * Fixes find_node_in_partition_map logic.
 
     * Fixes Node.Refresh logic.
 
