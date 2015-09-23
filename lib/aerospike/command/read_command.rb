@@ -92,8 +92,7 @@ module Aerospike
       end
 
       if op_count == 0
-        # data Bin was not returned.
-        @record = Record.new(@node, @key, generation, expiration)
+        @record = Record.new(@node, @key, nil, generation, expiration)
         return
       end
 
