@@ -115,7 +115,7 @@ module Aerospike
 
   private
 
-    SCAN_TERMINATED_EXCEPTION = Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::SCAN_TERMINATED)
-    QUERY_TERMINATED_EXCEPTION = Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::SCAN_TERMINATED)
+    SCAN_TERMINATED_EXCEPTION = Aerospike::Exceptions::ScanTerminated.new()
+    QUERY_TERMINATED_EXCEPTION = Aerospike::Exceptions::QueryTerminated.new()
 
 end

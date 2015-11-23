@@ -38,6 +38,8 @@ module Aerospike
       @closed = Atomic.new(true)
       @mutex = Mutex.new
 
+      @old_node_cound = 0
+
       # setup auth info for cluster
       if policy.requires_authentication
         @user = policy.user
@@ -238,7 +240,17 @@ module Aerospike
       remove_list = find_nodes_to_remove(refresh_count)
       remove_nodes(remove_list) unless remove_list.empty?
 
-      Aerospike.logger.info("Tend finished. Live node count: #{nodes.length} #{nodes}")
+      # only log the tend finish IF the number of nodes has been changed.
+      # This prevents spamming the log on every tend interval
+      if @old_node_cound != nodes.length
+        if @old_node_cound > nodes.length
+          Aerospike.logger.info("Tend finished. #{@old_node_cound - nodes.length} nodes have left the cluster. Old node count: #{@old_node_cound}, New node count #{nodes.length} #{nodes}")
+        else
+          Aerospike.logger.info("Tend finished. #{nodes.length - @old_node_cound} nodes have joined the cluster. Old node count: #{@old_node_cound}, New node count #{nodes.length} #{nodes}")
+        end
+      end
+
+      @old_node_cound = nodes.length
     end
 
     def wait_till_stablized

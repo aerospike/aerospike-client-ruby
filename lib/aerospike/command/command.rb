@@ -447,7 +447,13 @@ module Aerospike
           begin
             parse_result
           rescue => e
-            Aerospike.logger.error(e)
+            case e
+            # do not log the following exceptions
+            when Aerospike::Exceptions::ScanTerminated
+            when Aerospike::Exceptions::QueryTerminated
+            else
+              Aerospike.logger.error(e)
+            end
             
             # close the connection
             # cancelling/closing the batch/multi commands will return an error, which will
