@@ -34,7 +34,7 @@ module Aerospike
 
       # Tend interval in milliseconds; determines the interval at
       # which the client checks for cluster state changes. Minimum interval is 10ms.
-      @tend_interval = opt[:tend_interval] || 1000 # 1 second
+      self.tend_interval = opt[:tend_interval] || 1000 # 1 second
 
       # user name
       @user = opt[:user]
@@ -45,6 +45,14 @@ module Aerospike
 
     def requires_authentication
       (@user && @user != '') || (@password && @password != '')
+    end
+
+    def tend_interval=(interval)
+      if interval < 10
+        Aerospike.logger.warn("Minimum tend interval is 10 milliseconds (client policy: #{interval}).")
+        interval = 10
+      end
+      @tend_interval = interval
     end
 
   end # class

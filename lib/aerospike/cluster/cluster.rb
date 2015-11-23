@@ -32,10 +32,6 @@ module Aerospike
       @connection_queue_size = policy.connection_queue_size
       @connection_timeout = policy.timeout
       @tend_interval = policy.tend_interval
-      if @tend_interval < 10
-        Aerospike.logger.warn('Minimum tend interval is 10 milliseconds.')
-        @tend_interval = 10
-      end
       @aliases = {}
       @cluster_nodes = []
       @partition_write_map = {}
