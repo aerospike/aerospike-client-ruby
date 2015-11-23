@@ -31,6 +31,11 @@ module Aerospike
       @cluster_seeds = hosts
       @connection_queue_size = policy.connection_queue_size
       @connection_timeout = policy.timeout
+      @tend_interval = policy.tend_interval
+      if @tend_interval < 10
+        Aerospike.logger.warn('Minimum tend interval is 10 milliseconds.')
+        @tend_interval = 10
+      end
       @aliases = {}
       @cluster_nodes = []
       @partition_write_map = {}
@@ -188,7 +193,7 @@ module Aerospike
         while true
           begin
             tend
-            sleep 1 # 1 second
+            sleep(@tend_interval / 1000.0)
           rescue => e
             Aerospike.logger.error("Exception occured during tend: #{e}")
           end
