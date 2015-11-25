@@ -50,6 +50,7 @@ describe Aerospike::Client do
     before :all do
 
       @client = described_class.new(Support.host, Support.port, :user => Support.user, :password => Support.password)
+      @geo_supported = @client.request_info("features")["features"].include?("geo")
       @record_count = 1000
 
       for i in 1..@record_count
@@ -172,6 +173,88 @@ describe Aerospike::Client do
         end # it
 
       end # context
+
+    end # context
+
+    context "Geospatial Filter" do
+
+      let(:lon){ 103.9114 }
+      let(:lat){ 1.3083 }
+      let(:radius){ 1000 }
+      let(:point){ Aerospike::GeoJSON.new({type: "Point", coordinates: [lon, lat]}) }
+      let(:region){ Aerospike::GeoJSON.new({type: "Polygon", coordinates: [[[103.6055, 1.1587], [103.6055, 1.4707], [104.0884, 1.4707], [104.0884, 1.1587], [103.6055, 1.1587]]]}) }
+
+      around do |example|
+        if @geo_supported
+          Support.delete_set(@client, "geo")
+          task = @client.create_index("test", "geo", "geo_index", "location", :geo2dsphere)
+          task.wait_till_completed
+          example.call
+          @client.drop_index("test", "geo", "geo_index")
+        else
+          example.call
+        end
+      end
+
+      it "should return a point within the given GeoJSON region" do
+        skip "Server does not support geo feature" unless @geo_supported
+
+        key = Aerospike::Key.new("test", "geo", "p1")
+        @client.put(key, "location" => point)
+
+        stmt = Aerospike::Statement.new(key.namespace, key.set_name, ["location"])
+        stmt.filters = [Aerospike::Filter.geoWithinGeoJSONRegion("location", region)]
+        rs = @client.query(stmt)
+
+        results = []
+        rs.each{|record| results << record }
+        expect(results.map(&:key)).to eq [key]
+      end # it
+
+      it "should return a point within the given radius" do
+        skip "Server does not support geo feature" unless @geo_supported
+
+        key = Aerospike::Key.new("test", "geo", "p1")
+        @client.put(key, "location" => point)
+
+        stmt = Aerospike::Statement.new(key.namespace, key.set_name, ["location"])
+        stmt.filters = [Aerospike::Filter.geoWithinRadius("location", lon, lat, radius)]
+        rs = @client.query(stmt)
+
+        results = []
+        rs.each{|record| results << record }
+        expect(results.map(&:key)).to eq [key]
+      end # it
+
+      it "should return a region which contains the given GeoJSON point" do
+        skip "Server does not support geo feature" unless @geo_supported
+
+        key = Aerospike::Key.new("test", "geo", "r1")
+        @client.put(key, "location" => region)
+
+        stmt = Aerospike::Statement.new(key.namespace, key.set_name, ["location"])
+        stmt.filters = [Aerospike::Filter.geoContainsGeoJSONPoint("location", point)]
+        rs = @client.query(stmt)
+
+        results = []
+        rs.each{|record| results << record }
+        expect(results.map(&:key)).to eq [key]
+      end # it
+
+      it "should return a region which contains the given lon/lat coordinates" do
+        skip "Server does not support geo feature" unless @geo_supported
+
+        key = Aerospike::Key.new("test", "geo", "r1")
+        @client.put(key, "location" => region)
+
+        stmt = Aerospike::Statement.new(key.namespace, key.set_name, ["location"])
+        stmt.filters = [Aerospike::Filter.geoContainsPoint("location", lon, lat)]
+        rs = @client.query(stmt)
+
+        results = []
+        rs.each{|record| results << record }
+        expect(results.map(&:key)).to eq [key]
+      end # it
 
     end # context
 

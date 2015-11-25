@@ -39,6 +39,7 @@ module Aerospike
     #LUA_BLOB = 18
     MAP = 19
     LIST = 20
+    GEOJSON = 23
 
   end # module
 

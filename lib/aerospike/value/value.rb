@@ -63,6 +63,8 @@ module Aerospike
         res = MapValue.new(value)
       when Array
         res = ListValue.new(value)
+      when GeoJSON
+        res = GeoJSONValue.new(value)
       else
         # throw an exception for anything that is not supported.
         raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::TYPE_NOT_SUPPORTED, "Value type #{value.class} not supported.")
@@ -380,6 +382,51 @@ module Aerospike
 
   end
 
+  # #######################################/
+
+  # GeoJSON value.
+  # Supported by Aerospike server version 3.7 and later.
+  class GeoJSONValue < Value #:nodoc:
+
+    def initialize(json)
+      @json = json
+      @bytes = json.to_json
+      self
+    end
+
+    def estimate_size
+      # flags + ncells + jsonstr
+      1 + 2 + @bytes.bytesize
+    end
+
+    def write(buffer, offset)
+      buffer.write_byte(0, offset) # flags
+      buffer.write_uint16(0, offset + 1) # ncells
+      return 1 + 2 + buffer.write_binary(@bytes, offset + 3) # JSON string
+    end
+
+    def pack(packer)
+      raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::PARAMETER_ERROR, "Can't pack GeoJSON")
+    end
+
+    def type
+      Aerospike::ParticleType::GEOJSON
+    end
+
+    def get
+      @json
+    end
+
+    def to_bytes
+      @bytes
+    end
+
+    def to_s
+      @json
+    end
+
+  end
+
   #######################################
 
   protected
@@ -427,6 +474,12 @@ module Aerospike
 
     when Aerospike::ParticleType::MAP
       normalize_strings_in_map(MessagePack.unpack(buf.read(offset, length)))
+
+    when Aerospike::ParticleType::GEOJSON
+      # ignore the flags for now
+      ncells = buf.read_int16(offset + 1)
+      hdrsz = 1 + 2 + (ncells * 8)
+      Aerospike::GeoJSON.new(buf.read(offset + hdrsz, length - hdrsz))
 
     else
       nil

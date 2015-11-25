@@ -26,6 +26,26 @@ module Aerospike
       Filter.new(bin_name, from, to)
     end
 
+    def self.geoWithinGeoJSONRegion(bin_name, region)
+      region = region.to_json
+      Filter.new(bin_name, region, region, ParticleType::GEOJSON)
+    end
+
+    def self.geoWithinRadius(bin_name, lon, lat, radius_meter)
+      region = GeoJSON.new({type: "AeroCircle", coordinates: [[lon, lat], radius_meter]})
+      geoWithinGeoJSONRegion(bin_name, region)
+    end
+
+    def self.geoContainsGeoJSONPoint(bin_name, point)
+      point = point.to_json
+      Filter.new(bin_name, point, point, ParticleType::GEOJSON)
+    end
+
+    def self.geoContainsPoint(bin_name, lon, lat)
+      point = GeoJSON.new({type: "Point", coordinates: [lon, lat]})
+      geoContainsGeoJSONPoint(bin_name, point)
+    end
+
     def estimate_size
       return @name.bytesize + @begin.estimate_size + @end.estimate_size + 10
     end
@@ -37,7 +57,7 @@ module Aerospike
       offset += len + 1
 
       # Write particle type.
-      buf.write_byte(@begin.type, offset)
+      buf.write_byte(@val_type, offset)
       offset+=1
 
       # Write filter begin.
@@ -63,10 +83,14 @@ module Aerospike
 
     private
 
-    def initialize(bin_name, begin_value, end_value)
+    def initialize(bin_name, begin_value, end_value, val_type = nil)
       @name = bin_name
       @begin = Aerospike::Value.of(begin_value)
       @end = Aerospike::Value.of(end_value)
+
+      # The type of the filter values can usually be inferred automatically;
+      # but in certain cases caller can override the type.
+      @val_type = val_type || @begin.type
     end
 
   end # class

@@ -26,6 +26,10 @@ describe Aerospike::Client do
     described_class.new(Support.host, Support.port, :user => Support.user, :password => Support.password)
   end
 
+  let(:geo_supported) do
+    client.request_info("features")["features"].include?("geo")
+  end
+
   after do
     client.close
   end
@@ -159,6 +163,20 @@ describe Aerospike::Client do
 
         key = Support.gen_random_key
         bin = Aerospike::Bin.new('bin', rand)
+        client.put(key, bin)
+
+        expect(client.connected?).to eq true
+
+        record = client.get(key)
+        expect(record.bins['bin']).to eq bin.value
+
+      end
+
+      it "should put a GeoJSON value and get it successfully" do
+        skip "Server does not support geo feature" unless geo_supported
+
+        key = Support.gen_random_key
+        bin = Aerospike::Bin.new('bin', Aerospike::GeoJSON.new({type: "Point", coordinates: [103.9114, 1.3083]}))
         client.put(key, bin)
 
         expect(client.connected?).to eq true

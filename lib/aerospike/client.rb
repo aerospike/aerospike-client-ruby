@@ -576,7 +576,7 @@ module Aerospike
     #  IndexTask instance.
     #
     #  This method is only supported by Aerospike 3 servers.
-    #  index_type should be between :string or :numeric
+    #  index_type should be :string, :numeric or :geo2dsphere (requires server version 3.7 or later)
     def create_index(namespace, set_name, index_name, bin_name, index_type, options={})
       policy = opt_to_write_policy(options)
       str_cmd = "sindex-create:ns=#{namespace}"
@@ -919,9 +919,13 @@ module Aerospike
     def setup_command_validators
       Aerospike.logger.debug { "Cluster features: #{@cluster.features.get.to_a}" }
       validators = []
-      unless @cluster.supports_feature?("float")
-        validators << UnsupportedParticleTypeValidator.new(Aerospike::ParticleType::DOUBLE)
-      end
+
+      # guard against unsupported particle types
+      unsupported_particle_types = []
+      unsupported_particle_types << Aerospike::ParticleType::DOUBLE unless @cluster.supports_feature?("float")
+      unsupported_particle_types << Aerospike::ParticleType::GEOJSON unless @cluster.supports_feature?("geo")
+      validators << UnsupportedParticleTypeValidator.new(*unsupported_particle_types) unless unsupported_particle_types.empty?
+
       @command_validators = validators
     end
 

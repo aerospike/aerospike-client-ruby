@@ -40,6 +40,7 @@ require 'aerospike/command/admin_command'
 require 'aerospike/command/unsupported_particle_type_validator'
 require 'aerospike/key'
 require 'aerospike/operation'
+require 'aerospike/geo_json'
 
 require 'aerospike/policy/client_policy'
 require 'aerospike/policy/priority'
