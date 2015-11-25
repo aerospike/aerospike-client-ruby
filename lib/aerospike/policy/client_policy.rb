@@ -30,7 +30,7 @@ module Aerospike
       @connection_queue_size = opt[:connection_queue_size] || 64
 
       # Throw exception if host connection fails during add_host.
-      @fail_if_not_connected = opt[:fail_if_not_connected] || true
+      @fail_if_not_connected = opt.has_key?(:fail_if_not_connected) ? opt[:fail_if_not_connected] : true
 
       # user name
       @user = opt[:user]
