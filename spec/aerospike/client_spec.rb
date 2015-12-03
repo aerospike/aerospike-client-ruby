@@ -350,6 +350,14 @@ describe Aerospike::Client do
       Aerospike::Bin.new('bin name', rand(456123890))
     end
 
+    it "should #add, #get" do
+      client.operate(key, [
+                       Aerospike::Operation.add(bin_int),
+      ])
+      rec = client.get(key)
+      expect(rec.bins[bin_str.name]).to eq bin_int.value * 1
+      expect(rec.generation).to eq 1
+    end
 
     it "should #put, #append" do
 
