@@ -1,12 +1,32 @@
+## December 3 2015 (1.0.11)
+
+  Major feature and bug fix release.
+
+  * **Fixes**:
+
+    * Fix `ClientPolicy` to actually accept `fail_if_not_connected` parameter from constructor opts. PR #29, thanks to [Nick Recobra](https://github.com/oruen)
+
+    * Fix record initialization issue. PR #28, thanks to [jzhua](https://github.com/jzhua)
+
+    * Consume the rest of the stream when scan/query is finished.
+
+  * **Improvements**:
+
+    * Only logs tend messages when the number of cluster nodes have changed.
+
+    * Prevent logging of Tend intervals (unless node count has changed.)
+
+    * Scan and Query termination has been fixed.
+
 ## September 22 2015 (1.0.10)
 
   Major fix release.
 
   * **Fixes**:
 
-    * Fixes find_node_in_partition_map logic.
+    * Fixes `find_node_in_partition_map` logic.
 
-    * Fixes Node.Refresh logic.
+    * Fixes `Node.Refresh` logic.
 
     * Fixes an issue with dead connections that would cause an infinite loop.
 
