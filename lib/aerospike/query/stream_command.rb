@@ -39,6 +39,9 @@ module Aerospike
           # if there is no recordset defined, it means this is an Execute UDF On Query command
           # return successfully
           if (@recordset == nil) && (result_code == Aerospike::ResultCode::KEY_NOT_FOUND_ERROR)
+            # consume the rest of the input buffer from the socket
+            read_bytes(receive_size - data_offset) if @data_offset < receive_size
+
             return nil
           end
           raise Aerospike::Exceptions::Aerospike.new(result_code)
