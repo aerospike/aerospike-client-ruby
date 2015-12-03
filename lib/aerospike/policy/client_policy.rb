@@ -19,7 +19,7 @@ module Aerospike
   class ClientPolicy
 
     attr_accessor :user, :password
-    attr_accessor :timeout, :connection_queue_size, :fail_if_not_connected
+    attr_accessor :timeout, :connection_queue_size, :fail_if_not_connected, :tend_interval
 
     def initialize(opt={})
       # Initial host connection timeout in seconds. The timeout when opening a connection
@@ -32,6 +32,10 @@ module Aerospike
       # Throw exception if host connection fails during add_host.
       @fail_if_not_connected = opt.has_key?(:fail_if_not_connected) ? opt[:fail_if_not_connected] : true
 
+      # Tend interval in milliseconds; determines the interval at
+      # which the client checks for cluster state changes. Minimum interval is 10ms.
+      self.tend_interval = opt[:tend_interval] || 1000 # 1 second
+
       # user name
       @user = opt[:user]
 
@@ -41,6 +45,14 @@ module Aerospike
 
     def requires_authentication
       (@user && @user != '') || (@password && @password != '')
+    end
+
+    def tend_interval=(interval)
+      if interval < 10
+        Aerospike.logger.warn("Minimum tend interval is 10 milliseconds (client policy: #{interval}).")
+        interval = 10
+      end
+      @tend_interval = interval
     end
 
   end # class
