@@ -19,11 +19,14 @@ module Aerospike
 	# Pre-defined user roles.
 	module Role
 
-		 # Manage users their roles.
+		 # Manage users and their roles.
 		 USER_ADMIN = 'user-admin'
 
-		 # Manage indicies, user defined functions and server configuration.
+		 # Manage indicies, user-defined functions and server configuration.
 		 SYS_ADMIN = 'sys-admin'
+
+		 # Allow read, write and UDF transactions with the database.
+		 READ_WRITE_UDF = "read-write-udf"
 
 		 # Allow read and write transactions with the database.
 		 READ_WRITE = 'read-write'
