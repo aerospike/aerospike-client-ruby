@@ -34,6 +34,7 @@ module Aerospike
     UINT32 = 'N'
     INT64 = 'q>'
     UINT64 = 'Q>'
+    DOUBLE = 'G'
 
     DEFAULT_BUFFER_SIZE = 16 * 1024
     MAX_BUFFER_SIZE = 10 * 1024 * 1024
@@ -104,6 +105,11 @@ module Aerospike
       8
     end
 
+    def write_double(f, offset)
+      @buf[offset, 8] = [f].pack(DOUBLE)
+      8
+    end
+
     def read(offset, len=nil)
       start = offset
 
@@ -138,6 +144,11 @@ module Aerospike
         i = i.succ
       end
       val
+    end
+
+    def read_double(offset)
+      vals = @buf[offset..offset+7]
+      vals.unpack(DOUBLE)[0]
     end
 
     def to_s

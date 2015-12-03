@@ -36,7 +36,6 @@ module Aerospike
     INVALID_NODE_ERROR = -3
 
     # Client parse error.
-
     PARSE_ERROR = -2
 
     # Client serialization error.

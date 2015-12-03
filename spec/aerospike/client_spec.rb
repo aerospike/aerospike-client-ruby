@@ -155,6 +155,19 @@ describe Aerospike::Client do
 
       end
 
+      it "should put a FLOAT and get it successfully" do
+
+        key = Support.gen_random_key
+        bin = Aerospike::Bin.new('bin', rand)
+        client.put(key, bin)
+
+        expect(client.connected?).to eq true
+
+        record = client.get(key)
+        expect(record.bins['bin']).to eq bin.value
+
+      end
+
       it "should put an ARRAY and get it successfully" do
 
         key = Support.gen_random_key
@@ -300,7 +313,7 @@ describe Aerospike::Client do
       exists = client.exists(key)
       expect(exists).to eq false
 
-      client.put(key, {'str' => 'value', 'int' => 10})
+      client.put(key, {'str' => 'value', 'int' => 10, 'float' => 3.14159})
 
       exists = client.exists(key)
       expect(exists).to eq true
@@ -322,7 +335,7 @@ describe Aerospike::Client do
 
     end
 
-    it "should add to a key successfully" do
+    it "should add to an int key successfully" do
 
       client.add(key, {'int' => 10 })
       record = client.get(key)
@@ -331,6 +344,18 @@ describe Aerospike::Client do
       client.add(key, {'int' => -10 })
       record = client.get(key)
       expect(record.bins['int']).to eq 10
+
+    end
+
+    it "should add to a float key successfully" do
+
+      client.add(key, {'float' => 2.71828 })
+      record = client.get(key)
+      expect(record.bins['float']).to eq 5.85987
+
+      client.add(key, {'float' => -3.14159 })
+      record = client.get(key)
+      expect(record.bins['float']).to eq 2.71828
 
     end
 
@@ -348,6 +373,10 @@ describe Aerospike::Client do
 
     let(:bin_int) do
       Aerospike::Bin.new('bin name', rand(456123890))
+    end
+
+    let(:bin_float) do
+      Aerospike::Bin.new('bin name', rand)
     end
 
     it "should #add, #get" do
@@ -398,7 +427,7 @@ describe Aerospike::Client do
       expect(rec.generation).to eq 2
     end
 
-    it "should #put, #add" do
+    it "should #put, #add integer" do
 
       rec = client.operate(key, [
                              Aerospike::Operation.put(bin_int),
@@ -414,6 +443,26 @@ describe Aerospike::Client do
       ])
 
       expect(rec.bins[bin_str.name]).to eq bin_int.value * 2
+      expect(rec.generation).to eq 2
+
+    end
+
+    it "should #put, #add float" do
+
+      rec = client.operate(key, [
+                             Aerospike::Operation.put(bin_float),
+                             Aerospike::Operation.get,
+      ])
+
+      expect(rec.bins[bin_float.name]).to eq bin_float.value
+      expect(rec.generation).to eq 1
+
+      rec = client.operate(key, [
+                             Aerospike::Operation.add(bin_float),
+                             Aerospike::Operation.get,
+      ])
+
+      expect(rec.bins[bin_str.name]).to be_within(0.00001).of(bin_float.value * 2)
       expect(rec.generation).to eq 2
 
     end

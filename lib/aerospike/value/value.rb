@@ -51,6 +51,8 @@ module Aerospike
           # big nums > 2**63 are not supported
           raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::TYPE_NOT_SUPPORTED, "Value type #{value.class} not supported.")
         end
+      when Float
+        res = FloatValue.new(value)
       when String
         res = StringValue.new(value)
       when Symbol
@@ -234,6 +236,49 @@ module Aerospike
 
   end # IntegerValue
 
+  #######################################
+
+  # Float value.
+  class FloatValue < Value #:nodoc:
+
+    def initialize(val)
+      @value = val || 0.0
+      self
+    end
+
+    def estimate_size
+      8
+    end
+
+    def write(buffer, offset)
+      buffer.write_double(@value, offset)
+      8
+    end
+
+    def pack(packer)
+      packer.write(@value)
+    end
+
+    def type
+      Aerospike::ParticleType::DOUBLE
+    end
+
+    def get
+      @value
+    end
+
+    def to_bytes
+      [@value].pack('G')
+    end
+
+    def to_s
+      @value.to_s
+    end
+
+  end # FloatValue
+
+  #######################################
+
   # List value.
   # Supported by Aerospike 3 servers only.
   class ListValue < Value #:nodoc:
@@ -370,6 +415,9 @@ module Aerospike
 
     when Aerospike::ParticleType::INTEGER
       buf.read_int64(offset)
+
+    when Aerospike::ParticleType::DOUBLE
+      buf.read_double(offset)
 
     when Aerospike::ParticleType::BLOB
       buf.read(offset,length)
