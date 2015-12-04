@@ -66,7 +66,7 @@ def run_example(client)
 	bin = Bin.new(bin_name, "genvalue3")
 	Shared.logger.info("Put: namespace=#{key.namespace} set=#{key.set_name} key=#{key.user_key} bin=#{bin.name} value=#{bin.value} expected generation=#{record.generation}")
 
-	write_policy = WritePolicy.new(0, 2)
+	write_policy = WritePolicy.new
 	write_policy.generation_policy = GenerationPolicy::EXPECT_GEN_EQUAL
 	write_policy.generation = record.generation
 	client.put(key, [bin], write_policy)

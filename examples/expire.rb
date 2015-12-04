@@ -82,7 +82,8 @@ def no_expire_example(client)
 
 	# Specify that record NEVER expires.
 	# The "Never Expire" value is -1, or 0xFFFFFFFF.
-	write_policy = WritePolicy.new(nil, nil, 2)
+	write_policy = WritePolicy.new
+	write_policy.generation = 2
 	write_policy.expiration = -1
 	client.put(key, [bin], write_policy)
 
