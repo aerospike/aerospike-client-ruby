@@ -1,4 +1,4 @@
-## December 3 2015 (1.0.11)
+## December 4 2015 (1.0.11)
 
   Major feature and bug fix release.
 
@@ -12,9 +12,18 @@
 
   * **Improvements**:
 
-    * Only logs tend messages when the number of cluster nodes have changed.
+    * Support for double precision floating point data type in record bins.
+      Requires server version 3.6.0 or later. [CLIENT-599]
 
-    * Prevent logging of Tend intervals (unless node count has changed.)
+    * Support for geospatial data in record bins using GeoJSON format; support
+      for querying geospatial indexes using points-within-region and
+      region-contains-point filters. Requires server version 3.7.0 or later.
+      [CLIENT-594]
+
+    * Tend intervale is now configurable via the client policy. Default is 1
+      second as before.
+
+    * Only logs tend messages when the number of cluster nodes have changed.
 
     * Scan and Query termination has been fixed.
 
