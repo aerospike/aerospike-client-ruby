@@ -37,6 +37,7 @@ require 'aerospike/command/batch_command_exists'
 require 'aerospike/command/read_command'
 require 'aerospike/command/delete_command'
 require 'aerospike/command/admin_command'
+require 'aerospike/command/unsupported_particle_type_validator'
 require 'aerospike/key'
 require 'aerospike/operation'
 

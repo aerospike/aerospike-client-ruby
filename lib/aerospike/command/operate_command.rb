@@ -28,6 +28,10 @@ module Aerospike
       @operations = operations
     end
 
+    def write_bins
+      @operations.select{|op| op.op_type == Aerospike::Operation::WRITE}.map(&:bin).compact
+    end
+
     def write_buffer
       set_operate(@policy, @key, @operations)
     end

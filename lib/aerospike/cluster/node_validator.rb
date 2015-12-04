@@ -20,11 +20,12 @@ module Aerospike
 
   class NodeValidator # :nodoc:
 
-    attr_reader :host, :aliases, :name, :use_new_info
+    attr_reader :host, :aliases, :name, :use_new_info, :features
 
     def initialize(cluster, host, timeout)
       @cluster = cluster
       @use_new_info = true
+      @features = Set.new
       @host = host
 
       set_aliases(host)
@@ -70,9 +71,14 @@ module Aerospike
             end
           end
 
-          info_map= Info.request(conn, 'node', 'build')
+          info_map = Info.request(conn, 'node', 'build', 'features')
           if node_name = info_map['node']
             @name = node_name
+
+            # Set features
+            if features = info_map['features']
+              @features = features.split(';').to_set
+            end
 
             # Check new info protocol support for >= 2.6.6 build
             if build_version = info_map['build']

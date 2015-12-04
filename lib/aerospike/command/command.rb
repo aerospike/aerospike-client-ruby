@@ -81,6 +81,12 @@ module Aerospike
       self
     end
 
+    # List of all bins that this command will write to - sub-classes should
+    # overrite this as appropriate.
+    def write_bins
+      []
+    end
+
     # Writes the command for write operations
     def set_write(policy, operation, key, bins)
       begin_cmd

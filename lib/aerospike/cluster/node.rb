@@ -22,7 +22,7 @@ module Aerospike
 
   class Node
 
-    attr_reader :reference_count, :responded, :name
+    attr_reader :reference_count, :responded, :name, :features
 
     PARTITIONS = 4096
     FULL_HEALTH = 100
@@ -34,6 +34,7 @@ module Aerospike
       @aliases = Atomic.new(nv.aliases)
       @host = nv.host
       @use_new_info = Atomic.new(nv.use_new_info)
+      @features = nv.features
 
       # Assign host to first IP alias because the server identifies nodes
       # by IP address (not hostname).
@@ -168,7 +169,10 @@ module Aerospike
       close_connections
     end
 
-    # Implements stringer interface
+    def supports_feature?(feature)
+      @features.include?(feature.to_s)
+    end
+
     def to_s
       "#{@name}:#{@host}"
     end

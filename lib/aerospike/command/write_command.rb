@@ -33,6 +33,10 @@ module Aerospike
       self
     end
 
+    def write_bins
+      @bins
+    end
+
     def write_buffer
       set_write(@policy, @operation, @key, @bins)
     end

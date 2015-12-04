@@ -49,6 +49,8 @@ module Aerospike
       policy = opt_to_client_policy(options)
 
       @cluster = Cluster.new(policy, Host.new(host, port))
+      @cluster.add_cluster_config_change_listener(self)
+      @cluster.connect
 
       self
     end
@@ -65,7 +67,10 @@ module Aerospike
 
       policy = client.send(:opt_to_client_policy , options)
 
-      client.send(:cluster=, Cluster.new(policy, *hosts))
+      cluster = Cluster.new(policy, *hosts)
+      cluster.add_cluster_config_change_listener(client)
+      client.send(:cluster=, cluster)
+      cluster.connect
 
       client
     end
@@ -119,7 +124,7 @@ module Aerospike
     def put(key, bins, options={})
       policy = opt_to_write_policy(options)
       command = WriteCommand.new(@cluster, policy, key, hash_to_bins(bins), Aerospike::Operation::WRITE)
-      command.execute
+      execute_command(command)
     end
 
     #-------------------------------------------------------
@@ -142,7 +147,7 @@ module Aerospike
     def append(key, bins, options={})
       policy = opt_to_write_policy(options)
       command = WriteCommand.new(@cluster, policy, key, hash_to_bins(bins), Aerospike::Operation::APPEND)
-      command.execute
+      execute_command(command)
     end
 
     ##
@@ -161,7 +166,7 @@ module Aerospike
     def prepend(key, bins, options={})
       policy = opt_to_write_policy(options)
       command = WriteCommand.new(@cluster, policy, key, hash_to_bins(bins), Aerospike::Operation::PREPEND)
-      command.execute
+      execute_command(command)
     end
 
     #-------------------------------------------------------
@@ -184,7 +189,7 @@ module Aerospike
     def add(key, bins, options={})
       policy = opt_to_write_policy(options)
       command = WriteCommand.new(@cluster, policy, key, hash_to_bins(bins), Aerospike::Operation::ADD)
-      command.execute
+      execute_command(command)
     end
 
     #-------------------------------------------------------
@@ -206,7 +211,7 @@ module Aerospike
     def delete(key, options={})
       policy = opt_to_write_policy(options)
       command = DeleteCommand.new(@cluster, policy, key)
-      command.execute
+      execute_command(command)
       command.existed
     end
 
@@ -227,7 +232,7 @@ module Aerospike
     def touch(key, options={})
       policy = opt_to_write_policy(options)
       command = TouchCommand.new(@cluster, policy, key)
-      command.execute
+      execute_command(command)
     end
 
     #-------------------------------------------------------
@@ -240,7 +245,7 @@ module Aerospike
     def exists(key, options={})
       policy = opt_to_policy(options)
       command = ExistsCommand.new(@cluster, policy, key)
-      command.execute
+      execute_command(command)
       command.exists
     end
 
@@ -274,7 +279,7 @@ module Aerospike
       policy = opt_to_policy(options)
 
       command = ReadCommand.new(@cluster, policy, key, bin_names)
-      command.execute
+      execute_command(command)
       command.record
     end
 
@@ -283,7 +288,7 @@ module Aerospike
     def get_header(key, options={})
       policy = opt_to_policy(options)
       command = ReadHeaderCommand.new(@cluster, policy, key)
-      command.execute
+      execute_command(command)
       command.record
     end
 
@@ -355,7 +360,7 @@ module Aerospike
       policy = opt_to_write_policy(options)
 
       command = OperateCommand.new(@cluster, policy, key, operations)
-      command.execute
+      execute_command(command)
       command.record
     end
 
@@ -506,7 +511,7 @@ module Aerospike
       policy = opt_to_write_policy(options)
 
       command = ExecuteCommand.new(@cluster, policy, key, package_name, function_name, args)
-      command.execute
+      execute_command(command)
 
       record = command.record
 
@@ -553,7 +558,7 @@ module Aerospike
           abort_on_exception = true
           begin
             command = QueryCommand.new(node, policy, statement, nil)
-            command.execute
+            execute_command(command)
           rescue => e
             Aerospike.logger.error(e)
             raise e
@@ -651,7 +656,7 @@ module Aerospike
             abort_on_exception = true
             command = ScanCommand.new(node, new_policy, namespace, set_name, bin_names, recordset)
             begin
-              command.execute
+              execute_command(command)
             rescue => e
               Aerospike.logger.error(e.backtrace.join("\n")) unless e == SCAN_TERMINATED_EXCEPTION 
               recordset.cancel(e)
@@ -666,7 +671,7 @@ module Aerospike
           nodes.each do |node|
             command = ScanCommand.new(node, new_policy, namespace, set_name, bin_names, recordset)
             begin
-              command.execute
+              execute_command(command)
             rescue => e
               Aerospike.logger.error(e.backtrace.join("\n")) unless e == SCAN_TERMINATED_EXCEPTION 
               recordset.cancel(e)
@@ -701,7 +706,7 @@ module Aerospike
         abort_on_exception = true
         command = ScanCommand.new(node, new_policy, namespace, set_name, bin_names, recordset)
         begin
-          command.execute
+          execute_command(command)
         rescue => e
           Aerospike.logger.error(e.backtrace.join("\n")) unless e == SCAN_TERMINATED_EXCEPTION 
           recordset.cancel(e)
@@ -741,7 +746,7 @@ module Aerospike
           abort_on_exception = true
           command = QueryCommand.new(node, new_policy, statement, recordset)
           begin
-            command.execute
+            execute_command(command)
           rescue => e
             Aerospike.logger.error(e.backtrace.join("\n")) unless e == QUERY_TERMINATED_EXCEPTION 
             recordset.cancel(e)
@@ -906,6 +911,32 @@ module Aerospike
       @cluster = cluster
     end
 
+    def cluster_config_changed(cluster)
+      Aerospike.logger.debug { "Cluster config change detected; active nodes: #{cluster.nodes.map(&:name)}" }
+      setup_command_validators
+    end
+
+    def setup_command_validators
+      Aerospike.logger.debug { "Cluster features: #{@cluster.features.get.to_a}" }
+      validators = []
+      unless @cluster.supports_feature?("float")
+        validators << UnsupportedParticleTypeValidator.new(Aerospike::ParticleType::DOUBLE)
+      end
+      @command_validators = validators
+    end
+
+    def validate_command(command)
+      return unless @command_validators
+      @command_validators.each do |validator|
+        validator.call(command)
+      end
+    end
+
+    def execute_command(command)
+      validate_command(command)
+      command.execute
+    end
+
     def batch_execute(keys, &cmd_gen)
       batch_nodes = BatchNode.generate_list(@cluster, keys)
       threads = []
@@ -918,7 +949,7 @@ module Aerospike
           threads << Thread.new do
             abort_on_exception=true
             command = cmd_gen.call(bn.node, bns)
-            command.execute
+            execute_command(command)
           end
         end
       end

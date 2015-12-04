@@ -37,6 +37,10 @@ module Aerospike
       self
     end
 
+    def bin
+      Aerospike::Bin.new(bin_name, bin_value) if bin_name && bin_value
+    end
+
     def self.get(bin_name=nil)
       Operation.new(READ, bin_name)
     end

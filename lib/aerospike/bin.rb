@@ -37,6 +37,10 @@ module Aerospike
       @value
     end
 
+    def type
+      @value.type if @value
+    end
+
     def to_s
       "#{@name}:#{@value.to_s}"
     end
