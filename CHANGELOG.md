@@ -20,7 +20,7 @@
       region-contains-point filters. Requires server version 3.7.0 or later.
       [CLIENT-594]
 
-    * Tend intervale is now configurable via the client policy. Default is 1
+    * Tend interval is now configurable via the client policy. Default is 1
       second as before.
 
     * Only logs tend messages when the number of cluster nodes have changed.
