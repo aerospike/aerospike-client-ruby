@@ -9,6 +9,10 @@ rvm:
 - ruby-head
 - rbx
 env: CI="travis"
+sudo: false
+os:
+- linux
+dist: trusty
 matrix:
   allow_failures:
   - rvm: ruby-head
@@ -19,25 +23,27 @@ install:
 - tar xvzf aerospike-server.tgz
 - cp -f .travis/aerospike.conf ./aerospike-server/share/etc
 - cd aerospike-server
+- sed -i -e 's/\${me}/"root"/' share/libexec/aerospike-start
+- sed -i -e 's/set_shmmax$/#set_shmmax/' share/libexec/aerospike-start
+- sed -i -e 's/set_shmall$/#set_shmall/' share/libexec/aerospike-start
 - mkdir instance1
 - mkdir instance2
 - ./bin/aerospike init --home instance1 --instance 1 --service-port 3000
 - ./bin/aerospike init --home instance2 --instance 2 --service-port 3010
 - cd instance1
-- sudo ./bin/aerospike start
+- ./bin/aerospike start
+- ../../scripts/wait-for-node.sh var/log/aerospike.log
 - cd ../..
-- pwd
-- sleep 5
-- sudo tail -n 1000 aerospike-server/instance1/var/log/aerospike.log
 - bundle install
 script:
 - bundle exec rspec
 - cd aerospike-server/instance1
-- sudo ./bin/aerospike restart
+- ./bin/aerospike restart
+- ../../scripts/wait-for-node.sh var/log/aerospike.log
 - cd ../instance2
-- sudo ./bin/aerospike start
+- ./bin/aerospike start
+- ../../scripts/wait-for-node.sh var/log/aerospike.log
 - cd ../..
-- sleep 5
 - bundle exec rspec
 notifications:
   hipchat:
