@@ -26,6 +26,7 @@ install:
 - sed -i -e 's/\${me}/"root"/' share/libexec/aerospike-start
 - sed -i -e 's/set_shmmax$/#set_shmmax/' share/libexec/aerospike-start
 - sed -i -e 's/set_shmall$/#set_shmall/' share/libexec/aerospike-start
+- sed -i -e 's/sudo //' share/libexec/aerospike-stop
 - mkdir instance1
 - mkdir instance2
 - ./bin/aerospike init --home instance1 --instance 1 --service-port 3000
