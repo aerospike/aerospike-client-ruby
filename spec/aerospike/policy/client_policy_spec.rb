@@ -29,7 +29,7 @@ describe Aerospike::ClientPolicy do
       expect(policy.class).to eq described_class
       expect(policy.timeout).to eq 1.0
       expect(policy.connection_queue_size).to eq 64
-      expect(policy.fail_if_not_connected).to be_true
+      expect(policy.fail_if_not_connected).to eq true
       expect(policy.user).to be_nil
       expect(policy.password).to be_nil
     end
@@ -38,7 +38,7 @@ describe Aerospike::ClientPolicy do
 
       policy = described_class.new(fail_if_not_connected: false)
 
-      expect(policy.fail_if_not_connected).to be_false
+      expect(policy.fail_if_not_connected).to eq false
     end
   end
 
