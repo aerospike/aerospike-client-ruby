@@ -50,6 +50,7 @@ describe Aerospike::Client do
     before :all do
 
       @client = described_class.new(Support.host, Support.port, :user => Support.user, :password => Support.password)
+      sleep 2 # allow some time for cluster tending process to stabilize when running against multi-node cluster
       @geo_supported = @client.request_info("features")["features"].include?("geo")
       @record_count = 1000
 
