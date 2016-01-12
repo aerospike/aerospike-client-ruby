@@ -38,7 +38,9 @@ install:
 script:
 - bundle exec rspec
 - cd aerospike-server/instance1
-- ./bin/aerospike restart
+- ./bin/aerospike stop
+  cat /dev/null > var/log/aerospike.log
+- ./bin/aerospike start
 - ../../scripts/wait-for-node.sh var/log/aerospike.log
 - cd ../instance2
 - ./bin/aerospike start
