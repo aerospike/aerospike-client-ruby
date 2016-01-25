@@ -841,7 +841,7 @@ module Aerospike
         hash # it is a list of bins
       else
         hash.map do |k, v|
-          raise Aerospike::Exceptions::Parse("bin name `#{k}` is not a string.") unless k.is_a?(String)
+          raise Aerospike::Exceptions::Parse.new("bin name `#{k}` is not a string.") unless k.is_a?(String)
           Bin.new(k, v)
         end
       end
