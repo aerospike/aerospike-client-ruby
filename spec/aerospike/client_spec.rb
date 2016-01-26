@@ -259,9 +259,13 @@ describe Aerospike::Client do
       expect(record.bins).to be nil
       expect(record.generation).to eq 1
       expect(record.expiration).to be > 0
-
     end
 
+    it "should raise an error if hash with non-string keys is passed as record" do
+      key = Support.gen_random_key
+
+      expect { client.put(key, {symbol_key: "string value"}) }.to raise_error(Aerospike::Exceptions::Aerospike)
+    end
 
   end
 
