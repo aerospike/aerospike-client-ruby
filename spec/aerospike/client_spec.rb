@@ -20,6 +20,8 @@ require 'aerospike/host'
 require 'aerospike/key'
 require 'aerospike/bin'
 
+require 'benchmark'
+
 describe Aerospike::Client do
 
   let(:client) do
@@ -129,6 +131,18 @@ describe Aerospike::Client do
 
         record = client.get(key)
         expect(record.bins['bin']).to eq 'value'
+
+      end
+
+      it "should put a STRING with non-ASCII characters and get it successfully" do
+
+        key = Support.gen_random_key
+        client.put(key, Aerospike::Bin.new('bin', '柑橘類の葉'))
+
+        expect(client.connected?).to eq true
+
+        record = client.get(key)
+        expect(record.bins['bin']).to eq '柑橘類の葉'
 
       end
 

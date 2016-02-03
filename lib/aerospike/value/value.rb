@@ -168,7 +168,8 @@ module Aerospike
     end
 
     def write(buffer, offset)
-      buffer.write_binary(@value, offset)
+      bytes = @value.encode(Aerospike.encoding).force_encoding(Encoding::BINARY)
+      buffer.write_binary(bytes, offset)
     end
 
     def pack(packer)
@@ -429,12 +430,20 @@ module Aerospike
 
   #######################################
 
+  def self.encoding
+    @_encoding ||= Encoding::UTF_8
+  end
+
+  def self.encoding=(encoding)
+    @_encoding = encoding
+  end
+
   protected
 
   def self.normalize_elem(elem) # :nodoc:
     case elem
     when String
-     elem[1..-1]
+     elem[1..-1].encode(Aerospike.encoding)
     when Array
       normalize_strings_in_array(elem)
     when Hash
@@ -458,7 +467,8 @@ module Aerospike
 
     case type
     when Aerospike::ParticleType::STRING
-      buf.read(offset, length)
+      bytes = buf.read(offset, length)
+      bytes.force_encoding(Aerospike.encoding)
 
     when Aerospike::ParticleType::INTEGER
       buf.read_int64(offset)
