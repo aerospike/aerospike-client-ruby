@@ -1,3 +1,16 @@
+
+HEAD
+====
+
+* **Fixes**:
+
+  * Fixed syntax error in Client when raising exception for invalid bin key;
+    thanks to [Ole Riesenberg](https://github.com/oleriesenberg) for the fix.
+    [aerospike/aerospike-client-ruby#31]
+  * Use UTF-8 as default encoding when writing/reading Strings from record
+    bins; thanks to [fs-wu](https://github.com/fs-wu) for finding the issue and
+    reporting it. [aerospike/aerospike-client-ruby#33]
+
 ## December 4 2015 (1.0.11)
 
   Major feature and bug fix release.
@@ -148,7 +161,7 @@
   * **New Features**:
 
     * Added Security Features: Please consult [Security Docs](https://www.aerospike.com/docs/guide/security.html) on Aerospike website.
-      
+
       * `ClientPolicy.User`, `ClientPolicy.Password`
       * `Client.CreateUser()`, `Client.DropUser()`, `Client.ChangePassword()`
       * `Client.GrantRoles()`, `Client.RevokeRoles()`, `Client.ReplaceRoles()`
@@ -170,7 +183,7 @@
   * **Fixes**
 
     * Fixed setting timeout on connection
-    * Fixed exception handling typo for Connection#write 
+    * Fixed exception handling typo for Connection#write
 
 ## Dec 8 2014 (0.1.5)
 
