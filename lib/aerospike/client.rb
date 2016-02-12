@@ -620,7 +620,7 @@ module Aerospike
       # Index did not previously exist. Return without error.
       return if response.start_with?('FAIL:201')
 
-      raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::INDEX_GENERICINDEX_GENERIC, "Drop index failed: #{response}")
+      raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::INDEX_GENERIC, "Drop index failed: #{response}")
     end
 
     def request_info(*commands)
@@ -658,7 +658,7 @@ module Aerospike
             begin
               execute_command(command)
             rescue => e
-              Aerospike.logger.error(e.backtrace.join("\n")) unless e == SCAN_TERMINATED_EXCEPTION 
+              Aerospike.logger.error(e.backtrace.join("\n")) unless e == SCAN_TERMINATED_EXCEPTION
               recordset.cancel(e)
             ensure
               recordset.thread_finished
@@ -673,7 +673,7 @@ module Aerospike
             begin
               execute_command(command)
             rescue => e
-              Aerospike.logger.error(e.backtrace.join("\n")) unless e == SCAN_TERMINATED_EXCEPTION 
+              Aerospike.logger.error(e.backtrace.join("\n")) unless e == SCAN_TERMINATED_EXCEPTION
               recordset.cancel(e)
             ensure
               recordset.thread_finished
@@ -708,7 +708,7 @@ module Aerospike
         begin
           execute_command(command)
         rescue => e
-          Aerospike.logger.error(e.backtrace.join("\n")) unless e == SCAN_TERMINATED_EXCEPTION 
+          Aerospike.logger.error(e.backtrace.join("\n")) unless e == SCAN_TERMINATED_EXCEPTION
           recordset.cancel(e)
         ensure
           recordset.thread_finished
@@ -748,7 +748,7 @@ module Aerospike
           begin
             execute_command(command)
           rescue => e
-            Aerospike.logger.error(e.backtrace.join("\n")) unless e == QUERY_TERMINATED_EXCEPTION 
+            Aerospike.logger.error(e.backtrace.join("\n")) unless e == QUERY_TERMINATED_EXCEPTION
             recordset.cancel(e)
           ensure
             recordset.thread_finished

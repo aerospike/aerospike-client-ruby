@@ -365,7 +365,7 @@ module Aerospike
         "Index not readable"
 
       when INDEX_GENERIC
-        "Index error"
+        "Index error - check server logs"
 
       when INDEX_NAME_MAXLEN
         "Index name max length exceeded"
