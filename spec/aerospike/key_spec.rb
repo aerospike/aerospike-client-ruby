@@ -32,4 +32,20 @@ describe Aerospike::Key do
 
   end # describe
 
+  describe '#digest' do
+
+    context 'with an integer user key' do
+
+      it 'computes a correct digest' do
+
+        k = described_class.new('namespace', 'set', 42)
+
+        expect(k.digest.unpack('H*')).to eq ['386f89f493f3fd7ec333d43dd4dec8aa2e7d6ccf']
+
+      end
+
+    end # context
+
+  end # describe
+
 end # describe

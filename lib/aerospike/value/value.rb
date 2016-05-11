@@ -230,7 +230,9 @@ module Aerospike
     end
 
     def to_bytes
-      [@value].pack('Q<')
+      # Convert integer to big endian unsigned 64 bits.
+      # @see http://ruby-doc.org/core-2.3.0/Array.html#method-i-pack
+      [@value].pack('Q>')
     end
 
     def to_s
