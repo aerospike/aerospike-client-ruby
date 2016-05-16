@@ -212,7 +212,7 @@ module Aerospike
 
     def launch_tend_thread
       @tend_thread = Thread.new do
-        abort_on_exception = false
+        Thread.current.abort_on_exception = false
         while true
           begin
             tend

@@ -559,7 +559,7 @@ module Aerospike
       # Use a thread per node
       nodes.each do |node|
         Thread.new do
-          abort_on_exception = true
+          Thread.current.abort_on_exception = true
           begin
             command = QueryCommand.new(node, policy, statement, nil)
             execute_command(command)
@@ -657,7 +657,7 @@ module Aerospike
         # Use a thread per node
         nodes.each do |node|
           Thread.new do
-            abort_on_exception = true
+            Thread.current.abort_on_exception = true
             command = ScanCommand.new(node, new_policy, namespace, set_name, bin_names, recordset)
             begin
               execute_command(command)
@@ -671,7 +671,7 @@ module Aerospike
         end
       else
         Thread.new do
-          abort_on_exception = true
+          Thread.current.abort_on_exception = true
           nodes.each do |node|
             command = ScanCommand.new(node, new_policy, namespace, set_name, bin_names, recordset)
             begin
@@ -707,7 +707,7 @@ module Aerospike
       recordset = Recordset.new(policy.record_queue_size, 1, :scan)
 
       Thread.new do
-        abort_on_exception = true
+        Thread.current.abort_on_exception = true
         command = ScanCommand.new(node, new_policy, namespace, set_name, bin_names, recordset)
         begin
           execute_command(command)
@@ -747,7 +747,7 @@ module Aerospike
       # Use a thread per node
       nodes.each do |node|
         Thread.new do
-          abort_on_exception = true
+          Thread.current.abort_on_exception = true
           command = QueryCommand.new(node, new_policy, statement, recordset)
           begin
             execute_command(command)
@@ -955,7 +955,7 @@ module Aerospike
         bn = batch_node
         bn.batch_namespaces.each do |bns|
           threads << Thread.new do
-            abort_on_exception=true
+            Thread.current.abort_on_exception = true
             command = cmd_gen.call(bn.node, bns)
             execute_command(command)
           end
