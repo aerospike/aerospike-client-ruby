@@ -1,3 +1,9 @@
+Head
+===================
+
+* **Improvements**
+  * Add 2.3.1 to supported Ruby versions on Travis-CI.
+
 1.0.12 / 2016-02-11
 ===================
 
