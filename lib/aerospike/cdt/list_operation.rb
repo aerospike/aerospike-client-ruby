@@ -180,17 +180,17 @@ module Aerospike
       private
 
       def self.create_operation(type, cdt_type, bin, *args)
-        packer = Value.get_packer
-        packer.write(0)
-        packer.write(cdt_type)
-        if args.length > 0
-          packer.write_array_header(args.length)
-          args.each do |value|
-            Value.of(value).pack(packer)
+        bytes = nil
+        Packer.use do |packer|
+          packer.write_raw_short(cdt_type)
+          if args.length > 0
+            packer.write_array_header(args.length)
+            args.each do |value|
+              Value.of(value).pack(packer)
+            end
           end
+          bytes = packer.bytes
         end
-        bytes = packer.to_s.force_encoding('binary')
-        Value.put_packer(packer)
         return Operation.new(type, bin, BytesValue.new(bytes))
       end
 

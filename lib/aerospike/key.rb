@@ -17,6 +17,7 @@
 require 'digest'
 
 require 'aerospike/value/value'
+require 'aerospike/utils/pool'
 
 module Aerospike
 

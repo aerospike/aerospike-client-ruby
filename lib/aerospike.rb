@@ -11,6 +11,8 @@ require 'aerospike/atomic/atomic'
 
 require 'aerospike/client'
 require 'aerospike/utils/pool'
+require 'aerospike/utils/packer'
+require 'aerospike/utils/unpacker'
 require 'aerospike/utils/epoc'
 require 'aerospike/utils/buffer'
 require 'aerospike/host'
