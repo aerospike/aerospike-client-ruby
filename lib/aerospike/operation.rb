@@ -25,6 +25,8 @@ module Aerospike
     READ        = 1
     READ_HEADER = 1
     WRITE       = 2
+    CDT_READ    = 3
+    CDT_MODIFY  = 4
     ADD         = 5
     APPEND      = 9
     PREPEND     = 10

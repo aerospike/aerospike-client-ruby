@@ -106,6 +106,10 @@ module Aerospike
       end
     end
 
+    def supports_feature?(feature)
+      @cluster.supports_feature?(feature)
+    end
+
     #-------------------------------------------------------
     # Write Record Operations
     #-------------------------------------------------------
