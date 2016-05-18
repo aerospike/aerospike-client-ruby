@@ -615,23 +615,19 @@ describe Aerospike::Client do
 
   end
 
-  describe "benchmarks" do
+  describe "benchmarks", skip: true do
 
     it "benchmark #put #get" do
       bin = Aerospike::Bin.new('bin', 'value')
       key = Support.gen_random_key
 
-      record = nil
-      Benchmark.bm do |bm|
-        # joining an array of strings
-        bm.report do
-          1000.times do
-            client.put(key, bin)
-            record = client.get(key)
-          end
+      times = Benchmark.measure do
+        1000.times do
+          client.put(key, bin)
+          client.get(key)
         end
       end
-
+      puts times
     end
 
   end

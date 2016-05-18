@@ -20,20 +20,10 @@ require "benchmark"
 describe Aerospike::Info do
 
   describe "#request" do
-
     it "should connect and request info from the server" do
       conn = Aerospike::Connection.new(Support.host, Support.port)
-      Aerospike::Info.request(conn)
-
-      Benchmark.bm do |bm|
-        # joining an array of strings
-        bm.report do
-          1000.times do
-            Aerospike::Info.request(conn)
-          end
-        end
-      end
-
+      info = Aerospike::Info.request(conn)
+      expect(info).to include("version")
     end
   end
 
