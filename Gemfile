@@ -1,7 +1,7 @@
 source "https://rubygems.org"
 
 group :test do
-  gem 'rspec', '~> 2.13'
+  gem 'rspec', '~> 3.4'
   gem 'simplecov', :require => false
 end
 
