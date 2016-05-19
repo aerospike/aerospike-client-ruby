@@ -24,10 +24,10 @@ module Aerospike
 
     @@digest_pool = Pool.new
     @@digest_pool.create_block = Proc.new do
-      unless RUBY_PLATFORM == 'java'
-        Digest::RMD160.new
+      if RUBY_PLATFORM == 'java'
+        OpenSSL::Digest::RIPEMD160.new
       else
-        h = OpenSSL::Digest::RIPEMD160.new
+        Digest::RMD160.new
       end
     end
 
