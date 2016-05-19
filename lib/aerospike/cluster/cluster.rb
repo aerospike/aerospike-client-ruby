@@ -325,9 +325,9 @@ module Aerospike
 
     def update_cluster_features
       # Cluster supports features that are supported by all nodes
-      @features.update do |cluster_features|
-        node_featues = self.nodes.map(&:features)
-        cluster_features.replace(node_featues.reduce(&:intersection))
+      @features.update do
+        node_features = self.nodes.map(&:features)
+        node_features.reduce(&:intersection) || Set.new
       end
     end
 
