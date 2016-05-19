@@ -4,6 +4,9 @@ Head
 * **Improvements**
   * Add 2.3.1 to supported Ruby versions on Travis-CI.
 
+* **Fixes**
+  * Prevent "value must be enumerable" error when client cannot connect to cluster. [#35](https://github.com/aerospike/aerospike-client-ruby/issues/35). Thanks to [@rohanthewiz](https://github.com/rohanthewiz)!
+
 1.0.12 / 2016-02-11
 ===================
 
@@ -16,7 +19,8 @@ Head
     bins; thanks to [fs-wu](https://github.com/fs-wu) for finding the issue and
     reporting it. [aerospike/aerospike-client-ruby#33]
 
-## December 4 2015 (1.0.11)
+1.0.11 / 2015-12-04
+===================
 
   Major feature and bug fix release.
 
@@ -45,7 +49,8 @@ Head
 
     * Scan and Query termination has been fixed.
 
-## September 22 2015 (1.0.10)
+1.0.10 / 2015-09-22
+===================
 
   Major fix release.
 
@@ -57,7 +62,8 @@ Head
 
     * Fixes an issue with dead connections that would cause an infinite loop.
 
-## Augest 11 2015 (1.0.9)
+1.0.9 / 2015-08-11
+==================
 
   Minor fix release.
 
@@ -65,7 +71,8 @@ Head
 
     * Sends the original key value to the server for all relevant commands, including `operate` and `execute_udf`
 
-## July 23 2015 (1.0.8)
+1.0.8 / 2015-07-23
+==================
 
   Minor fix release.
 
@@ -81,7 +88,8 @@ Head
 
     * Fixes an issue with including the `statement.rb` in the manifest. Thanks to [Ángel M](https://github.com/Angelmmiguel)
 
-## May 15 2015 (1.0.7)
+1.0.7 / 2015-05-15
+==================
 
   Minor fixes.
 
@@ -101,7 +109,8 @@ Head
 
     * Removed deprecated `SetCapacity()` and `GetCapacity()` methods for LDTs.
 
-## April 2 2015 (1.0.6)
+1.0.6 / 2015-04-02
+==================
 
   Minor fixes.
 
@@ -109,7 +118,8 @@ Head
 
     * Fixed running a stream query without parameters to the function.
 
-## March 25 2015 (1.0.5)
+1.0.5 / 2015-03-25
+==================
 
   Minor improvements.
 
@@ -117,7 +127,8 @@ Head
 
     * Added `:execute_udf_on_query` method to `Aerospike::Client`
 
-## March 24 2015 (1.0.4)
+1.0.4 / 2015-03-24
+==================
 
   Hot fix.
 
@@ -125,7 +136,8 @@ Head
 
     * Close a socket if connection raises an exception to avoid leaking the file descriptor.
 
-## March 24 2015 (1.0.3)
+1.0.3 / 2015-03-24
+==================
 
   Minor fixes and improvements.
 
@@ -138,7 +150,8 @@ Head
     * Wait for a good connection on `socket.connect_nonblock` to prevent infinite loops on read/write operations.
 
 
-## March 14 2015 (1.0.2)
+1.0.2 / 2015-03-14
+==================
 
   Minor improvements.
 
@@ -146,7 +159,8 @@ Head
 
     * Added `:new_many` method to `Aerospike::Client`
 
-## Jan 28 2015 (1.0.1)
+1.0.1 / 2015-01-28
+==================
 
   Hot fix.
 
@@ -154,7 +168,8 @@ Head
 
     * Added `bcrypt` to the gem dependencies.
 
-## Jan 26 2015 (1.0.0)
+1.0.0 / 2015-01-26
+==================
 
   Major release. With this release, Ruby client graduates to version 1.
 
@@ -176,7 +191,8 @@ Head
 
     * fixed size returned from `BytesValue.write`
 
-## Dec 28 2014 (0.1.6)
+0.1.6 / 2014-12-28
+==================
 
   Minor features added, minor fixes and improvements.
 
@@ -190,7 +206,8 @@ Head
     * Fixed setting timeout on connection
     * Fixed exception handling typo for Connection#write
 
-## Dec 8 2014 (0.1.5)
+0.1.5 / 2014-12-08
+==================
 
   Major features added, minor fixes and improvements.
 
@@ -203,7 +220,8 @@ Head
 
     * Fixed getting back results only for specified bin names.
 
-## Oct 27 2014 (0.1.3)
+0.1.3 / 2014-10-27
+==================
 
   Minor fix.
 
@@ -211,7 +229,8 @@ Head
 
     * Fixed LDT bin and module name packing.
 
-## Oct 25 2014 (0.1.2)
+0.1.2 / 2014-10-25
+==================
 
   Minor fix.
 
@@ -219,7 +238,8 @@ Head
 
     * Fixed String unpacking for single byte strings.
 
-## Oct 25 2014 (0.1.1)
+0.1.1 / 2014-10-25
+==================
 
   Minor fixes.
 
@@ -228,6 +248,7 @@ Head
     * Fixed String packing header in Hash and Array.
     * #find on LDTs returns `nil` instad of raising an exception if the item is not found.
 
-## Oct 14 2014 (0.1.0)
+0.1.0 / 2014-10-14
+==================
 
   * Initial Release.
