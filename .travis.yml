@@ -26,7 +26,6 @@ install:
 - sed -i -e 's/\${me}/"root"/' share/libexec/aerospike-start
 - sed -i -e 's/set_shmmax$/#set_shmmax/' share/libexec/aerospike-start
 - sed -i -e 's/set_shmall$/#set_shmall/' share/libexec/aerospike-start
-- sed -i -e 's/sudo //' share/libexec/aerospike-stop
 - mkdir instance1
 - mkdir instance2
 - ./bin/aerospike init --home instance1 --instance 1 --service-port 3000
@@ -34,19 +33,13 @@ install:
 - cd instance1
 - ./bin/aerospike start
 - ../../scripts/wait-for-node.sh var/log/aerospike.log
+- cd ..
+- cd instance2
+- ./bin/aerospike start
+- ../../scripts/wait-for-node.sh var/log/aerospike.log
 - cd ../..
-- bundle install
 script:
-- bundle exec rspec
-- cd aerospike-server/instance1
-- ./bin/aerospike stop
-- cat /dev/null > var/log/aerospike.log
-- ./bin/aerospike start
-- ../../scripts/wait-for-node.sh var/log/aerospike.log
-- cd ../instance2
-- ./bin/aerospike start
-- ../../scripts/wait-for-node.sh var/log/aerospike.log
-- cd ../..
+- bundle install
 - bundle exec rspec
 notifications:
   hipchat:
