@@ -16,7 +16,7 @@
 
 require "spec_helper"
 
-describe "client.operate() - CDT List Operations" do
+describe "client.operate() - CDT List Operations", skip: !Support.feature?("cdt-list") do
 
   let(:client) { Support.client }
   let(:key) { Support.gen_random_key }
@@ -32,7 +32,6 @@ describe "client.operate() - CDT List Operations" do
 
   describe "ListOperation.append" do
     it "appends a single item to the list and returns the list size" do
-      skip "requires cdt-list feature on the server" unless client.supports_feature?("cdt-list")
       record = { "list" => [1, 2, 3, 4, 5] }
       operation = Aerospike::CDT::ListOperation.append('list', 99)
       expectedResult = { "list" => 6 }
@@ -41,7 +40,6 @@ describe "client.operate() - CDT List Operations" do
     end
 
     it "appends a single list item to the list and returns the list size" do
-      skip "requires cdt-list feature on the server" unless client.supports_feature?("cdt-list")
       record = { "list" => [1, 2, 3, 4, 5] }
       operation = Aerospike::CDT::ListOperation.append('list', [99, 100])
       expectedResult = { "list" => 6 }
@@ -50,7 +48,6 @@ describe "client.operate() - CDT List Operations" do
     end
 
     it "appends multiple items to the list and returns the list size" do
-      skip "requires cdt-list feature on the server" unless client.supports_feature?("cdt-list")
       record = { "list" => [1, 2, 3, 4, 5] }
       operation = Aerospike::CDT::ListOperation.append('list', 99, 100)
       expectedResult = { "list" => 7 }
@@ -61,7 +58,6 @@ describe "client.operate() - CDT List Operations" do
 
   describe "ListOperation.insert" do
     it "inserts a single item at the specified index and returns the list size" do
-      skip "requires cdt-list feature on the server" unless client.supports_feature?("cdt-list")
       record = { "list" => [1, 2, 3, 4, 5] }
       operation = Aerospike::CDT::ListOperation.insert('list', 2, 99)
       expectedResult = { "list" => 6 }
@@ -70,7 +66,6 @@ describe "client.operate() - CDT List Operations" do
     end
 
     it "inserts a single list item at the specified index and returns the list size" do
-      skip "requires cdt-list feature on the server" unless client.supports_feature?("cdt-list")
       record = { "list" => [1, 2, 3, 4, 5] }
       operation = Aerospike::CDT::ListOperation.insert('list', 2, [99, 100])
       expectedResult = { "list" => 6 }
@@ -79,7 +74,6 @@ describe "client.operate() - CDT List Operations" do
     end
 
     it "inserts multiple items at the specified index and returns the list size" do
-      skip "requires cdt-list feature on the server" unless client.supports_feature?("cdt-list")
       record = { "list" => [1, 2, 3, 4, 5] }
       operation = Aerospike::CDT::ListOperation.insert('list', 2, 99, 100)
       expectedResult = { "list" => 7 }
@@ -90,7 +84,6 @@ describe "client.operate() - CDT List Operations" do
 
   describe "ListOperation.pop" do
     it "removes the item at the specified index and returns it" do
-      skip "requires cdt-list feature on the server" unless client.supports_feature?("cdt-list")
       record = { "list" => [1, 2, 3, 4, 5] }
       operation = Aerospike::CDT::ListOperation.pop('list', 2)
       expectedResult = { "list" => 3 }
@@ -101,7 +94,6 @@ describe "client.operate() - CDT List Operations" do
 
   describe "ListOperation.pop_range" do
     it "removes the items in the specified range and returns them" do
-      skip "requires cdt-list feature on the server" unless client.supports_feature?("cdt-list")
       record = { "list" => [1, 2, 3, 4, 5] }
       operation = Aerospike::CDT::ListOperation.pop_range('list', 2, 2)
       expectedResult = { "list" => [3, 4] }
@@ -110,7 +102,6 @@ describe "client.operate() - CDT List Operations" do
     end
 
     it "removes and returns all items starting at the specified index if count is not specified" do
-      skip "requires cdt-list feature on the server" unless client.supports_feature?("cdt-list")
       record = { "list" => [1, 2, 3, 4, 5] }
       operation = Aerospike::CDT::ListOperation.pop_range('list', 2)
       expectedResult = { "list" => [3, 4, 5] }
@@ -121,7 +112,6 @@ describe "client.operate() - CDT List Operations" do
 
   describe "ListOperation.remove" do
     it "removes the item at the specified index and returns the number of items removed" do
-      skip "requires cdt-list feature on the server" unless client.supports_feature?("cdt-list")
       record = { "list" => [1, 2, 3, 4, 5] }
       operation = Aerospike::CDT::ListOperation.remove('list', 2)
       expectedResult = { "list" => 1 }
@@ -132,7 +122,6 @@ describe "client.operate() - CDT List Operations" do
 
   describe "ListOperation.remove_range" do
     it "removes the items in the specified range and returns the number of items removed" do
-      skip "requires cdt-list feature on the server" unless client.supports_feature?("cdt-list")
       record = { "list" => [1, 2, 3, 4, 5] }
       operation = Aerospike::CDT::ListOperation.remove_range('list', 2, 2)
       expectedResult = { "list" => 2 }
@@ -141,7 +130,6 @@ describe "client.operate() - CDT List Operations" do
     end
 
     it "removes all items starting at the specified index and returns the number of items removed if count is not specified" do
-      skip "requires cdt-list feature on the server" unless client.supports_feature?("cdt-list")
       record = { "list" => [1, 2, 3, 4, 5] }
       operation = Aerospike::CDT::ListOperation.remove_range('list', 2)
       expectedResult = { "list" => 3 }
@@ -152,7 +140,6 @@ describe "client.operate() - CDT List Operations" do
 
   describe "ListOperation.trim" do
     it "removes all elements not within the specified range and returns the number of elements removed" do
-      skip "requires cdt-list feature on the server" unless client.supports_feature?("cdt-list")
       record = { "list" => [1, 2, 3, 4, 5] }
       operation = Aerospike::CDT::ListOperation.trim('list', 1, 3)
       expectedResult = { "list" => 2 }
@@ -163,7 +150,6 @@ describe "client.operate() - CDT List Operations" do
 
   describe "ListOperation.set" do
     it "sets the item at the specified index" do
-      skip "requires cdt-list feature on the server" unless client.supports_feature?("cdt-list")
       record = { "list" => [1, 2, 3, 4, 5] }
       operation = Aerospike::CDT::ListOperation.set('list', 2, 99)
       expectedResult = nil
@@ -174,7 +160,6 @@ describe "client.operate() - CDT List Operations" do
 
   describe "ListOperation.clear" do
     it "removes all elements from the list" do
-      skip "requires cdt-list feature on the server" unless client.supports_feature?("cdt-list")
       record = { "list" => [1, 2, 3, 4, 5] }
       operation = Aerospike::CDT::ListOperation.clear('list')
       expectedResult = nil
@@ -185,7 +170,6 @@ describe "client.operate() - CDT List Operations" do
 
   describe "ListOperation.size" do
     it "returns the element count" do
-      skip "requires cdt-list feature on the server" unless client.supports_feature?("cdt-list")
       record = { "list" => [1, 2, 3, 4, 5] }
       operation = Aerospike::CDT::ListOperation.size('list')
       expectedResult = { "list" => 5 }
@@ -196,7 +180,6 @@ describe "client.operate() - CDT List Operations" do
 
   describe "ListOperation.get" do
     it "returns the item at the specified index" do
-      skip "requires cdt-list feature on the server" unless client.supports_feature?("cdt-list")
       record = { "list" => [1, 2, 3, 4, 5] }
       operation = Aerospike::CDT::ListOperation.get('list', 2)
       expectedResult = { "list" => 3 }
@@ -205,7 +188,6 @@ describe "client.operate() - CDT List Operations" do
     end
 
     it "returns an error if the index is out of bounds" do
-      skip "requires cdt-list feature on the server" unless client.supports_feature?("cdt-list")
       record = { "list" => [1, 2, 3, 4, 5] }
       operation = Aerospike::CDT::ListOperation.get('list', 99)
       expectedResult = { "list" => 3 }
@@ -216,7 +198,6 @@ describe "client.operate() - CDT List Operations" do
 
   describe "ListOperation.get_range" do
     it "returns the items in the specified range" do
-      skip "requires cdt-list feature on the server" unless client.supports_feature?("cdt-list")
       record = { "list" => [1, 2, 3, 4, 5] }
       operation = Aerospike::CDT::ListOperation.get_range('list', 1, 3)
       expectedResult = { "list" => [2, 3, 4]}
@@ -225,7 +206,6 @@ describe "client.operate() - CDT List Operations" do
     end
 
     it "returns all items starting at the specified index if count is not specified" do
-      skip "requires cdt-list feature on the server" unless client.supports_feature?("cdt-list")
       record = { "list" => [1, 2, 3, 4, 5] }
       operation = Aerospike::CDT::ListOperation.get_range('list', 1)
       expectedResult = { "list" => [2, 3, 4, 5]}
