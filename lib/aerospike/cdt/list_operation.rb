@@ -57,11 +57,11 @@ module Aerospike
       #  Create list append operation.
       #  Server appends value(s) to end of the list bin.
       #  Server returns list size.
-      def self.append(binName, *values)
+      def self.append(bin_name, *values)
         if values.length > 1
-          create_operation(Operation::CDT_MODIFY, APPEND_ITEMS, binName, values)
+          create_operation(Operation::CDT_MODIFY, APPEND_ITEMS, bin_name, values)
         else
-          create_operation(Operation::CDT_MODIFY, APPEND, binName, values.first)
+          create_operation(Operation::CDT_MODIFY, APPEND, bin_name, values.first)
         end
       end
 
@@ -69,19 +69,19 @@ module Aerospike
       #  Create list insert operation.
       #  Server inserts value(s) at the specified index of the list bin.
       #  Server returns list size.
-      def self.insert(binName, index, *values)
+      def self.insert(bin_name, index, *values)
         if values.length > 1
-          create_operation(Operation::CDT_MODIFY, INSERT_ITEMS, binName, index, values)
+          create_operation(Operation::CDT_MODIFY, INSERT_ITEMS, bin_name, index, values)
         else
-          create_operation(Operation::CDT_MODIFY, INSERT, binName, index, values.first)
+          create_operation(Operation::CDT_MODIFY, INSERT, bin_name, index, values.first)
         end
       end
 
       ##
       # Create list pop operation.
       # Server returns item at specified index and removes item from list bin.
-      def self.pop(binName, index)
-        create_operation(Operation::CDT_MODIFY, POP, binName, index)
+      def self.pop(bin_name, index)
+        create_operation(Operation::CDT_MODIFY, POP, bin_name, index)
       end
 
       ##
@@ -90,11 +90,11 @@ module Aerospike
       # items from list bin. If "count" is not specified, the server returns
       # items starting at the specified index to the end of the list and
       # removes those items from the list bin.
-      def self.pop_range(binName, index, count=nil)
+      def self.pop_range(bin_name, index, count=nil)
         if count
-          create_operation(Operation::CDT_MODIFY, POP_RANGE, binName, index, count)
+          create_operation(Operation::CDT_MODIFY, POP_RANGE, bin_name, index, count)
         else
-          create_operation(Operation::CDT_MODIFY, POP_RANGE, binName, index)
+          create_operation(Operation::CDT_MODIFY, POP_RANGE, bin_name, index)
         end
       end
 
@@ -102,8 +102,8 @@ module Aerospike
       # Create list remove operation.
       # Server removes item at specified index from list bin.
       # Server returns number of items removed.
-      def self.remove(binName, index)
-        create_operation(Operation::CDT_MODIFY, REMOVE, binName, index)
+      def self.remove(bin_name, index)
+        create_operation(Operation::CDT_MODIFY, REMOVE, bin_name, index)
       end
 
       ##
@@ -112,11 +112,11 @@ module Aerospike
       # "count" is not specified, the server removes all items starting at the
       # specified index to the end of the list.
       # Server returns number of items removed.
-      def self.remove_range(binName, index, count=nil)
+      def self.remove_range(bin_name, index, count=nil)
         if count
-          create_operation(Operation::CDT_MODIFY, REMOVE_RANGE, binName, index, count)
+          create_operation(Operation::CDT_MODIFY, REMOVE_RANGE, bin_name, index, count)
         else
-          create_operation(Operation::CDT_MODIFY, REMOVE_RANGE, binName, index)
+          create_operation(Operation::CDT_MODIFY, REMOVE_RANGE, bin_name, index)
         end
       end
 
@@ -124,8 +124,8 @@ module Aerospike
       # Create list set operation.
       # Server sets item value at specified index in list bin.
       # Server does not return a result by default.
-      def self.set(binName, index, value)
-        create_operation(Operation::CDT_MODIFY, SET, binName, index, value)
+      def self.set(bin_name, index, value)
+        create_operation(Operation::CDT_MODIFY, SET, bin_name, index, value)
       end
 
       ##
@@ -134,11 +134,11 @@ module Aerospike
       # by index and count. If count is not specified, server will keep all
       # items starting at the specified index to the end of the list.
       # Server returns number of items removed.
-      def self.trim(binName, index, count=nil)
+      def self.trim(bin_name, index, count=nil)
         if count
-          create_operation(Operation::CDT_MODIFY, TRIM, binName, index, count)
+          create_operation(Operation::CDT_MODIFY, TRIM, bin_name, index, count)
         else
-          create_operation(Operation::CDT_MODIFY, TRIM, binName, index)
+          create_operation(Operation::CDT_MODIFY, TRIM, bin_name, index)
         end
       end
 
@@ -146,22 +146,22 @@ module Aerospike
       # Create list clear operation.
       # Server removes all items in the list bin.
       # Server does not return a result by default.
-      def self.clear(binName)
-        create_operation(Operation::CDT_MODIFY, CLEAR, binName)
+      def self.clear(bin_name)
+        create_operation(Operation::CDT_MODIFY, CLEAR, bin_name)
       end
 
       ##
       # Create list size operation.
       # Server returns size of list.
-      def self.size(binName)
-        create_operation(Operation::CDT_READ, SIZE, binName)
+      def self.size(bin_name)
+        create_operation(Operation::CDT_READ, SIZE, bin_name)
       end
 
       ##
       # Create list get operation.
       # Server returns the item at the specified index in the list bin.
-      def self.get(binName, index)
-        create_operation(Operation::CDT_READ, GET, binName, index)
+      def self.get(bin_name, index)
+        create_operation(Operation::CDT_READ, GET, bin_name, index)
       end
 
       ##
@@ -169,11 +169,11 @@ module Aerospike
       # Server returns "count" items starting at the specified index in the
       # list bin. If "count" is not specified, the server returns all items
       # starting at the specified index to the end of the list.
-      def self.get_range(binName, index, count=nil)
+      def self.get_range(bin_name, index, count=nil)
         if count
-          create_operation(Operation::CDT_READ, GET_RANGE, binName, index, count)
+          create_operation(Operation::CDT_READ, GET_RANGE, bin_name, index, count)
         else
-          create_operation(Operation::CDT_READ, GET_RANGE, binName, index)
+          create_operation(Operation::CDT_READ, GET_RANGE, bin_name, index)
         end
       end
 

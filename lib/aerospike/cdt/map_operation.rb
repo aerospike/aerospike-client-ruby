@@ -62,11 +62,22 @@ module Aerospike
         self
       end
 
-      def self.set_map_policy(binName, policy)
-        MapOperation.new(Operation::CDT_MODIFY, SET_TYPE, binName, policy: policy)
+      ##
+      # Create set map policy operation.
+      # Server sets map policy attributes. Server returns null.
+      #
+      # The required map policy attributes can be changed after the map is created.
+      def self.set_policy(bin_name, policy)
+        MapOperation.new(Operation::CDT_MODIFY, SET_TYPE, bin_name, policy: policy)
       end
 
-      def self.put(binName, key, value, policy: MapPolicy::DEFAULT)
+      ##
+      # Create map put operation.
+      # Server writes key/value item to map bin and returns map size.
+      #
+      # The map policy dictates the type of map to create when it does not exist.
+      # The map policy also specifies the mode used when writing items to the map.
+      def self.put(bin_name, key, value, policy: MapPolicy::DEFAULT)
         cmd =
           case policy.write_mode
           when MapWriteMode::UPDATE then PUT
@@ -74,10 +85,16 @@ module Aerospike
           when MapWriteMode::CREATE_ONLY then ADD
           else PUT
           end
-        MapOperation.new(Operation::CDT_MODIFY, cmd, binName, key, value, policy: policy)
+        MapOperation.new(Operation::CDT_MODIFY, cmd, bin_name, key, value, policy: policy)
       end
 
-      def self.put_items(binName, values, policy: MapPolicy::DEFAULT)
+      ##
+      # Create map put items operation
+      # Server writes each map item to map bin and returns map size.
+      #
+      # The map policy dictates the type of map to create when it does not exist.
+      # The map policy also specifies the mode used when writing items to the map.
+      def self.put_items(bin_name, values, policy: MapPolicy::DEFAULT)
         cmd =
           case policy.write_mode
           when MapWriteMode::UPDATE then PUT_ITEMS
@@ -85,29 +102,56 @@ module Aerospike
           when MapWriteMode::CREATE_ONLY then ADD_ITEMS
           else PUT_ITEMS
           end
-        MapOperation.new(Operation::CDT_MODIFY, cmd, binName, values, policy: policy)
+        MapOperation.new(Operation::CDT_MODIFY, cmd, bin_name, values, policy: policy)
       end
 
-      def self.increment(binName, key, value, policy: MapPolicy::DEFAULT)
-        MapOperation.new(Operation::CDT_MODIFY, INCREMENT, binName, key, value, policy: policy)
+      ##
+      # Create map increment operation.
+      # Server increments values by incr for all items identified by key and returns final result.
+      # Valid only for numbers.
+      #
+      # The map policy dictates the type of map to create when it does not exist.
+      # The map policy also specifies the mode used when writing items to the map.
+      def self.increment(bin_name, key, incr, policy: MapPolicy::DEFAULT)
+        MapOperation.new(Operation::CDT_MODIFY, INCREMENT, bin_name, key, incr, policy: policy)
       end
 
-      def self.decrement(binName, key, value, policy: MapPolicy::DEFAULT)
-        MapOperation.new(Operation::CDT_MODIFY, DECREMENT, binName, key, value, policy: policy)
+      ##
+      # Create map decrement operation.
+      # Server decrements values by decr for all items identified by key and returns final result.
+      # Valid only for numbers.
+      #
+      # The map policy dictates the type of map to create when it does not exist.
+      # The map policy also specifies the mode used when writing items to the map.
+      def self.decrement(bin_name, key, decr, policy: MapPolicy::DEFAULT)
+        MapOperation.new(Operation::CDT_MODIFY, DECREMENT, bin_name, key, decr, policy: policy)
       end
 
-      def self.clear(binName)
-        MapOperation.new(Operation::CDT_MODIFY, CLEAR, binName)
+      ##
+      # Create map clear operation.
+      # Server removes all items in map.  Server returns null.
+      def self.clear(bin_name)
+        MapOperation.new(Operation::CDT_MODIFY, CLEAR, bin_name)
       end
 
-      def self.remove_keys(binName, *keys, return_type: MapReturnType::NONE)
+      ##
+      # Create map remove operation.
+      # Server removes map item identified by key and returns removed data specified by return_type.
+      def self.remove_keys(bin_name, *keys, return_type: MapReturnType::NONE)
         if keys.length > 1
-          MapOperation.new(Operation::CDT_MODIFY, REMOVE_BY_KEY_LIST, binName, keys, return_type: return_type)
+          MapOperation.new(Operation::CDT_MODIFY, REMOVE_BY_KEY_LIST, bin_name, keys, return_type: return_type)
         else
-          MapOperation.new(Operation::CDT_MODIFY, REMOVE_BY_KEY, binName, keys.first, return_type: return_type)
+          MapOperation.new(Operation::CDT_MODIFY, REMOVE_BY_KEY, bin_name, keys.first, return_type: return_type)
         end
       end
 
+      ##
+      # Create map remove operation.
+      # Server removes map items identified by key range (key_begin inclusive, key_end exclusive).
+      # If key_begin is null, the range is less than key_end.
+      # If key_end is null, the range is greater than equal to key_begin.
+      #
+      # Server returns removed data specified by return_type.
       def self.remove_key_range(bin_name, key_begin, key_end = nil, return_type: MapReturnType::NONE)
         if key_end
           MapOperation.new(Operation::CDT_MODIFY, REMOVE_BY_KEY_INTERVAL, bin_name, key_begin, key_end, return_type: return_type)
@@ -116,14 +160,24 @@ module Aerospike
         end
       end
 
-      def self.remove_values(binName, *values, return_type: MapReturnType::NONE)
+      ##
+      # Create map remove operation.
+      # Server removes map items identified by value and returns removed data specified by return_type.
+      def self.remove_values(bin_name, *values, return_type: MapReturnType::NONE)
         if values.length > 1
-          MapOperation.new(Operation::CDT_MODIFY, REMOVE_BY_VALUE_LIST, binName, values, return_type: return_type)
+          MapOperation.new(Operation::CDT_MODIFY, REMOVE_BY_VALUE_LIST, bin_name, values, return_type: return_type)
         else
-          MapOperation.new(Operation::CDT_MODIFY, REMOVE_BY_VALUE, binName, values.first, return_type: return_type)
+          MapOperation.new(Operation::CDT_MODIFY, REMOVE_BY_VALUE, bin_name, values.first, return_type: return_type)
         end
       end
 
+      ##
+      # Create map remove operation.
+      # Server removes map items identified by value range (value_begin inclusive, value_end exclusive).
+      # If value_begin is null, the range is less than value_end.
+      # If value_end is null, the range is greater than equal to value_begin.
+      #
+      # Server returns removed data specified by return_type.
       def self.remove_value_range(bin_name, value_begin, value_end = nil, return_type: MapReturnType::NONE)
         if value_end
           MapOperation.new(Operation::CDT_MODIFY, REMOVE_BY_VALUE_INTERVAL, bin_name, value_begin, value_end, return_type: return_type)
@@ -132,38 +186,67 @@ module Aerospike
         end
       end
 
-      def self.remove_index(binName, index, return_type: MapReturnType::NONE)
-        MapOperation.new(Operation::CDT_MODIFY, REMOVE_BY_INDEX, binName, index, return_type: return_type)
+      ##
+      # Create map remove operation.
+      # Server removes map item identified by index and returns removed data specified by return_type.
+      def self.remove_index(bin_name, index, return_type: MapReturnType::NONE)
+        MapOperation.new(Operation::CDT_MODIFY, REMOVE_BY_INDEX, bin_name, index, return_type: return_type)
       end
 
-      def self.remove_index_range(binName, index, count = nil, return_type: MapReturnType::NONE)
+      ##
+      # Create map remove operation.
+      # Server removes "count" map items starting at specified index and
+      # returns removed data specified by return_type. If "count" is not
+      # specified, the server selects map items starting at specified index to
+      # the end of map.
+      def self.remove_index_range(bin_name, index, count = nil, return_type: MapReturnType::NONE)
         if count
-          MapOperation.new(Operation::CDT_MODIFY, REMOVE_BY_INDEX_RANGE, binName, index, count, return_type: return_type)
+          MapOperation.new(Operation::CDT_MODIFY, REMOVE_BY_INDEX_RANGE, bin_name, index, count, return_type: return_type)
         else
-          MapOperation.new(Operation::CDT_MODIFY, REMOVE_BY_INDEX_RANGE, binName, index, return_type: return_type)
+          MapOperation.new(Operation::CDT_MODIFY, REMOVE_BY_INDEX_RANGE, bin_name, index, return_type: return_type)
         end
       end
 
-      def self.remove_by_rank(binName, rank, return_type: MapReturnType::NONE)
-        MapOperation.new(Operation::CDT_MODIFY, REMOVE_BY_RANK, binName, rank, return_type: return_type)
+      ##
+      # Create map remove operation.
+      # Server removes map item identified by rank and returns removed data specified by return_type.
+      def self.remove_by_rank(bin_name, rank, return_type: MapReturnType::NONE)
+        MapOperation.new(Operation::CDT_MODIFY, REMOVE_BY_RANK, bin_name, rank, return_type: return_type)
       end
 
-      def self.remove_by_rank_range(binName, rank, count = nil, return_type: MapReturnType::NONE)
+      ##
+      # Create map remove operation.
+      # Server selects "count" map items starting at specified rank and returns
+      # selected data specified by return_type. If "count" is not specified,
+      # server removes map items starting at specified rank to the last ranked.
+      def self.remove_by_rank_range(bin_name, rank, count = nil, return_type: MapReturnType::NONE)
         if count
-          MapOperation.new(Operation::CDT_MODIFY, REMOVE_BY_RANK_RANGE, binName, rank, count, return_type: return_type)
+          MapOperation.new(Operation::CDT_MODIFY, REMOVE_BY_RANK_RANGE, bin_name, rank, count, return_type: return_type)
         else
-          MapOperation.new(Operation::CDT_MODIFY, REMOVE_BY_RANK_RANGE, binName, rank, return_type: return_type)
+          MapOperation.new(Operation::CDT_MODIFY, REMOVE_BY_RANK_RANGE, bin_name, rank, return_type: return_type)
         end
       end
 
-      def self.size(binName)
-        MapOperation.new(Operation::CDT_READ, SIZE, binName)
+      ##
+      # Create map size operation.
+      # Server returns size of map.
+      def self.size(bin_name)
+        MapOperation.new(Operation::CDT_READ, SIZE, bin_name)
       end
 
-      def self.get_key(binName, key, return_type: MapReturnType::NONE)
-        MapOperation.new(Operation::CDT_READ, GET_BY_KEY, binName, key, return_type: return_type)
+      ##
+      # Create map get by key operation.
+      # Server selects map item identified by key and returns selected data specified by return_type.
+      def self.get_key(bin_name, key, return_type: MapReturnType::NONE)
+        MapOperation.new(Operation::CDT_READ, GET_BY_KEY, bin_name, key, return_type: return_type)
       end
 
+      # Create map get by key range operation.
+      # Server selects map items identified by key range (key_begin inclusive, key_end exclusive).
+      # If key_begin is null, the range is less than key_end.
+      # If key_end is null, the range is greater than equal to key_begin.
+      # <p>
+      # Server returns selected data specified by return_type.
       def self.get_key_range(bin_name, key_begin, key_end = nil, return_type: MapReturnType::NONE)
         if key_end
           MapOperation.new(Operation::CDT_READ, GET_BY_KEY_INTERVAL, bin_name, key_begin, key_end, return_type: return_type)
@@ -172,10 +255,18 @@ module Aerospike
         end
       end
 
-      def self.get_value(binName, value, return_type: MapReturnType::NONE)
-        MapOperation.new(Operation::CDT_READ, GET_BY_VALUE, binName, value, return_type: return_type)
+      # Create map get by value operation.
+      # Server selects map items identified by value and returns selected data specified by return_type.
+      def self.get_value(bin_name, value, return_type: MapReturnType::NONE)
+        MapOperation.new(Operation::CDT_READ, GET_BY_VALUE, bin_name, value, return_type: return_type)
       end
 
+      # Create map get by value range operation.
+      # Server selects map items identified by value range (value_begin inclusive, value_end exclusive)
+      # If value_begin is null, the range is less than value_end.
+      # If value_end is null, the range is greater than equal to value_begin.
+      # <p>
+      # Server returns selected data specified by return_type.
       def self.get_value_range(bin_name, value_begin, value_end = nil, return_type: MapReturnType::NONE)
         if value_end
           MapOperation.new(Operation::CDT_READ, GET_BY_VALUE_INTERVAL, bin_name, value_begin, value_end, return_type: return_type)
@@ -184,27 +275,42 @@ module Aerospike
         end
       end
 
-      def self.get_index(binName, index, return_type: MapReturnType::NONE)
-        MapOperation.new(Operation::CDT_READ, GET_BY_INDEX, binName, index, return_type: return_type)
+      # Create map get by index operation.
+      # Server selects map item identified by index and returns selected data specified by return_type.
+      def self.get_index(bin_name, index, return_type: MapReturnType::NONE)
+        MapOperation.new(Operation::CDT_READ, GET_BY_INDEX, bin_name, index, return_type: return_type)
       end
 
-      def self.get_index_range(binName, index, count = nil, return_type: MapReturnType::NONE)
+      # Create map get by index range operation.
+      # Server selects "count" map items starting at specified index and
+      # returns selected data specified by return_type.  If "count" is not
+      # specified, server selects map items starting at specified index to the
+      # end of map.
+      def self.get_index_range(bin_name, index, count = nil, return_type: MapReturnType::NONE)
         if count
-          MapOperation.new(Operation::CDT_READ, GET_BY_INDEX_RANGE, binName, index, count, return_type: return_type)
+          MapOperation.new(Operation::CDT_READ, GET_BY_INDEX_RANGE, bin_name, index, count, return_type: return_type)
         else
-          MapOperation.new(Operation::CDT_READ, GET_BY_INDEX_RANGE, binName, index, return_type: return_type)
+          MapOperation.new(Operation::CDT_READ, GET_BY_INDEX_RANGE, bin_name, index, return_type: return_type)
         end
       end
 
-      def self.get_by_rank(binName, rank, return_type: MapReturnType::NONE)
-        MapOperation.new(Operation::CDT_READ, GET_BY_RANK, binName, rank, return_type: return_type)
+      # Create map get by rank operation.
+      # Server selects map item identified by rank and returns selected data
+      # specified by return_type.
+      def self.get_by_rank(bin_name, rank, return_type: MapReturnType::NONE)
+        MapOperation.new(Operation::CDT_READ, GET_BY_RANK, bin_name, rank, return_type: return_type)
       end
 
-      def self.get_by_rank_range(binName, rank, count = nil, return_type: MapReturnType::NONE)
+      # Create map get by rank range operation.
+      # Server selects "count" map items starting at specified rank and returns
+      # selected data specified by returnType.  If "count" is not specified,
+      # server selects map items starting at specified rank to the last ranked
+      # item.
+      def self.get_by_rank_range(bin_name, rank, count = nil, return_type: MapReturnType::NONE)
         if count
-          MapOperation.new(Operation::CDT_READ, GET_BY_RANK_RANGE, binName, rank, count, return_type: return_type)
+          MapOperation.new(Operation::CDT_READ, GET_BY_RANK_RANGE, bin_name, rank, count, return_type: return_type)
         else
-          MapOperation.new(Operation::CDT_READ, GET_BY_RANK_RANGE, binName, rank, return_type: return_type)
+          MapOperation.new(Operation::CDT_READ, GET_BY_RANK_RANGE, bin_name, rank, return_type: return_type)
         end
       end
 

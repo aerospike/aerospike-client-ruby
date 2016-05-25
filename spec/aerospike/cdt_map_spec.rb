@@ -33,11 +33,11 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
     expect(record.bins).to eql(expectedRecordPostOp)
   end
 
-  describe "MapOperation.set_map_policy" do
+  describe "MapOperation.set_policy" do
     it "changes the map order" do
       record = { "map" => { "c" => 1, "b" => 2, "a" => 3 } }
       operations = [
-        MapOperation.set_map_policy("map", MapPolicy.new(order: MapOrder::KEY_ORDERED)),
+        MapOperation.set_policy("map", MapPolicy.new(order: MapOrder::KEY_ORDERED)),
         MapOperation.get_key_range("map", "a", "z", return_type: MapReturnType::KEY)
       ]
       expectedResult = { "map" => [ "a", "b", "c" ] }
