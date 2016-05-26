@@ -1,10 +1,16 @@
 Head
 ===================
 
+* **Breaking Changes**
+  * Incompatible integer key digests: digests for integer keys computed by v2 and v1 are different; the Aerospike server uses the key digest to retrieve records. Please carefully read the [details](docs/api-changes.html#v2.0.0) of this breaking change if you have existing records with integer keys created by a v1 client version and need to read them with a v2 client version.
+  * Drop support for Ruby 1.9.3; requires Ruby 2.0 or later.
+
 * **Improvements**
+  * Add support for List and Map operations on List/Map Complex Data Types (CDT); requires Aerospike Server version 3.9 or later. [CLIENT-559]
   * Add 2.3.1 to supported Ruby versions on Travis-CI.
 
 * **Fixes**
+  * Fix digest creation for integer keys. [PR #34](https://github.com/aerospike/aerospike-client-ruby/pull/34). Thanks to [@murphyslaw](https://github.com/murphyslaw)!
   * Prevent "value must be enumerable" error when client cannot connect to cluster. [#35](https://github.com/aerospike/aerospike-client-ruby/issues/35). Thanks to [@rohanthewiz](https://github.com/rohanthewiz)!
 
 1.0.12 / 2016-02-11
