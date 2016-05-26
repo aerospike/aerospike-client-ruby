@@ -1,4 +1,9 @@
-# Aerospike Ruby Client
+# Aerospike Ruby Client [![travis][travis-image]][travis-url] [![gem][gem-image]][gem-url]
+
+[travis-image]: https://travis-ci.org/aerospike/aerospike-client-ruby.svg?branch=master
+[travis-url]: https://travis-ci.org/aerospike/aerospike-client-ruby
+[gem-image]: https://img.shields.io/gem/v/aerospike.svg
+[gem-url]: https://rubygems.org/gems/aerospike
 
 An Aerospike library for Ruby.
 
