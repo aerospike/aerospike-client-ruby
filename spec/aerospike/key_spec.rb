@@ -21,14 +21,42 @@ describe Aerospike::Key do
   describe "#initialize" do
 
     it "should make a new key successfully" do
-
       k = described_class.new('namespace', 'set', 'string_value')
 
       expect(k.namespace).to eq 'namespace'
       expect(k.set_name).to eq 'set'
       expect(k.user_key).to eq 'string_value'
-
     end
+
+  end # describe
+
+  describe '#digest' do
+
+    context 'with an integer user key' do
+
+      it 'computes a correct digest' do
+        k = described_class.new('namespace', 'set', 42)
+
+        expect(k.digest.unpack('H*')).to eq ['386f89f493f3fd7ec333d43dd4dec8aa2e7d6ccf']
+      end
+
+      context 'v1.0.x compatibility' do
+        it 'computes a backward compatible digest for all keys' do
+          described_class.enable_v1_compatibility!
+          k = described_class.new('namespace', 'set', 42)
+          described_class.enable_v1_compatibility!(false)
+
+          expect(k.digest.unpack('H*')).to eq ['2312f777f2a475512965d267110d9ae18c40f350']
+        end
+
+        it 'computes a backward compatible digest for specific keys' do
+          k = described_class.new('namespace', 'set', 42, v1_compatible: true)
+
+          expect(k.digest.unpack('H*')).to eq ['2312f777f2a475512965d267110d9ae18c40f350']
+        end
+      end
+
+    end # context
 
   end # describe
 

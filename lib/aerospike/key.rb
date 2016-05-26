@@ -31,13 +31,24 @@ module Aerospike
       end
     end
 
+    # enable backwards compatibility with v1 client for integer keys
+    # ref. https://github.com/aerospike/aerospike-client-ruby/pull/34
+    def self.enable_v1_compatibility!(comp = true)
+      @v1_compatibility = !!comp
+    end
+    def self.v1_compatible?
+      @v1_compatibility
+    end
 
     attr_reader :namespace, :set_name, :digest
+    attr_reader :v1_compatible
+    alias_method :v1_compatible?, :v1_compatible
 
-    def initialize(ns, set, val, digest=nil)
+    def initialize(ns, set, val, digest=nil, v1_compatible: self.class.v1_compatible?)
       @namespace = ns
       @set_name = set
       @user_key = Value.of(val)
+      @v1_compatible = v1_compatible
 
       unless digest
         compute_digest
@@ -47,6 +58,7 @@ module Aerospike
 
       self
     end
+
 
     def to_s
       "#{@namespace}:#{@set_name}:#{@user_key}:#{@digest.nil? ? '' : @digest.bytes}"
@@ -75,9 +87,15 @@ module Aerospike
 
     def compute_digest
       key_type = @user_key.type
+      key_bytes = @user_key.to_bytes
 
       if key_type == Aerospike::ParticleType::NULL
         raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::PARAMETER_ERROR, "Invalid key: nil")
+      end
+
+      # v1.0.12 and prior computed integer key digest using little endian byte order
+      if key_type == Aerospike::ParticleType::INTEGER && v1_compatible?
+        key_bytes.reverse!
       end
 
       # get a hash from pool and make it ready for work
@@ -87,7 +105,7 @@ module Aerospike
       # Compute a complete digest
       h.update(@set_name)
       h.update(key_type.chr)
-      h.update(@user_key.to_bytes)
+      h.update(key_bytes)
       @digest = h.digest
 
       # put the hash object back to the pool
