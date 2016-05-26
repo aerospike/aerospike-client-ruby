@@ -56,7 +56,7 @@ module Aerospike
   # This is the last of a multi-part message.
   INFO3_LAST = Integer(1 << 0)
   # Commit to master only before declaring success.
-  INFO3_COMMIT_MASTER = Integer(1 << 1)  
+  INFO3_COMMIT_MASTER = Integer(1 << 1)
   # Update only. Merge bins.
   INFO3_UPDATE_ONLY = Integer(1 << 3)
 
@@ -460,7 +460,7 @@ module Aerospike
             else
               Aerospike.logger.error(e)
             end
-            
+
             # close the connection
             # cancelling/closing the batch/multi commands will return an error, which will
             # close the connection to throw away its data and signal the server about the

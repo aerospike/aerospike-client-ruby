@@ -51,4 +51,12 @@ EOF
     PASSWORD
   end
 
+  def self.client
+    @client ||= Aerospike::Client.new(self.host, self.port, user: self.user, password: self.password)
+  end
+
+  def self.feature?(feature)
+    self.client.supports_feature?(feature.to_s)
+  end
+
 end

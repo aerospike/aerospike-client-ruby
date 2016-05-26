@@ -14,9 +14,6 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-require 'msgpack'
-
-require 'aerospike/utils/pool'
 
 require 'aerospike/aerospike_exception'
 
@@ -26,19 +23,6 @@ module Aerospike
 
   # Polymorphic value classes used to efficiently serialize objects into the wire protocol.
   class Value #:nodoc:
-
-    @@packer_pool = Pool.new
-    @@packer_pool.create_block = Proc.new { MessagePack::Packer.new }
-
-    def self.get_packer
-      res = @@packer_pool.poll
-      res.clear
-      res
-    end
-
-    def self.put_packer(packer)
-      @@packer_pool.offer(packer)
-    end
 
     def self.of(value)
       case value
@@ -290,11 +274,10 @@ module Aerospike
 
     def initialize(list)
       @list = list || nil
-      packer = Value.get_packer
-      pack(packer)
-      @bytes = packer.to_s.force_encoding('binary')
-      Value.put_packer(packer)
-
+      Packer.use do |packer|
+        pack(packer)
+        @bytes = packer.bytes
+      end
       self
     end
 
@@ -341,10 +324,10 @@ module Aerospike
     def initialize(vmap)
       @vmap = vmap || {}
 
-      packer = Value.get_packer
-      pack(packer)
-      @bytes = packer.to_s.force_encoding('binary')
-      Value.put_packer(packer)
+      Packer.use do |packer|
+        pack(packer)
+        @bytes = packer.bytes
+      end
 
       self
     end
@@ -442,29 +425,6 @@ module Aerospike
 
   protected
 
-  def self.normalize_elem(elem) # :nodoc:
-    case elem
-    when String
-     elem[1..-1].encode(Aerospike.encoding)
-    when Array
-      normalize_strings_in_array(elem)
-    when Hash
-      normalize_strings_in_map(elem)
-    else
-      elem
-    end
-  end
-
-  def self.normalize_strings_in_array(arr) # :nodoc:
-    arr.map! { |elem| normalize_elem(elem) }
-  end
-
-  def self.normalize_strings_in_map(hash) # :nodoc:
-    hash.inject({}) do |h, (k,v)|
-      h.update({ normalize_elem(k) => normalize_elem(v) })
-    end
-  end
-
   def self.bytes_to_particle(type, buf, offset, length) # :nodoc:
 
     case type
@@ -482,10 +442,16 @@ module Aerospike
       buf.read(offset,length)
 
     when Aerospike::ParticleType::LIST
-      normalize_strings_in_array(MessagePack.unpack(buf.read(offset, length)))
+      Unpacker.use do |unpacker|
+        data = buf.read(offset, length)
+        unpacker.unpack(data)
+      end
 
     when Aerospike::ParticleType::MAP
-      normalize_strings_in_map(MessagePack.unpack(buf.read(offset, length)))
+      Unpacker.use do |unpacker|
+        data = buf.read(offset, length)
+        unpacker.unpack(data)
+      end
 
     when Aerospike::ParticleType::GEOJSON
       # ignore the flags for now

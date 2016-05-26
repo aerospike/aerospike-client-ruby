@@ -324,12 +324,45 @@ Checks if the client is connected to the cluster.
 
 <!--
 ################################################################################
+operate()
+################################################################################
+-->
+<a name="operate"></a>
+
+### prepend(key, operations, options={})
+
+Performs multiple operations on a single record.
+
+Parameters:
+
+- `key`         – A [Key object](datamodel.md#key), used to locate the record in the cluster.
+- `bins`        – An array of one or more [Operations](operations.md) to execute on the record.
+- `options`     – A hash representing [WritePolicy Attributes](policies.md#WritePolicy) to use for this operation.
+                  If not provided, ```@default_write_policy``` will be used.
+
+Example:
+```ruby
+  key = Key.new("test", "demo", 123)
+  ops = [
+    Aerospike::Operation.add(Aerospike::Bin.new("int_bin", 1)),
+    Aerospike::Operation.get("int_bin"),
+    Aerospike::CDT::ListOperation.append("list_bin", "foo", "bar"),
+    Aerospike::CDT::MapOperation.remove_keys("map_bin", "key1", "key2").and_return(Aerospike::CDT::MapReturnType::KEY_VALUE)
+  ]
+
+  result = client.operate(key, ops)
+
+  puts result   # => { "int_bin" => 5, "list_bin" => 3, "map_bin" => { "key1" => "abc", "key2" => "yxz" } }
+```
+
+<!--
+################################################################################
 prepend()
 ################################################################################
 -->
 <a name="prepend"></a>
 
-### prepend(key, bins. options={})
+### prepend(key, bins, options={})
 
 Using the provided key, prepends provided values to the mentioned bins.
 Bin value types should by of `string` for the command to have any effect.
