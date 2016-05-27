@@ -24,58 +24,89 @@ require 'benchmark'
 
 describe Aerospike::Client do
 
-  let(:client) do
-    described_class.new(Support.host, Support.port, :user => Support.user, :password => Support.password)
-  end
-
-  let(:geo_supported) do
-    client.request_info("features")["features"].include?("geo")
-  end
-
-  after do
-    client.close
-  end
+  let(:client) { Support.client }
 
   describe "#initialize" do
 
-    it "should connect to the cluster successfully" do
-
-      expect(client.connected?).to eq true
-
+    around(:each) do |example|
+      begin
+        as_hosts = ENV.delete("AEROSPIKE_HOSTS")
+        example.call
+      ensure
+        ENV["AEROSPIKE_HOSTS"] = as_hosts
+      end
     end
 
-    it "should have at least one node" do
-
-      expect(client.nodes.length).to be >= 1
-
+    def cluster_seeds(client)
+      client.instance_variable_get(:@cluster).seeds
     end
 
-    it "should have at least one name in node name list" do
+    it "accepts a single Host" do
+      host = Aerospike::Host.new("10.10.10.10", 3333)
+      client = Aerospike::Client.new(host, connect: false)
 
-      expect(client.node_names.length).to be >= 1
+      expect(cluster_seeds(client)).to eq [host]
+    end
 
+    it "accepts a list of Hosts" do
+      host1 = Aerospike::Host.new("10.10.10.10", 3333)
+      host2 = Aerospike::Host.new("10.10.10.11", 3333)
+      client = Aerospike::Client.new([host1, host2], connect: false)
+
+      expect(cluster_seeds(client)).to eq [host1, host2]
+    end
+
+    it "accepts a single hostname" do
+      client = Aerospike::Client.new("10.10.10.10", connect: false)
+
+      expect(cluster_seeds(client)).to eq [Aerospike::Host.new("10.10.10.10", 3000)]
+    end
+
+    it "accepts a single hostname and port" do
+      client = Aerospike::Client.new("10.10.10.10:3333", connect: false)
+
+      expect(cluster_seeds(client)).to eq [Aerospike::Host.new("10.10.10.10", 3333)]
+    end
+
+    it "accepts a list of hostnames" do
+      client = Aerospike::Client.new("10.10.10.10:3333,10.10.10.11", connect: false)
+
+      expect(cluster_seeds(client)).to eq [Aerospike::Host.new("10.10.10.10", 3333), Aerospike::Host.new("10.10.10.11", 3000)]
+    end
+
+    it "reads a list of hostnames from AEROSPIKE_HOSTS" do
+      ENV["AEROSPIKE_HOSTS"] = "10.10.10.10:3333,10.10.10.11"
+      client = Aerospike::Client.new(connect: false)
+
+      expect(cluster_seeds(client)).to eq [Aerospike::Host.new("10.10.10.10", 3333), Aerospike::Host.new("10.10.10.11", 3000)]
+    end
+
+    it "defaults to localhost:3000" do
+      ENV["AEROSPIKE_HOSTS"] = nil
+      client = Aerospike::Client.new(connect: false)
+
+      expect(cluster_seeds(client)).to eq [Aerospike::Host.new("localhost", 3000)]
     end
 
   end
 
-  describe "#new_many" do
+  describe "#connect" do
+    let(:client) { described_class.new(connect: false) }
 
     it "should connect to the cluster successfully" do
-
-      hosts = [
-        Aerospike::Host.new(Support.host, Support.port),
-      ]
-
-      mclient = described_class.new_many(hosts, :user => Support.user, :password => Support.password)
-
-      expect(mclient.connected?).to eq true
-      expect(mclient.nodes.length).to be >= 1
-      expect(mclient.node_names.length).to be >= 1
-
-      mclient.close
-
+      client.connect
+      expect(client.connected?).to eq true
     end
 
+    it "should have at least one node" do
+      client.connect
+      expect(client.nodes.length).to be >= 1
+    end
+
+    it "should have at least one name in node name list" do
+      client.connect
+      expect(client.node_names.length).to be >= 1
+    end
   end
 
   describe "#put and #get" do
@@ -186,9 +217,7 @@ describe Aerospike::Client do
 
       end
 
-      it "should put a GeoJSON value and get it successfully" do
-        skip "Server does not support geo feature" unless geo_supported
-
+      it "should put a GeoJSON value and get it successfully", skip: !Support.feature?('geo') do
         key = Support.gen_random_key
         bin = Aerospike::Bin.new('bin', Aerospike::GeoJSON.new({type: "Point", coordinates: [103.9114, 1.3083]}))
         client.put(key, bin)

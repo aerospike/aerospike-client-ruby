@@ -25,6 +25,8 @@ describe Aerospike::Client do
 
   describe "UDF operations" do
 
+    let(:client) { Support.client }
+
     let(:udf_body) do
       "function testFunc1(rec, div, str)
          local ret = map                     -- Initialize the return value (a map)
@@ -53,14 +55,6 @@ describe Aerospike::Client do
         rec[bin] = value;
         aerospike:create(rec);
       end"
-    end
-
-    let(:client) do
-      described_class.new(Support.host, Support.port, :user => Support.user, :password => Support.password)
-    end
-
-    after do
-      client.close
     end
 
     it "should register UDFs, list them and and then successfully drop them" do
@@ -241,7 +235,7 @@ describe Aerospike::Client do
         if rec.bins['bin1'] <= 500
           expect(rec.bins['bin2']).to eq (rec.bins['bin1'] / div)
         else
-          expect(rec.bins['bin2']).to eq -1
+          expect(rec.bins['bin2']).to eq(-1)
         end
         cnt += 1
       end

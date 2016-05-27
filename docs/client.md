@@ -4,13 +4,14 @@ The `Client` class provides methods which can be used to perform operations on a
 database cluster. In order to get an instance of the Client class, you need to initialize it:
 
 ```ruby
-  client = Aerospike::Client.new("127.0.0.1", 3000)
+  client = Aerospike::Client.new("127.0.0.1:3000")
 ```
 
 To customize a Client behaviour:
 
 ```ruby
-  client = Aerospike::Client.new("127.0.0.1", 3000, :connection_queue_size => 64, :timeout => 0.005)
+  policy = { connection_queue_size: 64, timeout: 0.005 }
+  client = Aerospike::Client.new("127.0.0.1:3000", policy: policy)
 ```
 
 *Notice*: Examples in the section are only intended to illuminate simple use cases without too much distraction. Always follow good coding practices in production.

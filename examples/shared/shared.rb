@@ -59,7 +59,7 @@ module Shared
 		@write_policy = WritePolicy.new
 		@policy = Policy.new
 		@logger = Logger.new(STDOUT, Logger::INFO)
-		@client = Client.new(host, port)
+		@client = Client.new(Host.new(host, port))
 	end
 
 	def host

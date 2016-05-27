@@ -49,24 +49,44 @@ For details, see [Logger Object](log.md)
 
 <a name="client"></a>
 
-### Client.new(host, port)
+### Client.new(hosts, policy:, connect:)
 
 Creates a new [client](client.md) with the provided configuration.
 
 Parameters:
 
-- `name`   – Host name or IP to connect to.
-- `port`   – Host port.
+- `hosts`   – [optional] One or more `Aerospike::Host` objects, or a String
+              with a comma separated list of hostnames. If no hosts are
+              specified, the client will attempt to read the hostnames from the
+              `AEROSPIKE_HOSTS` environment variable, or else default to "localhost:3000".
+- `policy`  – [optional] Client policy to use (e.g. username/password, timeout, etc.)
+- `connect` - [optional] Whether to connect to the cluster immediately. Default: true.
 
 Returns a new client object.
 
-Example:
+Examples:
+
+Specifying a single host seed address:
 
 ```ruby
-  client = Aerospike::Client.new("127.0.0.1", 3000)
+  host = Aerospike::Host.new("127.0.0.1", 3000)
+  client = Aerospike::Client.new(host)
 ```
 
-For detals, see [Client Class](client.md).
+Specifying a list of host addresses:
+
+```ruby
+  client = Aerospike::Client.new("10.0.0.1:3000,10.0.0.2:3100")
+```
+
+Using `AEROSPIKE_HOSTS` to set the hostnames:
+
+```ruby
+  ENV["AEROSPIKE_HOSTS"] = "192.168.10.10:3000"
+  client = Client.new
+```
+
+For details, see [Client Class](client.md).
 
 <!--
 ################################################################################

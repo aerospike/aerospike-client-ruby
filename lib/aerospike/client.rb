@@ -29,7 +29,7 @@ module Aerospike
   # Examples:
   #
   # # connect to the database
-  # client = Client.new('192.168.0.1', 3000)
+  # client = Client.new('192.168.0.1')
   #
   # #=> raises Aerospike::Exceptions::Timeout if a +:timeout+ is specified and
   # +:fail_if_not_connected+ set to true
@@ -39,40 +39,27 @@ module Aerospike
     attr_accessor :default_policy, :default_write_policy,
       :default_scan_policy, :default_query_policy, :default_admin_policy
 
-    def initialize(host, port, options={})
+    def initialize(hosts = nil, policy: ClientPolicy.new, connect: true)
       @default_policy = Policy.new
       @default_write_policy = WritePolicy.new
       @default_scan_policy = ScanPolicy.new
       @default_query_policy = QueryPolicy.new
       @default_admin_policy = QueryPolicy.new
 
-      policy = create_policy(options, ClientPolicy)
-
-      @cluster = Cluster.new(policy, Host.new(host, port))
+      hosts = parse_hosts(hosts || ENV["AEROSPIKE_HOSTS"] || "localhost")
+      policy = create_policy(policy, ClientPolicy)
+      @cluster = Cluster.new(policy, *hosts)
       @cluster.add_cluster_config_change_listener(self)
-      @cluster.connect
 
+      self.connect if connect
       self
     end
 
-    def self.new_many(hosts, options={})
-      # Don't initiualize, just instantiate
-      client = Client.allocate
+    ##
+    #  Connect to the cluster.
 
-      client.default_policy = Policy.new
-      client.default_write_policy = WritePolicy.new
-      client.default_scan_policy = ScanPolicy.new
-      client.default_query_policy = QueryPolicy.new
-      client.default_admin_policy = QueryPolicy.new
-
-      policy = client.send(:create_policy , options, ClientPolicy)
-
-      cluster = Cluster.new(policy, *hosts)
-      cluster.add_cluster_config_change_listener(client)
-      client.send(:cluster=, cluster)
-      cluster.connect
-
-      client
+    def connect
+      @cluster.connect
     end
 
     ##
@@ -865,6 +852,23 @@ module Aerospike
         policy_klass.new(policy)
       else
         fail TypeError, "policy should be a #{policy_klass.name} instance or a Hash"
+      end
+    end
+
+    def parse_hosts(hosts)
+      case hosts
+      when Host
+        [hosts]
+      when Array
+        hosts
+      when String
+        hosts.split(?,).map { |host|
+          (addr, port) = host.split(?:)
+          port ||= 3000
+          Host.new(addr, port.to_i)
+        }
+      else
+        fail TypeError, "hosts should be a Host object, an Array of Host objects, or a String"
       end
     end
 

@@ -23,9 +23,7 @@ require 'aerospike/language'
 
 describe Aerospike::Client do
 
-  let(:client) do
-    described_class.new(Support.host, Support.port, :user => Support.user, :password => Support.password)
-  end
+  let(:client) { Support.client }
 
   let(:str_bin_name) do
     'str_bin'
@@ -53,8 +51,6 @@ describe Aerospike::Client do
                       key.set_name,
                       "index_int_#{key.set_name}",
                       )
-
-    client.close
   end
 
   describe "Index operations" do

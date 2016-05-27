@@ -47,7 +47,7 @@ def main
 	end
 
 	opt_parser.parse!
-	client = Client.new(options[:host], options[:port])
+	client = Client.new(Host.new(options[:host], options[:port]))
 
 	info_map = options[:value].nil? ? client.request_info : client.request_info(options[:value])
 	info_map.each_with_index do |vals, i|

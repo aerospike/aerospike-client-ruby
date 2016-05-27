@@ -40,6 +40,56 @@ To create only specific keys using v1 compatible digest, set the
     k2 = Aerospike::Key.new('test', 'demo', 42, v1_compatible: true)
     puts k2.digest.unpack("H*")                   # => 0de7a87b3db745e84c7571d947c4b038bb735760
 
+### Client Initializer
+
+The client initializer `Aerospike::Client.new` has been updated to accept
+multiple hostnames. The hostnames can be passed either in the form of
+`Aerospike::Host` objects or as a string of comma separated hostnames. If no
+hosts are specified, the v2 client will attempt to read the hostnames from the
+`AEROSPIKE_HOSTS` environment variable. Last, the client will default to the
+address "localhost:3000".
+
+Client policy settings need to be passed as a hash to the `policy:` named parameter.
+
+The new `connect:` named paramter can be set to `false` to prevent the client
+from connecting to the cluster immediately. The connection can be established
+later using the `Client#connectx` method.
+
+Here is the new method signature:
+
+    def initialize(hosts = nil, policy: ClientPolicy.new, connect: true)
+
+Usage examples:
+
+Specifying a single host seed address:
+
+```ruby
+  host = Aerospike::Host.new("127.0.0.1", 3000)
+  client = Aerospike::Client.new(host)
+```
+
+Specifying a list of host addresses:
+
+```ruby
+  client = Aerospike::Client.new("10.0.0.1:3000,10.0.0.2:3100")
+```
+
+Using `AEROSPIKE_HOSTS` to set the hostnames:
+
+```ruby
+  ENV["AEROSPIKE_HOSTS"] = "192.168.10.10:3000"
+  client = Client.new
+```
+
+Setting a client policy:
+
+```ruby
+  client = Client.new(policy: { timeout: 0.2 })
+```
+
+`Aerospike::Client.new_many` has been removed as the regular `new` method can
+now accept multiple hostnames.
+
 ### Supported Ruby versions
 
 Ruby 1.9.3 is no longer supported. Ruby 2.0 or later are requried to use

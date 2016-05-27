@@ -22,13 +22,7 @@ describe Aerospike::Client do
 
     describe "LargeSet operations" do
 
-      let(:client) do
-        described_class.new(Support.host, Support.port, :user => Support.user, :password => Support.password)
-      end
-
-      after do
-        client.close
-      end
+      let(:client) { Support.client }
 
       let(:lset) do
         client.get_large_set(Support.gen_random_key, 'bbb')

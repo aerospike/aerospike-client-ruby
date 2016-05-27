@@ -21,43 +21,34 @@ describe Aerospike::Client do
 
   describe "Scan operations" do
 
-    def scan_method(type, bin_names=[], ops={})
-      case type
-      when :single_node
-        r = @client.nodes.map do |node|
-          @client.scan_node(node, 'test', 'test998', bin_names, ops)
-        end
-        r
-      when :multiple_nodes
-        return [@client.scan_all('test', 'test998', bin_names, ops)]
-      end
-    end
+    let(:client) { Support.client }
 
     before :all do
-      @client = described_class.new(Support.host, Support.port, :user => Support.user, :password => Support.password)
-      sleep 2 # allow some time for cluster tending process to stabilize when running against multi-node cluster
+      @namespace = "test"
+      @set = "test998"
       @record_count = 1000
-
-      for i in 1..@record_count
-        key = Aerospike::Key.new('test', 'test998', i)
-
+      @record_count.times do |i|
+        key = Aerospike::Key.new(@namespace, @set, i)
         bin_map = {
           'bin1' => "value#{i}",
           'bin2' => i,
           'bin4' => ['value4', {'map1' => 'map val'}],
           'bin5' => {'value5' => [124, "string value"]},
         }
-
-        @client.put(key, bin_map, :send_key => true)
-
-        expect(@client.exists(key)).to eq true
+        Support.client.put(key, bin_map, :send_key => true)
       end
     end
 
-    after :all do
-      @client.close
+    def scan_method(type, bin_names=[], ops={})
+      case type
+      when :single_node
+        client.nodes.map do |node|
+          client.scan_node(node, @namespace, @set, bin_names, ops)
+        end
+      when :multiple_nodes
+        [client.scan_all(@namespace, @set, bin_names, ops)]
+      end
     end
-
 
     [:single_node, :multiple_nodes].each do |type|
 
@@ -136,23 +127,6 @@ describe Aerospike::Client do
       end # context
 
     end # do
-
-    # it "benchmark #scan_all" do
-    #   bin = Aerospike::Bin.new('bin', 'value')
-    #   key = Support.gen_random_key
-
-    #   record = nil
-    #   Benchmark.bm do |bm|
-    #     # joining an array of strings
-    #     bm.report do
-    #       100.times do |i|
-    #         rs = @client.scan_all('test', 'test998', nil, :scan_percent => 10)
-    #         rs.each { }
-    #       end
-    #     end
-    #   end
-
-    # end
 
   end
 

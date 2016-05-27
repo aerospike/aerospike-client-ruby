@@ -19,85 +19,64 @@ require "aerospike/query/statement"
 
 describe Aerospike::Client do
 
-    let(:udf_body) do
-      " local function map_record(record)
-          -- Add name and age to returned map.
-          -- Could add other record bins here as well.
-          return map {bin1=record.bin1, bin2=record['bin2']}
+  let(:client) { Support.client }
+
+  let(:udf_body) do
+    " local function map_record(record)
+        -- Add name and age to returned map.
+        -- Could add other record bins here as well.
+        return map {bin1=record.bin1, bin2=record['bin2']}
+      end
+
+      function filter_records(stream)
+
+        local function filter_name(record)
+          return true
         end
 
-        function filter_records(stream)
+        return stream : filter(filter_name) : map(map_record)
+      end
 
-          local function filter_name(record)
-            return true
-          end
+      function filter_records_param(stream, value)
 
-          return stream : filter(filter_name) : map(map_record)
+        local function filter_name(record)
+          return record['bin2'] > value
         end
 
-        function filter_records_param(stream, value)
-
-          local function filter_name(record)
-            return record['bin2'] > value
-          end
-
-          return stream : filter(filter_name) : map(map_record)
-        end"
-    end
+        return stream : filter(filter_name) : map(map_record)
+      end"
+  end
 
   describe "Query operations" do
 
     before :all do
-
-      @client = described_class.new(Support.host, Support.port, :user => Support.user, :password => Support.password)
-      sleep 2 # allow some time for cluster tending process to stabilize when running against multi-node cluster
-      @geo_supported = @client.request_info("features")["features"].include?("geo")
+      @namespace = "test"
+      @set = "test998"
       @record_count = 1000
-
-      for i in 1..@record_count
-        key = Aerospike::Key.new('test', 'test998', i)
-
+      @record_count.times do |i|
+        key = Aerospike::Key.new(@namespace, @set, i)
         bin_map = {
           'bin1' => "value#{i}",
           'bin2' => i,
           'bin4' => ['value4', {'map1' => 'map val'}],
           'bin5' => {'value5' => [124, "string value"]},
         }
-
-        @client.put(key, bin_map)
-
-        expect(@client.exists(key)).to eq true
+        Support.client.put(key, bin_map)
       end
 
-      index_task = @client.create_index(
-        key.namespace,
-        key.set_name,
-        "index_int_bin2",
-        'bin2', :numeric
-        )
-
+      index_task = Support.client.create_index(@namespace, @set, "index_int_bin2", "bin2", :numeric)
       expect(index_task.wait_till_completed).to be true
       expect(index_task.completed?).to be true
 
-      index_task = @client.create_index(
-        key.namespace,
-        key.set_name,
-        "index_str_bin1",
-        'bin1', :string
-        )
-
+      index_task = Support.client.create_index(@namespace, @set, "index_str_bin1", "bin1", :string)
       expect(index_task.wait_till_completed).to be true
       expect(index_task.completed?).to be true
-    end
-
-    after :all do
-      @client.close
     end
 
     context "No Filter == Scan" do
 
       it "should return all records" do
-        rs = @client.query(Aerospike::Statement.new('test', 'test998', ))
+        rs = client.query(Aerospike::Statement.new(@namespace, @set))
 
         i = 0
         rs.each do |rec|
@@ -116,9 +95,9 @@ describe Aerospike::Client do
       context "Numeric Bins" do
 
         it "should return relevent records" do
-          stmt = Aerospike::Statement.new('test', 'test998', ['bin1', 'bin2'])
+          stmt = Aerospike::Statement.new(@namespace, @set, ['bin1', 'bin2'])
           stmt.filters = [Aerospike::Filter.Equal('bin2', 1)]
-          rs = @client.query(stmt)
+          rs = client.query(stmt)
 
           i = 0
           rs.each do |rec|
@@ -136,9 +115,9 @@ describe Aerospike::Client do
       context "String Bins" do
 
         it "should return relevent records" do
-          stmt = Aerospike::Statement.new('test', 'test998')
+          stmt = Aerospike::Statement.new(@namespace, @set)
           stmt.filters = [Aerospike::Filter.Equal('bin1', 'value1')]
-          rs = @client.query(stmt)
+          rs = client.query(stmt)
 
           i = 0
           rs.each do |rec|
@@ -159,9 +138,9 @@ describe Aerospike::Client do
       context "Numeric Bins" do
 
         it "should return relevent records" do
-          stmt = Aerospike::Statement.new('test', 'test998')
+          stmt = Aerospike::Statement.new(@namespace, @set)
           stmt.filters = [Aerospike::Filter.Range('bin2', 10, 100)]
-          rs = @client.query(stmt)
+          rs = client.query(stmt)
 
           i = 0
           rs.each do |rec|
@@ -177,7 +156,7 @@ describe Aerospike::Client do
 
     end # context
 
-    context "Geospatial Filter" do
+    context "Geospatial Filter", skip: !Support.feature?("geo") do
 
       let(:lon){ 103.9114 }
       let(:lat){ 1.3083 }
@@ -186,26 +165,20 @@ describe Aerospike::Client do
       let(:region){ Aerospike::GeoJSON.new({type: "Polygon", coordinates: [[[103.6055, 1.1587], [103.6055, 1.4707], [104.0884, 1.4707], [104.0884, 1.1587], [103.6055, 1.1587]]]}) }
 
       around do |example|
-        if @geo_supported
-          Support.delete_set(@client, "geo")
-          task = @client.create_index("test", "geo", "geo_index", "location", :geo2dsphere)
-          task.wait_till_completed
-          example.call
-          @client.drop_index("test", "geo", "geo_index")
-        else
-          example.call
-        end
+        Support.delete_set(client, "geo")
+        task = client.create_index(@namespace, "geo", "geo_index", "location", :geo2dsphere)
+        task.wait_till_completed
+        example.call
+        client.drop_index(@namespace, "geo", "geo_index")
       end
 
       it "should return a point within the given GeoJSON region" do
-        skip "Server does not support geo feature" unless @geo_supported
-
-        key = Aerospike::Key.new("test", "geo", "p1")
-        @client.put(key, "location" => point)
+        key = Aerospike::Key.new(@namespace, "geo", "p1")
+        client.put(key, "location" => point)
 
         stmt = Aerospike::Statement.new(key.namespace, key.set_name, ["location"])
         stmt.filters = [Aerospike::Filter.geoWithinGeoJSONRegion("location", region)]
-        rs = @client.query(stmt)
+        rs = client.query(stmt)
 
         results = []
         rs.each{|record| results << record }
@@ -213,14 +186,12 @@ describe Aerospike::Client do
       end # it
 
       it "should return a point within the given radius" do
-        skip "Server does not support geo feature" unless @geo_supported
-
-        key = Aerospike::Key.new("test", "geo", "p1")
-        @client.put(key, "location" => point)
+        key = Aerospike::Key.new(@namespace, "geo", "p1")
+        client.put(key, "location" => point)
 
         stmt = Aerospike::Statement.new(key.namespace, key.set_name, ["location"])
         stmt.filters = [Aerospike::Filter.geoWithinRadius("location", lon, lat, radius)]
-        rs = @client.query(stmt)
+        rs = client.query(stmt)
 
         results = []
         rs.each{|record| results << record }
@@ -228,14 +199,12 @@ describe Aerospike::Client do
       end # it
 
       it "should return a region which contains the given GeoJSON point" do
-        skip "Server does not support geo feature" unless @geo_supported
-
-        key = Aerospike::Key.new("test", "geo", "r1")
-        @client.put(key, "location" => region)
+        key = Aerospike::Key.new(@namespace, "geo", "r1")
+        client.put(key, "location" => region)
 
         stmt = Aerospike::Statement.new(key.namespace, key.set_name, ["location"])
         stmt.filters = [Aerospike::Filter.geoContainsGeoJSONPoint("location", point)]
-        rs = @client.query(stmt)
+        rs = client.query(stmt)
 
         results = []
         rs.each{|record| results << record }
@@ -243,14 +212,12 @@ describe Aerospike::Client do
       end # it
 
       it "should return a region which contains the given lon/lat coordinates" do
-        skip "Server does not support geo feature" unless @geo_supported
-
-        key = Aerospike::Key.new("test", "geo", "r1")
-        @client.put(key, "location" => region)
+        key = Aerospike::Key.new(@namespace, "geo", "r1")
+        client.put(key, "location" => region)
 
         stmt = Aerospike::Statement.new(key.namespace, key.set_name, ["location"])
         stmt.filters = [Aerospike::Filter.geoContainsPoint("location", lon, lat)]
-        rs = @client.query(stmt)
+        rs = client.query(stmt)
 
         results = []
         rs.each{|record| results << record }
@@ -263,16 +230,16 @@ describe Aerospike::Client do
 
       it "should return relevent records from UDF without any arguments" do
 
-        register_task = @client.register_udf(udf_body, "udf_empty.lua", Aerospike::Language::LUA)
+        register_task = client.register_udf(udf_body, "udf_empty.lua", Aerospike::Language::LUA)
 
         expect(register_task.wait_till_completed).to be true
         expect(register_task.completed?).to be true
 
-        stmt = Aerospike::Statement.new('test', 'test998')
+        stmt = Aerospike::Statement.new(@namespace, @set)
         stmt.filters = [Aerospike::Filter.Range('bin2', 10, 100)]
         stmt.set_aggregate_function('udf_empty', 'filter_records', [], true)
 
-        rs = @client.query(stmt)
+        rs = client.query(stmt)
 
         i = 0
         rs.each do |rec|
@@ -287,18 +254,18 @@ describe Aerospike::Client do
 
       it "should return relevent records from UDF with arguments" do
 
-        register_task = @client.register_udf(udf_body, "udf_empty.lua", Aerospike::Language::LUA)
+        register_task = client.register_udf(udf_body, "udf_empty.lua", Aerospike::Language::LUA)
 
         expect(register_task.wait_till_completed).to be true
         expect(register_task.completed?).to be true
 
-        stmt = Aerospike::Statement.new('test', 'test998')
+        stmt = Aerospike::Statement.new(@namespace, @set)
         stmt.filters = [Aerospike::Filter.Range('bin2', 10, 100)]
 
         filter_value = 90
         stmt.set_aggregate_function('udf_empty', 'filter_records_param', [filter_value], true)
 
-        rs = @client.query(stmt)
+        rs = client.query(stmt)
 
         i = 0
         rs.each do |rec|

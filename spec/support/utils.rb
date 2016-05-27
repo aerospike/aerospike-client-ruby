@@ -3,10 +3,6 @@ require 'aerospike/key'
 module Support
 
   RAND_CHARS = ('a'..'z').to_a.concat(('A'..'Z').to_a).concat(('0'..'9').to_a)
-  HOST = ENV.fetch("AS_HOST", "127.0.0.1")
-  PORT = ENV.fetch("AS_PORT", 3000).to_i
-  USER = ""
-  PASSWORD = ""
 
   def self.rand_string(len)
     RAND_CHARS.shuffle[0,len].join
@@ -35,24 +31,8 @@ EOF
     remove_task.wait_till_completed or fail "Could not un-register delete_record UDF to delete set #{set_name}"
   end
 
-  def self.host
-    HOST
-  end
-
-  def self.port
-    PORT
-  end
-
-  def self.user
-    USER
-  end
-
-  def self.password
-    PASSWORD
-  end
-
   def self.client
-    @client ||= Aerospike::Client.new(self.host, self.port, user: self.user, password: self.password)
+    @client ||= Aerospike::Client.new()
   end
 
   def self.feature?(feature)

@@ -322,7 +322,9 @@ readFlags
 printBenchmarkParams
 
 begin
-  client = Client.new(@options[:host], @options[:port], :user => @options[:user], :password => @options[:password])
+  host = Host.new(@options[:host], @options[:port])
+  policy = { user: @options[:user], password: @options[:password] }
+  client = Client.new(host, policy: policy)
 rescue => e
   abort(e.to_s)
 end

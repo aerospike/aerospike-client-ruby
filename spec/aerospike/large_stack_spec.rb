@@ -22,13 +22,7 @@ describe Aerospike::Client do
 
     describe "LargeStack operations" do
 
-      let(:client) do
-        described_class.new(Support.host, Support.port, :user => Support.user, :password => Support.password)
-      end
-
-      after do
-        client.close
-      end
+      let(:client) { Support.client }
 
       let(:lstack) do
         client.get_large_stack(Support.gen_random_key, 'bbb')

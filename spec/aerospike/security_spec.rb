@@ -21,49 +21,43 @@ describe Aerospike::Client do
 
     describe "Security operations", :skip_security => true do
 
-      before :all do
-        @client = described_class.new(Support.host, Support.port, :user => Support.user, :password => Support.password)
-      end
-
-      after :all do
-        @client.close
-      end
+      let(:client) { Support.client }
 
       context "Roles" do
 
         before :each do
           begin
-            @client.drop_user('test_user')
+            client.drop_user('test_user')
           rescue
           end
-      
-          @client.create_user('test_user', 'test', ["user-admin"])
+
+          client.create_user('test_user', 'test', ["user-admin"])
         end
 
         it "must query roles perfectly" do
-          admin = @client.query_user('test_user')
+          admin = client.query_user('test_user')
 
           expect(admin.user).to eq 'test_user'
           expect(admin.roles).to include 'user-admin'
         end # it
 
         it "Must Revoke/Grant Roles Perfectly" do
-          @client.grant_roles("test_user", ["user-admin", "sys-admin", "read-write", "read"])
-          admin = @client.query_user("test_user")
+          client.grant_roles("test_user", ["user-admin", "sys-admin", "read-write", "read"])
+          admin = client.query_user("test_user")
 
           expect(admin.user).to eq "test_user"
           expect(admin.roles).to match_array(["user-admin", "sys-admin", "read-write", "read"])
-          
-          @client.revoke_roles("test_user", ["sys-admin"])
-          admin = @client.query_user("test_user")
+
+          client.revoke_roles("test_user", ["sys-admin"])
+          admin = client.query_user("test_user")
 
           expect(admin.user).to eq "test_user"
           expect(admin.roles).to match_array(["user-admin", "read-write", "read"])
         end
 
-        it "Must Replace Roles Perfectly" do        
-          @client.replace_roles("test_user", ["user-admin", "read"])
-          admin = @client.query_user("test_user")
+        it "Must Replace Roles Perfectly" do
+          client.replace_roles("test_user", ["user-admin", "read"])
+          admin = client.query_user("test_user")
 
           expect(admin.user).to eq "test_user"
           expect(admin.roles).to match_array(["user-admin", "read"])
@@ -75,11 +69,11 @@ describe Aerospike::Client do
 
         it "Must Create/Drop User" do
           # drop before test
-          @client.drop_user("test_user")
+          client.drop_user("test_user")
 
-          @client.create_user("test_user", "test", ["user-admin", "read"])
+          client.create_user("test_user", "test", ["user-admin", "read"])
 
-          admin = @client.query_user("test_user")
+          admin = client.query_user("test_user")
 
           expect(admin.user).to eq "test_user"
           expect(admin.roles).to match_array(["user-admin", "read"])
@@ -87,21 +81,24 @@ describe Aerospike::Client do
 
         it "Must Change User Password" do
           # drop before test
-          @client.drop_user("test_user")
+          client.drop_user("test_user")
 
-          @client.create_user("test_user", "test", ["user-admin", "read"])
+          client.create_user("test_user", "test", ["user-admin", "read"])
 
           # connect using the new user
-          new_client = Aerospike::Client.new(Support.host, Support.port, :user => 'test_user', :password => 'test')
+          host = client.nodes.first.get_host
+          policy = { user: "test_user", password: "test" }
+          new_client = Aerospike::Client.new(host, policy: policy)
 
           # change current user's password on the fly
           new_client.change_password("test_user", "test1")
 
           # exhaust all node connections
           new_client.nodes.each do |node|
-            for i in 0...(Aerospike::ClientPolicy.new.connection_queue_size)
+            queue_size = Aerospike::ClientPolicy.new.connection_queue_size
+            queue_size.times do
               conn = node.get_connection(1)
-                  conn.close if conn
+              conn.close if conn
             end
           end
 
@@ -120,22 +117,22 @@ describe Aerospike::Client do
           # drop before test
           for i in 1...user_count
             begin
-              @client.drop_user("test_user#{i}")
+              client.drop_user("test_user#{i}")
             rescue
             end
           end
 
           for i in 1...user_count
-            @client.create_user("test_user#{i}", "test", ["read"])
-            end
+            client.create_user("test_user#{i}", "test", ["read"])
+          end
 
           # should have the password changed in the cluster, so that a new connection
           # will be established and used
-          users = @client.query_users
+          users = client.query_users
           expect(users.length).to be >= user_count-1
 
           for i in 1...user_count
-            @client.drop_user("test_user#{i}")
+            client.drop_user("test_user#{i}")
           end
 
         end

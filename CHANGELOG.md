@@ -1,12 +1,15 @@
-Head
+v2.0.0 / 2016-05-27
 ===================
 
-* **Breaking Changes**
-  * Incompatible integer key digests: digests for integer keys computed by v2 and v1 are different; the Aerospike server uses the key digest to retrieve records. Please carefully read the [details](docs/api-changes.html#v2.0.0) of this breaking change if you have existing records with integer keys created by a v1 client version and need to read them with a v2 client version.
+* **Breaking Changes** - Please refer to detailed list of [API changes](docs/api-changes.html#v2.0.0) for further details.
+  * Incompatible integer key digests: digests for integer keys computed by v2 and v1 are different; the Aerospike server uses the key digest to retrieve records. This will impact your ability to read records with integer keys that were created by a v1 client version.
+  * Backward incompatible changes to the `Aerospike::Client.new` initializer.
+  * The `Aerospike::Client.new_many` initializer has been removed; use `Aerospike::Client.new` instead.
   * Drop support for Ruby 1.9.3; requires Ruby 2.0 or later.
 
 * **Improvements**
   * Add support for List and Map operations on List/Map Complex Data Types (CDT); requires Aerospike Server version 3.9 or later. [CLIENT-559]
+  * Read Aerospike server address from AEROSPIKE_HOSTS env variable if not specified explicity in client constructor.
   * Add 2.3.1 to supported Ruby versions on Travis-CI.
 
 * **Fixes**

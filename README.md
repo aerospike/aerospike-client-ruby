@@ -31,7 +31,7 @@ require 'aerospike'
 
 include Aerospike
 
-client = Client.new("127.0.0.1", 3000)
+client = Client.new("127.0.0.1")
 
 key = Key.new('test', 'test', 'key value')
 bin_map = {
