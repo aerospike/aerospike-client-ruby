@@ -10,7 +10,6 @@ require 'aerospike'
 include Aerospike
 
 @options = {
-  :host => '127.0.0.1',
   :port => 3000,
   :namespace => 'test',
   :set => 'benchmark',
@@ -324,7 +323,7 @@ printBenchmarkParams
 begin
   host = Host.new(@options[:host], @options[:port])
   policy = { user: @options[:user], password: @options[:password] }
-  client = Client.new(host, policy: policy)
+  client = @options[:host] ? Client.new(host, policy: policy) : Client.new(policy: policy)
 rescue => e
   abort(e.to_s)
 end

@@ -23,7 +23,6 @@ module Shared
 
   def init
     @@options = {
-      :host => '127.0.0.1',
       :port => 3000,
       :namespace => 'test',
       :set => 'examples',
@@ -59,7 +58,7 @@ module Shared
     @write_policy = WritePolicy.new
     @policy = Policy.new
     @logger = Logger.new(STDOUT, Logger::INFO)
-    @client = Client.new(Host.new(host, port))
+    @client = host ? Client.new(Host.new(host, port)) : Client.new
   end
 
   def host

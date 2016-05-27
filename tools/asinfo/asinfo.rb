@@ -23,7 +23,6 @@ require 'aerospike'
 include Aerospike
 
 @options = {
-  :host => '127.0.0.1',
   :port => 3000,
   :value => nil,
   :showUsage => false,
@@ -50,7 +49,7 @@ include Aerospike
 end
 
 @opt_parser.parse!
-client = Client.new(Host.new(@options[:host], @options[:port]))
+client = @options[:host] ? Client.new(Host.new(@options[:host], @options[:port])) : Client.new
 info_map = @options[:value].nil? ? client.request_info : client.request_info(@options[:value])
 info_map.each_with_index do |vals, i|
   k, v = vals
