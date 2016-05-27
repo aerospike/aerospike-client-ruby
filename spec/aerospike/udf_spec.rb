@@ -58,25 +58,21 @@ describe Aerospike::Client do
     end
 
     it "should register UDFs, list them and and then successfully drop them" do
-
-      (1..10).to_a.each do |i|
-        register_task = client.register_udf(udf_body, "udf#{i}.lua", Aerospike::Language::LUA)
-
+      2.times do |i|
+        register_task = client.register_udf(udf_body, "test-udf#{i}.lua", Aerospike::Language::LUA)
         expect(register_task.wait_till_completed).to be true
         expect(register_task.completed?).to be true
       end
 
       # should list the udfs
-      udf_list = client.list_udf
-      expect(udf_list.select { |item| item.filename =~ /udf(1|2|3)\.lua/ }.length).to eq 3
+      modules = client.list_udf.map(&:filename)
+      expect(modules).to include("test-udf0.lua", "test-udf1.lua")
 
-      (1..10).to_a.each do |i|
-        remove_task = client.remove_udf("udf#{i}.lua")
-
+      2.times do |i|
+        remove_task = client.remove_udf("test-udf#{i}.lua")
         expect(remove_task.wait_till_completed).to be true
         expect(remove_task.completed?).to be true
       end
-
     end # it
 
     it "should execute a udf with string parameters successfully" do
@@ -151,13 +147,12 @@ describe Aerospike::Client do
     end
 
     it "should execute a UDF on all records" do
-
       ns = 'test'
       set = Support.rand_string(10)
-
       div = 2
 
-      1000.times do |i|
+      number_of_records = 100
+      number_of_records.times do |i|
         key = Support.gen_random_key(50, {:set => set})
         bin1 = Aerospike::Bin.new('bin1', i * div)
         bin2 = Aerospike::Bin.new('bin2', -1)
@@ -165,39 +160,32 @@ describe Aerospike::Client do
       end
 
       register_task = client.register_udf(udf_body, "udf1.lua", Aerospike::Language::LUA)
-
       expect(register_task.wait_till_completed).to be true
       expect(register_task.completed?).to be true
 
-      # run the UDF 3 times consecutively
       statement = Aerospike::Statement.new(ns, set)
       ex_task = client.execute_udf_on_query(statement, "udf1", "testFunc1", [div])
-
-      # wait until UDF is run on all records
       expect(ex_task.wait_till_completed).to be true
       expect(ex_task.completed?).to be true
 
       # read all data and make sure it is consistent
       recordset = client.scan_all(ns, set)
-
       cnt = 0
       recordset.each do |rec|
         expect(rec.bins['bin2']).to eq (rec.bins['bin1'] / div)
         cnt += 1
       end
-
-      expect(cnt).to be > 0
-
+      expect(cnt).to eq number_of_records
     end # it
 
     it "should execute a UDF on only a range of records" do
-
       ns = 'test'
       set = Support.rand_string(10)
 
       div = 2
 
-      1000.times do |i|
+      number_of_records = 100
+      number_of_records.times do |i|
         key = Support.gen_random_key(50, {:set => set})
         bin1 = Aerospike::Bin.new('bin1', i * div)
         bin2 = Aerospike::Bin.new('bin2', -1)
@@ -205,22 +193,15 @@ describe Aerospike::Client do
       end
 
       register_task = client.register_udf(udf_body, "udf1.lua", Aerospike::Language::LUA)
-
       expect(register_task.wait_till_completed).to be true
       expect(register_task.completed?).to be true
 
-      index_task = client.create_index(ns,
-                                       set,
-                                       "index_int_#{set}",
-                                       'bin1', :numeric
-                                       )
-
+      index_task = client.create_index(ns, set, "index_int_#{set}", 'bin1', :numeric)
       expect(index_task.wait_till_completed).to be true
       expect(index_task.completed?).to be true
 
-      # run the UDF 3 times consecutively
       statement = Aerospike::Statement.new(ns, set)
-      statement.filters << Aerospike::Filter.Range('bin1', 0, 500)
+      statement.filters << Aerospike::Filter.Range('bin1', 0, number_of_records / 2)
       ex_task = client.execute_udf_on_query(statement, "udf1", "testFunc1", [div])
 
       # wait until UDF is run on all records
@@ -232,15 +213,14 @@ describe Aerospike::Client do
 
       cnt = 0
       recordset.each do |rec|
-        if rec.bins['bin1'] <= 500
+        if rec.bins['bin1'] <= number_of_records / 2
           expect(rec.bins['bin2']).to eq (rec.bins['bin1'] / div)
         else
           expect(rec.bins['bin2']).to eq(-1)
         end
         cnt += 1
       end
-
-      expect(cnt).to be > 0
+      expect(cnt).to eq number_of_records
 
     end # it
 

@@ -38,7 +38,7 @@ module Aerospike
       # make sure there will be only ONE thread polling for completetion status
       @done_thread.update do |dt|
         dt ? dt : Thread.new do
-          abort_on_exception=true
+          Thread.current.abort_on_exception = true
           failures = 0
           while true
             begin
@@ -60,11 +60,7 @@ module Aerospike
     end
 
     def completed?
-      if @done.value == true
-        true
-      else
-        @done.value = all_nodes_done?
-      end
+      @done.value ||= all_nodes_done?
     end
 
   end # class

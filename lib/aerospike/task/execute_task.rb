@@ -32,9 +32,9 @@ module Aerospike
 		# IsDone queries all nodes for task completion status.
 		def all_nodes_done?
 
-			if @scan 
+			if @scan
 				command = 'scan-list'
-			else 
+			else
 				command = 'query-list'
 			end
 
@@ -68,7 +68,7 @@ module Aerospike
 				e = response.index(':')
 				status = response[0, e]
 
-				case status 
+				case status
 				when 'ABORTED'
 					raise raise Aerospike::Exceptions::QueryTerminated
 				when 'IN PROGRESS'
