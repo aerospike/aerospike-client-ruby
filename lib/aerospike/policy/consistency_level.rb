@@ -17,11 +17,11 @@ module Aerospike
 
   module ConsistencyLevel
 
-	# Involve a single replica in the operation.
-	CONSISTENCY_ONE = 0
+    # Involve a single replica in the operation.
+    CONSISTENCY_ONE = 0
 
-	# Involve all replicas in the operation.
-	CONSISTENCY_ALL = 1
+    # Involve all replicas in the operation.
+    CONSISTENCY_ALL = 1
 
   end # module
 

@@ -19,39 +19,39 @@ include Aerospike
 include Shared
 
 def main
-    Shared.init
-	run_example(Shared.client)
+  Shared.init
+  run_example(Shared.client)
 
-	Shared.logger.info("Example finished successfully.")
+  Shared.logger.info("Example finished successfully.")
 end
 
 def run_example(client)
-	Aerospike.logger = Shared.logger
+  Aerospike.logger = Shared.logger
 
-	(0...10000).each do |i|
-		Shared.client.put(Key.new(Shared.namespace, Shared.set_name, i), {"bin" => i})
-	end
+  (0...10000).each do |i|
+    Shared.client.put(Key.new(Shared.namespace, Shared.set_name, i), {"bin" => i})
+  end
 
-	Shared.logger.info("Scan parallel: namespace=#{Shared.namespace} set=#{Shared.set_name}")
-	record_count = 0
-	begin_time = Time.now
+  Shared.logger.info("Scan parallel: namespace=#{Shared.namespace} set=#{Shared.set_name}")
+  record_count = 0
+  begin_time = Time.now
 
-	policy = ScanPolicy.new
-	recordset = client.scan_all(Shared.namespace, Shared.set_name, [], policy)
+  policy = ScanPolicy.new
+  recordset = client.scan_all(Shared.namespace, Shared.set_name, [], policy)
 
-	recordset.each do |rec|	
-		record_count+=1
-		Shared.logger.info("Records #{record_count}") if (record_count % 100) == 0
-	end
+  recordset.each do |rec|
+    record_count+=1
+    Shared.logger.info("Records #{record_count}") if (record_count % 100) == 0
+  end
 
-	end_time = Time.now
+  end_time = Time.now
 
-	seconds = end_time - begin_time
-	Shared.logger.info("Total records returned: #{record_count}")
-	Shared.logger.info("Elapsed time: #{seconds} seconds")
-	
-	performance = (record_count.to_f/seconds.to_f).round(2)
-	Shared.logger.info("Records/second: #{performance}")
+  seconds = end_time - begin_time
+  Shared.logger.info("Total records returned: #{record_count}")
+  Shared.logger.info("Elapsed time: #{seconds} seconds")
+
+  performance = (record_count.to_f/seconds.to_f).round(2)
+  Shared.logger.info("Records/second: #{performance}")
 end
 
 main

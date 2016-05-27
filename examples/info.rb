@@ -19,43 +19,43 @@ require './shared/shared'
 include Aerospike
 
 def main
-	options = {
-	  :host => '127.0.0.1',
-	  :port => 3000,
-	  :value => nil,
-	  :showUsage => false,
-	}
+  options = {
+    :host => '127.0.0.1',
+    :port => 3000,
+    :value => nil,
+    :showUsage => false,
+  }
 
-	opt_parser = OptionParser.new do |opts|
-	  opts.banner = "Usage: asinfo [options]"
+  opt_parser = OptionParser.new do |opts|
+    opts.banner = "Usage: asinfo [options]"
 
-	  opts.on("-h", "--host HOST", "Aerospike server seed hostnames or IP addresses") do |v|
-	    options[:host] = v
-	  end
-	  opts.on("-p", "--port PORT", "Aerospike server seed hostname or IP address port number.") do |v|
-	    options[:port] = v.to_i
-	  end
+    opts.on("-h", "--host HOST", "Aerospike server seed hostnames or IP addresses") do |v|
+      options[:host] = v
+    end
+    opts.on("-p", "--port PORT", "Aerospike server seed hostname or IP address port number.") do |v|
+      options[:port] = v.to_i
+    end
 
-	  opts.on("-v", "--value VALUE", "(fetch single value - default all)") do |v|
-	    options[:value] = v
-	  end
+    opts.on("-v", "--value VALUE", "(fetch single value - default all)") do |v|
+      options[:value] = v
+    end
 
-	  opts.on("-u", "--usage", "Show usage information.") do |v|
-	    puts opts
-	    exit
-	  end
-	end
+    opts.on("-u", "--usage", "Show usage information.") do |v|
+      puts opts
+      exit
+    end
+  end
 
-	opt_parser.parse!
-	client = Client.new(Host.new(options[:host], options[:port]))
+  opt_parser.parse!
+  client = Client.new(Host.new(options[:host], options[:port]))
 
-	info_map = options[:value].nil? ? client.request_info : client.request_info(options[:value])
-	info_map.each_with_index do |vals, i|
-	  k, v = vals
-	  puts("#{i} :  #{k}\n     #{v}\n\n")
-	end
+  info_map = options[:value].nil? ? client.request_info : client.request_info(options[:value])
+  info_map.each_with_index do |vals, i|
+    k, v = vals
+    puts("#{i} :  #{k}\n     #{v}\n\n")
+  end
 
-	client.close
+  client.close
 end
 
 main

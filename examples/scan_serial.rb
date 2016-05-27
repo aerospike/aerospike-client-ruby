@@ -20,68 +20,68 @@ include Aerospike
 include Shared
 
 def main
-    Shared.init
-	run_example(Shared.client)
+  Shared.init
+  run_example(Shared.client)
 
-	Shared.logger.info("Example finished successfully.")
+  Shared.logger.info("Example finished successfully.")
 end
 
 class Metrics
-	attr_accessor :count, :total
+  attr_accessor :count, :total
 
-	def initialize
-		@count = 0
-		@total = 0
-	end
+  def initialize
+    @count = 0
+    @total = 0
+  end
 end
 
 @set_map = {}
 
 def run_example(client)
-	Shared.logger.info("Scan series: namespace=#{Shared.namespace}, set=#{Shared.set_name}")
+  Shared.logger.info("Scan series: namespace=#{Shared.namespace}, set=#{Shared.set_name}")
 
-	# Use low scan priority.  This will take more time, but it will reduce
-	# the load on the server.
-	policy = ScanPolicy.new
-	policy.max_retries = 1
-	policy.priority = Priority::LOW
+  # Use low scan priority.  This will take more time, but it will reduce
+  # the load on the server.
+  policy = ScanPolicy.new
+  policy.max_retries = 1
+  policy.priority = Priority::LOW
 
-	node_list = client.nodes
-	begin_time = Time.now
+  node_list = client.nodes
+  begin_time = Time.now
 
-	node_list.each do |node|
-		Shared.logger.info("Scan node #{node.name}")
-		recordset = client.scan_node(node, Shared.namespace, Shared.set_name, [], policy)
-		
-		recordset.each do |rec|
-			metrics = @set_map[rec.key.set_name]
-			metrics ||= Metrics.new
+  node_list.each do |node|
+    Shared.logger.info("Scan node #{node.name}")
+    recordset = client.scan_node(node, Shared.namespace, Shared.set_name, [], policy)
 
-			metrics.count+=1
-			metrics.total+=1
-			@set_map[rec.key.set_name] = metrics
-		end
+    recordset.each do |rec|
+      metrics = @set_map[rec.key.set_name]
+      metrics ||= Metrics.new
 
-		@set_map.each do |k, v|
-			Shared.logger.info("Node #{node}, set #{k}, count: #{v.count}")
-			v.count = 0
-		end
-	end
+      metrics.count+=1
+      metrics.total+=1
+      @set_map[rec.key.set_name] = metrics
+    end
 
-	end_time = Time.now
-	seconds = end_time - begin_time
-	Shared.logger.info("Elapsed time: #{seconds} seconds")
+    @set_map.each do |k, v|
+      Shared.logger.info("Node #{node}, set #{k}, count: #{v.count}")
+      v.count = 0
+    end
+  end
 
-	total = 0
+  end_time = Time.now
+  seconds = end_time - begin_time
+  Shared.logger.info("Elapsed time: #{seconds} seconds")
 
-	@set_map.each do |k, v|
-		Shared.logger.info("Total set #{k}, count: #{v.total}")
-		total += v.total
-	end
+  total = 0
 
-	Shared.logger.info("Grand total: #{total}")
-	performance = (total.to_f/seconds.to_f).round(2)
-	Shared.logger.info("Records/second: #{performance}")
+  @set_map.each do |k, v|
+    Shared.logger.info("Total set #{k}, count: #{v.total}")
+    total += v.total
+  end
+
+  Shared.logger.info("Grand total: #{total}")
+  performance = (total.to_f/seconds.to_f).round(2)
+  Shared.logger.info("Records/second: #{performance}")
 end
 
 main

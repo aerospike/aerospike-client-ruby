@@ -19,38 +19,38 @@ include Aerospike
 include Shared
 
 def main
-    Shared.init
-	run_example(Shared.client)
-	Shared.logger.info("Example finished successfully.")
+  Shared.init
+  run_example(Shared.client)
+  Shared.logger.info("Example finished successfully.")
 end
 
 def run_example(client)
-	key = Key.new(Shared.namespace, Shared.set_name, "appendkey")
-	
-	bin_name = "appendbin"
+  key = Key.new(Shared.namespace, Shared.set_name, "appendkey")
 
-	# Delete record if it already exists.
-	client.delete(key, Shared.write_policy)
+  bin_name = "appendbin"
 
-	bin = Bin.new(bin_name, "Hello")
-	Shared.logger.info("Initial append will create record.  Initial value is #{bin.value}.")
-	client.append(key, bin, Shared.write_policy)
+  # Delete record if it already exists.
+  client.delete(key, Shared.write_policy)
 
-	bin = Bin.new(bin_name, " World")
-	Shared.logger.info("Append \"#{bin.value}\" to existing record.")
-	client.append(key, bin, Shared.write_policy)
+  bin = Bin.new(bin_name, "Hello")
+  Shared.logger.info("Initial append will create record.  Initial value is #{bin.value}.")
+  client.append(key, bin, Shared.write_policy)
 
-	record = client.get(key, [bin.name], Shared.policy)
+  bin = Bin.new(bin_name, " World")
+  Shared.logger.info("Append \"#{bin.value}\" to existing record.")
+  client.append(key, bin, Shared.write_policy)
 
-	received = record.bins[bin.name]
-	expected = "Hello World"
+  record = client.get(key, [bin.name], Shared.policy)
 
-	if received == expected
-		Shared.logger.info("Append successful: ns=#{key.namespace} set=#{key.set_name} key=#{key.user_key} bin=#{bin.name} value=#{received}")
-	else
-		Shared.logger.fatal("Append mismatch: Expected #{expected}. Received #{received}")
-		exit
-	end
+  received = record.bins[bin.name]
+  expected = "Hello World"
+
+  if received == expected
+    Shared.logger.info("Append successful: ns=#{key.namespace} set=#{key.set_name} key=#{key.user_key} bin=#{bin.name} value=#{received}")
+  else
+    Shared.logger.fatal("Append mismatch: Expected #{expected}. Received #{received}")
+    exit
+  end
 end
 
 main

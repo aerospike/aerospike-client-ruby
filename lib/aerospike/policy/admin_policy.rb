@@ -16,18 +16,18 @@
 
 module Aerospike
 
-	# Policy attributes used for user administration commands.
-	class AdminPolicy
+  # Policy attributes used for user administration commands.
+  class AdminPolicy
 
-		# User administration command socket timeout in milliseconds.
-		# Default is one second timeout.
-		attr_accessor :timeout
+    # User administration command socket timeout in milliseconds.
+    # Default is one second timeout.
+    attr_accessor :timeout
 
-		# NewAdminPolicy generates a new AdminPolicy with default values.
-		def initialize(opt={})
-			@timeout = opt[:timeout] || 1
-		end
+    # NewAdminPolicy generates a new AdminPolicy with default values.
+    def initialize(opt={})
+      @timeout = opt[:timeout] || 1
+    end
 
-	end # class
+  end # class
 
 end # module

@@ -19,78 +19,78 @@ include Aerospike
 include Shared
 
 def main
-    Shared.init
-	run_replace_example(Shared.client)
-	run_replace_only_example(Shared.client)
+  Shared.init
+  run_replace_example(Shared.client)
+  run_replace_only_example(Shared.client)
 
-	Shared.logger.info("Example finished successfully.")
+  Shared.logger.info("Example finished successfully.")
 end
 
 def run_replace_example(client)
-	key = Key.new(Shared.namespace, Shared.set_name, "replacekey")
-	
-	bin1 = Bin.new("bin1", "value1")
-	bin2 = Bin.new("bin2", "value2")
-	bin3 = Bin.new("bin3", "value3")
+  key = Key.new(Shared.namespace, Shared.set_name, "replacekey")
 
-	Shared.logger.info("Put: namespace=#{key.namespace} set=#{key.set_name} key=#{key.user_key} bin1=#{bin1.name} value1=#{bin1.value} bin2=#{bin2.name} value2=#{bin2.value}")
+  bin1 = Bin.new("bin1", "value1")
+  bin2 = Bin.new("bin2", "value2")
+  bin3 = Bin.new("bin3", "value3")
 
-	client.put(key, [bin1, bin2], Shared.write_policy)
+  Shared.logger.info("Put: namespace=#{key.namespace} set=#{key.set_name} key=#{key.user_key} bin1=#{bin1.name} value1=#{bin1.value} bin2=#{bin2.name} value2=#{bin2.value}")
 
-	Shared.logger.info("Replace with: namespace=#{key.namespace} set=#{key.set_name} key=#{key.user_key} bin=#{bin3.name} value=#{bin3.value}")
+  client.put(key, [bin1, bin2], Shared.write_policy)
 
-	wpolicy = WritePolicy.new
-	wpolicy.record_exists_action = RecordExistsAction::REPLACE
-	client.put(key, [bin3], wpolicy)
+  Shared.logger.info("Replace with: namespace=#{key.namespace} set=#{key.set_name} key=#{key.user_key} bin=#{bin3.name} value=#{bin3.value}")
 
-	Shared.logger.info("Get: namespace=#{key.namespace} set=#{key.set_name} key=#{key.user_key}")
+  wpolicy = WritePolicy.new
+  wpolicy.record_exists_action = RecordExistsAction::REPLACE
+  client.put(key, [bin3], wpolicy)
 
-	record = client.get(key, [], Shared.policy)
+  Shared.logger.info("Get: namespace=#{key.namespace} set=#{key.set_name} key=#{key.user_key}")
 
-	if record.nil?
-		Shared.logger.fatal("Failed to get: namespace=#{key.namespace} set=#{key.set_name} key=#{key.user_key}")
-		exit
-	end
+  record = client.get(key, [], Shared.policy)
 
-	if record.bins[bin1.name].nil?
-		Shared.logger.info(bin1.name + " was deleted as expected.")
-	else
-		Shared.logger.fatal(bin1.name + " found when it should have been deleted.")
-		exit
-	end
+  if record.nil?
+    Shared.logger.fatal("Failed to get: namespace=#{key.namespace} set=#{key.set_name} key=#{key.user_key}")
+    exit
+  end
 
-	if record.bins[bin2.name].nil?
-		Shared.logger.info(bin2.name + " was deleted as expected.")
-	else
-		Shared.logger.fatal(bin2.name + " found when it should have been deleted.")
-	end
+  if record.bins[bin1.name].nil?
+    Shared.logger.info(bin1.name + " was deleted as expected.")
+  else
+    Shared.logger.fatal(bin1.name + " found when it should have been deleted.")
+    exit
+  end
 
-	Shared.validate_bin(key, bin3, record)
+  if record.bins[bin2.name].nil?
+    Shared.logger.info(bin2.name + " was deleted as expected.")
+  else
+    Shared.logger.fatal(bin2.name + " found when it should have been deleted.")
+  end
+
+  Shared.validate_bin(key, bin3, record)
 end
 
 def run_replace_only_example(client)
-	key = Key.new(Shared.namespace, Shared.set_name, "replaceonlykey")
-	
-	bin = Bin.new("bin", "value")
+  key = Key.new(Shared.namespace, Shared.set_name, "replaceonlykey")
 
-	# Delete record if it already exists.
-	client.delete(key, Shared.write_policy)
+  bin = Bin.new("bin", "value")
 
-	Shared.logger.info("Replace record requiring that it exists: namespace=#{key.namespace} set=#{key.set_name} key=#{key.user_key}")
+  # Delete record if it already exists.
+  client.delete(key, Shared.write_policy)
 
-	wpolicy = WritePolicy.new
-	wpolicy.record_exists_action = RecordExistsAction::REPLACE_ONLY
+  Shared.logger.info("Replace record requiring that it exists: namespace=#{key.namespace} set=#{key.set_name} key=#{key.user_key}")
 
-	begin
-		client.put(key, [bin], wpolicy)
-	rescue => ae
-		if ae.is_a?(Exceptions::Aerospike) && ae.result_code == ResultCode::KEY_NOT_FOUND_ERROR
-			Shared.logger.info("Success. `#{ae}` exception returned as expected.")
-		else
-			Shared.logger.fatal("Failure. This command should have resulted in an error.")
-			exit
-		end
-	end
+  wpolicy = WritePolicy.new
+  wpolicy.record_exists_action = RecordExistsAction::REPLACE_ONLY
+
+  begin
+    client.put(key, [bin], wpolicy)
+  rescue => ae
+    if ae.is_a?(Exceptions::Aerospike) && ae.result_code == ResultCode::KEY_NOT_FOUND_ERROR
+      Shared.logger.info("Success. `#{ae}` exception returned as expected.")
+    else
+      Shared.logger.fatal("Failure. This command should have resulted in an error.")
+      exit
+    end
+  end
 end
 
 main

@@ -19,44 +19,44 @@ include Aerospike
 include Shared
 
 def main
-    Shared.init
-	run_example(Shared.client)
-	Shared.logger.info("Example finished successfully.")
+  Shared.init
+  run_example(Shared.client)
+  Shared.logger.info("Example finished successfully.")
 end
 
 def run_example(client)
-	key = Key.new(Shared.namespace, Shared.set_name, "prependkey")
-	bin_name = "prependbin"
+  key = Key.new(Shared.namespace, Shared.set_name, "prependkey")
+  bin_name = "prependbin"
 
-	# Delete record if it already exists.
-	client.delete(key, Shared.write_policy)
+  # Delete record if it already exists.
+  client.delete(key, Shared.write_policy)
 
-	bin = Bin.new(bin_name, "World")
-	Shared.logger.info("Initial prepend will create record.  Initial value is #{bin.value}.")
-	client.prepend(key, [bin], Shared.write_policy)
+  bin = Bin.new(bin_name, "World")
+  Shared.logger.info("Initial prepend will create record.  Initial value is #{bin.value}.")
+  client.prepend(key, [bin], Shared.write_policy)
 
-	bin = Bin.new(bin_name, "Hello ")
-	Shared.logger.info("Prepend \"#{bin.value}\" to existing record.")
-	client.prepend(key, [bin], Shared.write_policy)
+  bin = Bin.new(bin_name, "Hello ")
+  Shared.logger.info("Prepend \"#{bin.value}\" to existing record.")
+  client.prepend(key, [bin], Shared.write_policy)
 
-	record = client.get(key, [bin.name], Shared.policy)
-	
+  record = client.get(key, [bin.name], Shared.policy)
 
-	if record.nil?
-		Shared.logger.fatal("Failed to get: namespace=#{key.namespace} set=#{key.set_name} key=#{key.user_key}")
-		exit
-	end
 
-	# The value received from the server is an unsigned byte stream.
-	# Convert to an integer before comparing with expected.
-	received = record.bins[bin.name]
-	expected = "Hello World"
+  if record.nil?
+    Shared.logger.fatal("Failed to get: namespace=#{key.namespace} set=#{key.set_name} key=#{key.user_key}")
+    exit
+  end
 
-	if received == expected
-		Shared.logger.info("Prepend successful: ns=#{key.namespace} set=#{key.set_name} key=#{key.user_key} bin=#{bin.name} value=#{received}")
-	else
-		Shared.logger.fatal("Prepend mismatch: Expected #{expected}. Received #{received}")
-	end
+  # The value received from the server is an unsigned byte stream.
+  # Convert to an integer before comparing with expected.
+  received = record.bins[bin.name]
+  expected = "Hello World"
+
+  if received == expected
+    Shared.logger.info("Prepend successful: ns=#{key.namespace} set=#{key.set_name} key=#{key.user_key} bin=#{bin.name} value=#{received}")
+  else
+    Shared.logger.fatal("Prepend mismatch: Expected #{expected}. Received #{received}")
+  end
 end
 
 main

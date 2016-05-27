@@ -19,83 +19,83 @@ require 'aerospike'
 
 module Shared
 
-	attr_accessor :write_policy, :policy, :client, :logger
+  attr_accessor :write_policy, :policy, :client, :logger
 
-	def init
-		@@options = {
-		  :host => '127.0.0.1',
-		  :port => 3000,
-		  :namespace => 'test',
-		  :set => 'examples',
-		}
+  def init
+    @@options = {
+      :host => '127.0.0.1',
+      :port => 3000,
+      :namespace => 'test',
+      :set => 'examples',
+    }
 
-		opt_parser = OptionParser.new do |opts|
-		  opts.banner = "Usage: benchmark [@@options]"
+    opt_parser = OptionParser.new do |opts|
+      opts.banner = "Usage: benchmark [@@options]"
 
-		  opts.on("-h", "--host HOST", "Aerospike server seed hostnames or IP addresses") do |v|
-		    @@options[:host] = v
-		  end
+      opts.on("-h", "--host HOST", "Aerospike server seed hostnames or IP addresses") do |v|
+        @@options[:host] = v
+      end
 
-		  opts.on("-p", "--port PORT", "Aerospike server seed hostname or IP address port number.") do |v|
-		    @@options[:port] = v.to_i
-		  end
+      opts.on("-p", "--port PORT", "Aerospike server seed hostname or IP address port number.") do |v|
+        @@options[:port] = v.to_i
+      end
 
-		  opts.on("-n", "--namespace NAMESPACE", "Aerospike namespace.") do |v|
-		    @@options[:namespace] = v
-		  end
+      opts.on("-n", "--namespace NAMESPACE", "Aerospike namespace.") do |v|
+        @@options[:namespace] = v
+      end
 
-		  opts.on("-s", "--set SET", "Aerospike set name.") do |v|
-		    @@options[:set] = v
-		  end
+      opts.on("-s", "--set SET", "Aerospike set name.") do |v|
+        @@options[:set] = v
+      end
 
-		  opts.on("-u", "--usage", "Show usage information.") do |v|
-		    puts opts
-		    exit
-		  end
-		end # opt_parser
+      opts.on("-u", "--usage", "Show usage information.") do |v|
+        puts opts
+        exit
+      end
+    end # opt_parser
 
-  		opt_parser.parse!
+    opt_parser.parse!
 
-		@write_policy = WritePolicy.new
-		@policy = Policy.new
-		@logger = Logger.new(STDOUT, Logger::INFO)
-		@client = Client.new(Host.new(host, port))
-	end
+    @write_policy = WritePolicy.new
+    @policy = Policy.new
+    @logger = Logger.new(STDOUT, Logger::INFO)
+    @client = Client.new(Host.new(host, port))
+  end
 
-	def host
-		@@options[:host]
-	end
+  def host
+    @@options[:host]
+  end
 
-	def port
-		@@options[:port]
-	end
+  def port
+    @@options[:port]
+  end
 
-	def namespace
-		@@options[:namespace]
-	end
+  def namespace
+    @@options[:namespace]
+  end
 
-	def set_name
-		@@options[:set]
-	end
+  def set_name
+    @@options[:set]
+  end
 
-	def print_params
-	  @logger.info("hosts:\t\t#{@@options[:host]}")
-	  @logger.info("port:\t\t#{@@options[:port]}")
-	  @logger.info("namespace:\t#{@@options[:namespace]}")
-	  @logger.info("set:\t\t#{@@options[:set]}")
-	  @logger.info
-	end
+  def print_params
+    @logger.info("hosts:\t\t#{@@options[:host]}")
+    @logger.info("port:\t\t#{@@options[:port]}")
+    @logger.info("namespace:\t#{@@options[:namespace]}")
+    @logger.info("set:\t\t#{@@options[:set]}")
+    @logger.info
+  end
 
-	def validate_bin(key, bin, record)
-		if record.key.digest != key.digest
-			@logger.fatal("key `#{key}` is not the same as key `#{record.key}`.")
-			exit
-		end
+  def validate_bin(key, bin, record)
+    if record.key.digest != key.digest
+      @logger.fatal("key `#{key}` is not the same as key `#{record.key}`.")
+      exit
+    end
 
-		if record.bins[bin.name] != bin.value
-			@logger.fatal("bin `#{bin.name}: #{bin.value}` is not the same as bin `#{record.bins[bin.name]}`.")
-			exit
-		end
-	end
+    if record.bins[bin.name] != bin.value
+      @logger.fatal("bin `#{bin.name}: #{bin.value}` is not the same as bin `#{record.bins[bin.name]}`.")
+      exit
+    end
+  end
 
 end
