@@ -40,7 +40,7 @@ install:
 - cd ../..
 script:
 - bundle install
-- bundle exec rspec
+- AEROSPIKE_HOSTS="127.0.0.1:3000,127.0.0.1:3010" bundle exec rspec
 notifications:
   hipchat:
     rooms:
