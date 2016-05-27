@@ -13,7 +13,7 @@ Gem::Specification.new do |s|
   s.homepage    = "http://www.github.com/aerospike/aerospike-client-ruby"
   s.summary     = "An Aerospike driver for Ruby."
   s.description = "Official Aerospike Client for ruby. Access your Aerospike cluster with ease of Ruby."
-  s.license       = "Apache2.0"
+  s.license       = "Apache-2.0"
   s.files = Dir.glob("lib/**/*") + %w(CHANGELOG.md LICENSE README.md)
   s.require_path = "lib"
   s.required_ruby_version = '>= 2.0.0'
