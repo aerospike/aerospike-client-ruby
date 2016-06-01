@@ -468,6 +468,20 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
       verifyOperation(record, operation, expectedResult, policy: map_policy)
     end
 
+    it "returns value for a single read" do
+      record = { "map" => { "a" => 1, "b" => 2, "c" => 3 } }
+      operation = MapOperation.get_index("map", 0).and_return(MapReturnType::VALUE)
+      expectedResult = { "map" => 1 }
+      verifyOperation(record, operation, expectedResult, policy: map_policy)
+    end
+
+    it "returns value for range read" do
+      record = { "map" => { "a" => 1, "b" => 2, "c" => 3 } }
+      operation = MapOperation.get_index_range("map", 0, 2).and_return(MapReturnType::VALUE)
+      expectedResult = { "map" => [ 1, 2] }
+      verifyOperation(record, operation, expectedResult, policy: map_policy)
+    end
+
     it "returns key/value for a single read" do
       record = { "map" => { "a" => 1, "b" => 2, "c" => 3 } }
       operation = MapOperation.get_index("map", 0).and_return(MapReturnType::KEY_VALUE)
