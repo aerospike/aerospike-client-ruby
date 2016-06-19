@@ -35,4 +35,16 @@ describe Aerospike::Policy do
     end
   end
 
+  describe "#max_retries" do
+
+    it "should return custom policy option" do
+
+      policy = described_class.new(max_retries: 42)
+
+      expect(policy.max_retries).to eq 42
+
+    end
+
+  end
+
 end
