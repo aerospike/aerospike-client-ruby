@@ -1,3 +1,9 @@
+HEAD
+===================
+
+* **Fixes**
+  * Fix a typo in the `max_retries` policy parameter name. [PR #37](https://github.com/aerospike/aerospike-client-ruby/pull/37) Thanks to [@murphyslaw](https://github.com/murphyslaw)!
+
 v2.0.0 / 2016-05-27
 ===================
 
