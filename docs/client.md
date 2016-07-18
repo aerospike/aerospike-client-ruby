@@ -332,7 +332,9 @@ operate()
 
 ### prepend(key, operations, options={})
 
-Performs multiple operations on a single record.
+Performs multiple operations on a single record. See
+[Aerospike::Operations](operations.md) for a complete list of operations
+supported by this command.
 
 Parameters:
 
@@ -451,7 +453,7 @@ createindex()
 -->
 <a name="createindex"></a>
 
-### create_index(namespace, set_name, index_name, bin_name, index_type. options={})
+### create_index(namespace, set_name, index_name, bin_name, index_type, options={})
 
 Creates a secondary index. ```create_index``` will return an ```IndexTask``` object which can be used to determine if the operation is completed asynchronously.
 
