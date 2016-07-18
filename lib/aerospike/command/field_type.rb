@@ -33,6 +33,7 @@ module Aerospike
     INDEX_FILTER = 23
     INDEX_LIMIT = 24
     INDEX_ORDER_BY = 25
+    INDEX_TYPE = 26
     UDF_PACKAGE_NAME = 30
     UDF_FUNCTION = 31
     UDF_ARGLIST = 32

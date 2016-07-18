@@ -18,6 +18,6 @@ Gem::Specification.new do |s|
   s.require_path = "lib"
   s.required_ruby_version = '>= 2.0.0'
   s.post_install_message = "Thank you for using Aerospike!\nYou can report issues on github.com/aerospike/aerospike-client-ruby"
-  s.add_dependency("msgpack", '~> 0.7')
+  s.add_dependency("msgpack", '~> 1.0')
   s.add_dependency("bcrypt", '~> 3.1')
 end

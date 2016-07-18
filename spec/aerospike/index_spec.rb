@@ -25,18 +25,21 @@ describe Aerospike::Client do
 
   let(:client) { Support.client }
 
-  let(:str_bin_name) do
-    'str_bin'
-  end
-
-  let(:int_bin_name) do
-    'int_bin'
-  end
+  let(:str_bin_name) { 'str_bin' }
+  let(:int_bin_name) { 'int_bin' }
+  let(:list_bin_name) { 'list_bin' }
+  let(:map_bin_name) { 'map_bin' }
 
   before do
     (1..1000).to_a.each do |i|
       key = Support.gen_random_key
-      client.put(key, {int_bin_name => rand(100000), str_bin_name => 'string value'})
+      record = {
+        int_bin_name => rand(100_000),
+        str_bin_name => 'string value',
+        list_bin_name => Array.new(10) { rand(1000) },
+        map_bin_name => { i: rand(100_000), s: 'map string value' },
+      }
+      client.put(key, record)
     end
   end
 
@@ -51,11 +54,23 @@ describe Aerospike::Client do
                       key.set_name,
                       "index_int_#{key.set_name}",
                       )
+    client.drop_index(key.namespace,
+                      key.set_name,
+                      "index_list_#{key.set_name}",
+                      )
+    client.drop_index(key.namespace,
+                      key.set_name,
+                      "index_mapkeys_#{key.set_name}",
+                      )
+    client.drop_index(key.namespace,
+                      key.set_name,
+                      "index_mapvalues_#{key.set_name}",
+                      )
   end
 
   describe "Index operations" do
 
-    it "should create an index and wait until it is created on all nodes" do
+    it "should create an integer index and wait until it is created on all nodes" do
       key = Support.gen_random_key
       index_task = client.create_index(key.namespace,
                                        key.set_name,
@@ -65,11 +80,50 @@ describe Aerospike::Client do
 
       expect(index_task.wait_till_completed).to be true
       expect(index_task.completed?).to be true
+    end
 
+    it "should create a string index and wait until it is created on all nodes" do
+      key = Support.gen_random_key
       index_task = client.create_index(key.namespace,
                                        key.set_name,
                                        "index_str_#{key.set_name}",
                                        str_bin_name, :string
+                                       )
+
+      expect(index_task.wait_till_completed).to be true
+      expect(index_task.completed?).to be true
+    end
+
+    it "should create an index on a list and wait until it is created on all nodes" do
+      key = Support.gen_random_key
+      index_task = client.create_index(key.namespace,
+                                       key.set_name,
+                                       "index_list_#{key.set_name}",
+                                       list_bin_name, :numeric, :list
+                                       )
+
+      expect(index_task.wait_till_completed).to be true
+      expect(index_task.completed?).to be true
+    end
+
+    it "should create an index on a map keys and wait until it is created on all nodes" do
+      key = Support.gen_random_key
+      index_task = client.create_index(key.namespace,
+                                       key.set_name,
+                                       "index_mapkeys_#{key.set_name}",
+                                       map_bin_name, :string, :mapkeys
+                                       )
+
+      expect(index_task.wait_till_completed).to be true
+      expect(index_task.completed?).to be true
+    end
+
+    it "should create an index on a map values and wait until it is created on all nodes" do
+      key = Support.gen_random_key
+      index_task = client.create_index(key.namespace,
+                                       key.set_name,
+                                       "index_mapvalues_#{key.set_name}",
+                                       map_bin_name, :string, :mapvalues
                                        )
 
       expect(index_task.wait_till_completed).to be true

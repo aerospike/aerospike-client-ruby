@@ -572,11 +572,17 @@ module Aerospike
     #
     #  This method is only supported by Aerospike 3 servers.
     #  index_type should be :string, :numeric or :geo2dsphere (requires server version 3.7 or later)
-    def create_index(namespace, set_name, index_name, bin_name, index_type, options={})
+    #  collection_type should be :list, :mapkeys or :mapvalues
+    def create_index(namespace, set_name, index_name, bin_name, index_type, collection_type=nil, options={})
+      if options.nil? && collection_type.is_a?(Hash)
+        options, collection_type = collection_type, nil
+      end
       policy = create_policy(options, WritePolicy)
       str_cmd = "sindex-create:ns=#{namespace}"
       str_cmd << ";set=#{set_name}" unless set_name.to_s.strip.empty?
-      str_cmd << ";indexname=#{index_name};numbins=1;indexdata=#{bin_name},#{index_type.to_s.upcase}"
+      str_cmd << ";indexname=#{index_name};numbins=1"
+      str_cmd << ";indextype=#{collection_type.to_s.upcase}" if collection_type
+      str_cmd << ";indexdata=#{bin_name},#{index_type.to_s.upcase}"
       str_cmd << ";priority=normal"
 
       # Send index command to one node. That node will distribute the command to other nodes.

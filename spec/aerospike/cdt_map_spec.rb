@@ -64,7 +64,8 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
     context "MapWriteMode::UPDATE_ONLY" do
       it "overwrites an existing key" do
         record = { "map" => { "a" => 1, "b" => 2, "c" => 3 } }
-        operation = MapOperation.put("map", "b", 99)
+        policy = MapPolicy.new(write_mode: MapWriteMode::UPDATE_ONLY)
+        operation = MapOperation.put("map", "b", 99, policy: policy)
         expectedResult = { "map" => 3 }
         expectedRecord = { "map" => { "a" => 1, "b" => 99, "c" => 3 } }
         verifyOperation(record, operation, expectedResult, expectedRecord)

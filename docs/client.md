@@ -21,24 +21,25 @@ With a new client, you can use any of the methods specified below:
 - [Methods](#methods)
   - [#add](#add)
   - [#append](#append)
-  - [#close](#close)
-  - [#delete](#delete)
-  - [#dxists](#exists)
   - [#batch_exists](#batchexists)
-  - [#get](#get)
-  - [#get_header](#getheader)
   - [#batch_get](#batchget)
   - [#batch_get_header](#batchgetheader)
+  - [#close](#close)
   - [#connected?](#isConnected)
+  - [#create_index](#createindex)
+  - [#delete](#delete)
+  - [#drop_index](#dropindex)
+  - [#execute_udf](#executeudf)
+  - [#exists](#exists)
+  - [#get](#get)
+  - [#get_header](#getheader)
   - [#operate](#operate)
   - [#prepend](#prepend)
   - [#put](#put)
-  - [#touch](#touch)
-  - [#create_index](#createindex)
-  - [#drop_index](#dropindex)
+  - [#query](#query)
   - [#register_udf](#registerudf)
   - [#register_udf_from_file](#registerudffromfile)
-  - [#execute_udf](#executeudf)
+  - [#touch](#touch)
 
 
 <a name="methods"></a>
@@ -465,19 +466,21 @@ createindex()
 -->
 <a name="createindex"></a>
 
-### create_index(namespace, set_name, index_name, bin_name, index_type, options={})
+### create\_index(namespace, set\_name, index\_name, bin\_name, index\_type, collections\_type=nil options={})
 
-Creates a secondary index. ```create_index``` will return an ```IndexTask``` object which can be used to determine if the operation is completed asynchronously.
+Creates a secondary index. `create_index` will return an `IndexTask` object
+which can be used to determine if the operation is completed asynchronously.
+See [Managing Secondary Indexes](query.md#manageindex) for more information.
 
 Parameters:
 
-- `namespace`     – Namespace
-- `set_name`      – Name of the Set
-- `index_name`    – Name of index
-- `bin_name`      – Bin name to create the index on
-- `index_type`    – `:string` or `:numeric`
-- `options`       – A hash representing [WritePolicy Attributes](policies.md#WritePolicy) to use for this operation.
-                  If not provided, ```@default_write_policy``` will be used.
+- `namespace`        – Namespace
+- `set_name`         – Name of the Set
+- `index_name`       – Name of index
+- `bin_name`         – Bin name to create the index on
+- `index_type`       – `:string`, `:numeric` or `:geo2dsphere`
+- `collection_type`  - [_optional_] `:list`, `:mapkeys` or `:mapvalues`
+- `options`          – A hash representing [WritePolicy Attributes](policies.md#WritePolicy) to use for this operation. If not provided, `@default_write_policy` will be used.
 
 Example:
 
@@ -606,4 +609,34 @@ Considering the UDF registered in `register_udf` example above:
     res = client.execute_udf(key, "udf1", "testFunc1")
 
     # res will be: {"status" => "OK"}
+```
+
+<!--
+################################################################################
+query()
+################################################################################
+-->
+<a name="query"></a>
+
+### query(statement, options={})
+
+Executes a query and returns a recordset. See [Querying Records](query.md#query)
+for more information.
+
+Parameters:
+
+- `statement`   – Query statement.
+- `options`     – A hash representing [QueryPolicy Attributes](policies.md#QueryPolicy) to use for this operation.
+                  If not provided, ```@default_query_policy``` will be used.
+
+Example:
+
+```ruby
+  statment = Aerospike::Statement.new("namespace", "set", ["bin1", "bin2"])
+  statment.filters << Aerospike::Filter.Range("bin2", 0, 100))
+  results = client.query(statment)
+
+  results.each do |record|
+    # process each record
+  end
 ```

@@ -8,7 +8,7 @@ end
 gem 'rake'
 gem "jruby-openssl", :platforms => :jruby
 gem 'msgpack-jruby', :require => 'msgpack', :platforms => :jruby
-gem 'msgpack', :platforms => [:mri, :rbx]
+gem 'msgpack', '~> 1.0', :platforms => [:mri, :rbx]
 gem 'bcrypt'
 
 gemspec

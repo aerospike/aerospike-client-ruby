@@ -22,28 +22,32 @@ module Aerospike
       Filter.new(bin_name, value, value)
     end
 
-    def self.Range(bin_name, from, to)
-      Filter.new(bin_name, from, to)
+    def self.Contains(bin_name, value, col_type)
+      Filter.new(bin_name, value, value, nil, col_type)
     end
 
-    def self.geoWithinGeoJSONRegion(bin_name, region)
+    def self.Range(bin_name, from, to, col_type = nil)
+      Filter.new(bin_name, from, to, nil, col_type)
+    end
+
+    def self.geoWithinGeoJSONRegion(bin_name, region, col_type = nil)
       region = region.to_json
-      Filter.new(bin_name, region, region, ParticleType::GEOJSON)
+      Filter.new(bin_name, region, region, ParticleType::GEOJSON, col_type)
     end
 
-    def self.geoWithinRadius(bin_name, lon, lat, radius_meter)
+    def self.geoWithinRadius(bin_name, lon, lat, radius_meter, col_type = nil)
       region = GeoJSON.new({type: "AeroCircle", coordinates: [[lon, lat], radius_meter]})
-      geoWithinGeoJSONRegion(bin_name, region)
+      geoWithinGeoJSONRegion(bin_name, region, col_type)
     end
 
-    def self.geoContainsGeoJSONPoint(bin_name, point)
+    def self.geoContainsGeoJSONPoint(bin_name, point, col_type = nil)
       point = point.to_json
-      Filter.new(bin_name, point, point, ParticleType::GEOJSON)
+      Filter.new(bin_name, point, point, ParticleType::GEOJSON, col_type)
     end
 
-    def self.geoContainsPoint(bin_name, lon, lat)
+    def self.geoContainsPoint(bin_name, lon, lat, col_type = nil)
       point = GeoJSON.new({type: "Point", coordinates: [lon, lat]})
-      geoContainsGeoJSONPoint(bin_name, point)
+      geoContainsGeoJSONPoint(bin_name, point, col_type)
     end
 
     def estimate_size
@@ -73,6 +77,17 @@ module Aerospike
       offset
     end
 
+    # for internal use
+    def collection_type
+      case @col_type
+      when :default then 0
+      when :list then 1
+      when :mapkeys then 2
+      when :mapvalues then 3
+      else 0
+      end
+    end
+
     #
     # Show the filter as String. This is util to show filters in logs.
     #
@@ -83,7 +98,7 @@ module Aerospike
 
     private
 
-    def initialize(bin_name, begin_value, end_value, val_type = nil)
+    def initialize(bin_name, begin_value, end_value, val_type = nil, col_type = nil)
       @name = bin_name
       @begin = Aerospike::Value.of(begin_value)
       @end = Aerospike::Value.of(end_value)
@@ -91,6 +106,7 @@ module Aerospike
       # The type of the filter values can usually be inferred automatically;
       # but in certain cases caller can override the type.
       @val_type = val_type || @begin.type
+      @col_type = col_type
     end
 
   end # class

@@ -51,26 +51,27 @@ describe Aerospike::Client do
 
     before :all do
       @namespace = "test"
-      @set = "test998"
-      @record_count = 1000
+      @set = "query100"
+      @record_count = 100
       @record_count.times do |i|
         key = Aerospike::Key.new(@namespace, @set, i)
         bin_map = {
           'bin1' => "value#{i}",
           'bin2' => i,
-          'bin4' => ['value4', {'map1' => 'map val'}],
-          'bin5' => {'value5' => [124, "string value"]},
+          'bin3' => [ i, i + 1_000, i + 1_000_000 ],
+          'bin4' => { "key#{i}" => i },
         }
         Support.client.put(key, bin_map)
       end
 
-      index_task = Support.client.create_index(@namespace, @set, "index_int_bin2", "bin2", :numeric)
-      expect(index_task.wait_till_completed).to be true
-      expect(index_task.completed?).to be true
-
-      index_task = Support.client.create_index(@namespace, @set, "index_str_bin1", "bin1", :string)
-      expect(index_task.wait_till_completed).to be true
-      expect(index_task.completed?).to be true
+      tasks = []
+      tasks << Support.client.create_index(@namespace, @set, "index_str_bin1", "bin1", :string)
+      tasks << Support.client.create_index(@namespace, @set, "index_int_bin2", "bin2", :numeric)
+      tasks << Support.client.create_index(@namespace, @set, "index_lst_bin3", "bin3", :numeric, :list)
+      tasks << Support.client.create_index(@namespace, @set, "index_mapkey_bin4", "bin4", :string, :mapkeys)
+      tasks << Support.client.create_index(@namespace, @set, "index_mapval_bin4", "bin4", :numeric, :mapvalues)
+      tasks.each(&:wait_till_completed)
+      expect(tasks.all?(&:completed?)).to be true
     end
 
     context "No Filter == Scan" do
@@ -94,7 +95,7 @@ describe Aerospike::Client do
 
       context "Numeric Bins" do
 
-        it "should return relevent records" do
+        it "should return relevant records" do
           stmt = Aerospike::Statement.new(@namespace, @set, ['bin1', 'bin2'])
           stmt.filters = [Aerospike::Filter.Equal('bin2', 1)]
           rs = client.query(stmt)
@@ -114,7 +115,7 @@ describe Aerospike::Client do
 
       context "String Bins" do
 
-        it "should return relevent records" do
+        it "should return relevant records" do
           stmt = Aerospike::Statement.new(@namespace, @set)
           stmt.filters = [Aerospike::Filter.Equal('bin1', 'value1')]
           rs = client.query(stmt)
@@ -133,13 +134,68 @@ describe Aerospike::Client do
 
     end # context
 
+    context "Contains Filter" do
+
+      context "List Bins" do
+
+        it "should return relevant records" do
+          stmt = Aerospike::Statement.new(@namespace, @set, ['bin2', 'bin3'])
+          stmt.filters = [Aerospike::Filter.Contains('bin3', 42, :list)]
+          rs = client.query(stmt)
+
+          i = 0
+          rs.each do |rec|
+            i += 1
+            expect(rec.bins['bin3']).to eq [42, 1_042, 1_000_042]
+          end
+          expect(i).to eq 1
+        end # it
+
+      end # context
+
+      context "Map Keys" do
+
+        it "should return relevant records" do
+          stmt = Aerospike::Statement.new(@namespace, @set, ['bin4'])
+          stmt.filters = [Aerospike::Filter.Contains('bin4', 'key42', :mapkeys)]
+          rs = client.query(stmt)
+
+          i = 0
+          rs.each do |rec|
+            i += 1
+            expect(rec.bins['bin4']).to eq({ "key42" => 42 })
+          end
+          expect(i).to eq 1
+        end # it
+
+      end # context
+
+      context "Map Values" do
+
+        it "should return relevant records" do
+          stmt = Aerospike::Statement.new(@namespace, @set, ['bin4'])
+          stmt.filters = [Aerospike::Filter.Contains('bin4', 42, :mapvalues)]
+          rs = client.query(stmt)
+
+          i = 0
+          rs.each do |rec|
+            i += 1
+            expect(rec.bins['bin4']).to eq({ "key42" => 42 })
+          end
+          expect(i).to eq 1
+        end # it
+
+      end # context
+
+    end # context
+
     context "Range Filter" do
 
       context "Numeric Bins" do
 
-        it "should return relevent records" do
+        it "should return relevant records" do
           stmt = Aerospike::Statement.new(@namespace, @set)
-          stmt.filters = [Aerospike::Filter.Range('bin2', 10, 100)]
+          stmt.filters = [Aerospike::Filter.Range('bin2', 10, 20)]
           rs = client.query(stmt)
 
           i = 0
@@ -148,7 +204,47 @@ describe Aerospike::Client do
             expect(rec.bins['bin1']).to eq "value#{rec.bins['bin2']}"
           end
 
-          expect(i).to eq 91
+          expect(i).to eq 11
+
+        end # it
+
+      end # context
+
+      context "List Bins" do
+
+        it "should return relevant records" do
+          stmt = Aerospike::Statement.new(@namespace, @set)
+          stmt.filters = [Aerospike::Filter.Range('bin3', 10, 20, :list)]
+          rs = client.query(stmt)
+
+          i = 0
+          rs.each do |rec|
+            i +=1
+            idx = rec.bins['bin2']
+            expect(rec.bins['bin3']).to eq([idx, 1_000 + idx, 1_000_000 + idx])
+          end
+
+          expect(i).to eq 11
+
+        end # it
+
+      end # context
+
+      context "Map Values" do
+
+        it "should return relevant records" do
+          stmt = Aerospike::Statement.new(@namespace, @set)
+          stmt.filters = [Aerospike::Filter.Range('bin4', 10, 20, :mapvalues)]
+          rs = client.query(stmt)
+
+          i = 0
+          rs.each do |rec|
+            i +=1
+            idx = rec.bins['bin2']
+            expect(rec.bins['bin4']).to eq({ "key#{idx}" => idx })
+          end
+
+          expect(i).to eq 11
 
         end # it
 
@@ -162,14 +258,26 @@ describe Aerospike::Client do
       let(:lat){ 1.3083 }
       let(:radius){ 1000 }
       let(:point){ Aerospike::GeoJSON.new({type: "Point", coordinates: [lon, lat]}) }
+      let(:point2){ Aerospike::GeoJSON.new({type: "Point", coordinates: [lon + 1, lat + 1]}) }
       let(:region){ Aerospike::GeoJSON.new({type: "Polygon", coordinates: [[[103.6055, 1.1587], [103.6055, 1.4707], [104.0884, 1.4707], [104.0884, 1.1587], [103.6055, 1.1587]]]}) }
 
-      around do |example|
-        Support.delete_set(client, "geo")
-        task = client.create_index(@namespace, "geo", "geo_index", "location", :geo2dsphere)
-        task.wait_till_completed
-        example.call
-        client.drop_index(@namespace, "geo", "geo_index")
+      before(:all) do
+        tasks = []
+        tasks << Support.client.create_index(@namespace, "geo", "geo_index", "location", :geo2dsphere)
+        tasks << Support.client.create_index(@namespace, "geo", "geo_list_index", "locations", :geo2dsphere, :list)
+        tasks << Support.client.create_index(@namespace, "geo", "geo_map_index", "locations", :geo2dsphere, :mapvalues)
+        tasks.each(&:wait_till_completed)
+        expect(tasks.all?(&:completed?)).to be true
+      end
+
+      after(:all) do
+        Support.client.drop_index(@namespace, "geo", "geo_index")
+        Support.client.drop_index(@namespace, "geo", "geo_list_index")
+        Support.client.drop_index(@namespace, "geo", "geo_map_index")
+      end
+
+      before(:each) do
+        Support.delete_set(Support.client, "geo")
       end
 
       it "should return a point within the given GeoJSON region" do
@@ -224,11 +332,37 @@ describe Aerospike::Client do
         expect(results.map(&:key)).to eq [key]
       end # it
 
+      it "should match points within a list of locations" do
+        key = Aerospike::Key.new(@namespace, "geo", "l1")
+        client.put(key, "locations" => [point, point2])
+
+        stmt = Aerospike::Statement.new(key.namespace, key.set_name, ["locations"])
+        stmt.filters = [Aerospike::Filter.geoWithinRadius("locations", lon, lat, radius, :list)]
+        rs = client.query(stmt)
+
+        results = []
+        rs.each{|record| results << record }
+        expect(results.map(&:key)).to eq [key]
+      end # it
+
+      it "should match points within a map of locations" do
+        key = Aerospike::Key.new(@namespace, "geo", "l1")
+        client.put(key, "locations" => { "current" => point, "last" => point2 })
+
+        stmt = Aerospike::Statement.new(key.namespace, key.set_name, ["locations"])
+        stmt.filters = [Aerospike::Filter.geoWithinRadius("locations", lon, lat, radius, :mapvalues)]
+        rs = client.query(stmt)
+
+        results = []
+        rs.each{|record| results << record }
+        expect(results.map(&:key)).to eq [key]
+      end # it
+
     end # context
 
     context "With A Stream UDF Query" do
 
-      it "should return relevent records from UDF without any arguments" do
+      it "should return relevant records from UDF without any arguments" do
 
         register_task = client.register_udf(udf_body, "udf_empty.lua", Aerospike::Language::LUA)
 
@@ -236,7 +370,7 @@ describe Aerospike::Client do
         expect(register_task.completed?).to be true
 
         stmt = Aerospike::Statement.new(@namespace, @set)
-        stmt.filters = [Aerospike::Filter.Range('bin2', 10, 100)]
+        stmt.filters = [Aerospike::Filter.Range('bin2', 10, 20)]
         stmt.set_aggregate_function('udf_empty', 'filter_records', [], true)
 
         rs = client.query(stmt)
@@ -248,11 +382,11 @@ describe Aerospike::Client do
           expect(res['bin1']).to eq "value#{res['bin2']}"
         end
 
-        expect(i).to eq 91
+        expect(i).to eq 11
 
       end # it
 
-      it "should return relevent records from UDF with arguments" do
+      it "should return relevant records from UDF with arguments" do
 
         register_task = client.register_udf(udf_body, "udf_empty.lua", Aerospike::Language::LUA)
 
@@ -260,9 +394,9 @@ describe Aerospike::Client do
         expect(register_task.completed?).to be true
 
         stmt = Aerospike::Statement.new(@namespace, @set)
-        stmt.filters = [Aerospike::Filter.Range('bin2', 10, 100)]
+        stmt.filters = [Aerospike::Filter.Range('bin2', 10, 20)]
 
-        filter_value = 90
+        filter_value = 15
         stmt.set_aggregate_function('udf_empty', 'filter_records_param', [filter_value], true)
 
         rs = client.query(stmt)
@@ -275,7 +409,7 @@ describe Aerospike::Client do
           expect(res['bin2']).to be > filter_value
         end
 
-        expect(i).to eq 10
+        expect(i).to eq 5
 
       end # it
 

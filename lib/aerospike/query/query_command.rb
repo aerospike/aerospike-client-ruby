@@ -54,6 +54,12 @@ module Aerospike
       end
 
       if @statement.filters && @statement.filters.length > 0
+        col_type = @statement.filters[0].collection_type
+        if col_type > 0
+          @data_offset += FIELD_HEADER_SIZE + 1
+          fieldCount += 1
+        end
+
         @data_offset += FIELD_HEADER_SIZE
         filterSize+=1 # num filters
 
@@ -128,6 +134,13 @@ module Aerospike
       end
 
       if @statement.filters && @statement.filters.length > 0
+        col_type = @statement.filters[0].collection_type
+        if col_type > 0
+          write_field_header(1, Aerospike::FieldType::INDEX_TYPE)
+          @data_buffer.write_byte(col_type, @data_offset)
+          @data_offset+=1
+        end
+
         write_field_header(filterSize, Aerospike::FieldType::INDEX_RANGE)
         @data_buffer.write_byte(@statement.filters.length, @data_offset)
         @data_offset+=1

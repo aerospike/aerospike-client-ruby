@@ -25,7 +25,7 @@ describe Aerospike::Client do
 
     before :all do
       @namespace = "test"
-      @set = "test998"
+      @set = "scan1000"
       @record_count = 1000
       @record_count.times do |i|
         key = Aerospike::Key.new(@namespace, @set, i)

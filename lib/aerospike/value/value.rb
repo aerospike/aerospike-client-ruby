@@ -392,7 +392,7 @@ module Aerospike
     end
 
     def pack(packer)
-      raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::PARAMETER_ERROR, "Can't pack GeoJSON")
+      packer.write(Aerospike::ParticleType::GEOJSON.chr + @bytes)
     end
 
     def type

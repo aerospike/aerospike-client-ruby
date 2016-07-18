@@ -79,12 +79,29 @@ Includes All Policy attributes, plus:
                            * Default: `0`
 - `expiration`             – Record expiration. Also known as ttl (time to live). Seconds record will live before being removed by the server.
                            Expiration values:
-                           * -1: Never expire for Aerospike 2 server versions >= 2.7.2 and Aerospike 3 server versions >= 3.1.4. 
+                           * -1: Never expire for Aerospike 2 server versions >= 2.7.2 and Aerospike 3 server versions >= 3.1.4.
                            Do not use -1 for older servers.
                            * 0: Default to namespace configuration variable "default-ttl" on the server.
                            * > 0: Actual expiration in seconds.
                            * Default: `0`
 
+<!--
+################################################################################
+QueryPolicy
+################################################################################
+-->
+<a name="QueryPolicy"></a>
+
+### QueryPolicy Object
+
+A policy effecting the behaviour of query and scan operations.
+
+Includes All Policy attributes, plus:
+
+- `record_queue_size`      - The record set buffers the query results locally.
+                           This attribute controls the size of the buffer (a
+                           `SizedQueue` instance).
+                           * Default: `5000`
 
 <a name="Values"></a>
 ## Values
@@ -186,4 +203,3 @@ priority
 - **HIGH**
 
   Run the database operation at the highest priority.
-  
