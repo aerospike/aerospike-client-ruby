@@ -22,7 +22,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
   let(:client) { Support.client }
   let(:key) { Support.gen_random_key }
 
-  def verifyOperation(record, operations, expectedResult, expectedRecordPostOp = record, policy: MapPolicy::DEFAULT)
+  def verifyOperation(record, operations, expectedResult, expectedRecordPostOp = record, policy = MapPolicy::DEFAULT)
     if record
       put_items = MapOperation.put_items("map", record["map"], policy: policy)
       client.operate(key, [put_items])
@@ -41,7 +41,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
         MapOperation.get_key_range("map", "a", "z", return_type: MapReturnType::KEY)
       ]
       expectedResult = { "map" => [ "a", "b", "c" ] }
-      verifyOperation(record, operations, expectedResult, policy: MapPolicy.new(order: MapOrder::UNORDERED))
+      verifyOperation(record, operations, expectedResult, record, MapPolicy.new(order: MapOrder::UNORDERED))
     end
   end
 
@@ -417,84 +417,84 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
       record = { "map" => { "a" => 1, "b" => 2, "c" => 3 } }
       operation = MapOperation.get_key("map", "b").and_return(MapReturnType::NONE)
       expectedResult = { "map" => nil }
-      verifyOperation(record, operation, expectedResult, policy: map_policy)
+      verifyOperation(record, operation, expectedResult, record, map_policy)
     end
 
     it "returns key index" do
       record = { "map" => { "a" => 1, "b" => 2, "c" => 3 } }
       operation = MapOperation.get_key("map", "a").and_return(MapReturnType::INDEX)
       expectedResult = { "map" => 0 }
-      verifyOperation(record, operation, expectedResult, policy: map_policy)
+      verifyOperation(record, operation, expectedResult, record, map_policy)
     end
 
     it "returns reverse key index" do
       record = { "map" => { "a" => 1, "b" => 2, "c" => 3 } }
       operation = MapOperation.get_key("map", "a").and_return(MapReturnType::REVERSE_INDEX)
       expectedResult = { "map" => 2 }
-      verifyOperation(record, operation, expectedResult, policy: map_policy)
+      verifyOperation(record, operation, expectedResult, record, map_policy)
     end
 
     it "returns value order (rank)" do
       record = { "map" => { "a" => 3, "b" => 2, "c" => 1 } }
       operation = MapOperation.get_key("map", "a").and_return(MapReturnType::RANK)
       expectedResult = { "map" => 2 }
-      verifyOperation(record, operation, expectedResult, policy: map_policy)
+      verifyOperation(record, operation, expectedResult, record, map_policy)
     end
 
     it "returns reverse value order (reverse rank)" do
       record = { "map" => { "a" => 3, "b" => 2, "c" => 1 } }
       operation = MapOperation.get_key("map", "a").and_return(MapReturnType::REVERSE_RANK)
       expectedResult = { "map" => 0 }
-      verifyOperation(record, operation, expectedResult, policy: map_policy)
+      verifyOperation(record, operation, expectedResult, record, map_policy)
     end
 
     it "returns count of items selected" do
       record = { "map" => { "a" => 1, "b" => 2, "c" => 3 } }
       operation = MapOperation.get_key_range("map", "a", "c").and_return(MapReturnType::COUNT)
       expectedResult = { "map" => 2 }
-      verifyOperation(record, operation, expectedResult, policy: map_policy)
+      verifyOperation(record, operation, expectedResult, record, map_policy)
     end
 
     it "returns key for a single read" do
       record = { "map" => { "a" => 1, "b" => 2, "c" => 3 } }
       operation = MapOperation.get_index("map", 0).and_return(MapReturnType::KEY)
       expectedResult = { "map" => "a" }
-      verifyOperation(record, operation, expectedResult, policy: map_policy)
+      verifyOperation(record, operation, expectedResult, record, map_policy)
     end
 
     it "returns keys for range read" do
       record = { "map" => { "a" => 1, "b" => 2, "c" => 3 } }
       operation = MapOperation.get_index_range("map", 0, 2).and_return(MapReturnType::KEY)
       expectedResult = { "map" => [ "a", "b" ] }
-      verifyOperation(record, operation, expectedResult, policy: map_policy)
+      verifyOperation(record, operation, expectedResult, record, map_policy)
     end
 
     it "returns value for a single read" do
       record = { "map" => { "a" => 1, "b" => 2, "c" => 3 } }
       operation = MapOperation.get_index("map", 0).and_return(MapReturnType::VALUE)
       expectedResult = { "map" => 1 }
-      verifyOperation(record, operation, expectedResult, policy: map_policy)
+      verifyOperation(record, operation, expectedResult, record, map_policy)
     end
 
     it "returns value for range read" do
       record = { "map" => { "a" => 1, "b" => 2, "c" => 3 } }
       operation = MapOperation.get_index_range("map", 0, 2).and_return(MapReturnType::VALUE)
       expectedResult = { "map" => [ 1, 2] }
-      verifyOperation(record, operation, expectedResult, policy: map_policy)
+      verifyOperation(record, operation, expectedResult, record, map_policy)
     end
 
     it "returns key/value for a single read" do
       record = { "map" => { "a" => 1, "b" => 2, "c" => 3 } }
       operation = MapOperation.get_index("map", 0).and_return(MapReturnType::KEY_VALUE)
       expectedResult = { "map" => { "a" => 1 } }
-      verifyOperation(record, operation, expectedResult, policy: map_policy)
+      verifyOperation(record, operation, expectedResult, record, map_policy)
     end
 
     it "returns key/value for a range read" do
       record = { "map" => { "a" => 1, "b" => 2, "c" => 3 } }
       operation = MapOperation.get_index_range("map", 0, 2).and_return(MapReturnType::KEY_VALUE)
       expectedResult = { "map" => { "a" => 1, "b" => 2 } }
-      verifyOperation(record, operation, expectedResult, policy: map_policy)
+      verifyOperation(record, operation, expectedResult, record, map_policy)
     end
   end
 end
