@@ -63,6 +63,7 @@ Parameters:
                   If not provided, ```@default_write_policy``` will be used.
 
 Example:
+
 ```ruby
   key = Key.new("test", "demo", 123)
 
@@ -94,6 +95,7 @@ Parameters:
                   If not provided, ```@default_write_policy``` will be used.
 
 Example:
+
 ```ruby
   key = Key.new("test", "demo", 123)
 
@@ -116,6 +118,7 @@ close()
 Closes the client connection to the cluster.
 
 Example:
+
 ```ruby
   client.close
 ```
@@ -142,6 +145,7 @@ returned values:
 - `existed`         – Boolean value that indicates if the Key existed.
 
 Example:
+
 ```ruby
   key = Key.new("test", "demo", 123)
 
@@ -344,6 +348,7 @@ Parameters:
                   If not provided, ```@default_write_policy``` will be used.
 
 Example:
+
 ```ruby
   key = Key.new("test", "demo", 123)
   ops = [
@@ -378,6 +383,7 @@ Parameters:
                   If not provided, ```@default_write_policy``` will be used.
 
 Example:
+
 ```ruby
   key = Key.new("test", "demo", 123)
 
@@ -408,6 +414,7 @@ Parameters:
                   If not provided, ```@default_write_policy``` will be used.
 
 Example:
+
 ```ruby
   key = Key.new("test", "demo", 123)
 
@@ -440,6 +447,7 @@ Parameters:
                   If not provided, ```@default_write_policy``` will be used.
 
 Example:
+
 ```ruby
   key = Key.new("test", "demo", 123)
 
