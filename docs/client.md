@@ -336,9 +336,13 @@ operate()
 
 ### prepend(key, operations, options={})
 
-Performs multiple operations on a single record. See
-[Aerospike::Operations](operations.md) for a complete list of operations
-supported by this command.
+Performs multiple operations on a single record. Operations are created via
+the `Aerospike::Operation`, `Aerospike::CDT::ListOperation` and
+`Aerospike::CDT::MapOperation` classes for operations on scalar, list and map
+type bins respectively.
+
+A [complete list of operations](operations.md) supported by this command is
+available [here](operations.md).
 
 Parameters:
 
