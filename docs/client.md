@@ -335,7 +335,7 @@ operate()
 -->
 <a name="operate"></a>
 
-### prepend(key, operations, options={})
+### operate(key, operations, options={})
 
 Performs multiple operations on a single record. Operations are created via
 the `Aerospike::Operation`, `Aerospike::CDT::ListOperation` and
