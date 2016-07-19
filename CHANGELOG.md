@@ -7,7 +7,7 @@ v2.1.0 / 2016-07-19
 
 * **Improvements**
   * Support for queries on Lists and Maps (keys & values)
-  * Support for creating indexes on Lists and Maps
+  * Support for creating indexes on Lists and Maps [CLIENT-685]
   * Support GeoJSON values in Lists and Maps
 
 v2.0.0 / 2016-05-27
