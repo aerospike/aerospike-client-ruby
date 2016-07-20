@@ -42,6 +42,21 @@ With a new client, you can use any of the methods specified below:
   - [#touch](#touch)
 
 
+<a name="error"></a>
+## Error Handling
+
+If an error occurs as a result of the database operation, an exception is
+raised. All Aerospike exceptions inherit from
+`Aerospike::Exceptions::Aerospike` and are a `StandardError`, i.e. they can be
+caught using normal `rescue` clauses.
+
+The `Aerospike::Exceptions::Aerospike` class provides an accessor to
+`result_code`. The result code describes the exact cause of the Aerospike
+server error.
+
+Client-side internal exceptions, either originating from the client code or
+from the Ruby standard library, are not converted to an Aerospike exception.
+
 <a name="methods"></a>
 ## Methods
 
@@ -219,7 +234,8 @@ get()
 
 ### get(key, bin_names=[], options={})
 
-Using the key provided, reads a record from the database cluster .
+Using the key provided, reads a record from the database cluster  The method
+returns `nil` if the record does not exist.
 
 Parameters:
 
