@@ -67,12 +67,17 @@ A policy effecting the behaviour of write operations.
 
 Includes All Policy attributes, plus:
 
+- `send_key`               – Qualify whether the server should store the record's primary key, or just use its digest.
+                           * Default: `true`
 - `record_exists_action`   – Qualify how to handle writes where the record already exists.
                            For values, see [RecordExistsAction Values](policies.md#exists).
                            * Default: `RecordExistsAction.UPDATE`
 - `generation_policy`      – Qualify how to handle record writes based on record generation.
                            For values, see [GenerationPolicy Values](policies.md#gen).
                            * Default: `GenerationPolicy.NONE` (generation is not used to restrict writes)
+- `commit_level`           – Desired consistency guarantee when committing a transaction on the server.
+                           For values, see [CommitLevel Values](policies.md#commit).
+                           * Default: `CommitLevel.COMMIT_ALL` (wait for write confirmation from all replicas)
 - `generation`             – Expected generation. Generation is the number of times a record has been modified
                            (including creation) on the server. If a write operation is creating a record,
                            the expected generation would be 0
@@ -178,6 +183,22 @@ exists
 
   Create only.  Fail if record exists.
 
+<!--
+################################################################################
+commit
+################################################################################
+-->
+<a name="commit"></a>
+
+### CommitLevel Values
+
+- **COMMIT_ALL**
+
+Wait until successfully committing master and all replicas.
+
+- **COMMIT_MASTER**
+
+Wait until successfully committing master only.
 
 <!--
 ################################################################################
