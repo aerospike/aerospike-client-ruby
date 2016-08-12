@@ -53,7 +53,7 @@ module Aerospike
         return false if (info3 & INFO3_LAST) == INFO3_LAST
 
         generation = @data_buffer.read_int32(6)
-        expiration = @data_buffer.read_int32(10)
+        expiration = Aerospike.TTL(@data_buffer.read_int32(10))
         field_count = @data_buffer.read_int16(18)
         op_count = @data_buffer.read_int16(20)
         key = parse_key(field_count)

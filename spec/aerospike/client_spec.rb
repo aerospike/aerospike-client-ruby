@@ -623,8 +623,8 @@ describe Aerospike::Client do
       key3 = Support.gen_random_key
 
       bin = Aerospike::Bin.new('bin', 'value')
-      client.put(key1, bin)
-      client.put(key3, bin)
+      client.put(key1, bin, ttl: 1000)
+      client.put(key3, bin, ttl: 1000)
 
       records = client.batch_get_header([key1, key2, key3])
 
@@ -633,12 +633,14 @@ describe Aerospike::Client do
       expect(records[0].key).to eq key1
       expect(records[0].bins).to be nil
       expect(records[0].generation).to be 1
+      expect(records[0].expiration).to be_within(10).of(1000)
 
       expect(records[1]).to be nil
 
       expect(records[2].key).to eq key3
       expect(records[2].bins).to be nil
       expect(records[2].generation).to be 1
+      expect(records[2].expiration).to be_within(10).of(1000)
 
     end
 

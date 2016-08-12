@@ -58,10 +58,10 @@ module Aerospike
         # If cmd is the end marker of the response, do not proceed further
         return false if (info3 & INFO3_LAST) == INFO3_LAST
 
-        generation = @data_buffer.read_int32(6).ord
-        expiration = @data_buffer.read_int32(10).ord
-        field_count = @data_buffer.read_int16(18).ord
-        op_count = @data_buffer.read_int16(20).ord
+        generation = @data_buffer.read_int32(6)
+        expiration = Aerospike.TTL(@data_buffer.read_int32(10))
+        field_count = @data_buffer.read_int16(18)
+        op_count = @data_buffer.read_int16(20)
         key = parse_key(field_count)
         item = @key_map[key.digest]
 
