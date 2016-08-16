@@ -1,3 +1,13 @@
+HEAD
+===================
+
+* **Bug Fixes**
+  * Fix incorrect expiration times on records fetched via batch_get or query operations. [#38](https://github.com/aerospike/aerospike-client-ruby/issues/38)
+
+* **Improvements**
+  * Add support for two new server error codes (23 & 24) introduced in Aerospike Server v3.9.1.
+
+
 v2.1.0 / 2016-07-19
 ===================
 
