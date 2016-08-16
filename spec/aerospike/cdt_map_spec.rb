@@ -27,10 +27,16 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
       put_items = MapOperation.put_items("map", record["map"], policy: policy)
       client.operate(key, [put_items])
     end
-    result = client.operate(key, Array(operations))
-    expect(result.bins).to eql(expectedResult)
-    record = client.get(key)
-    expect(record.bins).to eql(expectedRecordPostOp)
+    if Exception === expectedResult
+      expect {
+        client.operate(key, Array(operations))
+      }.to raise_error(expectedResult.class, expectedResult.message)
+    else
+      result = client.operate(key, Array(operations))
+      expect(result.bins).to eql(expectedResult)
+      record = client.get(key)
+      expect(record.bins).to eql(expectedRecordPostOp)
+    end
   end
 
   describe "MapOperation.set_policy" do
@@ -75,9 +81,8 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
         record = { "map" => { "a" => 1, "c" => 3 } }
         policy = MapPolicy.new(write_mode: MapWriteMode::UPDATE_ONLY)
         operation = MapOperation.put("map", "b", 99, policy: policy)
-        expectedResult = { "map" => 2 }
-        expectedRecord = { "map" => { "a" => 1, "c" => 3 } }
-        verifyOperation(record, operation, expectedResult, expectedRecord)
+        expectedResult = Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::ELEMENT_NOT_FOUND, "Element not found")
+        verifyOperation(record, operation, expectedResult)
       end
     end
 
@@ -86,9 +91,8 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
         record = { "map" => { "a" => 1, "b" => 2, "c" => 3 } }
         policy = MapPolicy.new(write_mode: MapWriteMode::CREATE_ONLY)
         operation = MapOperation.put("map", "b", 99, policy: policy)
-        expectedResult = { "map" => 3 }
-        expectedRecord = { "map" => { "a" => 1, "b" => 2, "c" => 3 } }
-        verifyOperation(record, operation, expectedResult, expectedRecord)
+        expectedResult = Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::ELEMENT_EXISTS, "Element already exists")
+        verifyOperation(record, operation, expectedResult)
       end
 
       it "creates a new key if it does not exist" do

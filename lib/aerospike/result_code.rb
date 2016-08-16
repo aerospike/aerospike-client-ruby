@@ -114,6 +114,12 @@ module Aerospike
     # Operation not allowed at this time.
     FAIL_FORBIDDEN = 22
 
+    # Returned by Map put and put_items operations when policy is REPLACE but key was not found
+    ELEMENT_NOT_FOUND = 23
+
+    # Returned by Map put and put_items operations when policy is CREATE_ONLY but key already exists
+    ELEMENT_EXISTS = 24
+
     # There are no more records left for query.
     QUERY_END = 50
 
@@ -129,10 +135,8 @@ module Aerospike
 
     ILLEGAL_STATE = 56
 
-
     # User name is invalid.
     INVALID_USER = 60
-
 
     # User was previously created.
     USER_ALREADY_EXISTS = 61
@@ -291,6 +295,12 @@ module Aerospike
 
       when FAIL_FORBIDDEN
         "Operation not allowed at this time"
+
+      when ELEMENT_NOT_FOUND
+        "Element not found"
+
+      when ELEMENT_EXISTS
+        "Element already exists"
 
       when QUERY_END
         "Query end"
