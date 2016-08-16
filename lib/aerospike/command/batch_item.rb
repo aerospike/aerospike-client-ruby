@@ -31,7 +31,7 @@ module Aerospike
       keys.each_with_index do |key, i|
         item = key_map[key.digest]
         unless item
-          item = BatchItem.new(i)
+          item = BatchItem.new(key, i)
           key_map[key.digest] = item
         else
           item.add_duplicate(i)
@@ -42,7 +42,8 @@ module Aerospike
     end
 
 
-    def initialize(index)
+    def initialize(key, index)
+      @key = key
       @index = index
     end
 
@@ -62,6 +63,10 @@ module Aerospike
       r = @duplicates[@index]
       @index+=1
       return r
+    end
+
+    def key
+      @key
     end
 
   end # class

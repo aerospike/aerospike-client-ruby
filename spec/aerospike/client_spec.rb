@@ -631,6 +631,7 @@ describe Aerospike::Client do
       expect(records.length).to eq 3
 
       expect(records[0].key).to eq key1
+      expect(records[0].key.user_key).to eq key1.user_key
       expect(records[0].bins).to be nil
       expect(records[0].generation).to be 1
       expect(records[0].expiration).to be_within(10).of(1000)
@@ -638,6 +639,7 @@ describe Aerospike::Client do
       expect(records[1]).to be nil
 
       expect(records[2].key).to eq key3
+      expect(records[2].key.user_key).to eq key3.user_key
       expect(records[2].bins).to be nil
       expect(records[2].generation).to be 1
       expect(records[2].expiration).to be_within(10).of(1000)
