@@ -1,4 +1,4 @@
-HEAD
+v2.1.1 / 2016-08-16
 ===================
 
 * **Bug Fixes**
@@ -6,7 +6,7 @@ HEAD
 
 * **Improvements**
   * Add support for two new server error codes (23 & 24) introduced in Aerospike Server v3.9.1.
-
+  * Records returned by batch_get operation should include the full key incl. the user key part.
 
 v2.1.0 / 2016-07-19
 ===================
