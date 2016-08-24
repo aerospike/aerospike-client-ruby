@@ -782,10 +782,8 @@ module Aerospike
 
     # Change user's password. Clear-text password will be hashed using bcrypt before sending to server.
     def change_password(user, password, options={})
+      raise Aerospike::Exceptions::Aerospike.new(INVALID_USER) unless @cluster.user && @cluster.user != ""
       policy = create_policy(options, AdminPolicy)
-      if @cluster.user == ''
-        return NewAerospikeError(INVALID_USER)
-      end
 
       hash = AdminCommand.hash_password(password)
       command = AdminCommand.new
