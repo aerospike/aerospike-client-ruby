@@ -88,9 +88,7 @@ module Aerospike
     #  Returns list of active server node names in the cluster.
 
     def node_names
-      @cluster.nodes.map do |node|
-        node.get_name
-      end
+      @cluster.nodes.map(&:get_name)
     end
 
     def supports_feature?(feature)
@@ -252,11 +250,9 @@ module Aerospike
 
       key_map = BatchItem.generate_map(keys)
 
-      cmd_gen = Proc.new do |node, bns|
+      batch_execute(keys) do |node, bns|
         BatchCommandExists.new(node, bns, policy, key_map, exists_array)
       end
-
-      batch_execute(keys, &cmd_gen)
       exists_array
     end
 
@@ -304,11 +300,9 @@ module Aerospike
 
       key_map = BatchItem.generate_map(keys)
 
-      cmd_gen = Proc.new do |node, bns|
+      batch_execute(keys) do |node, bns|
         BatchCommandGet.new(node, bns, policy, key_map, bin_names.uniq, records, INFO1_READ)
       end
-
-      batch_execute(keys, &cmd_gen)
       records
     end
 
@@ -329,11 +323,10 @@ module Aerospike
 
       key_map = BatchItem.generate_map(keys)
 
-      cmd_gen = Proc.new do |node, bns|
+      batch_execute(keys) do |node, bns|
         BatchCommandGet.new(node, bns, policy, key_map, nil, records, INFO1_READ | INFO1_NOBINDATA)
       end
 
-      batch_execute(keys, &cmd_gen)
       records
     end
 
@@ -510,22 +503,17 @@ module Aerospike
 
       record = command.record
 
-      return nil if !record || record.bins.length == 0
+      return nil if !record || record.bins.empty?
 
       result_map = record.bins
 
       # User defined functions don't have to return a value.
-      key, obj = result_map.detect{|k, v| k.include?('SUCCESS')}
-      if key
-        return obj
-      end
+      key, obj = result_map.detect{ |k, _| k.include?('SUCCESS') }
+      return obj if key
 
-      key, obj = result_map.detect{|k, v| k.include?('FAILURE')}
-      if key
-        raise Aerospike::Exceptions::Aerospike.new(UDF_BAD_RESPONSE, "#{obj}")
-      end
-
-      raise Aerospike::Exceptions::Aerospike.new(UDF_BAD_RESPONSE, "Invalid UDF return value")
+      key, obj = result_map.detect{ |k, _| k.include?('FAILURE') }
+      message = key ? obj.to_s : "Invalid UDF return value"
+      raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::UDF_BAD_RESPONSE, message)
     end
 
     # execute_udf_on_query applies user defined function on records that match the statement filter.
@@ -540,7 +528,7 @@ module Aerospike
       policy = create_policy(options, QueryPolicy)
 
       nodes = @cluster.nodes
-      if nodes.length == 0
+      if nodes.empty?
         raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::SERVER_NOT_AVAILABLE, "Executing UDF failed because cluster is empty.")
       end
 
@@ -644,7 +632,7 @@ module Aerospike
       new_policy = policy.clone
 
       nodes = @cluster.nodes
-      if nodes.length == 0
+      if nodes.empty?
         raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::SERVER_NOT_AVAILABLE, "Scan failed because cluster is empty.")
       end
 
@@ -699,7 +687,7 @@ module Aerospike
       new_policy = policy.clone
       new_policy.max_retries = 0
 
-      node = @cluster.get_node_by_name(node) if !node.is_a?(Aerospike::Node)
+      node = @cluster.get_node_by_name(node) unless node.is_a?(Aerospike::Node)
 
       recordset = Recordset.new(policy.record_queue_size, 1, :scan)
 
@@ -735,7 +723,7 @@ module Aerospike
       new_policy = policy.clone
 
       nodes = @cluster.nodes
-      if nodes.length == 0
+      if nodes.empty?
         raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::SERVER_NOT_AVAILABLE, "Scan failed because cluster is empty.")
       end
 
@@ -911,7 +899,7 @@ module Aerospike
       command.execute
     end
 
-    def batch_execute(keys, &cmd_gen)
+    def batch_execute(keys)
       batch_nodes = BatchNode.generate_list(@cluster, keys)
       threads = []
 
@@ -922,15 +910,15 @@ module Aerospike
         bn.batch_namespaces.each do |bns|
           threads << Thread.new do
             Thread.current.abort_on_exception = true
-            command = cmd_gen.call(bn.node, bns)
+            command = yield bn.node, bns
             execute_command(command)
           end
         end
       end
 
-      threads.each { |thr| thr.join }
+      threads.each(&:join)
     end
 
   end # class
 
-end #module
+end # module

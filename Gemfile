@@ -5,6 +5,10 @@ group :test do
   gem 'simplecov', :require => false
 end
 
+group :development do
+  gem 'rubocop', require: false
+end
+
 gem 'rake'
 gem "jruby-openssl", :platforms => :jruby
 gem 'msgpack-jruby', :require => 'msgpack', :platforms => :jruby

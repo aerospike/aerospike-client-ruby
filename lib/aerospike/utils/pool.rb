@@ -14,9 +14,6 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-require 'thread'
-require 'timeout'
-
 module Aerospike
 
   private
@@ -43,13 +40,10 @@ module Aerospike
     alias_method :<<, :offer
 
     def poll(create_new=true)
-      res = nil
-      begin
-        res = @pool.pop(true) # non_blocking
-        return res
-      rescue
-        return @create_block.call if @create_block && create_new
-      end
+      non_block = true
+      @pool.pop(non_block)
+    rescue
+      @create_block.call() if @create_block && create_new
     end
 
     def empty?

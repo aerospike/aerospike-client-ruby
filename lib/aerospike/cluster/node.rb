@@ -38,14 +38,14 @@ module Aerospike
 
       # Assign host to first IP alias because the server identifies nodes
       # by IP address (not hostname).
-      @host =                nv.aliases[0]
-      @health =              Atomic.new(FULL_HEALTH)
+      @host = nv.aliases[0]
+      @health = Atomic.new(FULL_HEALTH)
       @partition_generation = Atomic.new(-1)
-      @reference_count =      Atomic.new(0)
-      @responded =           Atomic.new(false)
-      @active =              Atomic.new(true)
+      @reference_count = Atomic.new(0)
+      @responded = Atomic.new(false)
+      @active = Atomic.new(true)
 
-      @connections =         Pool.new(@cluster.connection_queue_size)
+      @connections = Pool.new(@cluster.connection_queue_size)
       @connections.create_block = Proc.new do
         while conn = Connection.new(@host.name, @host.port, @cluster.connection_timeout)
 
@@ -240,7 +240,7 @@ module Aerospike
         if node
           node.reference_count.update{|v| v + 1}
         else
-          unless friends.any? {|host| host == aliass}
+          unless friends.any? {|h| h == aliass}
             friends << aliass
           end
         end
