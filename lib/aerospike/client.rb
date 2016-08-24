@@ -410,7 +410,7 @@ module Aerospike
     #  This method is only supported by Aerospike 3 servers.
     def register_udf_from_file(client_path, server_path, language, options={})
       udf_body = File.read(client_path)
-      register_udf(udf_body, server_path, language, options={})
+      register_udf(udf_body, server_path, language, options)
     end
 
     #  Register package containing user defined functions with server.
@@ -832,7 +832,8 @@ module Aerospike
     private
 
     def send_info_command(policy, command)
-      @cluster.request_info(@default_policy, command)
+      policy ||= default_policy
+      @cluster.request_info(policy, command)
     end
 
     def hash_to_bins(hash)
