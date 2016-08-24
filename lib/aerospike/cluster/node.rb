@@ -78,6 +78,7 @@ module Aerospike
         info_map = Info.request(conn, "node", "partition-generation", "services")
       rescue => e
         Aerospike.logger.error("Error during refresh for node #{self}: #{e}")
+        Aerospike.logger.error(e.backtrace.join("\n"))
 
         conn.close if conn
         decrease_health
@@ -211,13 +212,13 @@ module Aerospike
 
       if !info_name
         decrease_health
-        raise Aerospike::Exceptions.Aerospike.new("Node name is empty")
+        raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::INVALID_NODE_ERROR, "Node name is empty")
       end
 
       if !(@name == info_name)
         # Set node to inactive immediately.
         @active.update{|v| false}
-        raise Aerospike::Exceptions.Aerospike.new("Node name has changed. Old=#{@name} New= #{info_name}")
+        raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::INVALID_NODE_ERROR, "Node name has changed. Old=#{@name} New= #{info_name}")
       end
     end
 

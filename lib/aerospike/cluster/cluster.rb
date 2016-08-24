@@ -254,7 +254,8 @@ module Aerospike
             refresh_count += 1
             friend_list.concat(friends) if friends
           rescue => e
-            Aerospike.logger.error("Node `#{node}` refresh failed: #{e.backtrace.join("\n")}")
+            Aerospike.logger.error("Node `#{node}` refresh failed: #{e}")
+            Aerospike.logger.error(e.backtrace.join("\n"))
           end
         end
       end
