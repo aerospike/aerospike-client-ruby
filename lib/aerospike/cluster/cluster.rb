@@ -44,7 +44,7 @@ module Aerospike
       @mutex = Mutex.new
       @cluster_config_change_listeners = Atomic.new([])
 
-      @old_node_cound = 0
+      @old_node_count = 0
 
       # setup auth info for cluster
       if policy.requires_authentication
@@ -279,12 +279,10 @@ module Aerospike
 
         # only log the tend finish IF the number of nodes has been changed.
         # This prevents spamming the log on every tend interval
-        if @old_node_cound > nodes.length
-          Aerospike.logger.info("Tend finished. #{@old_node_cound - nodes.length} nodes have left the cluster. Old node count: #{@old_node_cound}, New node count #{nodes.length} #{nodes}")
-        else
-          Aerospike.logger.info("Tend finished. #{nodes.length - @old_node_cound} nodes have joined the cluster. Old node count: #{@old_node_cound}, New node count #{nodes.length} #{nodes}")
-        end
-        @old_node_cound = nodes.length
+        diff = @old_node_count - nodes.length
+        action = "#{diff.abs} #{diff.abs == 1 ? "node has" : "nodes have"} #{diff.negative? ? "joined" : "left"} the cluster."
+        Aerospike.logger.info("Tend finished. #{action} Old node count: #{@old_node_count}, New node count: #{nodes.length}")
+        @old_node_count = nodes.length
 
         notify_cluster_config_changed
       end
