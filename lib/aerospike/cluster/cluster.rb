@@ -280,8 +280,8 @@ module Aerospike
 
         # only log the tend finish IF the number of nodes has been changed.
         # This prevents spamming the log on every tend interval
-        diff = @old_node_count - nodes.length
-        action = "#{diff.abs} #{diff.abs == 1 ? "node has" : "nodes have"} #{diff.negative? ? "joined" : "left"} the cluster."
+        diff = nodes.length - @old_node_count
+        action = "#{diff.abs} #{diff.abs == 1 ? "node has" : "nodes have"} #{diff > 0 ? "joined" : "left"} the cluster."
         Aerospike.logger.info("Tend finished. #{action} Old node count: #{@old_node_count}, New node count: #{nodes.length}")
         @old_node_count = nodes.length
 
