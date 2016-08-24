@@ -7,7 +7,7 @@ database cluster. In order to get an instance of the Client class, you need to i
   client = Aerospike::Client.new("127.0.0.1:3000")
 ```
 
-To customize a Client behaviour:
+To customize the client behaviour:
 
 ```ruby
   policy = { connection_queue_size: 64, timeout: 0.005 }

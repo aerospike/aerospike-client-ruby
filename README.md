@@ -13,7 +13,6 @@ This library is compatible with Ruby 2.0+ and supports Linux, Mac OS X and vario
 - [Usage](#Usage)
 - [Prerequisites](#Prerequisites)
 - [Installation](#Installation)
-- [Tweaking Performance](#Performance)
 - [Benchmarks](#Benchmarks)
 - [API Documentaion](#API-Documentation)
 - [Tests](#Tests)
@@ -75,11 +74,13 @@ Supported operating systems:
 - other BSDs (untested)
 
 <a name="Installation"></a>
-## Installation from Ruby gems:
+## Installation
+
+### Installation from Ruby gems
 
 1. gem install aerospike
 
-## Installation from source:
+### Installation from source
 
 1. Install Ruby 2.0+
 2. Install RubyGems
@@ -87,13 +88,6 @@ Supported operating systems:
 4. Install dependencies: ```bundler install```
 5. Build and Install the gem locally: ```rake build && rake install```
 6. Run the benchmark: ```./tools/benchmark/benchmark.rb -u```
-
-<a name="Performance"></a>
-## Performance Tweaking
-
-We are bending all efforts to improve the client's performance. In out reference benchmarks, Go client performs almost as good as the C client.
-
-To read about performance variables, please refer to [`docs/performance.md`](docs/performance.md)
 
 <a name="Tests"></a>
 ## Tests
@@ -103,7 +97,6 @@ This library is packaged with a number of tests.
 To run all the test cases:
 
     $ bundle exec rspec
-
 
 <a name="Examples"></a>
 ## Examples
