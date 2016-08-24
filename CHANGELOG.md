@@ -1,3 +1,12 @@
+HEAD
+===================
+
+* **Bug Fixes**
+  * Fix error handling in node refresh during cluster tend
+
+* **Documentation**
+  * Added note about potential issues with usage in Ruby on Rails with Phusion Passenger
+
 v2.1.1 / 2016-08-16
 ===================
 
