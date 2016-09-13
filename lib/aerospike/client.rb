@@ -336,10 +336,8 @@ module Aerospike
 
     #  Perform multiple read/write operations on a single key in one batch call.
     #  An example would be to add an integer value to an existing record and then
-    #  read the result, all in one database call.
-    #
-    #  Write operations are always performed first, regardless of operation order
-    #  relative to read operations.
+    #  read the result, all in one database call. Operations are executed in
+    #  the order they are specified.
     def operate(key, operations, options={})
       policy = create_policy(options, WritePolicy)
 
