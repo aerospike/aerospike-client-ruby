@@ -40,6 +40,8 @@ module Aerospike
       ret
     end
     alias_method :value, :get
+    alias_method :to_s, :value
+    alias_method :inspect, :to_s
 
     def set(value)
       @mutex.synchronize do

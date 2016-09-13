@@ -26,8 +26,9 @@ module Aerospike
     end
 
     def to_s
-      "#{@name}:#{@port.to_s}"
+      "#{@name}:#{@port}"
     end
+    alias_method :inspect, :to_s
 
     def ==(other)
       other && other.is_a?(Host) && other.name == @name && other.port == @port

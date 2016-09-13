@@ -208,6 +208,10 @@ module Aerospike
       end
     end
 
+    def inspect
+      "#<Aerospike::Cluster @cluster_nodes=#{@cluster_nodes}>"
+    end
+
     private
 
     def launch_tend_thread

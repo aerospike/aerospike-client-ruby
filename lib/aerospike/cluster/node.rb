@@ -174,10 +174,6 @@ module Aerospike
       @features.include?(feature.to_s)
     end
 
-    def to_s
-      "#{@name}:#{@host}"
-    end
-
     def ==(other)
       other && other.is_a?(Node) && (@name == other.name)
     end
@@ -189,6 +185,10 @@ module Aerospike
 
     def hash
       @name.hash
+    end
+
+    def inspect
+      "#<Aerospike::Node: @name=#{@name}, @host=#{@host}>"
     end
 
     private

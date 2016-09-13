@@ -53,6 +53,11 @@ module Aerospike
     def length
       @pool.length
     end
+    alias_method :size, :length
+
+    def inspect
+      "#<Aerospike::Pool: size=#{size}>"
+    end
 
   end
 
