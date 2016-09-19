@@ -569,6 +569,50 @@ describe Aerospike::Client do
       expect(rec.generation).to eq 2
     end
 
+    context "with multiple read operations on same bin" do
+
+      let(:map_bin) { Aerospike::Bin.new("map", { "a" => 3, "b" => 2, "c" => 1 }) }
+
+      context "with record bin multiplicity SINGLE" do
+
+        it "returns the result of the last operation" do
+          client.put(key, [map_bin])
+
+          return_type = Aerospike::CDT::MapReturnType::KEY_VALUE
+          ops = [
+            Aerospike::CDT::MapOperation.get_index(map_bin.name, 0, return_type: return_type),
+            Aerospike::CDT::MapOperation.get_by_rank(map_bin.name, 0, return_type: return_type)
+          ]
+          policy = Aerospike::OperatePolicy.new(record_bin_multiplicity: Aerospike::RecordBinMultiplicity::SINGLE)
+          result = client.operate(key, ops, policy)
+
+          value = result.bins[map_bin.name]
+          expect(value).to eq({ "c" => 1 })
+        end
+
+      end
+
+      context "with record bin multiplicity ARRAY" do
+
+        it "returns the results of all operations as an array" do
+          client.put(key, [map_bin])
+
+          return_type = Aerospike::CDT::MapReturnType::KEY_VALUE
+          ops = [
+            Aerospike::CDT::MapOperation.get_index(map_bin.name, 0, return_type: return_type),
+            Aerospike::CDT::MapOperation.get_by_rank(map_bin.name, 0, return_type: return_type)
+          ]
+          policy = Aerospike::OperatePolicy.new(record_bin_multiplicity: Aerospike::RecordBinMultiplicity::ARRAY)
+          result = client.operate(key, ops, policy)
+
+          value = result.bins[map_bin.name]
+          expect(value).to eq([ { "a" => 3 }, { "c" => 1 } ])
+        end
+
+      end
+
+    end
+
   end
 
   context "Batch commands" do

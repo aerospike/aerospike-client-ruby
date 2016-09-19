@@ -17,6 +17,7 @@
 require 'aerospike/record'
 
 require 'aerospike/command/single_command'
+require 'aerospike/policy/operate_policy'
 require 'aerospike/utils/epoc'
 require 'aerospike/value/value'
 
@@ -26,7 +27,7 @@ module Aerospike
 
   class ReadCommand < SingleCommand #:nodoc:
 
-    attr_reader :record
+    attr_reader :record, :policy
 
     def initialize(cluster, policy, key, bin_names)
       super(cluster, key)
@@ -108,6 +109,7 @@ module Aerospike
     def parse_record(op_count, field_count, generation, expiration)
       bins = op_count > 0 ? {} : nil
       receive_offset = 0
+      single_bin_value = (!(OperatePolicy === policy) || policy.record_bin_multiplicity == RecordBinMultiplicity::SINGLE)
 
       # There can be fields in the response (setname etc).
       # But for now, ignore them. Expose them to the API if needed in the future.
@@ -129,12 +131,17 @@ module Aerospike
         name = @data_buffer.read(receive_offset+8, name_size).force_encoding('utf-8')
         receive_offset += 4 + 4 + name_size
 
-
         particle_bytes_size = op_size - (4 + name_size)
         value = Aerospike.bytes_to_particle(particle_type, @data_buffer, receive_offset, particle_bytes_size)
         receive_offset += particle_bytes_size
 
-        bins[name] = value
+        if single_bin_value || !bins.has_key?(name)
+          bins[name] = value
+        elsif (prev = bins[name]).kind_of?(OpResults)
+          prev << value
+        else
+          bins[name] = OpResults.new << prev << value
+        end
 
         i = i.succ
       end
@@ -143,5 +150,7 @@ module Aerospike
     end
 
   end # class
+
+  class OpResults < Array; end
 
 end # module

@@ -9,11 +9,22 @@ followed by a read operation on the same bin, will return the new value
 post-increment.
 
 The results are returned as a hash map with the bin names as keys and the
-result of the last operation on that bin as the value. I.e. if multiple
-operations on the same bin return a value for that bin, the result of the last
-operation will be returned. Note that many write operations return values as
-well, e.g. a list append operation returns the new size of the list after the
-append operation.
+result of the operation as values. If multiple operations return values for the
+same bin, by default only the result of the last operation is returned. To
+return the values of all operations, set `OperatePolicy#record_bin_multiplicity`
+to `Aerospike::RecordBinMultiplicity#ARRAY`:
+
+    policy = Aerospike::OperatePolicy.new(record_bin_multiplicity: Aerospike::RecordBinMultiplicity::ARRAY)
+    return_type = Aerospike::CDT::MapReturnType::VALUE
+    ops = [
+      Aerospike::CDT::MapOperation.get_key("mapBin", "keyA", return_type: return_type),
+      Aerospike::CDT::MapOperation.get_key("mapBin", "keyB", return_type: return_type)
+    ]
+    results = client.operate(key, ops, policy)
+    results.bins // => {"mapBin" => [{"keyA" => "valueA"}, {"keyB" => "valueB"}]}
+
+Note that many write operations return values as well, e.g. a list append
+operation returns the new size of the list after the append operation.
 
 Operations are grouped by the type of bins that they operate on. Operations are
 instantiated via one of the following three classes:
@@ -530,8 +541,8 @@ Parameters:
 - `count` `        - [optional] Number of elements to return.
 - `return_type`    - [optional] Type of data to return. Default is none.
 
-<a name="map-get_rank"></a>
-### Aerospike::CDT::MapOperation#get_rank(bin_name, rank, return_type:)
+<a name="map-get_by_rank"></a>
+### Aerospike::CDT::MapOperation#get_by_rank(bin_name, rank, return_type:)
 
 Selects map items identified by rank and returns selected data specified by
 return_type.
@@ -542,8 +553,8 @@ Parameters:
 - `rank`           - Rank of map item to return.
 - `return_type`    - [optional] Type of data to return. Default is none.
 
-<a name="map-get_rank_range"></a>
-### Aerospike::CDT::MapOperation#get_rank_range(bin_name, rank, count, return_type:)
+<a name="map-get_by_rank_range"></a>
+### Aerospike::CDT::MapOperation#get_by_rank_range(bin_name, rank, count, return_type:)
 
 Server selects "count" map items starting at specified rank and returns
 selected data specified by return_type.  If "count" is not specified, server
