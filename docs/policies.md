@@ -26,6 +26,31 @@ Usage Example:
   client.get(key, [], policy.new);
 ```
 
+<a name="ClientPolicy"></a>
+### ClientPolicy Object
+
+Client policy affecting the overall operation of the client. The client policy
+needs to be set when a new client instance is being instantiated.
+
+Attributes:
+
+* `timeout` - Initial host connection timeout in seconds. The timeout when opening a connection
+  to the server host for the first time.
+  * Default: 1 second
+* `connection_queue_size` - Size of the Connection Queue cache.
+  * Default: 64
+* `fail_if_not_connected` - Throw exception if host connection fails during the initial connection.
+  * Default: `true`
+* `tend_interval` - Tend interval in milliseconds; determines the interval at
+  which the client checks for cluster state changes. Minimum interval is 10ms.
+  * Default: 1000
+* `user` - User name for clusters that require authentication (Enterprise only)
+* `password` - Password for clusters that require authentication (Enterprise only)
+* `cluster_name` - Cluster name (optional)
+  * If specified, the cluster name will be verified whenever the client
+    connects to a new cluster node and nodes with non-matching cluster name
+    will be rejected.
+
 <a name="Policy"></a>
 ### Policy Object
 
@@ -75,6 +100,10 @@ Includes all [Policy](#Policy) attributes, plus:
       * 0: Default to namespace configuration variable "default-ttl" on the server.
       * > 0: Actual expiration in seconds.
   * Default: 0
+* `durable_delete` - (boolean) If the transaction results in a record deletion, leave a tombstone for the record.
+  This prevents deleted records from reappearing after node failures.
+  * Valid for Aerospike Server Enterprise Edition 3.10+ only.
+  Default: `false`
 
 <a name="OperatePolicy"></a>
 ### OperatePolicy Object
