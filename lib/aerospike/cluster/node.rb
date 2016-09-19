@@ -22,7 +22,7 @@ module Aerospike
 
   class Node
 
-    attr_reader :reference_count, :responded, :name, :features
+    attr_reader :reference_count, :responded, :name, :features, :cluster_name
 
     PARTITIONS = 4096
     FULL_HEALTH = 100
@@ -35,6 +35,7 @@ module Aerospike
       @host = nv.host
       @use_new_info = Atomic.new(nv.use_new_info)
       @features = nv.features
+      @cluster_name = nv.cluster_name
 
       # Assign host to first IP alias because the server identifies nodes
       # by IP address (not hostname).
@@ -75,7 +76,7 @@ module Aerospike
 
       begin
         conn = get_connection(1)
-        info_map = Info.request(conn, "node", "partition-generation", "services")
+        info_map = Info.request(conn, "node", "partition-generation", "services", "cluster-name")
       rescue => e
         Aerospike.logger.error("Error during refresh for node #{self}: #{e}")
         Aerospike.logger.error(e.backtrace.join("\n"))
@@ -86,7 +87,7 @@ module Aerospike
         return friends
       end
 
-      verify_node_name(info_map)
+      verify_node_name_and_cluster_name(info_map)
       restore_health
 
       @responded.update{|v| true}
@@ -207,7 +208,7 @@ module Aerospike
       @aliases.value = aliases
     end
 
-    def verify_node_name(info_map)
+    def verify_node_name_and_cluster_name(info_map)
       info_name = info_map['node']
 
       if !info_name
@@ -219,6 +220,11 @@ module Aerospike
         # Set node to inactive immediately.
         @active.update{|v| false}
         raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::INVALID_NODE_ERROR, "Node name has changed. Old=#{@name} New= #{info_name}")
+      end
+
+      if cluster_name && cluster_name != info_map['cluster-name']
+        @active.update{|v| false}
+        raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::INVALID_NODE_ERROR, "Cluster name does not match. expected: #{cluster_name}, got: #{info_map['cluster-name']}")
       end
     end
 

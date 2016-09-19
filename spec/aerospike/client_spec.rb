@@ -91,7 +91,8 @@ describe Aerospike::Client do
   end
 
   describe "#connect" do
-    let(:client) { described_class.new(connect: false) }
+    let(:client_policy) { Hash.new }
+    let(:client) { described_class.new(policy: client_policy, connect: false) }
 
     it "should connect to the cluster successfully" do
       client.connect
@@ -106,6 +107,14 @@ describe Aerospike::Client do
     it "should have at least one name in node name list" do
       client.connect
       expect(client.node_names.length).to be >= 1
+    end
+
+    context "with non-matching cluster name" do
+      let(:client_policy) { { cluster_name: 'thisIsNotTheRealClusterName' } }
+
+      it "should fail to connect if the cluster name does not match" do
+        expect { client.connect }.to raise_error(Aerospike::Exceptions::Aerospike)
+      end
     end
   end
 

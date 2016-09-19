@@ -20,13 +20,14 @@ module Aerospike
 
   class NodeValidator # :nodoc:
 
-    attr_reader :host, :aliases, :name, :use_new_info, :features
+    attr_reader :host, :aliases, :name, :use_new_info, :features, :cluster_name
 
-    def initialize(cluster, host, timeout)
+    def initialize(cluster, host, timeout, cluster_name)
       @cluster = cluster
       @use_new_info = true
       @features = Set.new
       @host = host
+      @cluster_name = cluster_name
 
       set_aliases(host)
       set_address(timeout)

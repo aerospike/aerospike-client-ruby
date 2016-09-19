@@ -35,6 +35,7 @@ module Aerospike
       @connection_queue_size = policy.connection_queue_size
       @connection_timeout = policy.timeout
       @tend_interval = policy.tend_interval
+      @cluster_name = policy.cluster_name
       @aliases = {}
       @cluster_nodes = []
       @partition_write_map = {}
@@ -365,7 +366,7 @@ module Aerospike
 
       seed_array.each do |seed|
         begin
-          seed_node_validator = NodeValidator.new(self, seed, @connection_timeout)
+          seed_node_validator = NodeValidator.new(self, seed, @connection_timeout, @cluster_name)
         rescue => e
           Aerospike.logger.error("Seed #{seed.to_s} failed: #{e.backtrace.join("\n")}")
           next
@@ -379,7 +380,7 @@ module Aerospike
             nv = seed_node_validator
           else
             begin
-              nv = NodeValidator.new(self, aliass, @connection_timeout)
+              nv = NodeValidator.new(self, aliass, @connection_timeout, @cluster_name)
             rescue Exection => e
               Aerospike.logger.error("Seed #{seed.to_s} failed: #{e}")
               next
