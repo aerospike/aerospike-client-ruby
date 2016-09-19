@@ -341,6 +341,15 @@ describe Aerospike::Client do
 
     end
 
+    it "should apply durable delete policy", skip: !Support.min_version?("3.10") do
+      key = Support.gen_random_key
+      if Support.enterprise?
+        expect { client.delete(key, durable_delete: true) }.to_not raise_exception
+      else
+        expect { client.delete(key, durable_delete: true) }.to raise_exception(/enterprise-only/i)
+      end
+    end
+
   end
 
   describe "#put and #touch" do

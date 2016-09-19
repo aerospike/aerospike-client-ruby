@@ -39,4 +39,28 @@ EOF
     self.client.supports_feature?(feature.to_s)
   end
 
+  def self.enterprise?
+    @enterprise_edition ||=
+      begin
+        info = self.client.request_info("edition")
+        info["edition"] =~ /Enterprise/
+      end
+  end
+
+  def self.version
+    @cluster_version ||=
+      begin
+        version = self.client.request_info("version")["version"]
+        version = version[/\d+(?:.\d+)+(:?-\d+)?(?:-[a-z0-9]{8})?/]
+        Gem::Version.new(version).release
+      end
+  end
+
+  # returns true if the server runs at least the specified minimum version
+  # of ASD (e.g. "3.9.1")
+  def self.min_version?(version)
+    version = Gem::Version.new(version)
+    self.version >= version
+  end
+
 end

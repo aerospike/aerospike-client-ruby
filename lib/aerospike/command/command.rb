@@ -48,8 +48,8 @@ module Aerospike
   INFO2_GENERATION = Integer(1 << 2)
   # Update if new generation >= old, good for restore.
   INFO2_GENERATION_GT = Integer(1 << 3)
-  # Create a duplicate on a generation collision.
-  INFO2_GENERATION_DUP = Integer(1 << 4)
+  # Transaction resulting in record deletion leaves tombstone (Enterprise only).
+  INFO2_DURABLE_DELETE = Integer(1 << 4)
   # Create only. Fail if record already exists.
   INFO2_CREATE_ONLY = Integer(1 << 5)
 
@@ -600,6 +600,7 @@ module Aerospike
 
       info_attr |= INFO3_COMMIT_MASTER if policy.commit_level == Aerospike::CommitLevel::COMMIT_MASTER
       read_attr |= INFO1_CONSISTENCY_ALL if policy.consistency_level == Aerospike::ConsistencyLevel::CONSISTENCY_ALL
+      write_attr |= INFO2_DURABLE_DELETE if policy.durable_delete
 
       # Write all header data except total size which must be written last.
       @data_buffer.write_byte(MSG_REMAINING_HEADER_SIZE, 8) # Message heade.length.

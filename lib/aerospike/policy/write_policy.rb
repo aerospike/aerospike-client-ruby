@@ -24,7 +24,8 @@ module Aerospike
   class WritePolicy < Policy
 
     attr_accessor :record_exists_action, :generation_policy,
-      :generation, :expiration, :send_key, :commit_level
+      :generation, :expiration, :send_key, :commit_level,
+      :durable_delete
 
     def initialize(opt={})
       super(opt)
@@ -58,6 +59,12 @@ module Aerospike
       # Send user defined key in addition to hash digest on a record put.
       # The default is to send the user defined key.
       @send_key = opt[:send_key].nil? ? true : opt[:send_key]
+
+      # If the transaction results in a record deletion, leave a tombstone for
+      # the record. This prevents deleted records from reappearing after node
+      # failures.
+      # Valid for Aerospike Server Enterprise Edition 3.10+ only.
+      @durable_delete = opt.fetch(:durable_delete, false)
 
       self
     end

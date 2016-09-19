@@ -120,6 +120,9 @@ module Aerospike
     # Returned by Map put and put_items operations when policy is CREATE_ONLY but key already exists
     ELEMENT_EXISTS = 24
 
+    # Enterprise-only feature not supported by the community edition
+    ENTERPRISE_ONLY = 25
+
     # There are no more records left for query.
     QUERY_END = 50
 
@@ -301,6 +304,9 @@ module Aerospike
 
       when ELEMENT_EXISTS
         "Element already exists"
+
+      when ENTERPRISE_ONLY
+        "Enterprise-only feature not supported by community edition"
 
       when QUERY_END
         "Query end"
