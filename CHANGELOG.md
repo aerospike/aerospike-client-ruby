@@ -1,11 +1,22 @@
-HEAD
+v2.2.0 / 2016-09-20
 ===================
 
+* **New Features**
+  * Support for durable delete write policy [CLIENT-768]; requires Aerospike
+    Server Enterprise Edition v3.10 or later.
+  * Support Cluster Name verification [CLIENT-776]; requires Aerospike Server v3.10 or later.
+
 * **Bug Fixes**
-  * Fix error handling in node refresh during cluster tend
+  * Fix error handling in node refresh during cluster tend.
+
+* **Improvements**
+  * Optionally return multiple results from read operations on same record bin.
+    [#39](https://github.com/aerospike/aerospike-client-ruby/issues/39) Thanks
+    to [@zingoba](https://github.com/zingoba).
 
 * **Documentation**
-  * Added note about potential issues with usage in Ruby on Rails with Phusion Passenger
+  * Added note about potential issues with usage in Ruby on Rails with Phusion Passenger.
+  * Amend/clean up documentation of client policies.
 
 v2.1.1 / 2016-08-16
 ===================
