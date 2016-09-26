@@ -428,7 +428,7 @@ module Aerospike
 
       hosts.each do |host|
         begin
-          nv = NodeValidator.new(self, host, @connection_timeout)
+          nv = NodeValidator.new(self, host, @connection_timeout, @cluster_name)
 
           # if node is already in cluster's node list,
           # or already included in the list to be added, we should skip it
@@ -451,7 +451,8 @@ module Aerospike
           list << node
 
         rescue => e
-          Aerospike.logger.error("Add node #{node.to_s} failed: #{e}")
+          Aerospike.logger.error("Add node #{node} failed: #{e}")
+          Aerospike.logger.error(e.backtrace.join("\n"))
         end
       end
 
