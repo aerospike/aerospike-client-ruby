@@ -83,7 +83,7 @@ Example:
 
 ```ruby
 statement = Aerospike::Statement.new('ns', 'set')
-statement.filters << Aerospike::Filter.Range("bin2", 0, 100))
+statement.filters << Aerospike::Filter.Range("bin2", 0, 100)
 ```
 
 #### Geospatial Filters
