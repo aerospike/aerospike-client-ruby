@@ -1,3 +1,12 @@
+v2.2.1 / 2016-11-14
+===================
+
+* **New Features**
+  * Added constants `Aerospike::TTL::*` for "special" TTL values, incl. Aerospike::TTL::DONT_UPDATE (requires Aerospike Server v3.10.1 or later)
+
+* **Bug Fixes**
+  * Fix "Add node failed: wrong number of arguments". [#41](https://github.com/aerospike/aerospike-client-ruby/issues/41)
+
 v2.2.0 / 2016-09-20
 ===================
 
