@@ -96,10 +96,15 @@ Includes all [Policy](#Policy) attributes, plus:
 * `expiration` – Record expiration. Also known as ttl (time to live).
   *  Seconds record will live before being removed by the server.
   * Expiration values:
-      * -1: Never expire for Aerospike 2 server versions >= 2.7.2 and Aerospike 3 server versions >= 3.1.4. Do not use -1 for older servers.
-      * 0: Default to namespace configuration variable "default-ttl" on the server.
+      * `Aerospike::TTL::NEVER_EXPIRE`: Never expire for Aerospike 2
+        server versions >= 2.7.2 and Aerospike 3 server versions >= 3.1.4. Do
+        not use for older servers.
+      * `Aerospike::TTL::NAMESPACE_DEFAULT`: Default to namespace configuration
+        variable "default-ttl" on the server.
+      * `Aerospike::TTL::DONT_UPDATE`: Update the record without changing the
+        record's current TTL value.
       * > 0: Actual expiration in seconds.
-  * Default: 0
+  * Default: `Aerospike::TTL::NAMESPACE_DEFAULT`
 * `durable_delete` - (boolean) If the transaction results in a record deletion, leave a tombstone for the record.
   This prevents deleted records from reappearing after node failures.
   * Valid for Aerospike Server Enterprise Edition 3.10+ only.

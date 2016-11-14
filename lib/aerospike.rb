@@ -49,6 +49,7 @@ require 'aerospike/cdt/map_return_type'
 require 'aerospike/cdt/map_write_mode'
 require 'aerospike/cdt/map_policy'
 require 'aerospike/geo_json'
+require 'aerospike/ttl'
 
 require 'aerospike/policy/client_policy'
 require 'aerospike/policy/priority'

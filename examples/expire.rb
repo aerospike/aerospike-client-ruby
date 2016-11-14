@@ -27,7 +27,7 @@ def main
   Shared.logger.info("Example finished successfully.")
 end
 
-#*
+#
 # Write and twice read an expiration record.
 #
 def expire_example(client)
@@ -68,7 +68,7 @@ def expire_example(client)
   end
 end
 
-#*
+#
 # Write and twice read a non-expiring tuple using the new "NoExpire" value (-1).
 # This example is most effective when the Default Namespace Time To Live (TTL)
 # is set to a small value, such as 5 seconds.  When we sleep beyond that
@@ -81,10 +81,9 @@ def no_expire_example(client)
   Shared.logger.info("Put: namespace=#{key.namespace} set=#{key.set_name} key=#{key.user_key} bin=#{bin.name} value=#{bin.value} expiration= NoExpire")
 
   # Specify that record NEVER expires.
-  # The "Never Expire" value is -1, or 0xFFFFFFFF.
   write_policy = WritePolicy.new
   write_policy.generation = 2
-  write_policy.expiration = -1
+  write_policy.expiration = Aerospike::TTL::NEVER_EXPIRE
   client.put(key, [bin], write_policy)
 
   # Read the record, showing it is there.
