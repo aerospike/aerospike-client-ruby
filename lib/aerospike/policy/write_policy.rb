@@ -1,5 +1,5 @@
 # encoding: utf-8
-# Copyright 2014 Aerospike, Inc.
+# Copyright 2014-2016 Aerospike, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,8 +24,11 @@ module Aerospike
   class WritePolicy < Policy
 
     attr_accessor :record_exists_action, :generation_policy,
-      :generation, :expiration, :send_key, :commit_level,
+      :generation, :ttl, :send_key, :commit_level,
       :durable_delete
+
+    alias expiration ttl
+    alias expiration= ttl=
 
     def initialize(opt={})
       super(opt)
@@ -47,14 +50,19 @@ module Aerospike
       # the expected generation would be 0
       @generation = opt[:generation] || 0
 
-      # Record expiration. Also known as ttl (time to live).
+      # Record expiration; also known as time-to-live (TTL).
       # Seconds record will live before being removed by the server.
-      # Expiration values:
-      # -1: Never expire for Aerospike 2 server versions >= 2.7.2 and Aerospike 3 server
-      # versions >= 3.1.4.  Do not use -1 for older servers.
-      # 0: Default to namespace configuration variable "default-ttl" on the server.
-      # > 0: Actual expiration in seconds.
-      @expiration = opt[:expiration] || opt[:ttl] || 0
+      #
+      # Supported values:
+      # - `Aerospike::TTL::NEVER_EXPIRE`: Never expire record; requires Aerospike 2
+      #    server versions >= 2.7.2 or Aerospike 3 server versions >= 3.1.4. Do
+      #    not use for older servers.
+      # - `Aerospike::TTL::NAMESPACE_DEFAULT`: Default to namespace configuration
+      #    variable "default-ttl" on the server.
+      # - `Aerospike::TTL::DONT_UPDATE`: Do not change a record's expiration date
+      #   when updating the record. Requires Aerospike server v3.10.1 or later.
+      # - Any value > 0: Actual time-to-live in seconds.
+      @ttl = opt[:ttl] || opt[:expiration] || 0
 
       # Send user defined key in addition to hash digest on a record put.
       # The default is to send the user defined key.

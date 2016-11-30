@@ -1,5 +1,5 @@
 # encoding: utf-8
-# Copyright 2014 Aerospike, Inc.
+# Copyright 2014-2016 Aerospike, Inc.
 #
 # Portions may be licensed to Aerospike, Inc. under one or more contributor
 # license agreements.
@@ -610,7 +610,7 @@ module Aerospike
       @data_buffer.write_byte(0, 12) # unused
       @data_buffer.write_byte(0, 13) # clear the result code
       @data_buffer.write_uint32(generation, 14)
-      @data_buffer.write_uint32(policy.expiration, 18)
+      @data_buffer.write_uint32(policy.ttl, 18)
 
       # Initialize timeout. It will be written later.
       @data_buffer.write_byte(0, 22)

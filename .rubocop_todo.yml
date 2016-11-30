@@ -26,7 +26,6 @@ Lint/IneffectiveAccessModifier:
   Exclude:
     - 'lib/aerospike/cdt/list_operation.rb'
     - 'lib/aerospike/info.rb'
-    - 'lib/aerospike/utils/epoc.rb'
     - 'lib/aerospike/value/value.rb'
 
 # Offense count: 6
@@ -510,7 +509,6 @@ Style/MethodName:
   Exclude:
     - 'examples/udf.rb'
     - 'lib/aerospike/query/filter.rb'
-    - 'lib/aerospike/utils/epoc.rb'
     - 'spec/aerospike/cdt_list_spec.rb'
     - 'spec/aerospike/cdt_map_spec.rb'
     - 'tools/benchmark/benchmark.rb'

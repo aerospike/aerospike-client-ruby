@@ -1,4 +1,4 @@
-# Copyright 2012-2014 Aerospike, Inc.#
+# Copyright 2012-2016 Aerospike, Inc.#
 # Portions may be licensed to Aerospike, Inc. under one or more contributor
 # license agreements.
 #
@@ -28,13 +28,13 @@ def run_example(client)
 	key = Key.new(Shared.namespace, Shared.set_name, "touchkey")
 	bin = Bin.new("touchbin", "touchvalue")
 
-	Shared.logger.info("Create record with 2 second expiration.")
+	Shared.logger.info("Create record with 2 second ttl.")
 	write_policy = WritePolicy.new
-	write_policy.generation = 2
+	write_policy.ttl = 2
 	client.put(key, [bin], write_policy)
 
-	Shared.logger.info("Touch same record with 5 second expiration.")
-	write_policy.expiration = 5
+	Shared.logger.info("Touch same record with 5 second ttl.")
+	write_policy.ttl = 5
 	record = client.operate(key, [Operation.touch, Operation.get_header], write_policy)
 
 	if record.nil?
@@ -42,8 +42,8 @@ def run_example(client)
 		exit
 	end
 
-	if record.expiration == 0
-		Shared.logger.fatal("Failed to get record expiration: namespace=#{key.namespace} set=#{key.set_name} key=#{key.user_key}")
+	if record.ttl == 0
+		Shared.logger.fatal("Failed to get record ttl: namespace=#{key.namespace} set=#{key.set_name} key=#{key.user_key}")
 		exit
 	end
 

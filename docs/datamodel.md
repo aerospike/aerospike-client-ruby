@@ -17,7 +17,7 @@ Fields are:
 - `key`         — Associated Key.
 - `node`        — Database node from which the record was retrieved from.
 - `duplicates`  — If the `writepolicy.GenerationPolicy` is DUPLICATE, it will contain older versions of bin data.
-- `expiration`  — TTL (TimeToLive) of the record in seconds. Shows in how many seconds the data will be erased if not updated.
+- `ttl`         — Time-to-live (TTL) of the record in seconds. Shows in how many seconds the data will be erased if not updated.
 - `generation`  — Record generation (number of times the record has been updated).
 
 The keys of the Bins are the names of the fields (bins) of a record. The values for each field can be `nil`, `FixedNum`, `String`, `Array` or `Hash`.
@@ -46,7 +46,6 @@ Simple example of a Read, Change, Update operation:
 
   # read it back!
   rec = client.get(key)
-  
 
   # change data
   rec.bins["bin1"] += 1

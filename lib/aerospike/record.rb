@@ -1,5 +1,5 @@
 # encoding: utf-8
-# Copyright 2014 Aerospike, Inc.
+# Copyright 2014-2016 Aerospike, Inc.
 #
 # Portions may be licensed to Aerospike, Inc. under one or more contributor
 # license agreements.
@@ -20,21 +20,37 @@ module Aerospike
 
   class Record
 
-    attr_reader :key, :bins, :generation, :expiration, :node
+    attr_reader :key, :bins, :generation, :ttl, :node
+
+    alias expiration ttl # for backwards compatibility
 
     def initialize(node, rec_key, rec_bins, rec_gen, rec_exp)
       @key = rec_key
       @bins = rec_bins
       @generation = rec_gen
-      @expiration = rec_exp
+      @ttl = expiration_to_ttl(rec_exp)
       @node = node
     end
 
     def to_s
-      'key: `' + key.to_s + '` ' +
-         'bins: `' + bins.to_s + '` ' +
-         'generation: `' + generation.to_s + '` ' +
-         'expiration: `' + expiration.to_s + '` '
+      "key: `#{key}` bins: `#{bins}` generation: `#{generation}`, ttl: `#{ttl}`"
+    end
+
+    private
+
+    CITRUSLEAF_EPOCH = 1262304000
+
+    # Converts an absolute expiration time (in seconds from citrusleaf epoch)
+    # to relative time-to-live (TTL) in seconds
+    def expiration_to_ttl(secs_from_epoc)
+      if secs_from_epoc == 0
+        Aerospike::TTL::NEVER_EXPIRE
+      else
+        now = Time.now.to_i - CITRUSLEAF_EPOCH
+        # Record was not expired at server but if it looks expired at client
+        # because of delay or clock differences, present it as not-expired.
+        secs_from_epoc > now ? secs_from_epoc - now : 1
+      end
     end
 
   end
