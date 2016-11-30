@@ -20,7 +20,7 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?("cdt-
 
   let(:client) { Support.client }
   let(:key) { Support.gen_random_key }
-  let(:policy) { Aerospike::WritePolicy.new(record_exists_action: Aerospike::RecordExistsAction::REPLACE, expiration: 600) }
+  let(:policy) { Aerospike::WritePolicy.new(record_exists_action: Aerospike::RecordExistsAction::REPLACE, ttl: 600) }
 
   def verifyOperation(record, operation, expectedResult, expectedRecordPostOp)
     client.put(key, record, policy)

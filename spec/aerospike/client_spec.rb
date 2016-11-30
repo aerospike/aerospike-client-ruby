@@ -1,5 +1,5 @@
 # encoding: utf-8
-# Copyright 2014 Aerospike, Inc.
+# Copyright 2014-2016 Aerospike, Inc.
 #
 # Portions may be licensed to Aerospike, Inc. under one or more contributor
 # license agreements.
@@ -310,7 +310,7 @@ describe Aerospike::Client do
       record = client.get_header(key)
       expect(record.bins).to be nil
       expect(record.generation).to eq 1
-      expect(record.expiration).to be > 0
+      expect(record.ttl).to be > 0
     end
 
     it "should raise an error if hash with non-string keys is passed as record" do
@@ -696,7 +696,7 @@ describe Aerospike::Client do
       expect(records[0].key.user_key).to eq key1.user_key
       expect(records[0].bins).to be nil
       expect(records[0].generation).to be 1
-      expect(records[0].expiration).to be_within(10).of(1000)
+      expect(records[0].ttl).to be_within(10).of(1000)
 
       expect(records[1]).to be nil
 
@@ -704,7 +704,7 @@ describe Aerospike::Client do
       expect(records[2].key.user_key).to eq key3.user_key
       expect(records[2].bins).to be nil
       expect(records[2].generation).to be 1
-      expect(records[2].expiration).to be_within(10).of(1000)
+      expect(records[2].ttl).to be_within(10).of(1000)
 
     end
 

@@ -1,5 +1,5 @@
 # encoding: utf-8
-# Copyright 2014 Aerospike, Inc.
+# Copyright 2014-2016 Aerospike, Inc.
 #
 # Portions may be licensed to Aerospike, Inc. under one or more contributor
 # license agreements.
@@ -59,7 +59,7 @@ module Aerospike
         return false if (info3 & INFO3_LAST) == INFO3_LAST
 
         generation = @data_buffer.read_int32(6)
-        expiration = Aerospike.TTL(@data_buffer.read_int32(10))
+        expiration = @data_buffer.read_int32(10)
         field_count = @data_buffer.read_int16(18)
         op_count = @data_buffer.read_int16(20)
         key = parse_key(field_count)

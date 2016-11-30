@@ -1,4 +1,4 @@
-# Copyright 2012-2014 Aerospike, Inc.#
+# Copyright 2012-2016 Aerospike, Inc.#
 # Portions may be licensed to Aerospike, Inc. under one or more contributor
 # license agreements.
 #
@@ -34,10 +34,10 @@ def expire_example(client)
   key = Key.new(Shared.namespace, Shared.set_name, "expirekey ")
   bin = Bin.new("expirebin", "expirevalue")
 
-  Shared.logger.info("Put: namespace=#{key.namespace} set=#{key.set_name} key=#{key.user_key} bin=#{bin.name} value=#{bin.value} expiration=2")
+  Shared.logger.info("Put: namespace=#{key.namespace} set=#{key.set_name} key=#{key.user_key} bin=#{bin.name} value=#{bin.value} ttl=2")
 
   # Specify that record expires 2 seconds after it's written.
-  client.put(key, [bin], :expiration => 2)
+  client.put(key, [bin], ttl: 2)
 
   # Read the record before it expires, showing it is there.
   Shared.logger.info("Get: namespace=#{key.namespace} set=#{key.set_name} key=#{key.user_key}")
@@ -78,12 +78,12 @@ def no_expire_example(client)
   key = Key.new(Shared.namespace, Shared.set_name, "expirekey")
   bin = Bin.new("expirebin", "noexpirevalue")
 
-  Shared.logger.info("Put: namespace=#{key.namespace} set=#{key.set_name} key=#{key.user_key} bin=#{bin.name} value=#{bin.value} expiration= NoExpire")
+  Shared.logger.info("Put: namespace=#{key.namespace} set=#{key.set_name} key=#{key.user_key} bin=#{bin.name} value=#{bin.value} ttl=NeverExpire")
 
   # Specify that record NEVER expires.
   write_policy = WritePolicy.new
   write_policy.generation = 2
-  write_policy.expiration = Aerospike::TTL::NEVER_EXPIRE
+  write_policy.ttl = Aerospike::TTL::NEVER_EXPIRE
   client.put(key, [bin], write_policy)
 
   # Read the record, showing it is there.

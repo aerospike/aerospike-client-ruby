@@ -1,4 +1,4 @@
-# Copyright 2012-2014 Aerospike, Inc.#
+# Copyright 2012-2016 Aerospike, Inc.#
 # Portions may be licensed to Aerospike, Inc. under one or more contributor
 # license agreements.
 #
@@ -85,10 +85,10 @@ def run_get_header_example(client)
 
   # Generation should be greater than zero.  Make sure it's populated.
   if record.generation == 0
-    Shared.logger.fatal("Invalid record header: generation=#{record.generation} expiration=#{record.expiration}")
+    Shared.logger.fatal("Invalid record header: generation=#{record.generation} ttl=#{record.ttl}")
     exit
   end
-  Shared.logger.info("Received: generation=#{record.generation} expiration=#{record.expiration}")
+  Shared.logger.info("Received: generation=#{record.generation} ttl=#{record.ttl}")
 end
 
 main

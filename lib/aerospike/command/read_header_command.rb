@@ -1,5 +1,5 @@
 # encoding: utf-8
-# Copyright 2014 Aerospike, Inc.
+# Copyright 2014-2016 Aerospike, Inc.
 #
 # Portions may be licensed to Aerospike, Inc. under one or more contributor
 # license agreements.
@@ -45,7 +45,7 @@ module Aerospike
 
       if result_code == 0
         generation = @data_buffer.read_int32(14)
-        expiration = Aerospike.TTL(@data_buffer.read_int32(18))
+        expiration = @data_buffer.read_int32(18)
         @record = Record.new(@node, @key, nil,  generation, expiration)
       else
         if result_code == Aerospike::ResultCode::KEY_NOT_FOUND_ERROR

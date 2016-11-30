@@ -1,4 +1,4 @@
-# Copyright 2012-2014 Aerospike, Inc.#
+# Copyright 2012-2016 Aerospike, Inc.#
 # Portions may be licensed to Aerospike, Inc. under one or more contributor
 # license agreements.
 #
@@ -117,14 +117,14 @@ def batch_read_headers(client, key_prefix,	size)
 
     level = :err
     generation = 0
-    expiration = 0
+    ttl = 0
 
-    if record && (record.generation > 0 || record.expiration > 0)
+    if record && (record.generation > 0 || record.ttl > 0)
       level = :info
       generation = record.generation
-      expiration = record.expiration
+      ttl = record.ttl
     end
-    log(level, "Record: ns=#{key.namespace} set=#{key.set_name} key=#{key.user_key} generation=#{generation} expiration=#{expiration}")
+    log(level, "Record: ns=#{key.namespace} set=#{key.set_name} key=#{key.user_key} generation=#{generation} ttl=#{ttl}")
   end
 
   if records.length != size

@@ -1,5 +1,5 @@
 # encoding: utf-8
-# Copyright 2014 Aerospike, Inc.
+# Copyright 2014-2016 Aerospike, Inc.
 #
 # Portions may be licensed to Aerospike, Inc. under one or more contributor
 # license agreements.
@@ -18,7 +18,6 @@ require 'aerospike/record'
 
 require 'aerospike/command/single_command'
 require 'aerospike/policy/operate_policy'
-require 'aerospike/utils/epoc'
 require 'aerospike/value/value'
 
 module Aerospike
@@ -57,7 +56,7 @@ module Aerospike
       header_length = @data_buffer.read(8).ord
       result_code = @data_buffer.read(13).ord & 0xFF
       generation = @data_buffer.read_int32(14)
-      expiration = Aerospike.TTL(@data_buffer.read_int32(18))
+      expiration = @data_buffer.read_int32(18)
       field_count = @data_buffer.read_int16(26) # almost certainly 0
       op_count = @data_buffer.read_int16(28)
       receive_size = (sz & 0xFFFFFFFFFFFF) - header_length
