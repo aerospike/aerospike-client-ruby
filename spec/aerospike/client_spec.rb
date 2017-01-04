@@ -195,50 +195,52 @@ describe Aerospike::Client do
         expect(record.bins['bin']).to eq bin.value
       end
 
-      it "should put an ARRAY and get it successfully" do
+      it "should put a LIST and get it successfully" do
         key = Support.gen_random_key
-        bin = Aerospike::Bin.new('bin', [
-                                   "string",
-                                   rand(2**63),
-                                   [1, nil, 'this'],
-                                   ["embedded array", 1984, nil, {2 => 'string'}],
-                                   nil,
-                                   {'array' => ["another string", 17]},
-        ])
+        value = [
+          "string",
+          rand(2**63),
+          [1, nil, 'this'],
+          ["embedded array", 1984, nil, {2 => 'string'}],
+          nil,
+          {'array' => ["another string", 17]},
+        ]
+        bin = Aerospike::Bin.new('bin', value)
         client.put(key, bin)
         record = client.get(key)
-        expect(record.bins['bin']).to eq bin.value
+        expect(record.bins['bin']).to eq value
       end
 
       it "should put a MAP and get it successfully" do
         key = Support.gen_random_key
-        bin = Aerospike::Bin.new('bin', {
-                                   "string" => nil,
-                                   rand(2**63) => {2 => 11},
-                                   [1, nil, 'this'] => {nil => "nihilism"},
-                                   nil => ["embedded array", 1984, nil, {2 => 'string'}],
-                                   {11 => [11, 'str']} => nil,
-                                   {} => {'array' => ["another string", 17]},
-        })
+        value = {
+          "string" => nil,
+          rand(2**63) => {2 => 11},
+          [1, nil, 'this'] => {nil => "nihilism"},
+          nil => ["embedded array", 1984, nil, {2 => 'string'}],
+          {11 => [11, 'str']} => nil,
+          {} => {'array' => ["another string", 17]},
+        }
+        bin = Aerospike::Bin.new('bin', value)
         client.put(key, bin)
         record = client.get(key)
-        expect(record.bins['bin']).to eq bin.value
+        expect(record.bins['bin']).to eq value
       end
 
-      it "should write a key as symbol successfully and get it well, even as text" do
+      it "should convert symbols to strings in MAP bin values" do
         key = Support.gen_random_key
-        bin = Aerospike::Bin.new('bin', {
-                                   "string" => nil,
-                                   rand(2**63) => {2 => 11},
-                                   [1, nil, 'this'] => {nil => "nihilism"},
-                                   nil => ["embedded array", 1984, nil, {2 => 'string'}],
-                                   {11 => [11, 'str']} => nil,
-                                   {} => {'array' => ["another string", 17]},
-        })
+        bin = Aerospike::Bin.new('map', { :foo => :bar })
         client.put(key, bin)
-
         record = client.get(key)
-        expect(record.bins['bin']).to eq bin.value
+        expect(record.bins['map']).to eq({ 'foo' => 'bar' })
+      end
+
+      it "should convert symbols to strings in LIST bin values" do
+        key = Support.gen_random_key
+        bin = Aerospike::Bin.new('list', [ :foo, :bar ])
+        client.put(key, bin)
+        record = client.get(key)
+        expect(record.bins['list']).to eq([ 'foo', 'bar' ])
       end
 
       it "should put a BYTE ARRAY and get it successfully" do
@@ -250,21 +252,6 @@ describe Aerospike::Client do
         record = client.get(key)
         expect(record.bins['bin']).to eq bytes
       end
-    end
-
-    it "should write a key as symbol successfully - and read its header again. It should behave like a String" do
-      key = Support.gen_random_key(50, :key_as_sym => true)
-
-      expect(key.user_key.is_a?(String))
-
-      client.put(key, Aerospike::Bin.new('bin', 'value'))
-
-      expect(client.connected?).to eq true
-
-      record = client.get_header(key)
-      expect(record.bins).to be nil
-      expect(record.generation).to eq 1
-      expect(record.ttl).to be > 0
     end
 
     it "should raise an error if hash with non-string keys is passed as record" do
@@ -546,10 +533,10 @@ describe Aerospike::Client do
 
     it "should successfully check existence of many keys" do
       KEY_CNT = 3000
-      keys = Array.new(KEY_CNT)
-      (0...KEY_CNT).to_a.each do |i|
-        keys[i] = Support.gen_random_key
-        client.put(keys[i], Aerospike::Bin.new('bin', 'value')) if i % 2 == 0
+      keys = []
+      KEY_CNT.times do |i|
+        keys << key = Support.gen_random_key()
+        client.put(key, Aerospike::Bin.new('bin', 'value')) if i % 2 == 0
       end
 
       exists = client.batch_exists(keys)

@@ -74,6 +74,10 @@ describe Aerospike::Key do
         expect(digest('-' * 10000)).to eq("b42e64afbfccb05912a609179228d9249ea1c1a0")
         expect(digest('+' * 100000)).to eq("0a3e888c20bb8958537ddd4ba835e4070bd51740")
       end
+
+      it 'should treat symbol record keys like strings' do
+        expect(digest(:abc)).to eq(digest('abc'))
+      end
     end
 
     context 'with a byte array user key' do
