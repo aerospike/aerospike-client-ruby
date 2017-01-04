@@ -296,6 +296,15 @@ describe Aerospike::Client do
         expect(record.bins['bin']).to eq bin.value
       end
 
+      it "should put a BYTE ARRAY and get it successfully" do
+        key = Support.gen_random_key
+        bytes = SecureRandom.random_bytes(1000)
+        value = Aerospike::BytesValue.new(bytes)
+        bin = Aerospike::Bin.new('bin', value)
+        client.put(key, bin)
+        record = client.get(key)
+        expect(record.bins['bin']).to eq bytes
+      end
     end
 
     it "should write a key as symbol successfully - and read its header again. It should behave like a String" do

@@ -120,7 +120,7 @@ module Aerospike
     end
 
     def to_bytes
-      @bytes.bytes
+      @bytes
     end
 
     def estimate_size
