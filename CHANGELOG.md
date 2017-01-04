@@ -1,3 +1,12 @@
+v2.3.0 / 2017-01-04
+===================
+
+* **Bug Fixes**
+  * Fix BytesValue used as record key. [#42](https://github.com/aerospike/aerospike-client-ruby/issues/42)
+
+* **Changes**
+  * Deprecate unsupport key types - only integer, string and byte keys are supported. [#43](https://github.com/aerospike/aerospike-client-ruby/issues/43)
+
 v2.2.1 / 2016-11-14
 ===================
 
