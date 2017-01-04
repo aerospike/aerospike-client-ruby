@@ -41,23 +41,24 @@ module Aerospike
       @v1_compatibility
     end
 
+    # Keys other than integers, strings and bytes are unsupported and will trigger a warning if used.
+    # Starting with v3 the client will raise an error instead of a warning.
+    # ref. https://github.com/aerospike/aerospike-client-ruby/issues/43
+    def self.disable_unsupported_key_warning!(enable_warning = false)
+      @unsupported_key_warning = enable_warning
+    end
+    def self.warn_unsupported_key?
+      @unsupported_key_warning
+    end
+
     attr_reader :namespace, :set_name, :digest
-    attr_reader :v1_compatible
-    alias_method :v1_compatible?, :v1_compatible
 
     def initialize(ns, set, val, digest=nil, v1_compatible: self.class.v1_compatible?)
       @namespace = ns
       @set_name = set
       @user_key = Value.of(val)
-      @v1_compatible = v1_compatible
-
-      unless digest
-        compute_digest
-      else
-        @digest = digest
-      end
-
-      self
+      check_key!(@namespace, @set_name, @user_key, !digest.nil?)
+      @digest = digest || compute_digest(v1_compatible)
     end
 
 
@@ -86,7 +87,20 @@ module Aerospike
 
     private
 
-    def compute_digest
+    def valid_key?(value, has_digest)
+      value.is_a?(IntegerValue) ||
+        value.is_a?(StringValue) ||
+        value.is_a?(BytesValue) ||
+        (has_digest && value.is_a?(NullValue))
+    end
+
+    def check_key!(ns, set, value, has_digest)
+      if self.class.warn_unsupported_key? && !valid_key?(value, has_digest)
+        warn("Unsupported key type: #{value.class.name} - only Integer, String and Bytes are supported")
+      end
+    end
+
+    def compute_digest(v1_compatible = false)
       key_type = @user_key.type
       key_bytes = @user_key.to_bytes
 
@@ -95,7 +109,7 @@ module Aerospike
       end
 
       # v1.0.12 and prior computed integer key digest using little endian byte order
-      if key_type == Aerospike::ParticleType::INTEGER && v1_compatible?
+      if key_type == Aerospike::ParticleType::INTEGER && v1_compatible
         key_bytes.reverse!
       end
 
@@ -107,10 +121,12 @@ module Aerospike
       h.update(@set_name)
       h.update(key_type.chr)
       h.update(key_bytes)
-      @digest = h.digest
+      digest = h.digest
 
       # put the hash object back to the pool
       @@digest_pool.offer(h)
+
+      digest
     end
 
   end
