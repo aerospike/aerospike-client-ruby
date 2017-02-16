@@ -381,7 +381,7 @@ module Aerospike
           else
             begin
               nv = NodeValidator.new(self, aliass, @connection_timeout, @cluster_name)
-            rescue Exection => e
+            rescue => e
               Aerospike.logger.error("Seed #{seed.to_s} failed: #{e}")
               next
             end
