@@ -1,3 +1,16 @@
+v2.4.0 / 2017-04-06
+===================
+
+* **New Features**
+  * Support ns/set truncate command [#47](https://github.com/aerospike/aerospike-client-ruby/issues/47)
+  * Support configurable scan socket write timeout [#46](https://github.com/aerospike/aerospike-client-ruby/issues/46)
+
+* **Bug Fixes**
+  * Fix "Digest::Base cannot be directly inherited in Ruby" [#45](https://github.com/aerospike/aerospike-client-ruby/issues/45)
+
+* **Updates**
+  * Ruby 2.0 has been removed from the client's test matrix as [official support for Ruby 2.0 has ended in Feb 2016](https://www.ruby-lang.org/en/news/2016/02/24/support-plan-of-ruby-2-0-0-and-2-1/). Nothing has changed in the client that would break compatibility with Ruby 2.0 yet. But compatibility is not guaranteed for future client releases. [#52](https://github.com/aerospike/aerospike-client-ruby/pull/52)
+
 v2.3.0 / 2017-01-04
 ===================
 

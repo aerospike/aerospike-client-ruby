@@ -40,6 +40,7 @@ With a new client, you can use any of the methods specified below:
   - [#register_udf](#registerudf)
   - [#register_udf_from_file](#registerudffromfile)
   - [#touch](#touch)
+  - [#truncate](#truncate)
 
 
 <a name="error"></a>
@@ -168,6 +169,43 @@ Example:
   if client.delete(key, :ttl => 0.005)
     # do something
   end
+```
+
+<!--
+################################################################################
+truncate()
+################################################################################
+-->
+<a name="truncate"></a>
+
+### truncate(namespace, set_name, before_last_update=nil, options={})
+
+Removes records in the specified namespace/set efficiently.
+
+This method is orders of magnitude faster than deleting records one at a time.
+Works with Aerospike Server versions >= 3.12.
+
+This asynchronous server call may return before the truncate is complete. The
+user can still write new records after the server call returns because new
+records will have last update times greater than the truncate cut-off (set at
+the time of the truncate call.)
+
+Parameters:
+
+- `namespace`   – Required namespace
+- `set_name`    - Optional set name. Pass in `nil` to delete all sets in the namespace.
+- `before_last_update` - Optional timestamp; if set, delete only records with
+                   a last-update timestamp older than the given timestamp. Must
+                   be before the current time. Pass in null to delete all records in
+                   namespace/set.
+- `options`     – A hash representing [Write Policy Attributes](policies.md#WritePolicy) to use for this operation.
+                  If not provided, ```@default_write_policy``` will be used.
+
+Example:
+
+```ruby
+  last_update_ts = Time.now
+  client.truncate("test", "test", last_update_ts)
 ```
 
 <!--
