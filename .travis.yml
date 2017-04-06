@@ -7,7 +7,7 @@ rvm:
 - 2.3
 - 2.4
 - ruby-head
-- rbx
+- rbx-2
 env: CI="travis"
 sudo: false
 os:
@@ -16,7 +16,7 @@ dist: trusty
 matrix:
   allow_failures:
   - rvm: ruby-head
-  - rvm: rbx
+  - rvm: rbx-2
   fast_finish: true
 install:
 - wget -O aerospike-server.tgz http://aerospike.com/download/server/latest/artifact/tgz
