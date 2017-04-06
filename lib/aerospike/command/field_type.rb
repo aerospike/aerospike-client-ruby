@@ -28,6 +28,7 @@ module Aerospike
     DIGEST_RIPE_ARRAY = 6
     TRAN_ID = 7    # user supplied transaction id, which is simply passed back
     SCAN_OPTIONS = 8
+    SCAN_TIMEOUT = 9
     INDEX_NAME = 21
     INDEX_RANGE = 22
     INDEX_FILTER = 23

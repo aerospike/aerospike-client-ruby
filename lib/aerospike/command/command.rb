@@ -337,6 +337,10 @@ module Aerospike
       @data_offset += 2 + FIELD_HEADER_SIZE
       field_count += 1
 
+      # Estimate scan timeout size.
+      @data_offset += 4 + FIELD_HEADER_SIZE
+      field_count += 1
+
       if bin_names
         bin_names.each do |bin_name|
           estimate_operation_size_for_bin_name(bin_name)
@@ -377,6 +381,10 @@ module Aerospike
       @data_offset += 1
       @data_buffer.write_byte(policy.scan_percent.to_i.ord, @data_offset)
       @data_offset += 1
+
+      write_field_header(4, Aerospike::FieldType::SCAN_TIMEOUT)
+      @data_buffer.write_uint32(policy.socket_timeout.to_i, @data_offset)
+      @data_offset += 4
 
       if bin_names
         bin_names.each do |bin_name|
