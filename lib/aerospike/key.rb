@@ -28,7 +28,7 @@ module Aerospike
       if RUBY_PLATFORM == 'java'
         OpenSSL::Digest::RIPEMD160.new
       else
-        Digest::RMD160.new
+        Digest(:RMD160).new
       end
     end
 
