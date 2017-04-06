@@ -20,8 +20,11 @@ module Aerospike
   # Container object for scan policy command.
   class ScanPolicy < BatchPolicy
 
-    attr_accessor :scan_percent, :concurrent_nodes,
-      :include_bin_data, :fail_on_cluster_change
+    attr_accessor :scan_percent
+    attr_accessor :concurrent_nodes
+    attr_accessor :include_bin_data
+    attr_accessor :fail_on_cluster_change
+    attr_accessor :socket_timeout
 
     def initialize(opt={})
       super(opt)
@@ -30,7 +33,7 @@ module Aerospike
       @concurrent_nodes = opt[:concurrent_nodes].nil? ? true : concurrent_nodes
       @include_bin_data = opt[:include_bin_data].nil? ? true : include_bin_data
       @fail_on_cluster_change = opt[:fail_on_cluster_change].nil? ? true : fail_on_cluster_change
-
+      @socket_timeout = opt[:socket_timeout] || 10000
       @max_retries = 0
 
       self
