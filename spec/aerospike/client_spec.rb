@@ -617,6 +617,47 @@ describe Aerospike::Client do
 
   end
 
+  describe "#truncate" do
+    it "deletes all records in the set" do
+      records_before = 20
+      namespace = 'test'
+      set_name = Support.rand_string(10)
+      records_before.times do
+        client.put(Support.gen_random_key(20, set: set_name), {"i" => 42})
+      end
+      sleep(0.1)
+
+      client.truncate(namespace, set_name)
+      sleep(0.2) # give truncate some time to finish
+
+      count = client.scan_all(namespace, set_name, nil).to_enum(:each).count
+      expect(count).to eq(0)
+    end
+
+    it "deletes all records older than given timestamp" do
+      records_before = 20
+      records_after = 2
+      namespace = 'test'
+      set_name = Support.rand_string(10)
+      records_before.times do
+        client.put(Support.gen_random_key(20, set: set_name), {"i" => 42})
+      end
+      sleep(0.1)
+      truncate_time = Time.now
+      sleep(0.1)
+      records_after.times do
+        client.put(Support.gen_random_key(20, set: set_name), {"i" => 42})
+      end
+      sleep(0.1)
+
+      client.truncate(namespace, set_name, truncate_time)
+      sleep(0.2) # give truncate some time to finish
+
+      count = client.scan_all(namespace, set_name, nil).to_enum(:each).count
+      expect(count).to eq(records_after)
+    end
+  end
+
   describe "benchmarks", skip: true do
 
     it "benchmark #put #get" do

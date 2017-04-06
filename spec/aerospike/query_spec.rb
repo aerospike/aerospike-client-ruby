@@ -277,7 +277,7 @@ describe Aerospike::Client do
       end
 
       before(:each) do
-        Support.delete_set(Support.client, "geo")
+        Support.delete_set(Support.client, @namespace, "geo")
       end
 
       it "should return a point within the given GeoJSON region" do

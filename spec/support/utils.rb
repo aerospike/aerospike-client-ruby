@@ -14,7 +14,11 @@ module Support
     Aerospike::Key.new('test', set_name, key_val)
   end
 
-  def self.delete_set(client, set_name)
+  def self.delete_set(client, namespace, set_name)
+    if min_version?("3.12.0")
+      return client.truncate(namespace, set_name)
+    end
+
     package = "test_utils_delete_record.lua"
     function = <<EOF
 function delete_record(record)
@@ -23,7 +27,7 @@ end
 EOF
     register_task = client.register_udf(function, package, Aerospike::Language::LUA)
     register_task.wait_till_completed or fail "Could not register delete_record UDF to delete set #{set_name}"
-    statement = Aerospike::Statement.new("test", set_name)
+    statement = Aerospike::Statement.new(namespace, set_name)
     execute_task = client.execute_udf_on_query(statement, package, "delete_record")
     execute_task.wait_till_completed
     remove_task = client.remove_udf(package)
