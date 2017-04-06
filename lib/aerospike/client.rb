@@ -204,6 +204,31 @@ module Aerospike
       command.existed
     end
 
+    ##
+    # Removes records in the specified namespace/set efficiently.
+    #
+    # This method is orders of magnitude faster than deleting records one at a
+    # time. Works with Aerospike Server versions >= 3.12.
+    #
+    # This asynchronous server call may return before the truncate is complete.
+    # The user can still write new records after the server call returns
+    # because new records will have last update times greater than the truncate
+    # cut-off (set at the time of the truncate call.)
+    #
+    #  If no policy options are provided, +@default_info_policy+ will be used.
+
+    def truncate(namespace, set_name, before_last_update = nil, options = {})
+      policy = create_policy(options, WritePolicy)
+      str_cmd = "truncate:namespace=#{namespace}"
+      str_cmd << ";set=#{set_name}" unless set_name.to_s.strip.empty?
+      str_cmd << ";lut=#{(before_last_update.to_f * 1_000_000_000.0).round}" if before_last_update
+
+      # Send index command to one node. That node will distribute the command to other nodes.
+      response = send_info_command(policy, str_cmd).upcase
+      return if response == 'OK'
+      raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::SERVER_ERROR, "Truncate failed: #{response}")
+    end
+
     #-------------------------------------------------------
     # Touch Operations
     #-------------------------------------------------------
@@ -572,10 +597,7 @@ module Aerospike
       str_cmd << ";priority=normal"
 
       # Send index command to one node. That node will distribute the command to other nodes.
-      response_map = send_info_command(policy, str_cmd)
-      _, response = response_map.first
-      response = response.to_s.upcase
-
+      response = send_info_command(policy, str_cmd).upcase
       if response == 'OK'
         # Return task that could optionally be polled for completion.
         return IndexTask.new(@cluster, namespace, index_name)
@@ -598,10 +620,7 @@ module Aerospike
       str_cmd << ";indexname=#{index_name}"
 
       # Send index command to one node. That node will distribute the command to other nodes.
-      response_map = send_info_command(policy, str_cmd)
-      _, response = response_map.first
-      response = response.to_s.upcase
-
+      response = send_info_command(policy, str_cmd).upcase
       return if response == 'OK'
 
       # Index did not previously exist. Return without error.
@@ -817,7 +836,9 @@ module Aerospike
 
     def send_info_command(policy, command)
       policy ||= default_policy
-      @cluster.request_info(policy, command)
+      Aerospike.logger.debug { "Sending info command: #{command}" }
+      _, response = @cluster.request_info(policy, command).first
+      response.to_s
     end
 
     def hash_to_bins(hash)
