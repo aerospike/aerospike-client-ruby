@@ -215,9 +215,9 @@ module Aerospike
     # because new records will have last update times greater than the truncate
     # cut-off (set at the time of the truncate call.)
     #
-    #  If no policy options are provided, +@default_info_policy+ will be used.
+    # If no policy options are provided, +@default_info_policy+ will be used.
 
-    def truncate(namespace, set_name, before_last_update = nil, options = {})
+    def truncate(namespace, set_name = nil, before_last_update = nil, options = {})
       policy = create_policy(options, WritePolicy)
       str_cmd = "truncate:namespace=#{namespace}"
       str_cmd << ";set=#{set_name}" unless set_name.to_s.strip.empty?
