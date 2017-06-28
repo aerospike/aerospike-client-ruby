@@ -17,7 +17,7 @@ Before connecting to a cluster, you must import the package.
 You can then generate a client object for connecting to and operating against a cluster.
 
 ```ruby
-client = Aeropsike::Client.new("127.0.0.1")
+client = Aerospike::Client.new("127.0.0.1")
 ```
 
 The application will use the client object to connect to a cluster, then perform operations such as writing and reading records.
