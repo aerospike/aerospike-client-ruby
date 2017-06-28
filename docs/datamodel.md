@@ -97,7 +97,7 @@ Example:
   bin2 = Bin.new("maxTPS", 1000000) # number value
   bin3 = Bin.new("notes", {
       "age" => 5,
-      666: "not allowed in",
+      "666": "not allowed in",
       "clients" => ["go", "c", "java", "python", "node", "erlang", 11, {"a" => "b"}],
     }) # go wild!
 ```
