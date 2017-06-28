@@ -480,8 +480,8 @@ Example:
   bins = {
     "a" => "Lack of skill dictates economy of style.",
     "b" => 123,
-    "c" => []int{1, 2, 3},
-    "d" => map[string]interface{}{"a" => 42, "b" => "An elephant is mouse with an operating system."},
+    "c" => [1, 2, 3],
+    "d" => {"a" => 42, "b" => "An elephant is mouse with an operating system."},
   }
 
   client.put(key, bins, :ttl => 0.05) # ttl is set to 50ms
