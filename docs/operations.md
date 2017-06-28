@@ -21,7 +21,7 @@ to `Aerospike::RecordBinMultiplicity#ARRAY`:
       Aerospike::CDT::MapOperation.get_key("mapBin", "keyB", return_type: return_type)
     ]
     results = client.operate(key, ops, policy)
-    results.bins // => {"mapBin" => [{"keyA" => "valueA"}, {"keyB" => "valueB"}]}
+    results.bins # => {"mapBin" => [{"keyA" => "valueA"}, {"keyB" => "valueB"}]}
 
 Note that many write operations return values as well, e.g. a list append
 operation returns the new size of the list after the append operation.

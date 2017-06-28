@@ -30,7 +30,7 @@ Simple example of a Read, Change, Update operation:
 
 ```ruby
   # define a client to connect to
-  client = Client.new("127.0.0.1", 3000)
+  client = Client.new("127.0.0.1:3000")
 
   key = Key.new("test", "demo", "key") # key can be of any supported type
 
@@ -97,7 +97,7 @@ Example:
   bin2 = Bin.new("maxTPS", 1000000) # number value
   bin3 = Bin.new("notes", {
       "age" => 5,
-      666: "not allowed in",
+      666 => "not allowed in",
       "clients" => ["go", "c", "java", "python", "node", "erlang", 11, {"a" => "b"}],
     }) # go wild!
 ```
