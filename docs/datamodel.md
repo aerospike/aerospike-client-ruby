@@ -38,7 +38,7 @@ Simple example of a Read, Change, Update operation:
   bins = {
     "bin1" => 42, # you can pass any supported type as bin value
     "bin2" => "An elephant is a mouse with an operating system",
-    "bin3" => []interface{}{"Go", 2009},
+    "bin3" => ["Ruby", 2009],
   }
 
   # write the bins
