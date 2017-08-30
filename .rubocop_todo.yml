@@ -41,9 +41,6 @@ Lint/LiteralInCondition:
 Lint/ParenthesesAsGroupedExpression:
   Exclude:
     - 'spec/aerospike/client_spec.rb'
-    - 'spec/aerospike/large_list_spec.rb'
-    - 'spec/aerospike/large_map_spec.rb'
-    - 'spec/aerospike/large_stack_spec.rb'
     - 'spec/aerospike/udf_spec.rb'
 
 # Offense count: 2
@@ -377,10 +374,6 @@ Style/ExtraSpacing:
 Style/For:
   Exclude:
     - 'lib/aerospike/value/value.rb'
-    - 'spec/aerospike/large_list_spec.rb'
-    - 'spec/aerospike/large_map_spec.rb'
-    - 'spec/aerospike/large_set_spec.rb'
-    - 'spec/aerospike/large_stack_spec.rb'
     - 'spec/aerospike/security_spec.rb'
     - 'tools/benchmark/benchmark.rb'
 
@@ -651,8 +644,6 @@ Style/RedundantBegin:
   Exclude:
     - 'lib/aerospike/command/admin_command.rb'
     - 'lib/aerospike/info.rb'
-    - 'lib/aerospike/ldt/large_list.rb'
-    - 'lib/aerospike/ldt/large_map.rb'
 
 # Offense count: 1
 # Cop supports --auto-correct.
@@ -942,10 +933,6 @@ Style/VariableName:
   Exclude:
     - 'examples/udf.rb'
     - 'lib/aerospike/command/admin_command.rb'
-    - 'lib/aerospike/ldt/large_list.rb'
-    - 'lib/aerospike/ldt/large_map.rb'
-    - 'lib/aerospike/ldt/large_set.rb'
-    - 'lib/aerospike/ldt/large_stack.rb'
     - 'lib/aerospike/query/query_command.rb'
     - 'lib/aerospike/task/execute_task.rb'
     - 'spec/aerospike/cdt_list_spec.rb'
