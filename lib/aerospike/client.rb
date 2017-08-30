@@ -371,49 +371,6 @@ module Aerospike
       command.record
     end
 
-    #-------------------------------------------------------------------
-    # Large collection functions (Supported by Aerospike 3 servers only)
-    #-------------------------------------------------------------------
-
-    #  Initialize large list operator.  This operator can be used to create and manage a list
-    #  within a single bin.
-    #
-    #  This method is only supported by Aerospike 3 servers.
-    def get_large_list(key, bin_name, user_module=nil, options={})
-      policy = create_policy(options, WritePolicy)
-      LargeList.new(self, policy, key, bin_name, user_module)
-    end
-
-    #  Initialize large map operator.  This operator can be used to create and manage a map
-    #  within a single bin.
-    #
-    #  This method is only supported by Aerospike 3 servers.
-    #  DEPRECATED. This method will be removed from the client in the future.
-    def get_large_map(key, bin_name, user_module=nil, options={})
-      policy = create_policy(options, WritePolicy)
-      LargeMap.new(self, policy, key, bin_name, user_module)
-    end
-
-    #  Initialize large set operator.  This operator can be used to create and manage a set
-    #  within a single bin.
-    #
-    #  This method is only supported by Aerospike 3 servers.
-    #  DEPRECATED. This method will be removed from the client in the future.
-    def get_large_set(key, bin_name, user_module=nil, options={})
-      policy = create_policy(options, WritePolicy)
-      LargeSet.new(self, policy, key, bin_name, user_module)
-    end
-
-    #  Initialize large stack operator.  This operator can be used to create and manage a stack
-    #  within a single bin.
-    #
-    #  This method is only supported by Aerospike 3 servers.
-    #  DEPRECATED. This method will be removed from the client in the future.
-    def get_large_stack(key, bin_name, user_module=nil, options={})
-      policy = create_policy(options, WritePolicy)
-      LargeStack.new(self, policy, key, bin_name, user_module)
-    end
-
     #---------------------------------------------------------------
     # User defined functions (Supported by Aerospike 3 servers only)
     #---------------------------------------------------------------
