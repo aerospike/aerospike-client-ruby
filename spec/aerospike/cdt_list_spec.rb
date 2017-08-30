@@ -148,6 +148,24 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?("cdt-
     end
   end
 
+  describe "ListOperation.increment", skip: !Support.min_version?("3.15") do
+    it "increments the list index by the specified value" do
+      record = { "list" => [1, 2, 3, 4, 5] }
+      operation = Aerospike::CDT::ListOperation.increment('list', 2, 3)
+      expectedResult = { "list" => 6 }
+      expectedRecord = { "list" => [1, 2, 6, 4, 5] }
+      verifyOperation(record, operation, expectedResult, expectedRecord)
+    end
+
+    it "increments the list index by 1" do
+      record = { "list" => [1, 2, 3, 4, 5] }
+      operation = Aerospike::CDT::ListOperation.increment('list', 2)
+      expectedResult = { "list" => 4 }
+      expectedRecord = { "list" => [1, 2, 4, 4, 5] }
+      verifyOperation(record, operation, expectedResult, expectedRecord)
+    end
+  end
+
   describe "ListOperation.set" do
     it "sets the item at the specified index" do
       record = { "list" => [1, 2, 3, 4, 5] }

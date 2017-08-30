@@ -49,6 +49,7 @@ module Aerospike
       SET           = 9
       TRIM          = 10
       CLEAR         = 11
+      INCREMENT     = 12
       SIZE          = 16
       GET           = 17
       GET_RANGE     = 18
@@ -148,6 +149,18 @@ module Aerospike
       # Server does not return a result by default.
       def self.clear(bin_name)
         create_operation(Operation::CDT_MODIFY, CLEAR, bin_name)
+      end
+
+      ##
+      # Create list increment operation.
+      # Server increments list[index] by value. If not specified, value defaults to 1.
+      # Server returns the value of list[index] after the operation.
+      def self.increment(bin_name, index, value = nil)
+        if value
+          create_operation(Operation::CDT_MODIFY, INCREMENT, bin_name, index, value)
+        else
+          create_operation(Operation::CDT_MODIFY, INCREMENT, bin_name, index)
+        end
       end
 
       ##
