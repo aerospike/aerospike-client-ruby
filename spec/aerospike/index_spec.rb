@@ -130,6 +130,17 @@ describe Aerospike::Client do
       expect(index_task.completed?).to be true
     end
 
+    it "does not return an error when creating an index that already exists" do
+      key = Support.gen_random_key
+      index_task = client.create_index(key.namespace, key.set_name, "index_int_#{key.set_name}", int_bin_name, :numeric)
+      expect(index_task.wait_till_completed).to be true
+      expect(index_task.completed?).to be true
+
+      index_task = client.create_index(key.namespace, key.set_name, "index_int_#{key.set_name}", int_bin_name, :numeric)
+      expect(index_task.wait_till_completed).to be true
+      expect(index_task.completed?).to be true
+    end
+
   end # describe
 
 end # describe
