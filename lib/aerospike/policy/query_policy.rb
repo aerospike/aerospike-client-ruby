@@ -20,10 +20,14 @@ module Aerospike
   # Container object for scan policy command.
   class QueryPolicy < BatchPolicy
 
+    attr_accessor :include_bin_data
+
     def initialize(opt={})
       super(opt)
 
       @max_retries = 0
+
+      @include_bin_data = opt.fetch(:include_bin_data, true)
 
       self
     end

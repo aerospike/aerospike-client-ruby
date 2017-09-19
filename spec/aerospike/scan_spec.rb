@@ -73,21 +73,33 @@ describe Aerospike::Client do
 
         end # it
 
-        it "should return all records with only bin1 and bin2" do
+        it "should return only the selected bins" do
           rs_list = scan_method(type, ['bin1', 'bin2'], :record_queue_size => 10)
 
-          i = 0
+          count = 0
           rs_list.each do |rs|
             rs.each do |rec|
-              i +=1
+              count += 1
+              expect(rec.bins.keys).to contain_exactly('bin1', 'bin2')
               expect(rec.bins['bin1']).to eq "value#{rec.bins['bin2']}"
-              expect(rec.bins.length).to eq 2
             end
           end
+          expect(count).to eq @record_count
+        end
 
-          expect(i).to eq @record_count
+        it "should return only record meta data" do
+          rs_list = scan_method(type, nil, include_bin_data: false)
 
-        end # it
+          count = 0
+          rs_list.each do |rs|
+            rs.each do |rec|
+              count += 1
+              expect(rec.bins).to be_nil
+              expect(rec.generation).to_not be_nil
+            end
+          end
+          expect(count).to eq @record_count
+        end
 
         it "should cancel without deadlock" do
 

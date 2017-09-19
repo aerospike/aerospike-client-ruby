@@ -74,6 +74,46 @@ describe Aerospike::Client do
       expect(tasks.all?(&:completed?)).to be true
     end
 
+    context "Bin selection" do
+      it "returns all record bins" do
+        stmt = Aerospike::Statement.new(@namespace, @set)
+        stmt.filters << Aerospike::Filter.Equal('bin2', 1)
+        rs = client.query(stmt)
+        count = 0
+        rs.each do |rec|
+          count += 1
+          expect(rec.bins.keys).to contain_exactly("bin1", "bin2", "bin3", "bin4")
+        end
+        expect(count).to be > 0
+      end
+
+      it "returns only the selected bins" do
+        bins = ["bin1", "bin2"]
+        stmt = Aerospike::Statement.new(@namespace, @set, bins)
+        stmt.filters << Aerospike::Filter.Equal('bin2', 1)
+        rs = client.query(stmt)
+        count = 0
+        rs.each do |rec|
+          count += 1
+          expect(rec.bins.keys).to contain_exactly("bin1", "bin2")
+        end
+        expect(count).to be > 0
+      end
+
+      it "returns only the record meta data", skip: !Support.min_version?("3.15") do
+        stmt = Aerospike::Statement.new(@namespace, @set)
+        stmt.filters << Aerospike::Filter.Equal('bin2', 1)
+        rs = client.query(stmt, include_bin_data: false)
+        count = 0
+        rs.each do |rec|
+          count += 1
+          expect(rec.bins).to be_nil
+          expect(rec.generation).to_not be_nil
+        end
+        expect(count).to be > 0
+      end
+    end
+
     context "No Filter == Scan" do
 
       it "should return all records" do

@@ -116,7 +116,7 @@ module Aerospike
 
       size_buffer
 
-      readAttr = INFO1_READ
+      readAttr = @policy.include_bin_data ? INFO1_READ : INFO1_READ | INFO1_NOBINDATA
       operation_count = (@statement.filters.to_a.length == 0 && @statement.bin_names.to_a.length == 0) ? @statement.bin_names.length : 0
 
       write_header(@policy, readAttr, 0, fieldCount, operation_count)
