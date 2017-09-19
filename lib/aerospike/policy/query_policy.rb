@@ -17,7 +17,7 @@ require 'aerospike/policy/batch_policy'
 
 module Aerospike
 
-  # Container object for scan policy command.
+  # Container object for query policy command.
   class QueryPolicy < BatchPolicy
 
     attr_accessor :include_bin_data
