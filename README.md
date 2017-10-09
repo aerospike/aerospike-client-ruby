@@ -7,7 +7,7 @@
 
 An Aerospike library for Ruby.
 
-This library is compatible with Ruby 2.1+ and supports Linux, Mac OS X and various other BSDs. Rubinius is supported, but not JRuby.
+This library is compatible with Ruby 2.2+ and supports Linux, Mac OS X and various other BSDs. Rubinius is supported, but not JRuby.
 
 - [Usage](#Usage)
 - [Prerequisites](#Prerequisites)
@@ -61,7 +61,7 @@ Details about the API are available in the [`docs`](docs) directory.
 <a name="Prerequisites"></a>
 ## Prerequisites
 
-[Ruby](https://ruby-lang.org) version v2.0+ is required.
+[Ruby](https://ruby-lang.org) version v2.2+ is required.
 
 Aerospike Ruby client implements the wire protocol, and does not depend on the C client.
 It is thread friendly.
@@ -81,7 +81,7 @@ Supported operating systems:
 
 ### Installation from source
 
-1. Install Ruby 2.0+
+1. Install Ruby 2.2+
 2. Install RubyGems
 3. Install Bundler: ```gem install bundler```
 4. Install dependencies: ```bundler install```

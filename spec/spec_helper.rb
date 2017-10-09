@@ -6,6 +6,11 @@ require "support/utils"
 require 'simplecov'
 SimpleCov.start
 
+if ENV["CODECOV_ENABLED"] == "true"
+  require 'codecov'
+  SimpleCov.formatter = SimpleCov::Formatter::Codecov
+end
+
 $:.unshift((Pathname(__FILE__).dirname.parent + 'lib').to_s)
 
 require 'aerospike'
