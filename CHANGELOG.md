@@ -1,7 +1,12 @@
-HEAD
+v2.5.0 / 2017-10-10
 ===================
 
+* **New Features**
+  * Support nobins flag on query operations
+  * Support CDT List Increment operation. Requires Aerospike server version 3.15 or later.
+
 * **Updates**
+  * The deprecated Large Data Types(LDT) feature has been removed.
   * Ruby 2.1 has been removed from the client's test matrix as [official support for Ruby 2.1 has ended in Apr 2017](https://www.ruby-lang.org/en/news/2017/04/01/support-of-ruby-2-1-has-ended/). Nothing has changed in the client that would break compatibility with Ruby 2.1 yet. But compatibility is not guaranteed for future client releases.
 
 v2.4.0 / 2017-04-06
