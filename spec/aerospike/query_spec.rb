@@ -129,6 +129,19 @@ describe Aerospike::Client do
 
       end # it
 
+      it "should return selected bins from all records" do
+        stmt = Aerospike::Statement.new(@namespace, @set, %w[bin1 bin2])
+        rs = client.query(stmt)
+
+        records = 0
+        rs.each do |rec|
+          records += 1
+          expect(rec.bins.keys).to contain_exactly("bin1", "bin2")
+        end
+
+        expect(records).to eq @record_count
+      end # it
+
     end # context
 
     context "Equal Filter" do

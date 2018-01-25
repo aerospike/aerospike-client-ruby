@@ -53,7 +53,7 @@ module Aerospike
         fieldCount+=1
       end
 
-      if @statement.filters && @statement.filters.length > 0
+      if !is_scan?
         col_type = @statement.filters[0].collection_type
         if col_type > 0
           @data_offset += FIELD_HEADER_SIZE + 1
@@ -69,21 +69,21 @@ module Aerospike
         end
         @data_offset += filterSize
         fieldCount+=1
+
+        if @statement.bin_names && @statement.bin_names.length > 0
+          @data_offset += FIELD_HEADER_SIZE
+          binNameSize+=1 # num bin names
+
+          @statement.bin_names.each do |bin_name|
+            binNameSize += bin_name.bytesize + 1
+          end
+          @data_offset += binNameSize
+          fieldCount+=1
+        end
       else
         # Calling query with no filters is more efficiently handled by a primary index scan.
         # Estimate scan options size.
         @data_offset += (2 + FIELD_HEADER_SIZE)
-        fieldCount+=1
-      end
-
-      if @statement.bin_names && @statement.bin_names.length > 0
-        @data_offset += FIELD_HEADER_SIZE
-        binNameSize+=1 # num bin names
-
-        @statement.bin_names.each do |bin_name|
-          binNameSize += bin_name.bytesize + 1 #OPERATION_HEADER_SIZE
-        end
-        @data_offset += binNameSize
         fieldCount+=1
       end
 
@@ -117,7 +117,7 @@ module Aerospike
       size_buffer
 
       readAttr = @policy.include_bin_data ? INFO1_READ : INFO1_READ | INFO1_NOBINDATA
-      operation_count = (@statement.filters.to_a.length == 0 && @statement.bin_names.to_a.length == 0) ? @statement.bin_names.length : 0
+      operation_count = (is_scan? && !@statement.bin_names.nil?) ? @statement.bin_names.length : 0
 
       write_header(@policy, readAttr, 0, fieldCount, operation_count)
 
@@ -133,7 +133,7 @@ module Aerospike
         write_field_string(@statement.set_name, Aerospike::FieldType::TABLE)
       end
 
-      if @statement.filters && @statement.filters.length > 0
+      if !is_scan?
         col_type = @statement.filters[0].collection_type
         if col_type > 0
           write_field_header(1, Aerospike::FieldType::INDEX_TYPE)
@@ -172,18 +172,6 @@ module Aerospike
         @data_offset+=1
       end
 
-      if @statement.bin_names && @statement.bin_names.length > 0
-        write_field_header(binNameSize, Aerospike::FieldType::QUERY_BINLIST)
-        @data_buffer.write_byte(@statement.bin_names.length, @data_offset)
-        @data_offset+=1
-
-        @statement.bin_names.each do |bin_name|
-          len = @data_buffer.write_binary(bin_name, @data_offset + 1)
-          @data_buffer.write_byte(len, @data_offset)
-          @data_offset += len + 1
-        end
-      end
-
       write_field_header(8, Aerospike::FieldType::TRAN_ID)
       @data_buffer.write_int64(@statement.task_id, @data_offset)
       @data_offset += 8
@@ -203,9 +191,19 @@ module Aerospike
         write_field_bytes(functionArgBuffer, Aerospike::FieldType::UDF_ARGLIST)
       end
 
+      if is_scan? && !@statement.bin_names.nil?
+        @statement.bin_names.each do |bin_name|
+          write_operation_for_bin_name(bin_name, Aerospike::Operation::READ)
+        end
+      end
+
       end_cmd
 
       return nil
+    end
+
+    def is_scan?
+      @statement.filters.nil? || @statement.filters.empty?
     end
 
   end # class
