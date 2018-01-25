@@ -208,7 +208,9 @@ module Aerospike
     # Removes records in the specified namespace/set efficiently.
     #
     # This method is orders of magnitude faster than deleting records one at a
-    # time. Works with Aerospike Server versions >= 3.12.
+    # time. It requires Aerospike Server version 3.12 or later. See
+    # https://www.aerospike.com/docs/reference/info#truncate for further
+    # information.
     #
     # This asynchronous server call may return before the truncate is complete.
     # The user can still write new records after the server call returns
