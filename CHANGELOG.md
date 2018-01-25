@@ -1,3 +1,13 @@
+v2.5.1 / 2018-01-25
+===================
+
+* **Bug Fixes**
+  * Some secondary index queries fail with parameter error on Aerospike Server v3.15.1.x [#57](https://github.com/aerospike/aerospike-client-ruby/issues/57)
+
+* **Updates**
+  * Added Ruby 2.5 to test matrix
+  * Updated documentation for Client#truncate command [CLIENT-985]
+
 v2.5.0 / 2017-10-10
 ===================
 
