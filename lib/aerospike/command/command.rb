@@ -34,6 +34,8 @@ module Aerospike
   # Get all bins.
   INFO1_GET_ALL = Integer(1 << 1)
 
+
+  INFO1_BATCH = Integer(1 << 3)
   # Do not read the bins
   INFO1_NOBINDATA = Integer(1 << 5)
 
@@ -315,6 +317,73 @@ module Aerospike
         end
       end
 
+      end_cmd
+    end
+
+    def set_batch_index_get(policy,batch, bin_names, read_attr)
+      bin_name_size = 0
+      operation_count = 0
+      field_count = 1
+      if bin_names
+        bin_names.each do |bin_name|
+          bin_name_size += bin_names.bytesize + OPERATION_HEADER_SIZE
+        end
+        operation_count = bin_names.length
+      end
+      begin_cmd
+      @data_offset += FIELD_HEADER_SIZE + 5
+
+      prev = nil
+      batch.keys.each do |key|
+        @data_offset += key.digest.length + 4
+
+        if prev != nil && prev.namespace == key.namespace
+          @data_offset += 1
+        else
+          @data_offset += key.namespace.bytesize + FIELD_HEADER_SIZE + 6
+          @data_offset += bin_name_size
+        end
+      end
+      size_buffer
+      write_header(policy,read_attr | INFO1_BATCH,0,1,0)
+      fieldSize_Offset = @data_offset
+      write_field_header(0,Aerospike::FieldType::BATCH_INDEX)
+      @data_buffer.write_int32(batch.keys.length,@data_offset)
+      @data_offset += 4
+      @data_buffer.write_byte(1,@data_offset)
+      @data_offset += 1
+
+      prev = nil
+
+      batch.keys.each_with_index do |key,i|
+        @data_buffer.write_int32(batch.offsets[i],@data_offset)
+        @data_offset += 4
+        @data_buffer.write_binary(key.digest, @data_offset)
+        @data_offset += key.digest.bytesize        
+    
+
+        if (prev != nil && prev.namespace == key.namespace)
+          @data_buffer.write_byte(1,@data_offset)
+          @data_offset += 1
+        else
+          @data_buffer.write_byte(0,@data_offset)
+          @data_offset += 1
+          @data_buffer.write_byte(read_attr,@data_offset)
+          @data_offset += 1
+          @data_buffer.write_int16(field_count,@data_offset)
+          @data_offset += 2
+          @data_buffer.write_int16(operation_count,@data_offset)
+          @data_offset += 2
+          write_field_string(key.namespace,Aerospike::FieldType::NAMESPACE)
+
+          if bin_names
+            bin_names.each do |bin_name|
+              write_operation_for_bin(bin_name, Aerospike::Operation::READ)
+            end
+          end
+          prev = key
+        end
+      end
       end_cmd
     end
 

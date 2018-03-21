@@ -40,6 +40,7 @@ module Aerospike
     UDF_ARGLIST = 32
     UDF_OP = 33
     QUERY_BINLIST = 40
+    BATCH_INDEX = 41
 
   end # module
 

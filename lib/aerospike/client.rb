@@ -306,6 +306,15 @@ module Aerospike
       command.record
     end
 
+
+    def batch_get_index(keys,bin_names=[],options={})
+      policy = create_policy(options, Policy)
+      records = Array.new(keys.length)
+      batch_execute_index(keys) do |bn|
+        BatchCommandGetIndex.new(bn,policy,bin_names,records,INFO1_READ | INFO1_GET_ALL)
+      end      
+      records
+    end
     #-------------------------------------------------------
     # Batch Read Operations
     #-------------------------------------------------------
@@ -875,6 +884,24 @@ module Aerospike
     def execute_command(command)
       validate_command(command)
       command.execute
+    end
+
+
+    def batch_execute_index(keys)
+      batch_nodes = BatchNodeIndex.generate_list(@cluster, keys)
+      threads = []
+
+      # Use a thread per namespace per node
+      batch_nodes.each do |batch_node|
+        # copy to avoid race condition
+        bn = batch_node
+        threads << Thread.new do
+          Thread.current.abort_on_exception = true
+          command = yield bn          
+          execute_command(command)
+        end
+      end
+      threads.each { |thr| thr.join }
     end
 
     def batch_execute(keys)
