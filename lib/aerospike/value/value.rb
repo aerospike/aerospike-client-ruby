@@ -18,19 +18,16 @@
 require 'aerospike/aerospike_exception'
 
 module Aerospike
-
-  private
-
   # Polymorphic value classes used to efficiently serialize objects into the wire protocol.
   class Value #:nodoc:
-    INTEGER_MAX = 2**63
+    INTEGER_RANGE = Range.new(-2**63, 2**63 - 1).freeze
 
     def self.of(value)
       case value
       when nil
         res = NullValue.new
       when Integer
-        if value < INTEGER_MAX
+        if INTEGER_RANGE.cover?(value)
           res = IntegerValue.new(value)
         else
           # big nums > 2**63 are not supported
@@ -481,5 +478,4 @@ module Aerospike
       nil
     end
   end
-
 end # module
