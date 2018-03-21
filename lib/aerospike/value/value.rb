@@ -23,13 +23,14 @@ module Aerospike
 
   # Polymorphic value classes used to efficiently serialize objects into the wire protocol.
   class Value #:nodoc:
+    INTEGER_MAX = 2**63
 
     def self.of(value)
       case value
       when nil
         res = NullValue.new
       when Integer
-        if value < 2**63
+        if value < INTEGER_MAX
           res = IntegerValue.new(value)
         else
           # big nums > 2**63 are not supported
