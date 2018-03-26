@@ -1,3 +1,9 @@
+Unreleased
+==========
+
+* **Bug Fixes**
+  * Fix min./max. boundary check for Integer bin values and improve performance. Thanks to [@wallin](https://github.com/wallin) of [castle.io](https://castle.io/)! [[#60]](https://github.com/aerospike/aerospike-client-ruby/pull/60)
+
 v2.5.1 / 2018-01-25
 ===================
 
