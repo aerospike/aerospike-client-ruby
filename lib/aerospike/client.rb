@@ -289,7 +289,7 @@ module Aerospike
 
     #  Read record header and bins for specified key.
     #  The policy can be used to specify timeouts.
-    def get(key, bin_names=[], options = nil)
+    def get(key, bin_names = nil, options = nil)
       policy = create_policy(options, Policy)
 
       command = ReadCommand.new(@cluster, policy, key, bin_names)
@@ -314,7 +314,7 @@ module Aerospike
     #  The returned records are in positional order with the original key array order.
     #  If a key is not found, the positional record will be nil.
     #  The policy can be used to specify timeouts.
-    def batch_get(keys, bin_names=[], options = nil)
+    def batch_get(keys, bin_names = nil, options = nil)
       policy = create_policy(options, Policy)
 
       # wait until all migrations are finished
@@ -596,7 +596,7 @@ module Aerospike
     # Scan Operations
     #-------------------------------------------------------
 
-    def scan_all(namespace, set_name, bin_names=[], options = nil)
+    def scan_all(namespace, set_name, bin_names = nil, options = nil)
       policy = create_policy(options, ScanPolicy)
 
       # wait until all migrations are finished
@@ -652,7 +652,7 @@ module Aerospike
 
     # ScanNode reads all records in specified namespace and set, from one node only.
     # The policy can be used to specify timeouts.
-    def scan_node(node, namespace, set_name, bin_names=[], options = nil)
+    def scan_node(node, namespace, set_name, bin_names = nil, options = nil)
       policy = create_policy(options, ScanPolicy)
       # wait until all migrations are finished
       # TODO: implement
