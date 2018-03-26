@@ -48,7 +48,7 @@ module Aerospike
       @default_query_policy = QueryPolicy.new
       @default_admin_policy = QueryPolicy.new
 
-      hosts = parse_hosts(hosts || ENV["AEROSPIKE_HOSTS"] || "localhost")
+      hosts = ::Aerospike::Host::Parse.(hosts || ENV['AEROSPIKE_HOSTS'] || 'localhost')
       policy = create_policy(policy, ClientPolicy)
       @cluster = Cluster.new(policy, hosts)
       @cluster.add_cluster_config_change_listener(self)
@@ -825,23 +825,6 @@ module Aerospike
         policy_klass.new(policy)
       else
         fail TypeError, "policy should be a #{policy_klass.name} instance or a Hash"
-      end
-    end
-
-    def parse_hosts(hosts)
-      case hosts
-      when Host
-        [hosts]
-      when Array
-        hosts
-      when String
-        hosts.split(?,).map { |host|
-          (addr, port) = host.split(?:)
-          port ||= 3000
-          Host.new(addr, port.to_i)
-        }
-      else
-        fail TypeError, "hosts should be a Host object, an Array of Host objects, or a String"
       end
     end
 

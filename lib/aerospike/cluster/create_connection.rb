@@ -18,17 +18,23 @@
 # the License.
 
 module Aerospike
-  class Peers
-    module Fetch
+  class Cluster
+    # Create connection based on cluster config and authenticate if needed
+    module CreateConnection
       class << self
-        def call(cluster, conn)
-          cmd = cluster.tls_enabled? ? 'peers-tls-std' : 'peers-clear-std'
-
-          response = Info.request(conn, cmd)
-
-          raise if response.size.zero?
-
-          ::Aerospike::Peers::Parse.(response.fetch(cmd))
+        def call(cluster, host)
+          ::Aerospike::Connection::Create.(
+            host.name,
+            host.port,
+            tls_name: host.tls_name,
+            timeout: cluster.connection_timeout,
+            ssl_options: cluster.ssl_options
+          ).tap do |conn|
+            if cluster.credentials_given?
+              # Authenticate will raise and close connection if invalid credentials
+              Connection::Authenticate.(conn, cluster.user, cluster.password)
+            end
+          end
         end
       end
     end

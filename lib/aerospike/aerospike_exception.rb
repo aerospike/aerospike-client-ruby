@@ -43,6 +43,12 @@ module Aerospike
       end
     end
 
+    class InvalidCredentials < Aerospike
+      def initialize(msg = nil)
+        super(ResultCode::NOT_AUTHENTICATED, msg)
+      end
+    end
+
     class Serialize < Aerospike
       def initialize(msg=nil)
         super(ResultCode::SERIALIZE_ERROR, msg)

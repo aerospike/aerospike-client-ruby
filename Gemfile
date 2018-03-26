@@ -10,9 +10,16 @@ group :development do
 end
 
 gem 'rake'
-gem "jruby-openssl", :platforms => :jruby
-gem 'msgpack-jruby', :require => 'msgpack', :platforms => :jruby
-gem 'msgpack', '~> 1.0', :platforms => [:mri, :rbx]
 gem 'bcrypt'
+
+platforms :mri, :rbx do
+  gem 'msgpack', '~> 1.0'
+  gem 'openssl'
+end
+
+platforms :jruby do
+  gem 'msgpack-jruby', require: 'msgpack'
+  gem 'jruby-openssl'
+end
 
 gemspec

@@ -21,14 +21,15 @@ module Aerospike
   class NodeValidator # :nodoc:
     VERSION_REGEXP = /(?<v1>\d+)\.(?<v2>\d+)\.(?<v3>\d+).*/.freeze
 
-    attr_reader :host, :aliases, :name, :use_new_info, :features, :cluster_name
+    attr_reader :host, :aliases, :name, :use_new_info, :features, :cluster_name, :ssl_options, :conn
 
-    def initialize(cluster, host, timeout, cluster_name)
+    def initialize(cluster, host, timeout, cluster_name, ssl_options = {})
       @cluster = cluster
       @use_new_info = true
       @features = Set.new
       @host = host
       @cluster_name = cluster_name
+      @ssl_options = ssl_options
 
       set_aliases(host)
       set_address(timeout)
@@ -38,26 +39,14 @@ module Aerospike
 
     def set_aliases(host)
       addresses = resolve(host.name)
-      @aliases = addresses.map { |addr| Host.new(addr, host.port) }
+      @aliases = addresses.map { |addr| Host.new(addr, host.port, host.tls_name) }
       Aerospike.logger.debug("Node Validator found #{aliases.length} addresses for host #{host}: #{@aliases}")
     end
 
     def set_address(timeout)
       @aliases.each do |aliass|
         begin
-          conn = Connection.new(aliass.name, aliass.port, timeout)
-
-          # need to authenticate
-          if @cluster.user && @cluster.user != ''
-            begin
-              command = AdminCommand.new
-              command.authenticate(conn, @cluster.user, @cluster.password)
-            rescue => e
-              # Socket not authenticated. Do not put back into pool.
-              conn.close if conn
-              raise e
-            end
-          end
+          conn = Cluster::CreateConnection.(@cluster, @host)
 
           info_map = Info.request(conn, 'node', 'build', 'features')
           if node_name = info_map['node']

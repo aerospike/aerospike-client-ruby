@@ -25,7 +25,7 @@ require 'aerospike/atomic/atomic'
 module Aerospike
   class Cluster
     attr_reader :connection_timeout, :connection_queue_size, :user, :password
-    attr_reader :features
+    attr_reader :features, :ssl_options
     attr_reader :cluster_id, :aliases
     attr_reader :cluster_name
 
@@ -36,6 +36,8 @@ module Aerospike
       @connection_timeout = policy.timeout
       @tend_interval = policy.tend_interval
       @cluster_name = policy.cluster_name
+      @ssl_options = policy.ssl_options
+
       @aliases = {}
       @cluster_nodes = []
       @partition_write_map = {}
@@ -53,7 +55,7 @@ module Aerospike
         @password = AdminCommand.hash_password(policy.password)
       end
 
-      self
+      initialize_tls_host_names(hosts) if tls_enabled?
     end
 
     def connect
@@ -66,6 +68,20 @@ module Aerospike
       launch_tend_thread
 
       Aerospike.logger.info('New cluster initialized and ready to be used...')
+    end
+
+    def credentials_given?
+      !(@user.nil? || @user.empty?)
+    end
+
+    def tls_enabled?
+      !ssl_options.nil? && ssl_options[:enable] != false
+    end
+
+    def initialize_tls_host_names(hosts)
+      hosts.each do |host|
+        host.tls_name ||= cluster_id.nil? ? host.name : cluster_id
+      end
     end
 
     def add_seeds(hosts)
@@ -355,7 +371,7 @@ module Aerospike
 
       seed_array.each do |seed|
         begin
-          seed_node_validator = NodeValidator.new(self, seed, @connection_timeout, @cluster_name)
+          seed_node_validator = NodeValidator.new(self, seed, @connection_timeout, @cluster_name, ssl_options)
         rescue => e
           Aerospike.logger.error("Seed #{seed} failed: #{e}\n#{e.backtrace.join("\n")}")
           next
@@ -368,7 +384,7 @@ module Aerospike
             nv = seed_node_validator
           else
             begin
-              nv = NodeValidator.new(self, aliass, @connection_timeout, @cluster_name)
+              nv = NodeValidator.new(self, aliass, @connection_timeout, @cluster_name, ssl_options)
             rescue => e
               Aerospike.logger.error("Seed #{seed} failed: #{e}")
               next

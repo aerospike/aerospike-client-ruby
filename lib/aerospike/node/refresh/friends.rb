@@ -59,7 +59,8 @@ module Aerospike
               cluster,
               host,
               cluster.connection_timeout,
-              cluster.cluster_name
+              cluster.cluster_name,
+              cluster.ssl_options
             )
 
             node = peers.find_node_by_name(nv.name)

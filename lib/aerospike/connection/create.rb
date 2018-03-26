@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Copyright 2018 Aerospike, Inc.
+# Copyright 2014-2018 Aerospike, Inc.
 #
 # Portions may be licensed to Aerospike, Inc. under one or more contributor
 # license agreements.
@@ -18,17 +18,17 @@
 # the License.
 
 module Aerospike
-  class Peers
-    module Fetch
+  module Connection # :nodoc:
+    module Create
       class << self
-        def call(cluster, conn)
-          cmd = cluster.tls_enabled? ? 'peers-tls-std' : 'peers-clear-std'
-
-          response = Info.request(conn, cmd)
-
-          raise if response.size.zero?
-
-          ::Aerospike::Peers::Parse.(response.fetch(cmd))
+        def call(host, port, timeout: 30, tls_name: nil, ssl_options: nil)
+          if !ssl_options.nil? && ssl_options[:enable] != false
+            ::Aerospike::Socket::SSL.connect(
+              host, port, timeout, tls_name, ssl_options
+            )
+          else
+            ::Aerospike::Socket::TCP.connect(host, port, timeout)
+          end
         end
       end
     end

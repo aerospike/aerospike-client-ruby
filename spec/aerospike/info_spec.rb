@@ -26,7 +26,7 @@ describe Aerospike::Info do
     let(:host) { Support.client.nodes.first.get_host }
 
     it "should connect and request info from the server" do
-      conn = Aerospike::Connection.new(host.name, host.port)
+      conn = Aerospike::Connection::Create.(host.name, host.port)
       info = Aerospike::Info.request(conn)
       expect(info).to include("version")
     end

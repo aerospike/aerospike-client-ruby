@@ -79,7 +79,7 @@ module Aerospike
           raise ::Aerospike::Exceptions::Parse if parser.current == '['
           parser.read_until(']').split(',').map do |host|
             hostname, port = host.split(':')
-            ::Aerospike::Host.new(hostname, port)
+            ::Aerospike::Host.new(hostname, port, peer.tls_name)
           end
         end
       end

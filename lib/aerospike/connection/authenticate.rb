@@ -18,17 +18,16 @@
 # the License.
 
 module Aerospike
-  class Peers
-    module Fetch
+  module Connection # :nodoc:
+    module Authenticate
       class << self
-        def call(cluster, conn)
-          cmd = cluster.tls_enabled? ? 'peers-tls-std' : 'peers-clear-std'
-
-          response = Info.request(conn, cmd)
-
-          raise if response.size.zero?
-
-          ::Aerospike::Peers::Parse.(response.fetch(cmd))
+        def call(conn, user, password)
+          command = AdminCommand.new
+          command.authenticate(conn, user, password)
+          true
+        rescue ::Aerospike::Exceptions::Aerospike
+          conn.close if conn
+          raise ::Aerospike::Exceptions::InvalidCredentials
         end
       end
     end

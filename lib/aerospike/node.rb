@@ -53,21 +53,12 @@ module Aerospike
       @failures = Atomic.new(0)
 
       @connections = Pool.new(@cluster.connection_queue_size)
+
+      # TODO: put in separate methods
       @connections.create_block = Proc.new do
-        while conn = Connection.new(@host.name, @host.port, @cluster.connection_timeout)
-
-          # need to authenticate
-          if @cluster.user && @cluster.user != ''
-            begin
-              command = AdminCommand.new
-              command.authenticate(conn, @cluster.user, @cluster.password)
-            rescue => e
-              # Socket not authenticated. Do not put back into pool.
-              conn.close if conn
-              raise e
-            end
-          end
-
+        conn = nil
+        loop do
+          conn = Cluster::CreateConnection.(cluster, host)
           break if conn.connected?
         end
         conn
@@ -97,20 +88,8 @@ module Aerospike
 
     # Separate connection for refreshing
     def tend_connection
-      if @tend_connection.nil? || !@tend_connection.valid?
-        @tend_connection = Connection.new(host.name, host.port, cluster.connection_timeout).tap { |conn|
-          # need to authenticate
-          if cluster.user && cluster.user != ''
-            begin
-              command = AdminCommand.new
-              command.authenticate(conn, cluster.user, cluster.password)
-            rescue => e
-              # Socket not authenticated. Do not put back into pool.
-              conn.close if conn
-              raise e
-            end
-          end
-        }
+      if @tend_connection.nil? || @tend_connection.closed?
+        @tend_connection = Cluster::CreateConnection.(cluster, host)
       end
       @tend_connection
     end
