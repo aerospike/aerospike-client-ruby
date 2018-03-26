@@ -149,21 +149,8 @@ module Aerospike
       end
     end
 
-    def update_partitions(conn, node)
-      # TODO: Cluster should not care about version of tokenizer
-      # decouple clstr interface
-      nmap = {}
-      if node.use_new_info?
-        Aerospike.logger.info("Updating partitions using new protocol...")
-
-        tokens = PartitionTokenizerNew.new(conn)
-        nmap = tokens.update_partition(partitions, node)
-      else
-        Aerospike.logger.info("Updating partitions using old protocol...")
-        tokens = PartitionTokenizerOld.new(conn)
-        nmap = tokens.update_partition(partitions, node)
-      end
-
+    def update_partitions(tokens, node)
+      nmap = tokens.update_partition(partitions, node)
       # update partition write map
       set_partitions(nmap) if nmap
 
@@ -180,6 +167,10 @@ module Aerospike
 
     def supports_feature?(feature)
       @features.get.include?(feature.to_s)
+    end
+
+    def supports_peers_protocol?
+      nodes.all? { |node| node.supports_feature?('peers') }
     end
 
     def change_password(user, password)
@@ -220,68 +211,79 @@ module Aerospike
 
     # Check health of all nodes in cluster
     def tend
-      nodes = self.nodes
+      was_changed = refresh_nodes
+
+      return unless was_changed
+
+      update_cluster_features
+      notify_cluster_config_changed
+      # only log the tend finish IF the number of nodes has been changed.
+      # This prevents spamming the log on every tend interval
+      log_tend_stats(nodes)
+    end
+
+    # Refresh status of all nodes in cluster. Adds new nodes and/or removes
+    # unhealty ones
+    def refresh_nodes
       cluster_config_changed = false
 
-      # All node additions/deletions are performed in tend thread.
-      # If active nodes don't exist, seed cluster.
+      nodes = self.nodes
       if nodes.empty?
-        Aerospike.logger.info("No connections available; seeding...")
         seed_nodes
         cluster_config_changed = true
-
-        # refresh nodes list after seeding
         nodes = self.nodes
       end
 
-      # Refresh all known nodes.
-      friend_list = []
-      refresh_count = 0
+      peers = Peers.new
 
-      # Clear node reference counts.
+      # Clear node reference count
       nodes.each do |node|
-        node.reset_reference_count!
-        node.reset_responded!
+        node.refresh_reset
+      end
 
-        if node.active?
-          begin
-            friends = node.refresh
-            refresh_count += 1
-            friend_list.concat(friends) if friends
-          rescue => e
-            Aerospike.logger.error("Node `#{node}` refresh failed: #{e}")
-            Aerospike.logger.error(e.backtrace.join("\n"))
-          end
+      peers.use_peers = supports_peers_protocol?
+
+      # refresh all known nodes
+      nodes.each do |node|
+        node.refresh_info(peers)
+      end
+
+      # refresh peers when necessary
+      if peers.generation_changed?
+        # Refresh peers for all nodes that responded the first time even if only
+        # one node's peers changed.
+        nodes.each do |node|
+          node.refresh_peers(peers)
         end
       end
 
-      # Add nodes in a batch.
-      add_list = find_nodes_to_add(friend_list)
-      unless add_list.empty?
-        add_nodes(add_list)
+      nodes.each do |node|
+        node.refresh_partitions(peers) if node.partition_generation.changed?
+      end
+
+      if peers.generation_changed? || !peers.use_peers?
+        nodes_to_remove = find_nodes_to_remove(peers.refresh_count)
+        if nodes_to_remove.any?
+          remove_nodes(nodes_to_remove)
+          cluster_config_changed = true
+        end
+      end
+
+      # Add any new nodes from peer refresh
+      if peers.nodes.any?
+        # peers.nodes is a Hash. Pass only values, ie. the array of nodes
+        add_nodes(peers.nodes.values)
         cluster_config_changed = true
       end
 
-      # Handle nodes changes determined from refreshes.
-      # Remove nodes in a batch.
-      remove_list = find_nodes_to_remove(refresh_count)
-      unless remove_list.empty?
-        remove_nodes(remove_list)
-        cluster_config_changed = true
-      end
+      cluster_config_changed
+    end
 
-      if cluster_config_changed
-        update_cluster_features
-
-        # only log the tend finish IF the number of nodes has been changed.
-        # This prevents spamming the log on every tend interval
-        diff = nodes.length - @old_node_count
-        action = "#{diff.abs} #{diff.abs == 1 ? "node has" : "nodes have"} #{diff > 0 ? "joined" : "left"} the cluster."
-        Aerospike.logger.info("Tend finished. #{action} Old node count: #{@old_node_count}, New node count: #{nodes.length}")
-        @old_node_count = nodes.length
-
-        notify_cluster_config_changed
-      end
+    def log_tend_stats(nodes)
+      diff = nodes.size - @old_node_count
+      action = "#{diff.abs} #{diff.abs == 1 ? "node has" : "nodes have"} #{diff > 0 ? "joined" : "left"} the cluster."
+      Aerospike.logger.info("Tend finished. #{action} Old node count: #{@old_node_count}, New node count: #{nodes.size}")
+      @old_node_count = nodes.size
     end
 
     def wait_till_stablized
@@ -402,42 +404,6 @@ module Aerospike
           @aliases.delete(aliass)
         end
       end
-    end
-
-    def find_nodes_to_add(hosts)
-      list = []
-
-      hosts.each do |host|
-        begin
-          nv = NodeValidator.new(self, host, @connection_timeout, @cluster_name)
-
-          # if node is already in cluster's node list,
-          # or already included in the list to be added, we should skip it
-          node = find_node_by_name(nv.name)
-          node ||= list.detect{|n| n.name == nv.name}
-
-          # make sure node is not already in the list to add
-          if node
-            # Duplicate node name found.  This usually occurs when the server
-            # services list contains both internal and external IP addresses
-            # for the same node.  Add new host to list of alias filters
-            # and do not add new node.
-            node.increase_reference_count!
-            node.add_alias(host)
-            add_alias(host, node)
-            next
-          end
-
-          node = create_node(nv)
-          list << node
-
-        rescue => e
-          Aerospike.logger.error("Add node #{node} failed: #{e}")
-          Aerospike.logger.error(e.backtrace.join("\n"))
-        end
-      end
-
-      list
     end
 
     def create_node(nv)

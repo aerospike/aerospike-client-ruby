@@ -22,7 +22,7 @@ require 'aerospike/atomic/atomic'
 module Aerospike
   class Node
 
-    attr_reader :reference_count, :responded, :name, :features, :cluster_name, :cluster, :host
+    attr_reader :reference_count, :responded, :name, :features, :cluster_name, :partition_generation, :peers_generation, :failures, :cluster, :peers_count, :host
 
     PARTITIONS = 4096
     FULL_HEALTH = 100
@@ -37,14 +37,20 @@ module Aerospike
       @features = nv.features
       @cluster_name = nv.cluster_name
 
+      # TODO: Re-use connection from node validator
+      @tend_connection = nil
+
       # Assign host to first IP alias because the server identifies nodes
       # by IP address (not hostname).
       @host = nv.aliases[0]
       @health = Atomic.new(FULL_HEALTH)
-      @partition_generation = Atomic.new(-1)
+      @peers_count = Atomic.new(0)
+      @peers_generation = ::Aerospike::Node::Generation.new
+      @partition_generation = ::Aerospike::Node::Generation.new
       @reference_count = Atomic.new(0)
       @responded = Atomic.new(false)
       @active = Atomic.new(true)
+      @failures = Atomic.new(0)
 
       @connections = Pool.new(@cluster.connection_queue_size)
       @connections.create_block = Proc.new do
@@ -70,34 +76,6 @@ module Aerospike
       @connections.cleanup_block = Proc.new { |conn| conn.close if conn }
     end
 
-    # Request current status from server node, and update node with the result
-    def refresh
-      friends = []
-
-      begin
-        conn = get_connection(1)
-        info_map = Info.request(conn, "node", "partition-generation", "services", "cluster-name")
-      rescue => e
-        Aerospike.logger.error("Error during refresh for node #{self}: #{e}")
-        Aerospike.logger.error(e.backtrace.join("\n"))
-
-        conn.close if conn
-        decrease_health
-
-        return friends
-      end
-
-      verify_node_name_and_cluster_name(info_map)
-      restore_health
-
-      responded!
-
-      friends = add_friends(info_map)
-      update_partitions(conn, info_map)
-      put_connection(conn)
-      friends
-    end
-
     # Get a connection to the node. If no cached connection is not available,
     # a new connection will be created
     def get_connection(timeout)
@@ -115,6 +93,26 @@ module Aerospike
     def put_connection(conn)
       conn.close if !active?
       @connections.offer(conn)
+    end
+
+    # Separate connection for refreshing
+    def tend_connection
+      if @tend_connection.nil? || !@tend_connection.valid?
+        @tend_connection = Connection.new(host.name, host.port, cluster.connection_timeout).tap { |conn|
+          # need to authenticate
+          if cluster.user && cluster.user != ''
+            begin
+              command = AdminCommand.new
+              command.authenticate(conn, cluster.user, cluster.password)
+            rescue => e
+              # Socket not authenticated. Do not put back into pool.
+              conn.close if conn
+              raise e
+            end
+          end
+        }
+      end
+      @tend_connection
     end
 
     # Mark the node as healthy
@@ -174,6 +172,22 @@ module Aerospike
       @responded.value = false
     end
 
+    def has_peers?
+      @peers_count.value > 0
+    end
+
+    def failed?
+      @failures.value > 0
+    end
+
+    def failed!
+      @failures.update { |v| v + 1 }
+    end
+
+    def reset_failures!
+      @failures.value = 0
+    end
+
     def aliases
       @aliases.value
     end
@@ -205,78 +219,35 @@ module Aerospike
       "#<Aerospike::Node: @name=#{@name}, @host=#{@host}>"
     end
 
+    ##
+    # Convenience wrappers for applying refresh operations to a node
+    ##
+
+    def refresh_info(peers)
+      Node::Refresh::Info.(self, peers)
+    end
+
+    def refresh_partitions(peers)
+      Node::Refresh::Partitions.(self, peers)
+    end
+
+    def refresh_peers(peers)
+      Node::Refresh::Peers.(self, peers)
+    end
+
+    def refresh_reset
+      Node::Refresh::Reset.(self)
+    end
+
     private
 
     def close_connections
+      @tend_connection.close if @tend_connection
       # drain connections and close all of them
       # non-blocking, does not call create_block when passed false
       while conn = @connections.poll(false)
         conn.close if conn
       end
     end
-
-
-    def verify_node_name_and_cluster_name(info_map)
-      info_name = info_map['node']
-
-      if !info_name
-        decrease_health
-        raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::INVALID_NODE_ERROR, "Node name is empty")
-      end
-
-      if !(@name == info_name)
-        # Set node to inactive immediately.
-        inactive!
-        raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::INVALID_NODE_ERROR, "Node name has changed. Old=#{@name} New= #{info_name}")
-      end
-
-      if cluster_name && cluster_name != info_map['cluster-name']
-        inactive!
-        raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::INVALID_NODE_ERROR, "Cluster name does not match. expected: #{cluster_name}, got: #{info_map['cluster-name']}")
-      end
-    end
-
-    def add_friends(info_map)
-      friend_string = info_map['services']
-      friends = []
-
-      return [] if friend_string.to_s.empty?
-
-      friend_names = friend_string.split(';')
-
-      friend_names.each do |friend|
-        friend_info = friend.split(':')
-        host = friend_info[0]
-        port = friend_info[1].to_i
-        aliass = Host.new(host, port)
-        node = @cluster.find_alias(aliass)
-
-        if node
-          node.increase_reference_count!
-        else
-          unless friends.any? {|h| h == aliass}
-            friends << aliass
-          end
-        end
-      end
-
-      friends
-    end
-
-    def update_partitions(conn, info_map)
-      gen_string = info_map['partition-generation']
-
-      raise Aerospike::Exceptions::Parse.new("partition-generation is empty") if gen_string.to_s.empty?
-
-      generation = gen_string.to_i
-
-      if @partition_generation.value != generation
-        Aerospike.logger.info("Node #{name} partition generation #{generation} changed")
-        @cluster.update_partitions(conn, self)
-        @partition_generation.value = generation
-      end
-    end
-
   end # class Node
-
 end # module
