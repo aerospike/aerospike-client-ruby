@@ -1,12 +1,15 @@
-# encoding: utf-8
-# Copyright 2014-2017 Aerospike, Inc.
+# frozen_string_literal: true
+
+# Copyright 2014-2018 Aerospike, Inc.
 #
 # Portions may be licensed to Aerospike, Inc. under one or more contributor
 # license agreements.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
-# the License at http:#www.apache.org/licenses/LICENSE-2.0
+# the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
@@ -17,12 +20,9 @@
 require 'aerospike/atomic/atomic'
 
 module Aerospike
-
-  private
-
   class Node
 
-    attr_reader :reference_count, :responded, :name, :features, :cluster_name
+    attr_reader :reference_count, :responded, :name, :features, :cluster_name, :cluster, :host
 
     PARTITIONS = 4096
     FULL_HEALTH = 100
@@ -90,7 +90,7 @@ module Aerospike
       verify_node_name_and_cluster_name(info_map)
       restore_health
 
-      @responded.update{|v| true}
+      responded!
 
       friends = add_friends(info_map)
       update_partitions(conn, info_map)
@@ -101,7 +101,7 @@ module Aerospike
     # Get a connection to the node. If no cached connection is not available,
     # a new connection will be created
     def get_connection(timeout)
-      while true
+      loop do
         conn = @connections.poll
         if conn.connected?
           conn.timeout = timeout.to_f
@@ -113,7 +113,7 @@ module Aerospike
     # Put back a connection to the cache. If cache is full, the connection will be
     # closed and discarded
     def put_connection(conn)
-      conn.close if !@active.value
+      conn.close if !active?
       @connections.offer(conn)
     end
 
@@ -126,7 +126,7 @@ module Aerospike
 
     # Decrease node Health as a result of bad connection or communication
     def decrease_health
-      @health.update {|v| v -= 1 }
+      @health.update { |v| v - 1 }
     end
 
     # Check if the node is unhealthy
@@ -139,35 +139,48 @@ module Aerospike
       @host
     end
 
+    # Sets node as active
+    def active!
+      @active.update { |_| true }
+    end
+
+    # Sets node as inactive
+    def inactive!
+      @active.update { |_| false }
+    end
+
     # Checks if the node is active
     def active?
       @active.value
     end
 
-    # Returns node name
-    def get_name
-      @name
+    def increase_reference_count!
+      @reference_count.update { |v| v + 1 }
     end
 
-    # Returns node aliases
-    def get_aliases
+    def reset_reference_count!
+      @reference_count.value = 0
+    end
+
+    def responded!
+      @responded.value = true
+    end
+
+    def responded?
+      @responded.value == true
+    end
+
+    def reset_responded!
+      @responded.value = false
+    end
+
+    def aliases
       @aliases.value
-    end
-
-    # Adds an alias for the node
-    def add_alias(alias_to_add)
-      # Aliases are only referenced in the cluster tend threads,
-      # so synchronization is not necessary.
-      aliases = get_aliases
-      aliases ||= []
-
-      aliases << alias_to_add
-      set_aliases(aliases)
     end
 
     # Marks node as inactice and closes all cached connections
     def close
-      @active.value = false
+      inactive!
       close_connections
     end
 
@@ -203,11 +216,6 @@ module Aerospike
     end
 
 
-    # Sets node aliases
-    def set_aliases(aliases)
-      @aliases.value = aliases
-    end
-
     def verify_node_name_and_cluster_name(info_map)
       info_name = info_map['node']
 
@@ -218,12 +226,12 @@ module Aerospike
 
       if !(@name == info_name)
         # Set node to inactive immediately.
-        @active.update{|v| false}
+        inactive!
         raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::INVALID_NODE_ERROR, "Node name has changed. Old=#{@name} New= #{info_name}")
       end
 
       if cluster_name && cluster_name != info_map['cluster-name']
-        @active.update{|v| false}
+        inactive!
         raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::INVALID_NODE_ERROR, "Cluster name does not match. expected: #{cluster_name}, got: #{info_map['cluster-name']}")
       end
     end
@@ -244,7 +252,7 @@ module Aerospike
         node = @cluster.find_alias(aliass)
 
         if node
-          node.reference_count.update{|v| v + 1}
+          node.increase_reference_count!
         else
           unless friends.any? {|h| h == aliass}
             friends << aliass
@@ -263,7 +271,7 @@ module Aerospike
       generation = gen_string.to_i
 
       if @partition_generation.value != generation
-        Aerospike.logger.info("Node #{get_name} partition generation #{generation} changed")
+        Aerospike.logger.info("Node #{name} partition generation #{generation} changed")
         @cluster.update_partitions(conn, self)
         @partition_generation.value = generation
       end

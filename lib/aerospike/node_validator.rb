@@ -1,12 +1,15 @@
-# encoding: utf-8
-# Copyright 2014-2017 Aerospike, Inc.
+# frozen_string_literal: true
+
+# Copyright 2014-2018 Aerospike, Inc.
 #
 # Portions may be licensed to Aerospike, Inc. under one or more contributor
 # license agreements.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
-# the License at http:#www.apache.org/licenses/LICENSE-2.0
+# the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
@@ -15,10 +18,8 @@
 # the License.
 
 module Aerospike
-
-  private
-
   class NodeValidator # :nodoc:
+    VERSION_REGEXP = /(?<v1>\d+)\.(?<v2>\d+)\.(?<v3>\d+).*/.freeze
 
     attr_reader :host, :aliases, :name, :use_new_info, :features, :cluster_name
 
@@ -31,28 +32,14 @@ module Aerospike
 
       set_aliases(host)
       set_address(timeout)
-
-      self
     end
 
+    private
+
     def set_aliases(host)
-      is_ip = !!((host =~ Resolv::IPv4::Regex) || (host =~ Resolv::IPv6::Regex))
-
-      if is_ip
-        # don't try to resolve IP addresses. May fail in different OS or network setups
-        addresses = host
-      else
-        addresses = Resolv.getaddresses(host.name)
-      end
-
-      aliases = []
-      addresses.each do |addr|
-        aliases << Host.new(addr, host.port)
-      end
-
-      @aliases = aliases
-
-      Aerospike.logger.debug("Node Validator has #{aliases.length} nodes.")
+      addresses = resolve(host.name)
+      @aliases = addresses.map { |addr| Host.new(addr, host.port) }
+      Aerospike.logger.debug("Node Validator found #{aliases.length} addresses for host #{host}: #{@aliases}")
     end
 
     def set_address(timeout)
@@ -90,23 +77,29 @@ module Aerospike
         ensure
           conn.close if conn
         end
-
       end
     end
 
-    protected
+    def resolve(hostname)
+      if is_ip?(hostname)
+        # Don't try to resolve IP addresses.
+        # May fail in different OS or network setups
+        [hostname]
+      else
+        Resolv.getaddresses(hostname)
+      end
+    end
 
-    # parses a version string
-    @@version_regexp = /(?<v1>\d+)\.(?<v2>\d+)\.(?<v3>\d+).*/
+    def is_ip?(hostname)
+      !!((hostname =~ Resolv::IPv4::Regex) || (hostname =~ Resolv::IPv6::Regex))
+    end
 
     def parse_version_string(version)
-      if v = @@version_regexp.match(version)
+      if v = VERSION_REGEXP.match(version)
         return v['v1'], v['v2'], v['v3']
       end
 
       raise Aerospike::Exceptions::Parse.new("Invalid build version string in Info: #{version}")
     end
-
   end # class
-
 end #module

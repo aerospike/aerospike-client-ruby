@@ -1,12 +1,15 @@
-# encoding: utf-8
-# Copyright 2014-2017 Aerospike, Inc.
+# frozen_string_literal: true
+
+# Copyright 2014-2018 Aerospike, Inc.
 #
 # Portions may be licensed to Aerospike, Inc. under one or more contributor
 # license agreements.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
-# the License at http:#www.apache.org/licenses/LICENSE-2.0
+# the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
@@ -15,21 +18,18 @@
 # the License.
 
 require 'set'
-require 'thread'
 require 'timeout'
 
 require 'aerospike/atomic/atomic'
 
 module Aerospike
-
-  private
-
   class Cluster
-
     attr_reader :connection_timeout, :connection_queue_size, :user, :password
     attr_reader :features
+    attr_reader :cluster_id, :aliases
+    attr_reader :cluster_name
 
-    def initialize(policy, *hosts)
+    def initialize(policy, hosts)
       @cluster_seeds = hosts
       @fail_if_not_connected = policy.fail_if_not_connected
       @connection_queue_size = policy.connection_queue_size
@@ -60,14 +60,12 @@ module Aerospike
       wait_till_stablized
 
       if @fail_if_not_connected && !connected?
-        raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::SERVER_NOT_AVAILABLE)
+        raise Aerospike::Exceptions::Aerospike, Aerospike::ResultCode::SERVER_NOT_AVAILABLE
       end
 
       launch_tend_thread
 
       Aerospike.logger.info('New cluster initialized and ready to be used...')
-
-      self
     end
 
     def add_seeds(hosts)
@@ -94,12 +92,10 @@ module Aerospike
       if node_array = nmap[partition.namespace]
         node = node_array.value[partition.partition_id]
 
-        if node && node.active?
-          return node
-        end
+        return node if node && node.active?
       end
 
-      return random_node
+      random_node
     end
 
     # Returns a random node on the cluster
@@ -110,16 +106,14 @@ module Aerospike
       i = 0
       while i < length
         # Must handle concurrency with other non-tending threads, so node_index is consistent.
-        index = (@node_index.update{|v| v+1} % node_array.length).abs
+        index = (@node_index.update{ |v| v+1 } % node_array.length).abs
         node = node_array[index]
 
-        if node.active?
-          return node
-        end
+        return node if node.active?
 
         i = i.succ
       end
-      raise Aerospike::Exceptions::InvalidNode.new
+      raise Aerospike::Exceptions::InvalidNode
     end
 
     # Returns a list of all nodes in the cluster
@@ -134,23 +128,19 @@ module Aerospike
     def get_node_by_name(node_name)
       node = find_node_by_name(node_name)
 
-      raise Aerospike::Exceptions::InvalidNode.new unless node
+      raise Aerospike::Exceptions::InvalidNode unless node
 
       node
     end
 
     # Closes all cached connections to the cluster nodes and stops the tend thread
     def close
-      unless @closed.value
-        # send close signal to maintenance channel
-        @closed.value = true
-        @tend_thread.kill
+      return if @closed.value
+      # send close signal to maintenance channel
+      @closed.value = true
+      @tend_thread.kill
 
-        nodes.each do |node|
-          node.close
-        end
-      end
-
+      nodes.each(&:close)
     end
 
     def find_alias(aliass)
@@ -177,7 +167,7 @@ module Aerospike
       # update partition write map
       set_partitions(nmap) if nmap
 
-      Aerospike.logger.info("Partitions updated...")
+      Aerospike.logger.info("Partitions for node #{node.name} updated")
     end
 
     def request_info(policy, *commands)
@@ -193,8 +183,8 @@ module Aerospike
     end
 
     def change_password(user, password)
-     # change password ONLY if the user is the same
-     @password = password if @user == user
+      # change password ONLY if the user is the same
+      @password = password if @user == user
     end
 
     def add_cluster_config_change_listener(listener)
@@ -213,22 +203,22 @@ module Aerospike
       "#<Aerospike::Cluster @cluster_nodes=#{@cluster_nodes}>"
     end
 
-    private
-
     def launch_tend_thread
       @tend_thread = Thread.new do
         Thread.current.abort_on_exception = false
-        while true
+        loop do
           begin
             tend
             sleep(@tend_interval / 1000.0)
           rescue => e
             Aerospike.logger.error("Exception occured during tend: #{e}")
+            Aerospike.logger.debug { e.backtrace.join("\n") }
           end
         end
       end
     end
 
+    # Check health of all nodes in cluster
     def tend
       nodes = self.nodes
       cluster_config_changed = false
@@ -250,8 +240,8 @@ module Aerospike
 
       # Clear node reference counts.
       nodes.each do |node|
-        node.reference_count.value = 0
-        node.responded.value = false
+        node.reset_reference_count!
+        node.reset_responded!
 
         if node.active?
           begin
@@ -299,14 +289,12 @@ module Aerospike
 
       # will run until the cluster is stablized
       thr = Thread.new do
-        while true
+        loop do
           tend
 
           # Check to see if cluster has changed since the last Tend.
           # If not, assume cluster has stabilized and return.
-          if count == nodes.length
-            break
-          end
+          break if count == nodes.length
 
           sleep(0.001) # sleep for a miliseconds
 
@@ -324,13 +312,12 @@ module Aerospike
       end
 
       @closed.value = false if @cluster_nodes.length > 0
-
     end
 
     def update_cluster_features
       # Cluster supports features that are supported by all nodes
       @features.update do
-        node_features = self.nodes.map(&:features)
+        node_features = nodes.map(&:features)
         node_features.reduce(&:intersection) || Set.new
       end
     end
@@ -368,43 +355,37 @@ module Aerospike
         begin
           seed_node_validator = NodeValidator.new(self, seed, @connection_timeout, @cluster_name)
         rescue => e
-          Aerospike.logger.error("Seed #{seed.to_s} failed: #{e.backtrace.join("\n")}")
+          Aerospike.logger.error("Seed #{seed} failed: #{e}\n#{e.backtrace.join("\n")}")
           next
         end
 
         nv = nil
         # Seed host may have multiple aliases in the case of round-robin dns configurations.
         seed_node_validator.aliases.each do |aliass|
-
           if aliass == seed
             nv = seed_node_validator
           else
             begin
               nv = NodeValidator.new(self, aliass, @connection_timeout, @cluster_name)
             rescue => e
-              Aerospike.logger.error("Seed #{seed.to_s} failed: #{e}")
+              Aerospike.logger.error("Seed #{seed} failed: #{e}")
               next
             end
           end
+          next if find_node_name(list, nv.name)
 
-          if !find_node_name(list, nv.name)
-            node = create_node(nv)
-            add_aliases(node)
-            list << node
-          end
+          node = create_node(nv)
+          add_aliases(node)
+          list << node
         end
-
       end
 
-      if list.length > 0
-        add_nodes_copy(list)
-      end
-
+      add_nodes_copy(list) if list.length > 0
     end
 
     # Finds a node by name in a list of nodes
     def find_node_name(list, name)
-      list.any?{|node| node.name == name}
+      list.any? { |node| node.name == name }
     end
 
     def add_alias(host, node)
@@ -441,7 +422,7 @@ module Aerospike
             # services list contains both internal and external IP addresses
             # for the same node.  Add new host to list of alias filters
             # and do not add new node.
-            node.reference_count.update{|v| v + 1}
+            node.increase_reference_count!
             node.add_alias(host)
             add_alias(host, node)
             next
@@ -460,7 +441,7 @@ module Aerospike
     end
 
     def create_node(nv)
-      Node.new(self, nv)
+      ::Aerospike::Node.new(self, nv)
     end
 
     def find_nodes_to_remove(refresh_count)
@@ -482,7 +463,7 @@ module Aerospike
 
         when 2
           # Two node clusters require at least one successful refresh before removing.
-          if refresh_count == 2 && node.reference_count.value == 0 && !node.responded.value
+          if refresh_count == 2 && node.reference_count.value == 0 && !node.responded?
             # Node is not referenced nor did it respond.
             remove_list << node
           end
@@ -492,9 +473,9 @@ module Aerospike
           if refresh_count >= 2 && node.reference_count.value == 0
             # Node is not referenced by other nodes.
             # Check if node responded to info request.
-            if node.responded.value
+            if node.responded?
               # Node is alive, but not referenced by other nodes.  Check if mapped.
-              if !find_node_in_partition_map(node)
+              unless find_node_in_partition_map(node)
                 # Node doesn't have any partitions mapped to it.
                 # There is not point in keeping it in the cluster.
                 remove_list << node
@@ -531,7 +512,7 @@ module Aerospike
     def add_aliases(node)
       # Add node's aliases to global alias set.
       # Aliases are only used in tend thread, so synchronization is not necessary.
-      node.get_aliases.each do |aliass|
+      node.aliases.each do |aliass|
         @aliases[aliass] = node
       end
     end
@@ -551,7 +532,7 @@ module Aerospike
       nodes_to_remove.each do |node|
         # Remove node's aliases from cluster alias set.
         # Aliases are only used in tend thread, so synchronization is not necessary.
-        node.get_aliases.each do |aliass|
+        node.aliases.each do |aliass|
           Aerospike.logger.debug("Removing alias #{aliass}")
           remove_alias(aliass)
         end
@@ -607,7 +588,5 @@ module Aerospike
     def find_node_by_name(node_name)
       nodes.detect{|node| node.name == node_name }
     end
-
   end
-
 end
