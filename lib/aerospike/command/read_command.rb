@@ -26,8 +26,7 @@ module Aerospike
   private
 
   class ReadCommand < SingleCommand #:nodoc:
-    VALUE_ENCODING = 'utf-8'
-
+    BIN_NAME_ENCODING = 'utf-8'
 
     attr_reader :record, :policy
 
@@ -130,7 +129,7 @@ module Aerospike
         op_size = @data_buffer.read_int32(receive_offset)
         particle_type = @data_buffer.read(receive_offset+5).ord
         name_size = @data_buffer.read(receive_offset+7).ord
-        name = @data_buffer.read(receive_offset+8, name_size).force_encoding(VALUE_ENCODING)
+        name = @data_buffer.read(receive_offset+8, name_size).force_encoding(BIN_NAME_ENCODING)
         receive_offset += 4 + 4 + name_size
 
         particle_bytes_size = op_size - (4 + name_size)
