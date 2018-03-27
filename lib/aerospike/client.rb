@@ -1,12 +1,14 @@
 # encoding: utf-8
-# Copyright 2014-2017 Aerospike, Inc.
+# Copyright 2014-2018 Aerospike, Inc.
 #
 # Portions may be licensed to Aerospike, Inc. under one or more contributor
 # license agreements.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
-# the License at http:#www.apache.org/licenses/LICENSE-2.0
+# the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
@@ -46,9 +48,9 @@ module Aerospike
       @default_query_policy = QueryPolicy.new
       @default_admin_policy = QueryPolicy.new
 
-      hosts = parse_hosts(hosts || ENV["AEROSPIKE_HOSTS"] || "localhost")
+      hosts = ::Aerospike::Host::Parse.(hosts || ENV['AEROSPIKE_HOSTS'] || 'localhost')
       policy = create_policy(policy, ClientPolicy)
-      @cluster = Cluster.new(policy, *hosts)
+      @cluster = Cluster.new(policy, hosts)
       @cluster.add_cluster_config_change_listener(self)
 
       self.connect if connect
@@ -88,7 +90,7 @@ module Aerospike
     #  Returns list of active server node names in the cluster.
 
     def node_names
-      @cluster.nodes.map(&:get_name)
+      @cluster.nodes.map(&:name)
     end
 
     def supports_feature?(feature)
@@ -823,23 +825,6 @@ module Aerospike
         policy_klass.new(policy)
       else
         fail TypeError, "policy should be a #{policy_klass.name} instance or a Hash"
-      end
-    end
-
-    def parse_hosts(hosts)
-      case hosts
-      when Host
-        [hosts]
-      when Array
-        hosts
-      when String
-        hosts.split(?,).map { |host|
-          (addr, port) = host.split(?:)
-          port ||= 3000
-          Host.new(addr, port.to_i)
-        }
-      else
-        fail TypeError, "hosts should be a Host object, an Array of Host objects, or a String"
       end
     end
 
