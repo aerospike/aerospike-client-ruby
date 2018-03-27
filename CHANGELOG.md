@@ -1,5 +1,5 @@
-Unreleased
-==========
+v2.6.0 / 2018-03-27
+===================
 
 * **New Features**
   * Support for peers protocol for cluster discovery. Requires Aerospike server version 3.10 or later. Thanks to [@wallin](https://github.com/wallin) of [castle.io](https://castle.io/)! [[#59]](https://github.com/aerospike/aerospike-client-ruby/pull/59)
