@@ -2,11 +2,11 @@ v2.6.0 / 2018-03-27
 ===================
 
 * **New Features**
-  * Support for peers protocol for cluster discovery. Requires Aerospike server version 3.10 or later. Thanks to [@wallin](https://github.com/wallin) of [castle.io](https://castle.io/)! [[#59]](https://github.com/aerospike/aerospike-client-ruby/pull/59)
-  * Support for TLS encryption support for client <-> server connections. Requires Aerospike Enterprise Edition version 3.11 or later. Thanks to [@wallin](https://github.com/wallin) of [castle.io](https://castle.io/)! [[#59]](https://github.com/aerospike/aerospike-client-ruby/pull/59)
+  * Support for peers protocol for cluster discovery. Requires Aerospike server version 3.10 or later. Thanks to [@wallin](https://github.com/wallin) of [castle.io](https://castle.io/)! [[#59](https://github.com/aerospike/aerospike-client-ruby/pull/59)]
+  * TLS encryption support for client <-> server connections. Requires Aerospike Enterprise Edition version 3.11 or later. Thanks to [@wallin](https://github.com/wallin) of [castle.io](https://castle.io/)! [[#59](https://github.com/aerospike/aerospike-client-ruby/pull/59)]
 
 * **Bug Fixes**
-  * Fix min./max. boundary check for Integer bin values and improve performance. Thanks to [@wallin](https://github.com/wallin) of [castle.io](https://castle.io/)! [[#60]](https://github.com/aerospike/aerospike-client-ruby/pull/60)
+  * Fix min./max. boundary check for Integer bin values and improve performance. Thanks to [@wallin](https://github.com/wallin) of [castle.io](https://castle.io/)! [[#60](https://github.com/aerospike/aerospike-client-ruby/pull/60)]
 
 * **Updates**
   * Update minimum required Ruby version to v2.3.
