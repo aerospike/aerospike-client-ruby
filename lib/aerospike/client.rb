@@ -328,7 +328,7 @@ module Aerospike
       key_map = BatchItem.generate_map(keys)
 
       batch_execute(keys) do |node, bns|
-        BatchCommandGet.new(node, bns, policy, key_map, bin_names.uniq, records, INFO1_READ)
+        BatchCommandGet.new(node, bns, policy, key_map, bin_names, records, INFO1_READ)
       end
       records
     end
