@@ -1,4 +1,5 @@
-# encoding: utf-8
+# frozen_string_literal: true
+
 # Copyright 2014-2017 Aerospike, Inc.
 #
 # Portions may be licensed to Aerospike, Inc. under one or more contributor
@@ -19,6 +20,8 @@ module Aerospike
   private
 
   class Partition # :nodoc:
+    UNPACK_FORMAT = 'l<'
+
     attr_reader :namespace, :partition_id
 
     def initialize(namespace, partition_id)
@@ -31,7 +34,7 @@ module Aerospike
     def self.new_by_key(key)
       Partition.new(
         key.namespace,
-        (key.digest[0..3].unpack('l<')[0] & 0xFFFF) % Node::PARTITIONS
+        (key.digest[0..3].unpack(UNPACK_FORMAT)[0] & 0xFFFF) % Node::PARTITIONS
       )
     end
 
