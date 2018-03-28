@@ -427,50 +427,7 @@ module Aerospike
     end
 
     def find_nodes_to_remove(refresh_count)
-      node_list = nodes
-
-      remove_list = []
-
-      node_list.each do |node|
-        if !node.active?
-          # Inactive nodes must be removed.
-          remove_list << node
-          next
-        end
-
-        case node_list.length
-        when 1
-          # Single node clusters rely solely on node health.
-          remove_list << node if node.unhealthy?
-
-        when 2
-          # Two node clusters require at least one successful refresh before removing.
-          if refresh_count == 2 && node.reference_count.value == 0 && !node.responded?
-            # Node is not referenced nor did it respond.
-            remove_list << node
-          end
-
-        else
-          # Multi-node clusters require two successful node refreshes before removing.
-          if refresh_count >= 2 && node.reference_count.value == 0
-            # Node is not referenced by other nodes.
-            # Check if node responded to info request.
-            if node.responded?
-              # Node is alive, but not referenced by other nodes.  Check if mapped.
-              unless find_node_in_partition_map(node)
-                # Node doesn't have any partitions mapped to it.
-                # There is not point in keeping it in the cluster.
-                remove_list << node
-              end
-            else
-              # Node not responding. Remove it.
-              remove_list << node
-            end
-          end
-        end
-      end
-
-      remove_list
+      FindNodesToRemove.(self, refresh_count)
     end
 
     def find_node_in_partition_map(filter)
