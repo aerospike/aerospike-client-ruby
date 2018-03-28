@@ -28,38 +28,30 @@ module Aerospike
           remove_list = []
 
           node_list.each do |node|
-            if !node.active?
+            unless node.active?
               # Inactive nodes must be removed.
               remove_list << node
               next
             end
 
-            case node_list.length
-            when 1
-              # Single node clusters rely solely on node health.
-              remove_list << node if node.unhealthy?
+            if refresh_count.zero? && node.failed?(4) # 5 or more failures counts as failed
+              # All node info requests failed and this node had 5 consecutive failures.
+              # Remove node.  If no nodes are left, seeds will be tried in next cluster
+              # tend iteration.
+              remove_list << node
+              next
+            end
 
-            when 2
-              # Two node clusters require at least one successful refresh before removing.
-              if refresh_count == 2 && node.reference_count.value == 0 && !node.responded?
-                # Node is not referenced nor did it respond.
+            if node_list.size > 1 && refresh_count >= 1 && !node.referenced?
+              # Node is not referenced by other nodes.
+              # Check if node responded to info request.
+              if node.failed?
                 remove_list << node
-              end
-
-            else
-              # Multi-node clusters require two successful node refreshes before removing.
-              if refresh_count >= 2 && node.reference_count.value == 0
-                # Node is not referenced by other nodes.
-                # Check if node responded to info request.
-                if node.responded?
-                  # Node is alive, but not referenced by other nodes.  Check if mapped.
-                  unless cluster.find_node_in_partition_map(node)
-                    # Node doesn't have any partitions mapped to it.
-                    # There is not point in keeping it in the cluster.
-                    remove_list << node
-                  end
-                else
-                  # Node not responding. Remove it.
+              else
+                # Node is alive, but not referenced by other nodes.  Check if mapped.
+                unless cluster.find_node_in_partition_map(node)
+                  # Node doesn't have any partitions mapped to it.
+                  # There is no point in keeping it in the cluster.
                   remove_list << node
                 end
               end
