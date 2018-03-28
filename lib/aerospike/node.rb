@@ -159,8 +159,8 @@ module Aerospike
       @peers_count.value > 0
     end
 
-    def failed?(threshold = 0)
-      @failures.value > threshold
+    def failed?(threshold = 1)
+      @failures.value >= threshold
     end
 
     def failed!

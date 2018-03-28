@@ -35,7 +35,7 @@ RSpec.describe Aerospike::Cluster::FindNodesToRemove do
         call
       end
 
-      it { expect(node).to have_received(:failed?).with(4) }
+      it { expect(node).to have_received(:failed?).with(5) }
     end
 
     context 'with refresh_count > 0' do

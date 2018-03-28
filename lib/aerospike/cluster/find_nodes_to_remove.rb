@@ -34,7 +34,7 @@ module Aerospike
               next
             end
 
-            if refresh_count.zero? && node.failed?(4) # 5 or more failures counts as failed
+            if refresh_count.zero? && node.failed?(5) # 5 or more failures counts as failed
               # All node info requests failed and this node had 5 consecutive failures.
               # Remove node.  If no nodes are left, seeds will be tried in next cluster
               # tend iteration.
