@@ -268,6 +268,8 @@ module Aerospike
       if peers.generation_changed?
         # Refresh peers for all nodes that responded the first time even if only
         # one node's peers changed.
+        peers.reset_refresh_count!
+
         nodes.each do |node|
           node.refresh_peers(peers)
         end
