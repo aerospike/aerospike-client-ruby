@@ -139,6 +139,10 @@ module Aerospike
       @reference_count.value = 0
     end
 
+    def referenced?
+      @reference_count.value > 0
+    end
+
     def responded!
       @responded.value = true
     end
@@ -155,8 +159,8 @@ module Aerospike
       @peers_count.value > 0
     end
 
-    def failed?
-      @failures.value > 0
+    def failed?(threshold = 1)
+      @failures.value >= threshold
     end
 
     def failed!

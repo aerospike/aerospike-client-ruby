@@ -44,6 +44,7 @@ RSpec.describe Aerospike::Cluster do
       allow(node).to receive(:refresh_partitions)
       allow(node.partition_generation).to receive(:changed?).and_return(node_generation_changed)
       allow(peers).to receive(:generation_changed?).and_return(generation_changed)
+      allow(peers).to receive(:reset_refresh_count!)
       peers.nodes = peer_nodes
 
       refresh_nodes
@@ -77,6 +78,7 @@ RSpec.describe Aerospike::Cluster do
         it { expect(node).to have_received(:refresh_peers).twice.with(peers) }
         it { expect(node).not_to have_received(:refresh_partitions)}
         it { expect(instance).to have_received(:find_nodes_to_remove).with(peers.refresh_count) }
+        it { expect(peers).to have_received(:reset_refresh_count!) }
       end
 
       context 'with nodes to remove' do
