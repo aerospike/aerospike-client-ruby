@@ -345,36 +345,36 @@ module Aerospike
         end
       end
       size_buffer
-      write_header(policy,read_attr | INFO1_BATCH,0,1,0)
-      write_field_header(0,Aerospike::FieldType::BATCH_INDEX)
-      @data_buffer.write_int32(batch.keys.length,@data_offset)
+      write_header(policy,read_attr | INFO1_BATCH, 0, 1, 0)
+      write_field_header(0, Aerospike::FieldType::BATCH_INDEX)
+      @data_buffer.write_int32(batch.keys.length, @data_offset)
       @data_offset += 4
-      @data_buffer.write_byte(1,@data_offset)
+      @data_buffer.write_byte(1, @data_offset)
       @data_offset += 1
 
       prev = nil
 
       
-      batch.each_key_with_offset do |key,offset|
-        @data_buffer.write_int32(offset,@data_offset)
+      batch.each_key_with_offset do |key, offset|
+        @data_buffer.write_int32(offset, @data_offset)
         @data_offset += 4
         @data_buffer.write_binary(key.digest, @data_offset)
         @data_offset += key.digest.bytesize        
     
 
         if (prev != nil && prev.namespace == key.namespace)
-          @data_buffer.write_byte(1,@data_offset)
+          @data_buffer.write_byte(1, @data_offset)
           @data_offset += 1
         else
-          @data_buffer.write_byte(0,@data_offset)
+          @data_buffer.write_byte(0, @data_offset)
           @data_offset += 1
-          @data_buffer.write_byte(read_attr,@data_offset)
+          @data_buffer.write_byte(read_attr, @data_offset)
           @data_offset += 1
-          @data_buffer.write_int16(field_count,@data_offset)
+          @data_buffer.write_int16(field_count, @data_offset)
           @data_offset += 2
-          @data_buffer.write_int16(operation_count,@data_offset)
+          @data_buffer.write_int16(operation_count, @data_offset)
           @data_offset += 2
-          write_field_string(key.namespace,Aerospike::FieldType::NAMESPACE)
+          write_field_string(key.namespace, Aerospike::FieldType::NAMESPACE)
 
           if bin_names
             bin_names.each do |bin_name|

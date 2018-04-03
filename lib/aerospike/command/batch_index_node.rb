@@ -39,7 +39,7 @@ module Aerospike
       # Split keys by server node.
       batch_nodes = []
 
-      keys.each_with_index do |key,i|
+      keys.each_with_index do |key, i|
 
         partition = Partition.new_by_key(key)
 
@@ -48,7 +48,7 @@ module Aerospike
         batch_node = batch_nodes.detect{|bn| bn.node == node}
 
         unless batch_node
-          batch_nodes << BatchIndexNode.new(node,key,i)
+          batch_nodes << BatchIndexNode.new(node, key, i)
         else
           batch_node.keys << key
           batch_node.offsets << i
@@ -65,7 +65,7 @@ module Aerospike
       end
     end
 
-    def initialize(node, key,offset)
+    def initialize(node, key, offset)
       @node = node
       @keys = [key]      
       @offsets = [offset]

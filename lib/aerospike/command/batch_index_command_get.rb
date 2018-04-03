@@ -22,7 +22,7 @@ module Aerospike
 
   class BatchIndexCommandGet < BatchCommand #:nodoc:
 
-    def initialize(batch_node,policy, bin_names, records, read_attr)
+    def initialize(batch_node, policy, bin_names, records, read_attr)
       super(batch_node.node)
       @batch_node = batch_node
       @policy = policy
