@@ -1,12 +1,14 @@
 # encoding: utf-8
-# Copyright 2014-2017 Aerospike, Inc.
+# Copyright 2014-2018 Aerospike, Inc.
 #
 # Portions may be licensed to Aerospike, Inc. under one or more contributor
 # license agreements.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
-# the License at http:#www.apache.org/licenses/LICENSE-2.0
+# the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
@@ -46,9 +48,9 @@ module Aerospike
       @default_query_policy = QueryPolicy.new
       @default_admin_policy = QueryPolicy.new
 
-      hosts = parse_hosts(hosts || ENV["AEROSPIKE_HOSTS"] || "localhost")
+      hosts = ::Aerospike::Host::Parse.(hosts || ENV['AEROSPIKE_HOSTS'] || 'localhost')
       policy = create_policy(policy, ClientPolicy)
-      @cluster = Cluster.new(policy, *hosts)
+      @cluster = Cluster.new(policy, hosts)
       @cluster.add_cluster_config_change_listener(self)
 
       self.connect if connect
@@ -88,7 +90,7 @@ module Aerospike
     #  Returns list of active server node names in the cluster.
 
     def node_names
-      @cluster.nodes.map(&:get_name)
+      @cluster.nodes.map(&:name)
     end
 
     def supports_feature?(feature)
@@ -110,7 +112,7 @@ module Aerospike
     #
     #  client.put key, {'bin', 'value string'}, :timeout => 0.001
 
-    def put(key, bins, options={})
+    def put(key, bins, options = nil)
       policy = create_policy(options, WritePolicy)
       command = WriteCommand.new(@cluster, policy, key, hash_to_bins(bins), Aerospike::Operation::WRITE)
       execute_command(command)
@@ -133,7 +135,7 @@ module Aerospike
     #
     #  client.append key, {'bin', 'value to append'}, :timeout => 0.001
 
-    def append(key, bins, options={})
+    def append(key, bins, options = nil)
       policy = create_policy(options, WritePolicy)
       command = WriteCommand.new(@cluster, policy, key, hash_to_bins(bins), Aerospike::Operation::APPEND)
       execute_command(command)
@@ -152,7 +154,7 @@ module Aerospike
     #
     #  client.prepend key, {'bin', 'value to prepend'}, :timeout => 0.001
 
-    def prepend(key, bins, options={})
+    def prepend(key, bins, options = nil)
       policy = create_policy(options, WritePolicy)
       command = WriteCommand.new(@cluster, policy, key, hash_to_bins(bins), Aerospike::Operation::PREPEND)
       execute_command(command)
@@ -175,7 +177,7 @@ module Aerospike
     #
     #  client.add key, {'bin', -1}, :timeout => 0.001
 
-    def add(key, bins, options={})
+    def add(key, bins, options = nil)
       policy = create_policy(options, WritePolicy)
       command = WriteCommand.new(@cluster, policy, key, hash_to_bins(bins), Aerospike::Operation::ADD)
       execute_command(command)
@@ -197,7 +199,7 @@ module Aerospike
     #
     #  existed = client.delete key, :timeout => 0.001
 
-    def delete(key, options={})
+    def delete(key, options = nil)
       policy = create_policy(options, WritePolicy)
       command = DeleteCommand.new(@cluster, policy, key)
       execute_command(command)
@@ -245,7 +247,7 @@ module Aerospike
     #
     #  client.touch key, :timeout => 0.001
 
-    def touch(key, options={})
+    def touch(key, options = nil)
       policy = create_policy(options, WritePolicy)
       command = TouchCommand.new(@cluster, policy, key)
       execute_command(command)
@@ -258,7 +260,7 @@ module Aerospike
     ##
     #  Determines if a record key exists.
     #  The policy can be used to specify timeouts.
-    def exists(key, options={})
+    def exists(key, options = nil)
       policy = create_policy(options, Policy)
       command = ExistsCommand.new(@cluster, policy, key)
       execute_command(command)
@@ -268,7 +270,7 @@ module Aerospike
     #  Check if multiple record keys exist in one batch call.
     #  The returned array bool is in positional order with the original key array order.
     #  The policy can be used to specify timeouts.
-    def batch_exists(keys, options={})
+    def batch_exists(keys, options = nil)
       policy = create_policy(options, Policy)
 
       # same array can be used without sychronization;
@@ -289,7 +291,7 @@ module Aerospike
 
     #  Read record header and bins for specified key.
     #  The policy can be used to specify timeouts.
-    def get(key, bin_names=[], options={})
+    def get(key, bin_names = nil, options = nil)
       policy = create_policy(options, Policy)
 
       command = ReadCommand.new(@cluster, policy, key, bin_names)
@@ -299,7 +301,7 @@ module Aerospike
 
     #  Read record generation and expiration only for specified key.  Bins are not read.
     #  The policy can be used to specify timeouts.
-    def get_header(key, options={})
+    def get_header(key, options = nil)
       policy = create_policy(options, Policy)
       command = ReadHeaderCommand.new(@cluster, policy, key)
       execute_command(command)
@@ -351,9 +353,6 @@ module Aerospike
         batch_execute_index(keys) do |bn|
           BatchIndexCommandGet.new(bn, policy, bin_names, records, bin_names.length == 0 ? (INFO1_READ | INFO1_GET_ALL) : INFO1_READ)
         end      
-      end
-      records
-    end
 
     #  Read multiple record header data for specified keys in one batch call.
     #  The returned records are in positional order with the original key array order.
@@ -387,7 +386,7 @@ module Aerospike
     #  An example would be to add an integer value to an existing record and then
     #  read the result, all in one database call. Operations are executed in
     #  the order they are specified.
-    def operate(key, operations, options={})
+    def operate(key, operations, options = nil)
       policy = create_policy(options, WritePolicy)
 
       command = OperateCommand.new(@cluster, policy, key, operations)
@@ -405,7 +404,7 @@ module Aerospike
     #  RegisterTask instance.
     #
     #  This method is only supported by Aerospike 3 servers.
-    def register_udf_from_file(client_path, server_path, language, options={})
+    def register_udf_from_file(client_path, server_path, language, options = nil)
       udf_body = File.read(client_path)
       register_udf(udf_body, server_path, language, options)
     end
@@ -416,7 +415,7 @@ module Aerospike
     #  RegisterTask instance.
     #
     #  This method is only supported by Aerospike 3 servers.
-    def register_udf(udf_body, server_path, language, options={})
+    def register_udf(udf_body, server_path, language, options = nil)
       content = Base64.strict_encode64(udf_body).force_encoding('binary')
 
       str_cmd = "udf-put:filename=#{server_path};content=#{content};"
@@ -446,7 +445,7 @@ module Aerospike
     #  RemoveTask instance.
     #
     #  This method is only supported by Aerospike 3 servers.
-    def remove_udf(udf_name, options={})
+    def remove_udf(udf_name, options = nil)
       str_cmd = "udf-remove:filename=#{udf_name};"
 
       # Send command to one node. That node will distribute it to other nodes.
@@ -463,7 +462,7 @@ module Aerospike
 
     #  ListUDF lists all packages containing user defined functions in the server.
     #  This method is only supported by Aerospike 3 servers.
-    def list_udf(options={})
+    def list_udf(options = nil)
       str_cmd = 'udf-list'
 
       # Send command to one node. That node will distribute it to other nodes.
@@ -499,7 +498,7 @@ module Aerospike
     #  udf file = <server udf dir>/<package name>.lua
     #
     #  This method is only supported by Aerospike 3 servers.
-    def execute_udf(key, package_name, function_name, args=[], options={})
+    def execute_udf(key, package_name, function_name, args=[], options = nil)
       policy = create_policy(options, WritePolicy)
 
       command = ExecuteCommand.new(@cluster, policy, key, package_name, function_name, args)
@@ -528,7 +527,7 @@ module Aerospike
     #
     # This method is only supported by Aerospike 3 servers.
     # If the policy is nil, the default relevant policy will be used.
-    def execute_udf_on_query(statement, package_name, function_name, function_args=[], options={})
+    def execute_udf_on_query(statement, package_name, function_name, function_args=[], options = nil)
       policy = create_policy(options, QueryPolicy)
 
       nodes = @cluster.nodes
@@ -565,7 +564,7 @@ module Aerospike
     #  This method is only supported by Aerospike 3 servers.
     #  index_type should be :string, :numeric or :geo2dsphere (requires server version 3.7 or later)
     #  collection_type should be :list, :mapkeys or :mapvalues
-    def create_index(namespace, set_name, index_name, bin_name, index_type, collection_type=nil, options={})
+    def create_index(namespace, set_name, index_name, bin_name, index_type, collection_type=nil, options = nil)
       if options.nil? && collection_type.is_a?(Hash)
         options, collection_type = collection_type, nil
       end
@@ -594,7 +593,7 @@ module Aerospike
 
     #  Delete secondary index.
     #  This method is only supported by Aerospike 3 servers.
-    def drop_index(namespace, set_name, index_name, options={})
+    def drop_index(namespace, set_name, index_name, options = nil)
       policy = create_policy(options, WritePolicy)
       str_cmd = "sindex-delete:ns=#{namespace}"
       str_cmd << ";set=#{set_name}" unless set_name.to_s.strip.empty?
@@ -618,7 +617,7 @@ module Aerospike
     # Scan Operations
     #-------------------------------------------------------
 
-    def scan_all(namespace, set_name, bin_names=[], options={})
+    def scan_all(namespace, set_name, bin_names = nil, options = nil)
       policy = create_policy(options, ScanPolicy)
 
       # wait until all migrations are finished
@@ -674,7 +673,7 @@ module Aerospike
 
     # ScanNode reads all records in specified namespace and set, from one node only.
     # The policy can be used to specify timeouts.
-    def scan_node(node, namespace, set_name, bin_names=[], options={})
+    def scan_node(node, namespace, set_name, bin_names = nil, options = nil)
       policy = create_policy(options, ScanPolicy)
       # wait until all migrations are finished
       # TODO: implement
@@ -716,7 +715,7 @@ module Aerospike
     #
     # This method is only supported by Aerospike 3 servers.
     # If the policy is nil, a default policy will be generated.
-    def query(statement, options={})
+    def query(statement, options = nil)
       policy = create_policy(options, QueryPolicy)
       new_policy = policy.clone
 
@@ -752,7 +751,7 @@ module Aerospike
 
     # Create user with password and roles. Clear-text password will be hashed using bcrypt
     # before sending to server.
-    def create_user(user, password, roles, options={})
+    def create_user(user, password, roles, options = nil)
       policy = create_policy(options, AdminPolicy)
       hash = AdminCommand.hash_password(password)
       command = AdminCommand.new
@@ -760,14 +759,14 @@ module Aerospike
     end
 
     # Remove user from cluster.
-    def drop_user(user, options={})
+    def drop_user(user, options = nil)
       policy = create_policy(options, AdminPolicy)
       command = AdminCommand.new
       command.drop_user(@cluster, policy, user)
     end
 
     # Change user's password. Clear-text password will be hashed using bcrypt before sending to server.
-    def change_password(user, password, options={})
+    def change_password(user, password, options = nil)
       raise Aerospike::Exceptions::Aerospike.new(INVALID_USER) unless @cluster.user && @cluster.user != ""
       policy = create_policy(options, AdminPolicy)
 
@@ -786,28 +785,28 @@ module Aerospike
     end
 
     # Add roles to user's list of roles.
-    def grant_roles(user, roles, options={})
+    def grant_roles(user, roles, options = nil)
       policy = create_policy(options, AdminPolicy)
       command = AdminCommand.new
       command.grant_roles(@cluster, policy, user, roles)
     end
 
     # Remove roles from user's list of roles.
-    def revoke_roles(user, roles, options={})
+    def revoke_roles(user, roles, options = nil)
       policy = create_policy(options, AdminPolicy)
       command = AdminCommand.new
       command.revoke_roles(@cluster, policy, user, roles)
     end
 
     # Retrieve roles for a given user.
-    def query_user(user, options={})
+    def query_user(user, options = nil)
       policy = create_policy(options, AdminPolicy)
       command = AdminCommand.new
       command.query_user(@cluster, policy, user)
     end
 
     # Retrieve all users and their roles.
-    def query_users(options={})
+    def query_users(options = nil)
       policy = create_policy(options, AdminPolicy)
       command = AdminCommand.new
       command.query_users(@cluster, policy)
@@ -845,23 +844,6 @@ module Aerospike
         policy_klass.new(policy)
       else
         fail TypeError, "policy should be a #{policy_klass.name} instance or a Hash"
-      end
-    end
-
-    def parse_hosts(hosts)
-      case hosts
-      when Host
-        [hosts]
-      when Array
-        hosts
-      when String
-        hosts.split(?,).map { |host|
-          (addr, port) = host.split(?:)
-          port ||= 3000
-          Host.new(addr, port.to_i)
-        }
-      else
-        fail TypeError, "hosts should be a Host object, an Array of Host objects, or a String"
       end
     end
 

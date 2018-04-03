@@ -91,30 +91,42 @@ describe Aerospike::Client do
   end
 
   describe "#connect" do
+    subject(:client) { described_class.new(policy: client_policy, connect: false) }
+
     let(:client_policy) { Hash.new }
-    let(:client) { described_class.new(policy: client_policy, connect: false) }
 
-    it "should connect to the cluster successfully" do
-      client.connect
-      expect(client.connected?).to eq true
-    end
-
-    it "should have at least one node" do
-      client.connect
-      expect(client.nodes.length).to be >= 1
-    end
-
-    it "should have at least one name in node name list" do
-      client.connect
-      expect(client.node_names.length).to be >= 1
-    end
-
-    context "with non-matching cluster name" do
-      let(:client_policy) { { cluster_name: 'thisIsNotTheRealClusterName' } }
-
-      it "should fail to connect if the cluster name does not match" do
-        expect { client.connect }.to raise_error(Aerospike::Exceptions::Aerospike)
+    shared_examples_for 'a cluster' do
+      before do
+        allow_any_instance_of(::Aerospike::Cluster).to receive(:supports_peers_protocol?).and_return(peers_enabled)
       end
+
+      context 'with empty policy' do
+        before do
+          client.connect
+        end
+
+        it { is_expected.to be_connected }
+        it { expect(client.nodes.size).to be >= 1 }
+        it { expect(client.node_names.size).to be >= 1 }
+      end
+
+      context "with non-matching cluster name" do
+        let(:client_policy) { { cluster_name: 'thisIsNotTheRealClusterName' } }
+
+        it { expect { client.connect }.to raise_error(Aerospike::Exceptions::Aerospike) }
+      end
+    end
+
+    context 'when peers protocol is enabled' do
+      let(:peers_enabled) { true }
+
+      it_behaves_like 'a cluster'
+    end
+
+    context 'when peers protocol is disabled' do
+      let(:peers_enabled) { false }
+
+      it_behaves_like 'a cluster'
     end
   end
 
