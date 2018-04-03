@@ -26,7 +26,7 @@ module Aerospike
 
   BatchNamespace = Struct.new :namespace, :keys
 
-  class BatchNode #:nodoc:
+  class BatchDirectNode #:nodoc:
 
     attr_accessor :node, :batch_namespaces, :key_capacity
 
@@ -37,10 +37,6 @@ module Aerospike
         raise Aerospike::Exceptions::Connection.new("command failed because cluster is empty.")
       end
 
-      node_count = nodes.length
-      keys_per_node = (keys.length/node_count).to_i + 10
-
-      # Split keys by server node.
       batch_nodes = []
 
       keys.each do |key|
@@ -51,7 +47,7 @@ module Aerospike
         batch_node = batch_nodes.detect{|bn| bn.node == node}
 
         unless batch_node
-          batch_nodes << BatchNode.new(node, keys_per_node, key)
+          batch_nodes << BatchDirectNode.new(node, key)
         else
           batch_node.add_key(key)
         end
@@ -63,7 +59,6 @@ module Aerospike
 
     def initialize(node, key_capacity, key)
       @node = node
-      @key_capacity = key_capacity
       @batch_namespaces = [BatchNamespace.new(key.namespace, [key])]
     end
 

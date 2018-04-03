@@ -25,9 +25,9 @@ module Aerospike
   private
 
 
-  class BatchNodeIndex #:nodoc:
+  class BatchIndexNode #:nodoc:
 
-    attr_accessor :node, :key_capacity, :keys, :offsets
+    attr_accessor :node, :keys, :offsets
 
     def self.generate_list(cluster, keys)
       nodes = cluster.nodes
@@ -35,9 +35,6 @@ module Aerospike
       if nodes.length == 0
         raise Aerospike::Exceptions::Connection.new("command failed because cluster is empty.")
       end
-
-      node_count = nodes.length
-      keys_per_node = (keys.length/node_count).to_i + 10
 
       # Split keys by server node.
       batch_nodes = []
@@ -51,7 +48,7 @@ module Aerospike
         batch_node = batch_nodes.detect{|bn| bn.node == node}
 
         unless batch_node
-          batch_nodes << BatchNodeIndex.new(node, keys_per_node, key,i)
+          batch_nodes << BatchIndexNode.new(node,key,i)
         else
           batch_node.keys << key
           batch_node.offsets << i
@@ -60,10 +57,16 @@ module Aerospike
       batch_nodes
     end
 
+    def each_key_with_offset()
+      i = 0
+      while i < @keys.length
+        yield @keys[i],@offsets[i]
+        i += 1
+      end
+    end
 
-    def initialize(node, key_capacity, key,offset)
+    def initialize(node, key,offset)
       @node = node
-      @key_capacity = key_capacity
       @keys = [key]      
       @offsets = [offset]
     end

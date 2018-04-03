@@ -21,7 +21,7 @@ module Aerospike
   class BatchPolicy < Policy
 
     attr_accessor :max_concurrent_nodes, :record_queue_size, 
-      :wait_until_migrations_are_over
+      :wait_until_migrations_are_over, :use_batch_direct
 
     def initialize(opt={})
       super(opt)
@@ -29,7 +29,7 @@ module Aerospike
       @max_concurrent_nodes = opt[:max_concurrent_nodes] || 0
       @record_queue_size = opt[:record_queue_size] || 5000
       @wait_until_migrations_are_over = opt[:wait_until_migrations_are_over].nil? ? false : wait_until_migrations_are_over
-
+      @use_batch_direct = opt[:use_batch_direct].nil? ? false : opt[:use_batch_direct]
       self
     end
 

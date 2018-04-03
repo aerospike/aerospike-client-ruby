@@ -1,5 +1,5 @@
 # encoding: utf-8
-# Copyright 2014-2017 Aerospike, Inc.
+# Copyright 2014 Aerospike, Inc.
 #
 # Portions may be licensed to Aerospike, Inc. under one or more contributor
 # license agreements.
@@ -20,21 +20,19 @@ module Aerospike
 
   private
 
-  class BatchCommandGet < BatchCommand #:nodoc:
+  class BatchIndexCommandGet < BatchCommand #:nodoc:
 
-    def initialize(node, batch_namespace, policy, key_map, bin_names, records, read_attr)
-      super(node)
-
-      @batch_namespace = batch_namespace
+    def initialize(batch_node,policy, bin_names, records, read_attr)
+      super(batch_node.node)
+      @batch_node = batch_node
       @policy = policy
-      @key_map = key_map
       @bin_names = bin_names
       @records = records
       @read_attr = read_attr
     end
 
     def write_buffer
-      set_batch_get(@policy, @batch_namespace, @bin_names, @read_attr)
+      set_batch_index_get(@policy, @batch_node, @bin_names, @read_attr)
     end
 
     # Parse all results in the batch.  Add records to shared list.
@@ -60,19 +58,19 @@ module Aerospike
 
         generation = @data_buffer.read_int32(6)
         expiration = @data_buffer.read_int32(10)
+        batch_index = @data_buffer.read_int32(14)
         field_count = @data_buffer.read_int16(18)
         op_count = @data_buffer.read_int16(20)
         key = parse_key(field_count)
-        item = @key_map[key.digest]
+        # item = @key_map[key.digest]
 
-        if item
-          if result_code == 0
-            index = item.index
-            @records[index] = parse_record(item.key, op_count, generation, expiration)
-          end
-        else
-          Aerospike.logger.debug("Unexpected batch key returned: #{key.namespace}, #{key.digest}")
+        # if item
+        if result_code == 0
+          @records[batch_index] = parse_record(key, op_count, generation, expiration)
         end
+        # else
+          # Aerospike.logger.debug("Unexpected batch key returned: #{key.namespace}, #{key.digest}")
+        # end
 
       end # while
 

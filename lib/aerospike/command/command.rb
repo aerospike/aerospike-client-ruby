@@ -320,13 +320,13 @@ module Aerospike
       end_cmd
     end
 
-    def set_batch_index_get(policy,batch, bin_names, read_attr)
+    def set_batch_index_get(policy, batch, bin_names, read_attr)
       bin_name_size = 0
       operation_count = 0
       field_count = 1
       if bin_names
         bin_names.each do |bin_name|
-          bin_name_size += bin_names.bytesize + OPERATION_HEADER_SIZE
+          bin_name_size += bin_name.bytesize + OPERATION_HEADER_SIZE
         end
         operation_count = bin_names.length
       end
@@ -346,7 +346,6 @@ module Aerospike
       end
       size_buffer
       write_header(policy,read_attr | INFO1_BATCH,0,1,0)
-      fieldSize_Offset = @data_offset
       write_field_header(0,Aerospike::FieldType::BATCH_INDEX)
       @data_buffer.write_int32(batch.keys.length,@data_offset)
       @data_offset += 4
@@ -355,8 +354,9 @@ module Aerospike
 
       prev = nil
 
-      batch.keys.each_with_index do |key,i|
-        @data_buffer.write_int32(batch.offsets[i],@data_offset)
+      
+      batch.each_key_with_offset do |key,offset|
+        @data_buffer.write_int32(offset,@data_offset)
         @data_offset += 4
         @data_buffer.write_binary(key.digest, @data_offset)
         @data_offset += key.digest.bytesize        
@@ -378,7 +378,7 @@ module Aerospike
 
           if bin_names
             bin_names.each do |bin_name|
-              write_operation_for_bin(bin_name, Aerospike::Operation::READ)
+              write_operation_for_bin_name(bin_name, Aerospike::Operation::READ)
             end
           end
           prev = key

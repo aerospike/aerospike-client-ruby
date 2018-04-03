@@ -306,15 +306,16 @@ module Aerospike
       command.record
     end
 
+    #-------------------------------------------------------
+    # Batch Read Operations
+    #-------------------------------------------------------
 
-    def batch_get_index(keys,bin_names=[],options={})
-      policy = create_policy(options, Policy)
-      records = Array.new(keys.length)
-      batch_execute_index(keys) do |bn|
-        BatchCommandGetIndex.new(bn,policy,bin_names,records,INFO1_READ | INFO1_GET_ALL)
-      end      
-      records
-    end
+    #  Read multiple record headers and bins for specified keys in one batch call.
+    #  The returned records are in positional order with the original key array order.
+    #  If a key is not found, the positional record will be nil.
+    #  The policy can be used to specify timeouts and protocol type.
+
+
     #-------------------------------------------------------
     # Batch Read Operations
     #-------------------------------------------------------
@@ -323,21 +324,33 @@ module Aerospike
     #  The returned records are in positional order with the original key array order.
     #  If a key is not found, the positional record will be nil.
     #  The policy can be used to specify timeouts.
-    def batch_get(keys, bin_names=[], options={})
-      policy = create_policy(options, Policy)
 
-      # wait until all migrations are finished
-      # TODO: implement
-      # @cluster.WaitUntillMigrationIsFinished(policy.timeout)
-
-      # same array can be used without sychronization;
-      # when a key exists, the corresponding index will be set to record
+    def batch_get(keys,bin_names=[],options={})
+      policy = create_policy(options, BatchPolicy)
       records = Array.new(keys.length)
+      # Use old batch direct protocol where batch reads are handled by direct low-level batch server 
+      # database routines.  The batch direct protocol can be faster when there is a single namespace, 
+      # but there is one important drawback.  The batch direct protocol will not proxy to a different 
+      # server node when the mapped node has migrated a record to another node (resulting in not
+      # found record).  
 
-      key_map = BatchItem.generate_map(keys)
+      # This can happen after a node has been added/removed from the cluster and there is a lag 
+      # between records being migrated and client partition map update (once per second).
 
-      batch_execute(keys) do |node, bns|
-        BatchCommandGet.new(node, bns, policy, key_map, bin_names.uniq, records, INFO1_READ)
+      # The new batch index protocol will perform this record proxy when necessary.
+      # Default: false (use new batch index protocol if server supports it)    
+      if policy.use_batch_direct 
+        key_map = BatchItem.generate_map(keys)
+
+        batch_execute(keys) do |node, bns|
+          BatchDirectCommandGet.new(node, bns, policy, key_map, bin_names.uniq, records, INFO1_READ)
+        end
+      else
+        policy = create_policy(options, Policy)
+        records = Array.new(keys.length)        
+        batch_execute_index(keys) do |bn|
+          BatchIndexCommandGet.new(bn,policy,bin_names,records,bin_names.length == 0 ? (INFO1_READ | INFO1_GET_ALL) : INFO1_READ )
+        end      
       end
       records
     end
@@ -347,7 +360,7 @@ module Aerospike
     #  If a key is not found, the positional record will be nil.
     #  The policy can be used to specify timeouts.
     def batch_get_header(keys, options={})
-      policy = create_policy(options, Policy)
+      policy = create_policy(options, BatchPolicy)
 
       # wait until all migrations are finished
       # TODO: Fix this and implement
@@ -360,7 +373,7 @@ module Aerospike
       key_map = BatchItem.generate_map(keys)
 
       batch_execute(keys) do |node, bns|
-        BatchCommandGet.new(node, bns, policy, key_map, nil, records, INFO1_READ | INFO1_NOBINDATA)
+        BatchDirectCommandGet.new(node, bns, policy, key_map, nil, records, INFO1_READ | INFO1_NOBINDATA)
       end
 
       records
@@ -888,10 +901,10 @@ module Aerospike
 
 
     def batch_execute_index(keys)
-      batch_nodes = BatchNodeIndex.generate_list(@cluster, keys)
+      batch_nodes = BatchIndexNode.generate_list(@cluster, keys)
       threads = []
 
-      # Use a thread per namespace per node
+      # Use a thread per  node
       batch_nodes.each do |batch_node|
         # copy to avoid race condition
         bn = batch_node
@@ -901,11 +914,11 @@ module Aerospike
           execute_command(command)
         end
       end
-      threads.each { |thr| thr.join }
+      threads.each do |thr| thr.join end
     end
 
     def batch_execute(keys)
-      batch_nodes = BatchNode.generate_list(@cluster, keys)
+      batch_nodes = BatchDirectNode.generate_list(@cluster, keys)
       threads = []
 
       # Use a thread per namespace per node
