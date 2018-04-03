@@ -331,16 +331,16 @@ module Aerospike
         operation_count = bin_names.length
       end
       begin_cmd
-      @data_offset += FIELD_HEADER_SIZE + 5
+      @data_offset += FIELD_HEADER_SIZE + 4 + 1 # batch.keys.length + flags
 
       prev = nil
       batch.keys.each do |key|
-        @data_offset += key.digest.length + 4
+        @data_offset += key.digest.length + 4 # 4 byte batch offset
 
         if prev != nil && prev.namespace == key.namespace
           @data_offset += 1
         else
-          @data_offset += key.namespace.bytesize + FIELD_HEADER_SIZE + 6
+          @data_offset += key.namespace.bytesize + FIELD_HEADER_SIZE + 1 + 1 + 2 + 2 # repeat/no-repeat flag + read_attr flags + field_count + operation_count
           @data_offset += bin_name_size
         end
       end
