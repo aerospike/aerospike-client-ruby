@@ -318,15 +318,6 @@ module Aerospike
     #  The policy can be used to specify timeouts and protocol type.
 
 
-    #-------------------------------------------------------
-    # Batch Read Operations
-    #-------------------------------------------------------
-
-    #  Read multiple record headers and bins for specified keys in one batch call.
-    #  The returned records are in positional order with the original key array order.
-    #  If a key is not found, the positional record will be nil.
-    #  The policy can be used to specify timeouts.
-
     def batch_get(keys, bin_names=[], options={})
       policy = create_policy(options, BatchPolicy)
       records = Array.new(keys.length)
@@ -353,7 +344,9 @@ module Aerospike
         batch_execute_index(keys) do |bn|
           BatchIndexCommandGet.new(bn, policy, bin_names, records, bin_names.length == 0 ? (INFO1_READ | INFO1_GET_ALL) : INFO1_READ)
         end      
-
+      end
+      records
+    end
     #  Read multiple record header data for specified keys in one batch call.
     #  The returned records are in positional order with the original key array order.
     #  If a key is not found, the positional record will be nil.
