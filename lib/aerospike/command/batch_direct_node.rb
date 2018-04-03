@@ -57,7 +57,7 @@ module Aerospike
     end
 
 
-    def initialize(node, key_capacity, key)
+    def initialize(node, key)
       @node = node
       @batch_namespaces = [BatchNamespace.new(key.namespace, [key])]
     end
