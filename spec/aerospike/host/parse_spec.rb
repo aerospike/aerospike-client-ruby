@@ -59,5 +59,48 @@ RSpec.describe Aerospike::Host::Parse do
       it { expect(first_item.tls_name).to be_nil }
       it { expect(first_item.port).to eq 3000 }
     end
+
+    context 'with "[::1]:3001"' do
+      let(:str) { '[::1]:3001' }
+
+      it { expect(parsed.size).to eq 1 }
+      it { expect(first_item.name).to eq '::1' }
+      it { expect(first_item.tls_name).to be_nil }
+      it { expect(first_item.port).to eq 3001 }
+    end
+  end
+
+  describe '::components' do
+    subject(:parsed) { described_class.components(str) }
+
+    context 'with "[]"' do
+      let(:str) { '[]' }
+
+      it { is_expected.to eq [''] }
+    end
+
+    context 'with "[::1]"' do
+      let(:str) { '[::1]' }
+
+      it { is_expected.to eq ['::1'] }
+    end
+
+    context 'with "[::1]:3001"' do
+      let(:str) { '[::1]:3001' }
+
+      it { is_expected.to eq ['::1', '3001'] }
+    end
+
+    context 'with "[::1]:tls_name:3001"' do
+      let(:str) { '[::1]:tls_name:3001' }
+
+      it { is_expected.to eq ['::1', 'tls_name', '3001'] }
+    end
+
+    context 'with "[1.1.1.1:3001"' do
+      let(:str) { '[1.1.1.1:3001' }
+
+      it { expect { parsed }.to raise_error(::Aerospike::Exceptions::Parse) }
+    end
   end
 end
