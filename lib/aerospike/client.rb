@@ -318,7 +318,7 @@ module Aerospike
     #  The policy can be used to specify timeouts and protocol type.
 
 
-    def batch_get(keys, bin_names=[], options={})
+    def batch_get(keys, bin_names=nil, options=nil)
       policy = create_policy(options, BatchPolicy)
       records = Array.new(keys.length)
       # Use old batch direct protocol where batch reads are handled by direct low-level batch server 
@@ -336,11 +336,9 @@ module Aerospike
         key_map = BatchItem.generate_map(keys)
 
         batch_execute(keys) do |node, bns|
-          BatchDirectCommandGet.new(node, bns, policy, key_map, bin_names.uniq, records, INFO1_READ)
+          BatchDirectCommandGet.new(node, bns, policy, key_map, bin_names, records, INFO1_READ)
         end
       else
-        policy = create_policy(options, Policy)
-        records = Array.new(keys.length)        
         batch_execute_index(keys) do |bn|
           BatchIndexCommandGet.new(bn, policy, bin_names, records, bin_names.length == 0 ? (INFO1_READ | INFO1_GET_ALL) : INFO1_READ)
         end      
@@ -351,7 +349,7 @@ module Aerospike
     #  The returned records are in positional order with the original key array order.
     #  If a key is not found, the positional record will be nil.
     #  The policy can be used to specify timeouts.
-    def batch_get_header(keys, options={})
+    def batch_get_header(keys, options=nil)
       policy = create_policy(options, BatchPolicy)
 
       # wait until all migrations are finished
