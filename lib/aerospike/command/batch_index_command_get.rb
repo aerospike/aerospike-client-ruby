@@ -66,7 +66,9 @@ module Aerospike
 
         # if item
         if result_code == 0
-          @records[batch_index] = parse_record(key, op_count, generation, expiration)
+          record = parse_record(key, op_count, generation, expiration)
+          record.set_key(@batch_node.get_key_from_offset(batch_index))
+          @records[batch_index] = record
         end
         # else
           # Aerospike.logger.debug("Unexpected batch key returned: #{key.namespace}, #{key.digest}")

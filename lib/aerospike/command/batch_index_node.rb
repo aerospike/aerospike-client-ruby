@@ -50,8 +50,7 @@ module Aerospike
         unless batch_node
           batch_nodes << BatchIndexNode.new(node, key, i)
         else
-          batch_node.keys << key
-          batch_node.offsets << i
+          batch_node.add_key(key,i)
         end
       end
       batch_nodes
@@ -59,19 +58,28 @@ module Aerospike
 
     def each_key_with_offset()
       i = 0
-      while i < @keys.length
-        yield @keys[i],@offsets[i]
-        i += 1
+
+      @offset_key_hash.each do |key,value|
+        yield value,key
       end
     end
 
     def initialize(node, key, offset)
       @node = node
-      @keys = [key]      
-      @offsets = [offset]
+      @keys = [key]
+      @offset_key_hash = {}
+      @offset_key_hash[offset] = key
     end
 
+    def add_key(key,offset)
+      @keys << key
+      @offset_key_hash[offset] = key
+    end
 
+    def get_key_from_offset(offset)
+      return @offset_key_hash[offset]
+    end
+    
   end # class
 
 end # module

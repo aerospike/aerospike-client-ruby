@@ -577,7 +577,7 @@ describe Aerospike::Client do
       expect(exists[2]).to eq(true)
     end
 
-    it "should successfully get keys" do
+    it "should successfully get keys using batch_index protocol" do
       key1 = Support.gen_random_key
       key2 = Support.gen_random_key
       key3 = Support.gen_random_key
@@ -587,6 +587,28 @@ describe Aerospike::Client do
       client.put(key3, bin)
 
       records = client.batch_get([key1, key2, key3], ['bin'])
+
+      expect(records.length).to eq 3
+
+      expect(records[0].key).to eq key1
+      expect(records[0].bins).to eq ({bin.name => bin.value})
+
+      expect(records[1]).to be nil
+
+      expect(records[2].key).to eq key3
+      expect(records[2].bins).to eq ({bin.name => bin.value})
+    end
+
+    it "should successfully get keys using batch_direct protocol" do
+      key1 = Support.gen_random_key
+      key2 = Support.gen_random_key
+      key3 = Support.gen_random_key
+
+      bin = Aerospike::Bin.new('bin', 'value')
+      client.put(key1, bin)
+      client.put(key3, bin)
+
+      records = client.batch_get([key1, key2, key3], ['bin'],{:use_batch_direct => true})
 
       expect(records.length).to eq 3
 
