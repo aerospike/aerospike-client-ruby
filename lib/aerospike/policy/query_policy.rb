@@ -13,21 +13,32 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'aerospike/policy/batch_policy'
+require 'aerospike/policy/policy'
 
 module Aerospike
 
   # Container object for query policy command.
-  class QueryPolicy < BatchPolicy
+  class QueryPolicy < Policy
 
     attr_accessor :include_bin_data
+    attr_accessor :record_queue_size
 
     def initialize(opt={})
       super(opt)
 
       @max_retries = 0
 
+      # Indicates if bin data is retrieved. If false, only record digests (and
+      # user keys if stored on the server) are retrieved.
+      # Default is true.
       @include_bin_data = opt.fetch(:include_bin_data, true)
+
+      # Number of records to place in queue before blocking. Records received
+      # from multiple server nodes will be placed in a queue. A separate thread
+      # consumes these records in parallel. If the queue is full, the producer
+      # threads will block until records are consumed.
+      # Default is 5000.
+      @record_queue_size = opt[:record_queue_size] || 5000
 
       self
     end
