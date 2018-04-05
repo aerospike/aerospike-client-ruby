@@ -321,17 +321,7 @@ module Aerospike
     def batch_get(keys, bin_names=nil, options=nil)
       policy = create_policy(options, BatchPolicy)
       records = Array.new(keys.length)
-      # Use old batch direct protocol where batch reads are handled by direct low-level batch server 
-      # database routines.  The batch direct protocol can be faster when there is a single namespace, 
-      # but there is one important drawback.  The batch direct protocol will not proxy to a different 
-      # server node when the mapped node has migrated a record to another node (resulting in not
-      # found record).  
 
-      # This can happen after a node has been added/removed from the cluster and there is a lag 
-      # between records being migrated and client partition map update (once per second).
-
-      # The new batch index protocol will perform this record proxy when necessary.
-      # Default: false (use new batch index protocol if server supports it)    
       if policy.use_batch_direct 
         key_map = BatchItem.generate_map(keys)
 
