@@ -322,19 +322,22 @@ module Aerospike
       policy = create_policy(options, BatchPolicy)
       records = Array.new(keys.length)
 
-      if policy.use_batch_direct 
-        key_map = BatchItem.generate_map(keys)
+      info_flags = INFO1_READ
+      info_flags |= INFO1_GET_ALL if bin_names.nil? || bin_names.empty?
 
+      if policy.use_batch_direct
+        key_map = BatchItem.generate_map(keys)
         batch_execute(keys) do |node, bns|
-          BatchDirectCommandGet.new(node, bns, policy, key_map, bin_names, records, INFO1_READ)
+          BatchDirectCommandGet.new(node, bns, policy, key_map, bin_names, records, info_flags)
         end
       else
         batch_execute_index(keys) do |bn|
-          BatchIndexCommandGet.new(bn, policy, bin_names, records, bin_names.length == 0 ? (INFO1_READ | INFO1_GET_ALL) : INFO1_READ)
-        end      
+          BatchIndexCommandGet.new(bn, policy, bin_names, records, info_flags)
+        end
       end
       records
     end
+
     #  Read multiple record header data for specified keys in one batch call.
     #  The returned records are in positional order with the original key array order.
     #  If a key is not found, the positional record will be nil.
@@ -873,7 +876,7 @@ module Aerospike
         bn = batch_node
         threads << Thread.new do
           Thread.current.abort_on_exception = true
-          command = yield bn          
+          command = yield bn
           execute_command(command)
         end
       end
