@@ -36,6 +36,7 @@ module Aerospike
       # index protocol will perform this record proxy when necessary.
       #
       # Default: false (use new batch index protocol if server supports it)
+      @record_queue_size = opt[:record_queue_size] || 5000
       @use_batch_direct = opt.fetch(:use_batch_direct) { false }
 
       self
