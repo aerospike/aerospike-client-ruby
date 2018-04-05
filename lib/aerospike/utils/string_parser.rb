@@ -21,6 +21,7 @@ module Aerospike
   module Utils
     class StringParser
       attr_reader :io
+
       def initialize(str)
         @io = ::StringIO.new(str)
       end
@@ -34,20 +35,23 @@ module Aerospike
         raise ::Aerospike::Exceptions::Parse unless @io.read(1) == char
       end
 
-      def read_until(char)
+      def read_until(*args)
         [].tap do |result|
           loop do
             chr = @io.read(1)
-            break if chr == char
+            break if args.include?(chr)
             result << chr
           end
         end.join
       end
 
+      def prev
+        @io.string[@io.tell - 1]
+      end
+
       def step(count = 1)
         @io.read(count)
       end
-
     end
   end
 end

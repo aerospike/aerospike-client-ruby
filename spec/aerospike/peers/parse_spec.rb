@@ -18,7 +18,7 @@
 # the License.
 
 RSpec.describe Aerospike::Peers::Parse do
-  describe "::call" do
+  describe '::call' do
     subject(:parsed) { described_class.call(response) }
 
     let(:first_peer) { parsed.peers.first }
@@ -45,9 +45,13 @@ RSpec.describe Aerospike::Peers::Parse do
     end
 
     context 'with IPv6' do
-      let(:response) { '1,,[[name,tls,[[::1]]]]' }
+      let(:response) { '1,,[[name,tls,[127.0.0.1:3001,[::1]:3002]]]' }
 
-      it { expect { parsed }.to raise_error(::Aerospike::Exceptions::Parse) }
+      it { expect(first_peer.hosts.size).to eq 2 }
+      it { expect(first_peer.hosts.first.name).to eq '127.0.0.1' }
+      it { expect(first_peer.hosts.first.port).to eq 3001 }
+      it { expect(first_peer.hosts.last.name).to eq '::1' }
+      it { expect(first_peer.hosts.last.port).to eq 3002 }
     end
 
     context 'with invalid response' do
