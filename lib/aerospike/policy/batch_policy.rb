@@ -20,7 +20,7 @@ module Aerospike
   # Container object for batch policy command.
   class BatchPolicy < Policy
 
-    attr_accessor :use_batch_direct
+    attr_accessor :use_batch_direct, :record_queue_size
 
     def initialize(opt={})
       super(opt)
