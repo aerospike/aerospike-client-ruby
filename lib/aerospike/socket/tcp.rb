@@ -26,7 +26,14 @@ module Aerospike
 
       def self.connect(host, port, timeout)
         Aerospike.logger.debug("Trying to connect to #{host}:#{port} with #{timeout}s timeout")
-        sock = new(::Socket::AF_INET, ::Socket::SOCK_STREAM, 0)
+
+        domain = if host.match(Resolv::IPv6::Regex)
+          ::Socket::AF_INET6
+        else
+          ::Socket::AF_INET
+        end
+
+        sock = new(domain, ::Socket::SOCK_STREAM, 0)
         sockaddr = ::Socket.sockaddr_in(port, host)
 
         begin
