@@ -37,10 +37,6 @@ module Aerospike
       "key: `#{key}` bins: `#{bins}` generation: `#{generation}`, ttl: `#{ttl}`"
     end
 
-    def set_key(key)
-      @key = key
-    end
-
     private
 
     CITRUSLEAF_EPOCH = 1262304000

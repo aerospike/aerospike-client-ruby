@@ -63,31 +63,22 @@ module Aerospike
       size_buffer
       write_header(policy,read_attr | INFO1_BATCH, 0, 1, 0)
       write_field_header(0, Aerospike::FieldType::BATCH_INDEX)
-      @data_buffer.write_int32(batch.keys.length, @data_offset)
-      @data_offset += 4
-      @data_buffer.write_byte(1, @data_offset)
-      @data_offset += 1
+      @data_offset += @data_buffer.write_int32(batch.keys.length, @data_offset)
+      @data_offset += @data_buffer.write_byte(1, @data_offset)
 
       prev = nil
 
       batch.each_key_with_index do |key, index|
-        @data_buffer.write_int32(index, @data_offset)
-        @data_offset += 4
-        @data_buffer.write_binary(key.digest, @data_offset)
-        @data_offset += key.digest.bytesize
+        @data_offset += @data_buffer.write_int32(index, @data_offset)
+        @data_offset += @data_buffer.write_binary(key.digest, @data_offset)
 
         if (prev != nil && prev.namespace == key.namespace)
-          @data_buffer.write_byte(1, @data_offset)
-          @data_offset += 1
+          @data_offset += @data_buffer.write_byte(1, @data_offset)
         else
-          @data_buffer.write_byte(0, @data_offset)
-          @data_offset += 1
-          @data_buffer.write_byte(read_attr, @data_offset)
-          @data_offset += 1
-          @data_buffer.write_int16(field_count, @data_offset)
-          @data_offset += 2
-          @data_buffer.write_int16(operation_count, @data_offset)
-          @data_offset += 2
+          @data_offset += @data_buffer.write_byte(0, @data_offset)
+          @data_offset += @data_buffer.write_byte(read_attr, @data_offset)
+          @data_offset += @data_buffer.write_int16(field_count, @data_offset)
+          @data_offset += @data_buffer.write_int16(operation_count, @data_offset)
           write_field_string(key.namespace, Aerospike::FieldType::NAMESPACE)
 
           if bin_names
@@ -111,11 +102,15 @@ module Aerospike
       op_count = @data_buffer.read_int16(20)
 
       key = parse_key(field_count)
+      req_key = batch.key_for_index(batch_index)
 
-      if result_code == 0
-        record = parse_record(key, op_count, generation, expiration)
-        record.set_key(batch.key_for_index(batch_index))
-        results[batch_index] = record
+      if key.digest == req_key.digest
+        if result_code == 0
+          record = parse_record(req_key, op_count, generation, expiration)
+          results[batch_index] = record
+        end
+      else
+        Aerospike.logger.warn("Unexpected batch key returned: #{key}")
       end
     end
 

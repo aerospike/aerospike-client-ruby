@@ -65,8 +65,7 @@ module Aerospike
       write_field_header(byte_size, Aerospike::FieldType::DIGEST_RIPE_ARRAY)
 
       batch.keys.each do |key|
-        @data_buffer.write_binary(key.digest, @data_offset)
-        @data_offset += key.digest.bytesize
+        @data_offset += @data_buffer.write_binary(key.digest, @data_offset)
       end
 
       if bin_names
@@ -92,10 +91,11 @@ module Aerospike
       if item
         if result_code == 0
           index = item.index
-          results[index] = parse_record(item.key, op_count, generation, expiration)
+          key = item.key
+          results[index] = parse_record(key, op_count, generation, expiration)
         end
       else
-        Aerospike.logger.debug("Unexpected batch key returned: #{key.namespace}, #{key.digest}")
+        Aerospike.logger.warn("Unexpected batch key returned: #{key}")
       end
     end
 
