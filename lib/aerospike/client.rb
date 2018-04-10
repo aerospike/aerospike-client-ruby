@@ -1,4 +1,3 @@
-# encoding: utf-8
 # Copyright 2014-2018 Aerospike, Inc.
 #
 # Portions may be licensed to Aerospike, Inc. under one or more contributor
