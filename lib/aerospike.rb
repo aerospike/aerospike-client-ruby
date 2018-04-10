@@ -1,4 +1,3 @@
-# encoding: utf-8
 # Copyright 2014-2018 Aerospike, Inc.
 #
 # Portions may be licensed to Aerospike, Inc. under one or more contributor
@@ -54,6 +53,7 @@ require 'aerospike/command/multi_command'
 require 'aerospike/command/batch_direct_command'
 require 'aerospike/command/batch_direct_exists_command'
 require 'aerospike/command/batch_index_command'
+require 'aerospike/command/batch_index_exists_command'
 require 'aerospike/command/read_header_command'
 require 'aerospike/command/touch_command'
 require 'aerospike/command/read_command'

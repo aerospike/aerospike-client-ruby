@@ -300,7 +300,7 @@ module Aerospike
     #  The policy can be used to specify timeouts and protocol type.
     def batch_get(keys, bin_names = nil, options = nil)
       policy = create_policy(options, BatchPolicy)
-      records = Array.new(keys.length)
+      results = Array.new(keys.length)
 
       info_flags = INFO1_READ
       if bin_names == :all || bin_names.nil? || bin_names.empty?
@@ -313,15 +313,15 @@ module Aerospike
 
       if policy.use_batch_direct
         key_map = BatchItem.generate_map(keys)
-        batch_execute(keys) do |node, bns|
-          BatchDirectCommand.new(node, bns, policy, key_map, bin_names, records, info_flags)
+        batch_execute(keys) do |node, batch|
+          BatchDirectCommand.new(node, batch, policy, key_map, bin_names, results, info_flags)
         end
       else
-        batch_execute_index(keys) do |bn|
-          BatchIndexCommand.new(bn, policy, bin_names, records, info_flags)
+        batch_execute_index(keys) do |batch|
+          BatchIndexCommand.new(batch, policy, bin_names, results, info_flags)
         end
       end
-      records
+      results
     end
 
     #  Read multiple record header data for specified keys in one batch call.
@@ -336,18 +336,21 @@ module Aerospike
     #  The returned array bool is in positional order with the original key array order.
     #  The policy can be used to specify timeouts.
     def batch_exists(keys, options = nil)
-      policy = create_policy(options, Policy)
+      policy = create_policy(options, BatchPolicy)
+      results = Array.new(keys.length)
 
-      # same array can be used without sychronization;
-      # when a key exists, the corresponding index will be marked true
-      exists_array = Array.new(keys.length)
-
-      key_map = BatchItem.generate_map(keys)
-
-      batch_execute(keys) do |node, bns|
-        BatchDirectExistsCommand.new(node, bns, policy, key_map, exists_array)
+      if policy.use_batch_direct
+        key_map = BatchItem.generate_map(keys)
+        batch_execute(keys) do |node, batch|
+          BatchDirectExistsCommand.new(node, batch, policy, key_map, results)
+        end
+      else
+        batch_execute_index(keys) do |batch|
+          BatchIndexExistsCommand.new(batch, policy, results)
+        end
       end
-      exists_array
+
+      results
     end
 
     #-------------------------------------------------------
