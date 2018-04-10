@@ -26,9 +26,8 @@ module Aerospike
     def initialize(cluster, key)
       @cluster = cluster
       @key = key
-      @partition = Partition.new_by_key(key)
 
-      super(@cluster.get_node(@partition))
+      super(@cluster.get_node_for_key(key))
 
       self
     end

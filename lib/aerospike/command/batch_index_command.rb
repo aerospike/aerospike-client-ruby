@@ -26,8 +26,8 @@ module Aerospike
     attr_accessor :results
     attr_accessor :read_attr
 
-    def initialize(batch, policy, bin_names, results, read_attr)
-      super(batch.node)
+    def initialize(node, batch, policy, bin_names, results, read_attr)
+      super(node)
       @batch = batch
       @policy = policy
       @bin_names = bin_names
@@ -69,8 +69,8 @@ module Aerospike
 
       prev = nil
 
-      batch.each_key_with_offset do |key, offset|
-        @data_buffer.write_int32(offset, @data_offset)
+      batch.each_key_with_index do |key, index|
+        @data_buffer.write_int32(index, @data_offset)
         @data_offset += 4
         @data_buffer.write_binary(key.digest, @data_offset)
         @data_offset += key.digest.bytesize
@@ -113,7 +113,7 @@ module Aerospike
 
       if result_code == 0
         record = parse_record(key, op_count, generation, expiration)
-        record.set_key(batch.get_key_from_offset(batch_index))
+        record.set_key(batch.key_for_index(batch_index))
         results[batch_index] = record
       end
     end

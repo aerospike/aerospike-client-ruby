@@ -20,8 +20,8 @@ module Aerospike
 
   class BatchIndexExistsCommand < BatchIndexCommand #:nodoc:
 
-    def initialize(batch, policy, results)
-      super(batch, policy, nil, results, INFO1_READ | INFO1_NOBINDATA)
+    def initialize(node, batch, policy, results)
+      super(node, batch, policy, nil, results, INFO1_READ | INFO1_NOBINDATA)
     end
 
     # Parse all results in the batch.  Add records to shared list.

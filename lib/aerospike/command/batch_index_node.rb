@@ -1,12 +1,13 @@
-# encoding: utf-8
-# Copyright 2014 Aerospike, Inc.
+# Copyright 2018 Aerospike, Inc.
 #
 # Portions may be licensed to Aerospike, Inc. under one or more contributor
 # license agreements.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
-# the License at http:#www.apache.org/licenses/LICENSE-2.0
+# the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
@@ -14,72 +15,38 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-require 'thread'
-
-require 'aerospike/record'
-
-require 'aerospike/command/command'
-
 module Aerospike
-
-  private
-
 
   class BatchIndexNode #:nodoc:
 
-    attr_accessor :node, :keys, :offsets
+    attr_accessor :node
+    attr_accessor :keys_by_idx
 
     def self.generate_list(cluster, keys)
-      nodes = cluster.nodes
-
-      if nodes.length == 0
-        raise Aerospike::Exceptions::Connection.new("command failed because cluster is empty.")
-      end
-
-      # Split keys by server node.
-      batch_nodes = []
-
-      keys.each_with_index do |key, i|
-
-        partition = Partition.new_by_key(key)
-
-        # error not required
-        node = cluster.get_node(partition)
-        batch_node = batch_nodes.detect{|bn| bn.node == node}
-
-        unless batch_node
-          batch_nodes << BatchIndexNode.new(node, key, i)
-        else
-          batch_node.add_key(key,i)
-        end
-      end
-      batch_nodes
+      keys.each_with_index
+        .group_by { |key, _| cluster.get_node_for_key(key) }
+        .map { |node, keys_with_idx| BatchIndexNode.new(node, keys_with_idx) }
     end
 
-    def each_key_with_offset()
-      i = 0
-
-      @offset_key_hash.each do |key,value|
-        yield value,key
-      end
-    end
-
-    def initialize(node, key, offset)
+    def initialize(node, keys_with_idx)
       @node = node
-      @keys = [key]
-      @offset_key_hash = {}
-      @offset_key_hash[offset] = key
+      @keys_by_idx = Hash[keys_with_idx.map(&:reverse)]
     end
 
-    def add_key(key,offset)
-      @keys << key
-      @offset_key_hash[offset] = key
+    def keys
+      keys_by_idx.values
     end
 
-    def get_key_from_offset(offset)
-      return @offset_key_hash[offset]
+    def each_key_with_index
+      keys_by_idx.each do |idx, key|
+        yield key, idx
+      end
     end
-    
-  end # class
 
-end # module
+    def key_for_index(idx)
+      keys_by_idx[idx]
+    end
+
+  end
+
+end

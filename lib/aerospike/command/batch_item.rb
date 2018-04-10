@@ -1,12 +1,13 @@
-# encoding: utf-8
-# Copyright 2014-2017 Aerospike, Inc.
+# Copyright 2014-2018 Aerospike, Inc.
 #
 # Portions may be licensed to Aerospike, Inc. under one or more contributor
 # license agreements.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
-# the License at http:#www.apache.org/licenses/LICENSE-2.0
+# the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
@@ -14,61 +15,31 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-require 'thread'
-
-require 'aerospike/record'
-
-require 'aerospike/command/command'
-
 module Aerospike
-
-  private
 
   class BatchItem #:nodoc:
 
+    attr_accessor :key
+    attr_accessor :indexes
+
     def self.generate_map(keys)
-      key_map = {}
-      keys.each_with_index do |key, i|
-        item = key_map[key.digest]
-        unless item
-          item = BatchItem.new(key, i)
-          key_map[key.digest] = item
-        else
-          item.add_duplicate(i)
-        end
-      end
-
-      key_map
+      map = keys.each_with_index
+        .group_by { |key, _| key }
+        .map { |key, keys_with_idx|
+          [key.digest, BatchItem.new(key, keys_with_idx.map(&:last))]
+        }
+      Hash[map]
     end
 
-
-    def initialize(key, index)
+    def initialize(key, indexes)
       @key = key
-      @index = index
-    end
-
-    def add_duplicate(idx)
-      unless @duplicates
-        @duplicates = []
-        @duplicates << @index
-        @index = 0
-      end
-
-      @duplicates << idx
+      @indexes = indexes
     end
 
     def index
-      return @index unless @duplicates
-
-      r = @duplicates[@index]
-      @index+=1
-      return r
+      indexes.shift
     end
 
-    def key
-      @key
-    end
+  end
 
-  end # class
-
-end # module
+end

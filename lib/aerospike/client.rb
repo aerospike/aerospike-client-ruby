@@ -301,52 +301,54 @@ module Aerospike
     def batch_get(keys, bin_names = nil, options = nil)
       policy = create_policy(options, BatchPolicy)
       results = Array.new(keys.length)
-
       info_flags = INFO1_READ
-      if bin_names == :all || bin_names.nil? || bin_names.empty?
+
+      case bin_names
+      when :all, nil, []
         info_flags |= INFO1_GET_ALL
         bin_names = nil
-      elsif bin_names == :none
+      when :none
         info_flags |= INFO1_NOBINDATA
         bin_names = nil
       end
 
       if policy.use_batch_direct
         key_map = BatchItem.generate_map(keys)
-        batch_execute(keys) do |node, batch|
+        execute_batch_direct_commands(keys) do |node, batch|
           BatchDirectCommand.new(node, batch, policy, key_map, bin_names, results, info_flags)
         end
       else
-        batch_execute_index(keys) do |batch|
-          BatchIndexCommand.new(batch, policy, bin_names, results, info_flags)
+        execute_batch_index_commands(keys) do |node, batch|
+          BatchIndexCommand.new(node, batch, policy, bin_names, results, info_flags)
         end
       end
+
       results
     end
 
     #  Read multiple record header data for specified keys in one batch call.
     #  The returned records are in positional order with the original key array order.
     #  If a key is not found, the positional record will be nil.
-    #  The policy can be used to specify timeouts.
+    #  The policy can be used to specify timeouts and protocol type.
     def batch_get_header(keys, options = nil)
-      return batch_get(keys, :none, options)
+      batch_get(keys, :none, options)
     end
 
     #  Check if multiple record keys exist in one batch call.
-    #  The returned array bool is in positional order with the original key array order.
-    #  The policy can be used to specify timeouts.
+    #  The returned boolean array is in positional order with the original key array order.
+    #  The policy can be used to specify timeouts and protocol type.
     def batch_exists(keys, options = nil)
       policy = create_policy(options, BatchPolicy)
       results = Array.new(keys.length)
 
       if policy.use_batch_direct
         key_map = BatchItem.generate_map(keys)
-        batch_execute(keys) do |node, batch|
+        execute_batch_direct_commands(keys) do |node, batch|
           BatchDirectExistsCommand.new(node, batch, policy, key_map, results)
         end
       else
-        batch_execute_index(keys) do |batch|
-          BatchIndexExistsCommand.new(batch, policy, results)
+        execute_batch_index_commands(keys) do |node, batch|
+          BatchIndexExistsCommand.new(node, batch, policy, results)
         end
       end
 
@@ -856,25 +858,30 @@ module Aerospike
       command.execute
     end
 
+    def execute_batch_index_commands(keys)
+      if @cluster.nodes.empty?
+        raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::SERVER_NOT_AVAILABLE, "Executing Batch Index command failed because cluster is empty.")
+      end
 
-    def batch_execute_index(keys)
       batch_nodes = BatchIndexNode.generate_list(@cluster, keys)
       threads = []
 
-      # Use a thread per  node
-      batch_nodes.each do |batch_node|
-        # copy to avoid race condition
-        bn = batch_node
+      batch_nodes.each do |batch|
         threads << Thread.new do
           Thread.current.abort_on_exception = true
-          command = yield bn
+          command = yield batch.node, batch
           execute_command(command)
         end
       end
-      threads.each do |thr| thr.join end
+
+      threads.each(&:join)
     end
 
-    def batch_execute(keys)
+    def execute_batch_direct_commands(keys)
+      if @cluster.nodes.empty?
+        raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::SERVER_NOT_AVAILABLE, "Executing Batch Direct command failed because cluster is empty.")
+      end
+
       batch_nodes = BatchDirectNode.generate_list(@cluster, keys)
       threads = []
 
@@ -882,10 +889,10 @@ module Aerospike
       batch_nodes.each do |batch_node|
         # copy to avoid race condition
         bn = batch_node
-        bn.batch_namespaces.each do |bns|
+        bn.batch_namespaces.each do |batch|
           threads << Thread.new do
             Thread.current.abort_on_exception = true
-            command = yield bn.node, bns
+            command = yield batch_node.node, batch
             execute_command(command)
           end
         end
