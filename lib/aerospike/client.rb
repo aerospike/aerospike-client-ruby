@@ -316,14 +316,18 @@ module Aerospike
     #  The returned records are in positional order with the original key array order.
     #  If a key is not found, the positional record will be nil.
     #  The policy can be used to specify timeouts and protocol type.
-
-
-    def batch_get(keys, bin_names=nil, options=nil)
+    def batch_get(keys, bin_names = nil, options = nil)
       policy = create_policy(options, BatchPolicy)
       records = Array.new(keys.length)
 
       info_flags = INFO1_READ
-      info_flags |= INFO1_GET_ALL if bin_names.nil? || bin_names.empty?
+      if bin_names == :all || bin_names.nil? || bin_names.empty?
+        info_flags |= INFO1_GET_ALL
+        bin_names = nil
+      elsif bin_names == :none
+        info_flags |= INFO1_NOBINDATA
+        bin_names = nil
+      end
 
       if policy.use_batch_direct
         key_map = BatchItem.generate_map(keys)
@@ -342,24 +346,8 @@ module Aerospike
     #  The returned records are in positional order with the original key array order.
     #  If a key is not found, the positional record will be nil.
     #  The policy can be used to specify timeouts.
-    def batch_get_header(keys, options=nil)
-      policy = create_policy(options, BatchPolicy)
-
-      # wait until all migrations are finished
-      # TODO: Fix this and implement
-      # @cluster.WaitUntillMigrationIsFinished(policy.timeout)
-
-      # same array can be used without sychronization;
-      # when a key exists, the corresponding index will be set to record
-      records = Array.new(keys.length)
-
-      key_map = BatchItem.generate_map(keys)
-
-      batch_execute(keys) do |node, bns|
-        BatchDirectCommandGet.new(node, bns, policy, key_map, nil, records, INFO1_READ | INFO1_NOBINDATA)
-      end
-
-      records
+    def batch_get_header(keys, options = nil)
+      return batch_get(keys, :none, options)
     end
 
     #-------------------------------------------------------
