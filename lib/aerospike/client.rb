@@ -267,24 +267,6 @@ module Aerospike
       command.exists
     end
 
-    #  Check if multiple record keys exist in one batch call.
-    #  The returned array bool is in positional order with the original key array order.
-    #  The policy can be used to specify timeouts.
-    def batch_exists(keys, options = nil)
-      policy = create_policy(options, Policy)
-
-      # same array can be used without sychronization;
-      # when a key exists, the corresponding index will be marked true
-      exists_array = Array.new(keys.length)
-
-      key_map = BatchItem.generate_map(keys)
-
-      batch_execute(keys) do |node, bns|
-        BatchCommandExists.new(node, bns, policy, key_map, exists_array)
-      end
-      exists_array
-    end
-
     #-------------------------------------------------------
     # Read Record Operations
     #-------------------------------------------------------
@@ -332,11 +314,11 @@ module Aerospike
       if policy.use_batch_direct
         key_map = BatchItem.generate_map(keys)
         batch_execute(keys) do |node, bns|
-          BatchDirectCommandGet.new(node, bns, policy, key_map, bin_names, records, info_flags)
+          BatchDirectCommand.new(node, bns, policy, key_map, bin_names, records, info_flags)
         end
       else
         batch_execute_index(keys) do |bn|
-          BatchIndexCommandGet.new(bn, policy, bin_names, records, info_flags)
+          BatchIndexCommand.new(bn, policy, bin_names, records, info_flags)
         end
       end
       records
@@ -348,6 +330,24 @@ module Aerospike
     #  The policy can be used to specify timeouts.
     def batch_get_header(keys, options = nil)
       return batch_get(keys, :none, options)
+    end
+
+    #  Check if multiple record keys exist in one batch call.
+    #  The returned array bool is in positional order with the original key array order.
+    #  The policy can be used to specify timeouts.
+    def batch_exists(keys, options = nil)
+      policy = create_policy(options, Policy)
+
+      # same array can be used without sychronization;
+      # when a key exists, the corresponding index will be marked true
+      exists_array = Array.new(keys.length)
+
+      key_map = BatchItem.generate_map(keys)
+
+      batch_execute(keys) do |node, bns|
+        BatchDirectExistsCommand.new(node, bns, policy, key_map, exists_array)
+      end
+      exists_array
     end
 
     #-------------------------------------------------------
