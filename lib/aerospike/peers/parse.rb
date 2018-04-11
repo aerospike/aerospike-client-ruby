@@ -72,15 +72,35 @@ module Aerospike
         end
 
         def parse_hosts(parser, peer)
+          result = []
           parser.expect('[')
-          return [] if parser.current == ']'
+          return result if parser.current == ']'
 
-          # TODO(wallin): handle IPv6
-          raise ::Aerospike::Exceptions::Parse if parser.current == '['
-          parser.read_until(']').split(',').map do |host|
-            hostname, port = host.split(':')
-            ::Aerospike::Host.new(hostname, port, peer.tls_name)
+          loop do
+            result << parse_host(parser, peer)
+            break if parser.current == ']'
           end
+
+          result
+        end
+
+        def parse_host(parser, peer)
+          if parser.current == '[' # IPv6
+            parser.step
+            host = parser.read_until(']')
+            # skip one extra if port is detected, to match read behavior below
+            parser.step if parser.current == ':'
+          else
+            host = parser.read_until(',', ':', ']')
+          end
+
+          port = parser.prev == ':' ? parser.read_until(',', ']').to_i : nil
+
+          if parser.prev == ',' || parser.prev == ']'
+            return ::Aerospike::Host.new(host, port, peer.tls_name)
+          end
+
+          raise ::Aerospike::Exceptions::Parse, "Unterminated host in response"
         end
       end
     end

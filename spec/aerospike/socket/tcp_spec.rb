@@ -38,14 +38,28 @@ describe Aerospike::Socket::TCP do
         connect
       end
 
-      it do
-        expect(described_class).to have_received(:new).with(
-          ::Socket::AF_INET, ::Socket::SOCK_STREAM, 0
-        )
-      end
-
       it { expect(instance).to have_received(:connect_nonblock).with(sockaddr) }
       it { is_expected.to be instance }
+
+      context 'with IPv6 host' do
+        let(:host) { '::1' }
+
+        it do
+          expect(described_class).to have_received(:new).with(
+            ::Socket::AF_INET6, ::Socket::SOCK_STREAM, 0
+          )
+        end
+      end
+
+      context 'with IPv4 host' do
+        let(:host) { '127.0.0.1' }
+
+        it do
+          expect(described_class).to have_received(:new).with(
+            ::Socket::AF_INET, ::Socket::SOCK_STREAM, 0
+          )
+        end
+      end
     end
 
     context 'when connection is in progress' do
