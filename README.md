@@ -1,7 +1,9 @@
-# Aerospike Ruby Client [![travis][travis-image]][travis-url] [![gem][gem-image]][gem-url]
+# Aerospike Ruby Client [![travis][travis-image]][travis-url] [![codecov][codecov-image]][codecov-url] [![gem][gem-image]][gem-url]
 
 [travis-image]: https://travis-ci.org/aerospike/aerospike-client-ruby.svg?branch=master
 [travis-url]: https://travis-ci.org/aerospike/aerospike-client-ruby
+[codecov-image]: https://codecov.io/gh/aerospike/aerospike-client-ruby/branch/master/graph/badge.svg
+[codecov-url]: https://codecov.io/gh/aerospike/aerospike-client-ruby
 [gem-image]: https://img.shields.io/gem/v/aerospike.svg
 [gem-url]: https://rubygems.org/gems/aerospike
 
