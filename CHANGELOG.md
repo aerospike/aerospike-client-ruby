@@ -1,3 +1,12 @@
+Unreleased
+===================
+
+* **New Features**
+  * Batch Index protocol support. Thanks to [@deenbandhu-agarwal](https://github.com/deenbandhu-agarwal)! [[#61](https://github.com/aerospike/aerospike-client-ruby/pull/61)]
+  * Memory optimization: Avoid easy allocations. Thanks to [@wallin](https://github.com/wallin)! [[#62](https://github.com/aerospike/aerospike-client-ruby/pull/62)]
+  * New node removal strategy. Thanks to [@wallin](https://github.com/wallin)! [[#63](https://github.com/aerospike/aerospike-client-ruby/pull/63)]
+  * Support for IPv6. Requires Aerospike Enterprise Edition v3.10 or later. Thanks to [@wallin](https://github.com/wallin)! [[#65](https://github.com/aerospike/aerospike-client-ruby/pull/65)]
+
 v2.6.0 / 2018-03-27
 ===================
 
