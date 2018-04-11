@@ -1,6 +1,6 @@
 #!/bin/bash
 ################################################################################
-# Copyright 2013-2017 Aerospike, Inc.
+# Copyright 2013-2018 Aerospike, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -57,7 +57,7 @@ function start_server {
 }
 
 function install_server {
-  wget -nv -O aerospike-server.tgz http://aerospike.com/download/server/latest/artifact/tgz
+  wget -nv -O aerospike-server.tgz https://www.aerospike.com/download/server/latest/artifact/tgz
   tar xzf aerospike-server.tgz
   cp -f .travis/aerospike.conf ./aerospike-server/share/etc
   cd aerospike-server
