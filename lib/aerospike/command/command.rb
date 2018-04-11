@@ -1,12 +1,13 @@
-# encoding: utf-8
-# Copyright 2014-2017 Aerospike, Inc.
+# Copyright 2014-2018 Aerospike, Inc.
 #
 # Portions may be licensed to Aerospike, Inc. under one or more contributor
 # license agreements.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
-# the License at http:#www.apache.org/licenses/LICENSE-2.0
+# the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
@@ -15,7 +16,6 @@
 # the License.
 
 require 'time'
-
 
 require 'msgpack'
 require 'aerospike/result_code'
@@ -34,6 +34,8 @@ module Aerospike
   # Get all bins.
   INFO1_GET_ALL = Integer(1 << 1)
 
+
+  INFO1_BATCH = Integer(1 << 3)
   # Do not read the bins
   INFO1_NOBINDATA = Integer(1 << 5)
 
@@ -253,67 +255,6 @@ module Aerospike
       write_field_string(package_name, Aerospike::FieldType::UDF_PACKAGE_NAME)
       write_field_string(function_name, Aerospike::FieldType::UDF_FUNCTION)
       write_field_bytes(arg_bytes, Aerospike::FieldType::UDF_ARGLIST)
-
-      end_cmd
-    end
-
-    def set_batch_exists(policy, batch_namespace)
-      # Estimate buffer size
-      begin_cmd
-      keys = batch_namespace.keys
-      byte_size = keys.length * DIGEST_SIZE
-
-      @data_offset += (batch_namespace ? batch_namespace.namespace.bytesize : 0)  +
-        FIELD_HEADER_SIZE + byte_size + FIELD_HEADER_SIZE
-
-      size_buffer
-
-      write_header(policy, INFO1_READ|INFO1_NOBINDATA, 0, 2, 0)
-      write_field_string(batch_namespace.namespace, Aerospike::FieldType::NAMESPACE)
-      write_field_header(byte_size, Aerospike::FieldType::DIGEST_RIPE_ARRAY)
-
-      keys.each do |key|
-        @data_buffer.write_binary(key.digest, @data_offset)
-        @data_offset += key.digest.bytesize
-      end
-      end_cmd
-    end
-
-    def set_batch_get(policy, batch_namespace, bin_names, read_attr)
-      # Estimate buffer size
-      begin_cmd
-      byte_size = batch_namespace.keys.length * DIGEST_SIZE
-
-      @data_offset += batch_namespace.namespace.bytesize +
-        FIELD_HEADER_SIZE + byte_size + FIELD_HEADER_SIZE
-
-      if bin_names
-        bin_names.each do |bin_name|
-          estimate_operation_size_for_bin_name(bin_name)
-        end
-      end
-
-      size_buffer
-
-      operation_count = 0
-      if bin_names
-        operation_count = bin_names.length
-      end
-
-      write_header(policy, read_attr, 0, 2, operation_count)
-      write_field_string(batch_namespace.namespace, Aerospike::FieldType::NAMESPACE)
-      write_field_header(byte_size, Aerospike::FieldType::DIGEST_RIPE_ARRAY)
-
-      batch_namespace.keys.each do |key|
-        @data_buffer.write_binary(key.digest, @data_offset)
-        @data_offset += key.digest.bytesize
-      end
-
-      if bin_names
-        bin_names.each do |bin_name|
-          write_operation_for_bin_name(bin_name, Aerospike::Operation::READ)
-        end
-      end
 
       end_cmd
     end

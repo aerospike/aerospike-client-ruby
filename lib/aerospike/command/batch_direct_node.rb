@@ -17,27 +17,22 @@
 
 module Aerospike
 
-  class BatchItem #:nodoc:
+  BatchNamespace = Struct.new :namespace, :keys
 
-    attr_accessor :key
-    attr_accessor :indexes
+  class BatchDirectNode #:nodoc:
 
-    def self.generate_map(keys)
-      map = keys.each_with_index
-        .group_by { |key, _| key }
-        .map { |key, keys_with_idx|
-          [key.digest, BatchItem.new(key, keys_with_idx.map(&:last))]
-        }
-      Hash[map]
+    attr_accessor :node
+    attr_accessor :batch_namespaces
+
+    def self.generate_list(cluster, keys)
+      keys.group_by { |key| cluster.get_node_for_key(key) }
+        .map { |node, keys_for_node| BatchDirectNode.new(node, keys_for_node) }
     end
 
-    def initialize(key, indexes)
-      @key = key
-      @indexes = indexes
-    end
-
-    def index
-      indexes.shift
+    def initialize(node, keys)
+      @node = node
+      @batch_namespaces = keys.group_by(&:namespace)
+        .map { |ns, keys_for_ns| BatchNamespace.new(ns, keys_for_ns) }
     end
 
   end

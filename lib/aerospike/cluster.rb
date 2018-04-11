@@ -102,7 +102,9 @@ module Aerospike
       (node_array.length > 0) && !@closed.value
     end
 
-    def get_node(partition)
+    def get_node_for_key(key)
+      partition = Partition.new_by_key(key)
+
       # Must copy hashmap reference for copy on write semantics to work.
       nmap = partitions
       if node_array = nmap[partition.namespace]

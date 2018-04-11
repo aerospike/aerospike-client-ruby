@@ -1,12 +1,13 @@
-# encoding: utf-8
-# Copyright 2014-2017 Aerospike, Inc.
+# Copyright 2014-2018 Aerospike, Inc.
 #
 # Portions may be licensed to Aerospike, Inc. under one or more contributor
 # license agreements.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
-# the License at http:#www.apache.org/licenses/LICENSE-2.0
+# the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
@@ -14,17 +15,13 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-require 'thread'
-
 require 'aerospike/record'
 
 require 'aerospike/command/command'
 
 module Aerospike
 
-  private
-
-  class BatchCommand < Command #:nodoc:
+  class MultiCommand < Command #:nodoc:
 
     def initialize(node)
       super(node)
@@ -48,11 +45,34 @@ module Aerospike
         receive_size = size & 0xFFFFFFFFFFFF
 
         if receive_size > 0
-          status = parse_record_results(receive_size)
+          status = parse_group(receive_size)
         else
           status = false
         end
       end
+    end
+
+    def parse_group(receive_size)
+      @data_offset = 0
+
+      while @data_offset < receive_size
+        read_bytes(MSG_REMAINING_HEADER_SIZE)
+        result_code = @data_buffer.read(5).ord & 0xFF
+
+        # The only valid server return codes are "ok" and "not found".
+        # If other return codes are received, then abort the batch.
+        if result_code != 0 && result_code != Aerospike::ResultCode::KEY_NOT_FOUND_ERROR
+          raise Aerospike::Exceptions::Aerospike.new(result_code)
+        end
+
+        # If cmd is the end marker of the response, do not proceed further
+        info3 = @data_buffer.read(3).ord
+        return false if (info3 & INFO3_LAST) == INFO3_LAST
+
+        parse_row(result_code)
+      end
+
+      true
     end
 
     def parse_key(field_count)

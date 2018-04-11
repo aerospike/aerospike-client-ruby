@@ -1,12 +1,13 @@
-# encoding: utf-8
-# Copyright 2014-2016 Aerospike, Inc.
+# Copyright 2014-2018 Aerospike, Inc.
 #
 # Portions may be licensed to Aerospike, Inc. under one or more contributor
 # license agreements.
 #
 # Licensed under the Apache License, Version 2.0 (the "License"); you may not
 # use this file except in compliance with the License. You may obtain a copy of
-# the License at http:#www.apache.org/licenses/LICENSE-2.0
+# the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
 #
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
@@ -15,11 +16,7 @@
 # the License.
 
 require "spec_helper"
-
-require 'aerospike/host'
-require 'aerospike/key'
-require 'aerospike/bin'
-
+require 'aerospike'
 require 'benchmark'
 
 describe Aerospike::Client do
@@ -537,94 +534,6 @@ describe Aerospike::Client do
 
       end
 
-    end
-
-  end
-
-  context "Batch commands" do
-
-    it "should successfully check existence of many keys" do
-      KEY_CNT = 3000
-      keys = []
-      KEY_CNT.times do |i|
-        keys << key = Support.gen_random_key()
-        client.put(key, Aerospike::Bin.new('bin', 'value')) if i % 2 == 0
-      end
-
-      exists = client.batch_exists(keys)
-
-      expect(exists.length).to eq KEY_CNT
-
-      exists.each_with_index do |elem, i|
-        expect(elem).to be (i % 2 == 0)
-      end
-    end
-
-    it "should successfully check existence of keys" do
-      key1 = Support.gen_random_key
-      key2 = Support.gen_random_key
-      key3 = Support.gen_random_key
-
-      client.put(key1, Aerospike::Bin.new('bin', 'value'))
-      client.put(key3, Aerospike::Bin.new('bin', 'value'))
-
-      exists = client.batch_exists([key1, key2, key3])
-
-      expect(exists.length).to eq 3
-
-      expect(exists[0]).to eq(true)
-      expect(exists[1]).to eq(false)
-      expect(exists[2]).to eq(true)
-    end
-
-    it "should successfully get keys" do
-      key1 = Support.gen_random_key
-      key2 = Support.gen_random_key
-      key3 = Support.gen_random_key
-
-      bin = Aerospike::Bin.new('bin', 'value')
-      client.put(key1, bin)
-      client.put(key3, bin)
-
-      records = client.batch_get([key1, key2, key3], ['bin'])
-
-      expect(records.length).to eq 3
-
-      expect(records[0].key).to eq key1
-      expect(records[0].bins).to eq ({bin.name => bin.value})
-
-      expect(records[1]).to be nil
-
-      expect(records[2].key).to eq key3
-      expect(records[2].bins).to eq ({bin.name => bin.value})
-    end
-
-    it "should successfully get headers for keys" do
-      key1 = Support.gen_random_key
-      key2 = Support.gen_random_key
-      key3 = Support.gen_random_key
-
-      bin = Aerospike::Bin.new('bin', 'value')
-      client.put(key1, bin, ttl: 1000)
-      client.put(key3, bin, ttl: 1000)
-
-      records = client.batch_get_header([key1, key2, key3])
-
-      expect(records.length).to eq 3
-
-      expect(records[0].key).to eq key1
-      expect(records[0].key.user_key).to eq key1.user_key
-      expect(records[0].bins).to be nil
-      expect(records[0].generation).to be 1
-      expect(records[0].ttl).to be_within(10).of(1000)
-
-      expect(records[1]).to be nil
-
-      expect(records[2].key).to eq key3
-      expect(records[2].key.user_key).to eq key3.user_key
-      expect(records[2].bins).to be nil
-      expect(records[2].generation).to be 1
-      expect(records[2].ttl).to be_within(10).of(1000)
     end
 
   end
