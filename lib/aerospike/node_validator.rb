@@ -21,15 +21,15 @@ module Aerospike
   class NodeValidator # :nodoc:
     VERSION_REGEXP = /(?<v1>\d+)\.(?<v2>\d+)\.(?<v3>\d+).*/.freeze
 
-    attr_reader :host, :aliases, :name, :use_new_info, :features, :cluster_name, :ssl_options, :conn
+    attr_reader :host, :aliases, :name, :use_new_info, :features, :cluster_name, :tls_options, :conn
 
-    def initialize(cluster, host, timeout, cluster_name, ssl_options = {})
+    def initialize(cluster, host, timeout, cluster_name, tls_options = {})
       @cluster = cluster
       @use_new_info = true
       @features = Set.new
       @host = host
       @cluster_name = cluster_name
-      @ssl_options = ssl_options
+      @tls_options = tls_options
 
       set_aliases(host)
       set_address(timeout)

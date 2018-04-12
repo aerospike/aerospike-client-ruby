@@ -28,7 +28,7 @@ module Aerospike
             host.port,
             tls_name: host.tls_name,
             timeout: cluster.connection_timeout,
-            ssl_options: cluster.ssl_options
+            tls_options: cluster.tls_options
           ).tap do |conn|
             if cluster.credentials_given?
               # Authenticate will raise and close connection if invalid credentials

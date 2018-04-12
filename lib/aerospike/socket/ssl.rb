@@ -22,16 +22,16 @@ module Aerospike
     class SSL < ::OpenSSL::SSL::SSLSocket
       include Base
 
-      SUPPORTED_SSL_PARAMS = %i[ca_file ca_path min_version max_version].freeze
-      DEFAULT_SSL_PARAMS = {
+      SUPPORTED_TLS_PARAMS = %i[ca_file ca_path min_version max_version].freeze
+      DEFAULT_TLS_PARAMS = {
         min_version: :TLS1_2
       }.freeze
 
       class << self
-        def connect(host, port, timeout, tls_name, ssl_options)
-          Aerospike.logger.debug("Connecting to #{host}:#{tls_name}:#{port} using SSL options #{ssl_options}")
+        def connect(host, port, timeout, tls_name, tls_options)
+          Aerospike.logger.debug("Connecting to #{host}:#{tls_name}:#{port} using TLS options #{tls_options}")
           tcp_sock = TCP.connect(host, port, timeout)
-          ctx = build_ssl_context(ssl_options)
+          ctx = build_ssl_context(tls_options)
           new(tcp_sock, ctx).tap do |ssl_sock|
             ssl_sock.hostname = tls_name
             ssl_sock.connect
@@ -39,15 +39,15 @@ module Aerospike
           end
         end
 
-        def build_ssl_context(ssl_options)
-          ssl_options[:context] || create_context(ssl_options)
+        def build_ssl_context(tls_options)
+          tls_options[:context] || create_context(tls_options)
         end
 
-        def create_context(ssl_options)
+        def create_context(tls_options)
           OpenSSL::SSL::SSLContext.new.tap do |ctx|
-            if ssl_options[:cert_file] && ssl_options[:pkey_file]
-              cert = OpenSSL::X509::Certificate.new(File.read(ssl_options[:cert_file]))
-              pkey = OpenSSL::PKey.read(File.read(ssl_options[:pkey_file]), ssl_options[:pkey_pass])
+            if tls_options[:cert_file] && tls_options[:pkey_file]
+              cert = OpenSSL::X509::Certificate.new(File.read(tls_options[:cert_file]))
+              pkey = OpenSSL::PKey.read(File.read(tls_options[:pkey_file]), tls_options[:pkey_pass])
               if ctx.respond_to?(:add_certificate)
                 ctx.add_certificate(cert, pkey)
               else
@@ -56,13 +56,13 @@ module Aerospike
               end
             end
 
-            params = DEFAULT_SSL_PARAMS.merge(filter_params(ssl_options))
+            params = DEFAULT_TLS_PARAMS.merge(filter_params(tls_options))
             ctx.set_params(params) unless params.empty?
           end
         end
 
         def filter_params(params)
-          params.select { |key| SUPPORTED_SSL_PARAMS.include?(key) }
+          params.select { |key| SUPPORTED_TLS_PARAMS.include?(key) }
         end
       end
     end

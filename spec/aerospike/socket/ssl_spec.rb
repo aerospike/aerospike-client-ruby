@@ -24,20 +24,20 @@ def resource(*path)
 end
 
 describe Aerospike::Socket::SSL do
-  let(:ssl_options) { {} }
+  let(:tls_options) { {} }
 
   describe '::build_ssl_context' do
-    subject(:build_ssl_context) { described_class.build_ssl_context(ssl_options) }
+    subject(:build_ssl_context) { described_class.build_ssl_context(tls_options) }
 
     context 'with pre-initialized context' do
       let(:ssl_context) { double }
-      let(:ssl_options) { { context:  ssl_context } }
+      let(:tls_options) { { context:  ssl_context } }
 
       it { is_expected.to be ssl_context }
     end
 
     context 'without pre-initialized context' do
-      let(:ssl_options) { {} }
+      let(:tls_options) { {} }
 
       before do
         allow(described_class).to receive(:create_context)
@@ -49,14 +49,14 @@ describe Aerospike::Socket::SSL do
   end
 
   describe '::create_context' do
-    subject(:create_context) { described_class.create_context(ssl_options) }
+    subject(:create_context) { described_class.create_context(tls_options) }
 
     it { is_expected.to be_a(OpenSSL::SSL::SSLContext) }
 
     context 'when cert_file and pkey_file options are given' do
       let(:cert) { resource('ssl', 'test.cert.pem') }
       let(:pkey) { resource('ssl', 'test.key.pem') }
-      let(:ssl_options) { { cert_file: cert, pkey_file: pkey } }
+      let(:tls_options) { { cert_file: cert, pkey_file: pkey } }
 
       before do
         allow_any_instance_of(OpenSSL::SSL::SSLContext).to receive(:add_certificate)
@@ -67,14 +67,14 @@ describe Aerospike::Socket::SSL do
 
     context 'with ca_file option' do
       let(:ca_file) { resource('ssl', 'ca.cert.pem') }
-      let(:ssl_options) { { ca_file: ca_file } }
+      let(:tls_options) { { ca_file: ca_file } }
 
       it { expect(create_context.ca_file).to be ca_file }
     end
 
     context 'with ca_path option' do
       let(:ca_path) { resource('ssl') }
-      let(:ssl_options) { { ca_path: ca_path } }
+      let(:tls_options) { { ca_path: ca_path } }
 
       it { expect(create_context.ca_path).to be ca_path }
     end

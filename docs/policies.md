@@ -74,7 +74,7 @@ Attributes:
   * If specified, the cluster name will be verified whenever the client
     connects to a new cluster node and nodes with non-matching cluster name
     will be rejected.
-* `ssl_options` - SSL/TLS context parameters (optional; requires Aerospike Enterprise Edition v3.11 or later)
+* `tls` - TLS/SSL context parameters (optional; requires Aerospike Enterprise Edition v3.11 or later)
   * To encrypt the client <-> server connections end-to-end using Transport
     Layer Security (TLS), an SSL/TLS context needs to be setup, by specifying one or more of the follwing options:
     * `ca_file` - The path to a file containing a PEM-format CA certificate.
@@ -84,8 +84,47 @@ Attributes:
     * `pkey_pass` - Optional password in case `pkey_file` is an encrypted PEM resource.
   * Alternatively, a pre-configured
     [`SSLContext`](https://ruby.github.io/openssl/OpenSSL/SSL/SSLContext.html)
-    can be passed using the `context` property of `ssl_options`. In this case,
-    all other properties in `ssl_options` are ignored.
+    can be passed using the `context` property of the `tls` options hash. In this case,
+    all other properties in `tls` are ignored.
+
+#### Examples
+
+Enabling TLS encryption by specifying the cert/private key file:
+
+```ruby
+require 'aerospike'
+include Aerospike
+
+tls_options = {
+  ca_file = './tls/ca.cert.pem',
+  cert_file = './tls/client.cert.pem',
+  pkey_file = './tls/client.key.pem'
+}
+policy = ClientPolicy.new(tls: tls_options)
+seed = '10.0.0.10:mydb:3000'
+
+client = Client.new(seed, policy: policy)
+```
+
+Enabling TLS encryption by passing a pre-configured `SSLContext`:
+
+```ruby
+require 'aerospike'
+require 'openssl'
+
+include Aerospike
+
+context = OpenSSL::SSL::SSLContext.new
+cert = OpenSSL::X509::Certificate.new(File.read('./tls/client.cert.pem'))
+pkey = OpenSSL::PKey.read(File.read('./tls/client.key.pem'))
+context.add_certificate(cert, pkey)
+context.ciphers = [ ... ] # Customize the context
+
+policy = ClientPolicy.new(tls: { context: context })
+seed = '10.0.0.10:mydb:3000'
+
+client = Client.new(seed, policy: policy)
+```
 
 <a name="Policy"></a>
 ### Policy Object

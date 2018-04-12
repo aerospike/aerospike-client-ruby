@@ -74,7 +74,7 @@ information on this feature.
 
 To connect to an Aerospike cluster securely via an encrypted connection, you
 need to configure TLS in the [`ClientPolicy`](policies.md#ClientPolicy) by
-setting the required `ssl_options`.
+setting the required `tls` options hash.
 
 #### IPv6
 
