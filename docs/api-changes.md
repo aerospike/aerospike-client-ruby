@@ -1,5 +1,13 @@
 # Backward Incompatible API Changes
 
+<a name="v2.6.0"></a>
+## Version 2.6.0
+
+### Supported Ruby versions
+
+The minimum required Ruby version is Ruby 2.3. Older versions of Ruby are no
+longer supported.
+
 <a name="v2.0.0"></a>
 ## Version 2.0.0
 
