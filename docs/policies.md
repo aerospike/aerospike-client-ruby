@@ -6,7 +6,17 @@ This document provides information on the structure of policy objects for specif
 operations and the allowed values for some of the policies.
 
 - [`Policy Objects`](#Objects)
+	- [`Client Policy`](#ClientPolicy)
+	- [`Write Policy`](#WritePolicy)
+	- [`Operate Policy`](#OperatePolicy)
+	- [`Batch Policy`](#BatchPolicy)
+	- [`Query Policy`](#QueryPolicy)
+	- [`Scan Policy`](#ScanPolicy)
 - [`Policy Values`](#Values)
+	- [`Generation Policy Value`](#gen)
+	- [`Exists Policy Value`](#exists)
+	- [`Commit Policy Value`](#commit)
+	- [`Priority Policy Value`](#priority)
 
 <a name="Objects"></a>
 ## Objects
@@ -19,11 +29,25 @@ When invoking an operation, you can choose:
 - pass policy in method options; e.g. `:ttl => 1`
 - Generate the relevant policy object directly and pass it instead of the options parameter.
 
-Usage Example:
+### Examples
+
+Using the default policy:
 
 ```ruby
-  client.get(key);
-  client.get(key, [], policy.new);
+  client.put(key, bins) # Use default write policy
+```
+
+Overriding the default policy:
+
+```ruby
+  client.put(key, bins, ttl: 3600)
+```
+
+Using a new policy object to set a custom policy:
+
+```ruby
+  policy = WritePolicy.new(ttl: 3600)
+  client.put(key, bins, policy)
 ```
 
 <a name="ClientPolicy"></a>
@@ -50,6 +74,18 @@ Attributes:
   * If specified, the cluster name will be verified whenever the client
     connects to a new cluster node and nodes with non-matching cluster name
     will be rejected.
+* `ssl_options` - SSL/TLS context parameters (optional; requires Aerospike Enterprise Edition v3.11 or later)
+  * To encrypt the client <-> server connections end-to-end using Transport
+    Layer Security (TLS), an SSL/TLS context needs to be setup, by specifying one or more of the follwing options:
+    * `ca_file` - The path to a file containing a PEM-format CA certificate.
+    * `ca_path` - The path to a directory containing CA certificates in PEM format. Files are looked up by subject's X509 name's hash value.
+    * `cert_file` - The path to a file containing a PEM-format client certificate.
+    * `pkey_file` - The path to a file containing a PEM-format private key for the client certificate.
+    * `pkey_pass` - Optional password in case `pkey_file` is an encrypted PEM resource.
+  * Alternatively, a pre-configured
+    [`SSLContext`](https://ruby.github.io/openssl/OpenSSL/SSL/SSLContext.html)
+    can be passed using the `context` property of `ssl_options`. In this case,
+    all other properties in `ssl_options` are ignored.
 
 <a name="Policy"></a>
 ### Policy Object
@@ -93,7 +129,7 @@ Includes all [Policy](#Policy) attributes, plus:
     creation) on the server. If a write operation is creating a record, the
     expected generation would be 0
   * Default: 0
-* `expiration` – Record expiration. Also known as ttl (time to live).
+* `expiration` – Record expiration. Also known as `ttl` (time-to-live).
   *  Seconds record will live before being removed by the server.
   * Expiration values:
       * `Aerospike::TTL::NEVER_EXPIRE`: Never expire for Aerospike 2
@@ -121,16 +157,59 @@ Includes all [WritePolicy](#WritePolicy) attributes, plus:
   * Allowed values: See [RecordBinMultiplicity Values](#RecordBinMultiplicity)
   * Default: `RecordBinMultiplicity::SINGLE`
 
-<a name="QueryPolicy"></a>
-### QueryPolicy Object
+<a name="BatchPolicy"></a>
+### BatchPolicy Object
 
-A policy affecting the behaviour of query and scan operations.
+A policy affecting the behaviour of batch operations.
 
 Includes All Policy attributes, plus:
 
+* `use_batch_direct` - [Boolean] Whether to use legacy Batch Direct protocol (if `true`) or newer Batch Index protocol (if `false`).
+	* Use old batch direct protocol where batch reads are handled by direct
+     low-level batch server database routines. The batch direct protocol can
+     be faster when there is a single namespace. But there is one important
+     drawback: The batch direct protocol will not proxy to a different
+     server node when the mapped node has migrated a record to another node
+     (resulting in not found record). This can happen after a node has been
+     added/removed from the cluster and there is a lag between records being
+     migrated and client partition map update (once per second). The batch
+     index protocol will perform this record proxy when necessary.
+	* Default: false (use new batch index protocol if server supports it)
+
+<a name="QueryPolicy"></a>
+### QueryPolicy Object
+
+A policy affecting the behaviour of query operations.
+
+Includes All Policy attributes, plus:
+
+* `include_bin_data` - [Boolean] Indicates if bin data is retrieved.
+	* If false, only record digests (and user keys if stored on the server) are retrieved.
+    * Default: true
 * `record_queue_size` - The record set buffers the query results locally.
   * This attribute controls the size of the buffer (a `SizedQueue` instance).
   * Default: 5000
+
+<a name="ScanPolicy"></a>
+### ScanPolicy Object
+
+A policy affecting the behaviour of scan operations.
+
+Includes All Policy attributes, plus:
+
+* `scan_percent` - Percent of data to scan.
+	* Valid integer range is 1 to 100.
+	* Default: 100
+* `concurrent_nodes` - [Boolean] Issue scan requests in parallel (if `true`) or serially (if `false`).
+	* Default: true (parallel scans)
+* `include_bin_data` - [Boolean] Indicates if bin data is retrieved.
+	* If false, only record digests (and user keys if stored on the server) are retrieved.
+    * Default: true
+* `record_queue_size` - The record set buffers the query results locally.
+  * This attribute controls the size of the buffer (a `SizedQueue` instance).
+  * Default: 5000
+* `fail_on_cluster_change`: [Boolean] Terminate scan if cluster is in fluctuating state.
+	* Default: true
 
 <a name="Values"></a>
 ## Values
