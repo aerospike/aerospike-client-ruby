@@ -27,7 +27,7 @@ module Aerospike
   class Buffer #:nodoc:
 
     @@buf_pool = Pool.new
-    @@buf_pool.create_block = Proc.new { Buffer.new }
+    @@buf_pool.create_proc = Proc.new { Buffer.new }
 
     attr_accessor :buf
 

@@ -1,5 +1,5 @@
-# encoding: utf-8
-# Copyright 2016-2017 Aerospike, Inc.
+# frozen_string_literal: true
+# Copyright 2017 Aerospike, Inc.
 #
 # Portions may be licensed to Aerospike, Inc. under one or more contributor
 # license agreements.
@@ -14,34 +14,32 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-require 'msgpack'
-require 'aerospike/utils/pool'
-
 module Aerospike
+  class ConnectionPool < Pool
 
-  private
+    attr_accessor :cluster, :host
 
-  class Packer < MessagePack::Packer #:nodoc:
-
-    @@pool = Pool.new
-    @@pool.create_proc = Proc.new { Packer.new }
-
-    def self.use
-      packer = @@pool.poll
-      packer.clear
-      yield packer
-    ensure
-      @@pool.offer(packer)
+    def initialize(cluster, host)
+      self.cluster = cluster
+      self.host = host
+      super(cluster.connection_queue_size)
     end
 
-    # WARNING: This method is not compatible with message pack standard.
-    def write_raw_short(val)
-      buffer << [val].pack("S>")
+    def create
+      conn = nil
+      loop do
+        conn = cluster.create_connection(host)
+        break if conn.connected?
+      end
+      conn
     end
 
-    def bytes
-      self.to_s.force_encoding('binary')
+    def check(conn)
+      conn.alive?
+    end
+
+    def cleanup(conn)
+      conn.close if conn
     end
   end
-
 end

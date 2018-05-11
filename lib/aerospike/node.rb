@@ -52,19 +52,7 @@ module Aerospike
       @active = Atomic.new(true)
       @failures = Atomic.new(0)
 
-      @connections = Pool.new(@cluster.connection_queue_size)
-
-      # TODO: put in separate methods
-      @connections.create_block = Proc.new do
-        conn = nil
-        loop do
-          conn = Cluster::CreateConnection.(cluster, host)
-          break if conn.connected?
-        end
-        conn
-      end
-
-      @connections.cleanup_block = Proc.new { |conn| conn.close if conn }
+      @connections = ::Aerospike::ConnectionPool.new(cluster, host)
     end
 
     # Get a connection to the node. If no cached connection is not available,

@@ -24,7 +24,7 @@ module Aerospike
   class Unpacker
 
     @@pool = Pool.new
-    @@pool.create_block = Proc.new { Unpacker.new }
+    @@pool.create_proc = Proc.new { Unpacker.new }
 
     def self.use
       unpacker = @@pool.poll
