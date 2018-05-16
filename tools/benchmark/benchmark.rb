@@ -163,9 +163,9 @@ def readFlags
   else
     case @binDataType
     when 'B'
-      binDataSize = 200
+      @binDataSize = 200
     when 'S'
-      binDataSize = 50
+      @binDataSize = 50
     end
   end
 
@@ -207,6 +207,11 @@ end
 @totalWErrCount, @totalRErrCount = 0, 0
 @totalTOCount, @totalWTOCount, @totalRTOCount = 0, 0, 0
 
+@terminate = false
+Signal.trap("INT") do
+  @terminate = true
+end
+
 def run_bench(client, ident, times)
   writepolicy = WritePolicy.new
   client.default_write_policy.timeout = @options[:timeout]
@@ -228,7 +233,7 @@ def run_bench(client, ident, times)
   randbins = @options[:rand_bin_data]
 
   iters = 1
-  while @workloadType == 'RU' || iters <= times
+  while (@workloadType == 'RU' || iters <= times) && !@terminate
     # if randomBin data has been requested
     bin = getBin if randbins
     key = Key.new(namespace, set, ident*times+(iters%times))
@@ -275,6 +280,36 @@ def run_bench(client, ident, times)
   end
 end
 
+def log_stats(timeElapsed:, reads: 0, readTimeouts: 0, readErrors: 0, writes: 0, writeTimeouts: 0, writeErrors: 0)
+  readTPS = reads / timeElapsed
+  writeTPS = writes / timeElapsed
+  total = reads + writes
+  totalTPS = total / timeElapsed
+  totalTimeouts = readTimeouts + writeTimeouts
+  totalErrors = readErrors = writeErrors
+
+  if @workloadType == 'RU'
+    str = "write(tps=#{writeTPS.round} timeouts=#{writeTimeouts} errors=#{writeErrors})"
+    str << " read(tps=#{readTPS.round} timeouts=#{readTimeouts} errors=#{readErrors})"
+    str << " total(tps=#{totalTPS.round} timeouts=#{totalTimeouts} errors=#{totalErrors}, count=#{total})"
+    @logger.info str
+  else
+    @logger.info "write(tps=#{writeTPS.round} timeouts=#{writeTimeouts} errors=#{writeErrors} totalCount=#{writes})"
+  end
+end
+
+def log_final(timeElapsed)
+  @logger.info "Totals: (run time #{timeElapsed} sec)"
+  log_stats(timeElapsed: timeElapsed,
+           reads: @totalRCount,
+           readTimeouts: @totalRTOCount,
+           readErrors: @totalRErrCount,
+           writes: @totalWCount,
+           writeTimeouts: @totalWTOCount,
+           writeErrors: @totalWErrCount
+          )
+end
+
 def reporter
   last_totalWCount = 0
   last_totalRCount = 0
@@ -285,19 +320,17 @@ def reporter
 
   t = Time.now
   while true
-    if Time.now - t >= 1
+    timeElapsed = Time.now - t
+    if timeElapsed >= 1
       @mutex.synchronize do
-        if @workloadType == 'RU'
-          w, r = @totalWCount - last_totalWCount, @totalRCount - last_totalRCount
-          wto, rto = @totalWTOCount - last_totalWTOCount, @totalRTOCount - last_totalRTOCount
-          werr, rerr = @totalWErrCount - last_totalWErrCount, @totalRErrCount - last_totalRErrCount
-          str = "write(tps=#{w} timeouts=#{wto} errors=#{werr})"
-          str << " read(tps=#{r} timeouts=#{rto} errors=#{rerr})"
-          str << " total(tps=#{w+r} timeouts=#{wto+rto} errors=#{werr+rerr}, count=#{@totalWCount+@totalRCount})"
-          @logger.info str
-        else
-          @logger.info "write(tps=#{@totalWCount - last_totalWCount} timeouts=#{@totalWTOCount - last_totalWTOCount} errors=#{@totalWErrCount - last_totalWErrCount} totalCount=#{@totalWCount})"
-        end
+        log_stats(timeElapsed: timeElapsed,
+                 reads: @totalRCount - last_totalRCount,
+                 readTimeouts: @totalRTOCount - last_totalRTOCount,
+                 readErrors: @totalRErrCount - last_totalRErrCount,
+                 writes: @totalWCount - last_totalWCount,
+                 writeTimeouts: @totalWTOCount - last_totalWTOCount,
+                 writeErrors: @totalWErrCount - last_totalWErrCount
+                )
 
         last_totalWCount = @totalWCount
         last_totalRCount = @totalRCount
@@ -328,13 +361,17 @@ rescue => e
   abort(e.to_s)
 end
 
+r_thread = Thread.new do
+  reporter
+end
+
+start = Time.now
 threads = []
-
-r_thread = Thread.new { reporter }
-
 for i in (1..@options[:concurrency]) do
     threads << Thread.new {run_bench(client, i - 1, @options[:key_count] / @options[:concurrency]) }
 end
+threads.each(&:join)
+@total_time = Time.now - start
 
-threads.each {|t| t.join}
 r_thread.kill
+log_final(@total_time)
