@@ -77,13 +77,12 @@ module Aerospike
 
       attr_reader :list_op, :arguments, :policy, :return_type
 
-      def initialize(op_type, list_op, bin_name, *arguments, policy: nil, return_type: nil)
+      def initialize(op_type, list_op, bin_name, *arguments, return_type: nil)
         @op_type = op_type
         @bin_name = bin_name
         @bin_value = nil
         @list_op = list_op
         @arguments = arguments
-        @policy = policy
         @return_type = return_type
       end
 
@@ -111,11 +110,11 @@ module Aerospike
       #  Create list insert operation.
       #  Server inserts value(s) at the specified index of the list bin.
       #  Server returns list size.
-      def self.insert(bin_name, index, *values, policy: nil)
+      def self.insert(bin_name, index, *values, policy: ListPolicy::DEFAULT)
         if values.length > 1
-          ListOperation.new(Operation::CDT_MODIFY, INSERT_ITEMS, bin_name, index, values, policy: policy)
+          ListOperation.new(Operation::CDT_MODIFY, INSERT_ITEMS, bin_name, index, values, policy.flags)
         else
-          ListOperation.new(Operation::CDT_MODIFY, INSERT, bin_name, index, values.first, policy: policy)
+          ListOperation.new(Operation::CDT_MODIFY, INSERT, bin_name, index, values.first, policy.flags)
         end
       end
 
@@ -166,8 +165,8 @@ module Aerospike
       # Create list set operation.
       # Server sets item value at specified index in list bin.
       # Server does not return a result by default.
-      def self.set(bin_name, index, value, policy: nil)
-        ListOperation.new(Operation::CDT_MODIFY, SET, bin_name, index, value, policy: policy)
+      def self.set(bin_name, index, value, policy: ListPolicy::DEFAULT)
+        ListOperation.new(Operation::CDT_MODIFY, SET, bin_name, index, value, policy.flags)
       end
 
       ##
@@ -196,12 +195,8 @@ module Aerospike
       # Create list increment operation.
       # Server increments list[index] by value. If not specified, value defaults to 1.
       # Server returns the value of list[index] after the operation.
-      def self.increment(bin_name, index, value = nil)
-        if value
-          ListOperation.new(Operation::CDT_MODIFY, INCREMENT, bin_name, index, value)
-        else
-          ListOperation.new(Operation::CDT_MODIFY, INCREMENT, bin_name, index)
-        end
+      def self.increment(bin_name, index, value = 1, policy: ListPolicy::DEFAULT)
+        ListOperation.new(Operation::CDT_MODIFY, INCREMENT, bin_name, index, value, policy.order, policy.flags)
       end
 
       ##

@@ -24,15 +24,14 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?("cdt-
   let(:list_bin) { "list" }
   let(:list_value) { [] }
   let(:return_type) { ListReturnType::VALUE }
-  let(:list_policy) { ListPolicy.new(
-      order: ListOrder::UNORDERED,
-      write_flags: ListWriteFlags::DEFAULT
-    )
-  }
+  let(:order) { ListOrder::UNORDERED }
+  let(:write_flags) { ListWriteFlags::DEFAULT }
+  let(:list_policy) { ListPolicy.new(order: order, write_flags: write_flags) }
 
   before(:each) do
     # Use append op to create list so we can set list order
-    op = ListOperation.append(list_bin, *list_value, policy: list_policy)
+    create_policy = ListPolicy.new(order: list_policy.order)
+    op = ListOperation.append(list_bin, *list_value, policy: create_policy)
     client.operate(key, [op])
   end
 
@@ -626,6 +625,71 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?("cdt-
 
       expect(result.bins[list_bin]).to eql([1, 4, 2])
       expect(list_post_op).to eql([2, 3, 5, 1])
+    end
+  end
+
+  describe "ListPolicy" do
+
+    context "ordered list" do
+      let(:list_value) { [5, 4, 3, 2, 1] }
+      let(:order) { ListOrder::ORDERED }
+
+      it "creates an ordered list" do
+        expect(list_post_op).to eql([1, 2, 3, 4, 5])
+      end
+    end
+
+    context "with add-unique flag" do
+      let(:list_value) { [1, 2, 3, 4, 5] }
+      let(:write_flags) { ListWriteFlags::ADD_UNIQUE }
+
+      it "throws an error when trying to insert a non-unique item" do
+        operation = ListOperation.append(list_bin, 3, 6, policy: list_policy)
+
+        expect { client.operate(key, [operation]) }.to raise_error(/Element already exists/)
+      end
+
+      context "with no-fail flag" do
+        let(:write_flags) { ListWriteFlags::ADD_UNIQUE | ListWriteFlags::NO_FAIL }
+
+        it "does not modify the list but returns ok" do
+          operation = ListOperation.append(list_bin, 3, 6, policy: list_policy)
+          result = client.operate(key, [operation])
+
+          expect(result.bins[list_bin]).to be 5
+          expect(list_post_op).to eql([1, 2, 3, 4, 5])
+        end
+
+        context "with partial flag" do
+          let(:write_flags) { ListWriteFlags::ADD_UNIQUE | ListWriteFlags::NO_FAIL | ListWriteFlags::PARTIAL }
+
+          it "appends only the unique items" do
+            operation = ListOperation.append(list_bin, 3, 6, policy: list_policy)
+            result = client.operate(key, [operation])
+
+            expect(result.bins[list_bin]).to be 6
+            expect(list_post_op).to eql([1, 2, 3, 4, 5, 6])
+          end
+        end
+      end
+    end
+
+    context "with insert-bounded flag" do
+      let(:list_value) { [1, 2, 3, 4, 5] }
+      let(:write_flags) { ListWriteFlags::INSERT_BOUNED }
+
+      it "allows inserts inside the existing list boundaries" do
+        operation = ListOperation.insert(list_bin, 3, 6, policy: list_policy)
+
+        expect { client.operate(key, [operation]) }.not_to raise_error
+        expect(list_post_op).to eql([1, 2, 3, 6, 4, 5])
+      end
+
+      it "throws an error when trying to insert an item outside the existing list boundaries" do
+        operation = ListOperation.insert(list_bin, 99, 6, policy: list_policy)
+
+        expect { client.operate(key, [operation]) }.to raise_error(/Parameter error/)
+      end
     end
   end
 end

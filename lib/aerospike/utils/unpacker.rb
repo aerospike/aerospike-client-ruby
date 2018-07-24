@@ -36,9 +36,9 @@ module Aerospike
 
     MsgPackExt = Struct.new(:type, :data)
     MsgPackExt::TYPES = [
-             # Map Create Flags:
-      0x00,  # UNORDERED
-      0x01,  # K_ORDERED
+             # Map Create Flags:         List Create Flags:
+      0x00,  # UNORDERED                 UNORDERED
+      0x01,  # K_ORDERED                 ORDERED
       0x03,  # KV_ORDERED
       0x08,  # PRESERVE_ORDER
     ]
@@ -66,12 +66,16 @@ module Aerospike
     private
 
     def unpack_list(array)
-      normalize_strings_in_array(array)
+      list = normalize_strings_in_array(array)
+      unless list.empty?
+        list.shift if MsgPackExt === list.first
+      end
+      list
     end
 
     def unpack_map(hash)
       hash = normalize_strings_in_map(hash)
-      if hash.any?
+      unless hash.empty?
         (key, _) = hash.first
         hash.shift if MsgPackExt === key
       end
