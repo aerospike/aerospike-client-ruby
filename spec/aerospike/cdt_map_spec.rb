@@ -21,484 +21,651 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
 
   let(:client) { Support.client }
   let(:key) { Support.gen_random_key }
+  let(:map_bin) { "map" }
+  let(:map_value) { }
+  let(:return_type) { MapReturnType::VALUE }
+  let(:map_order) { MapOrder::UNORDERED }
+  let(:write_mode) { MapWriteMode::UPDATE }
+  let(:map_policy) { MapPolicy.new(order: map_order, write_mode: write_mode) }
 
-  def verifyOperation(record, operations, expectedResult, expectedRecordPostOp = record, policy = MapPolicy::DEFAULT)
-    if record
-      put_items = MapOperation.put_items("map", record["map"], policy: policy)
-      client.operate(key, [put_items])
-    end
-    if Exception === expectedResult
-      expect {
-        client.operate(key, Array(operations))
-      }.to raise_error(expectedResult.class, expectedResult.message)
+  before(:each) do
+    next unless map_value
+
+    case map_order
+    when MapOrder::UNORDERED
+      client.put(key, { map_bin => map_value })
     else
-      result = client.operate(key, Array(operations))
-      expect(result.bins).to eql(expectedResult)
-      record = client.get(key)
-      expect(record.bins).to eql(expectedRecordPostOp)
+      # Use put_items op to create map so that we can control map order.
+      create_policy = MapPolicy.new(
+        order: map_policy.order,
+        write_mode: MapWriteMode::CREATE_ONLY
+      )
+      op = MapOperation.put_items(map_bin, map_value, policy: create_policy)
+      client.operate(key, [op])
     end
   end
 
+  def map_post_op
+    client.get(key).bins[map_bin]
+  end
+
   describe "MapOperation.set_policy" do
+    let(:map_value) { { "c" => 1, "b" => 2, "a" => 3 } }
+    let(:map_order) { MapOrder::UNORDERED }
+
     it "changes the map order" do
-      record = { "map" => { "c" => 1, "b" => 2, "a" => 3 } }
-      operations = [
-        MapOperation.set_policy("map", MapPolicy.new(order: MapOrder::KEY_ORDERED)),
-        MapOperation.get_key_range("map", "a", "z", return_type: MapReturnType::KEY)
-      ]
-      expectedResult = { "map" => [ "a", "b", "c" ] }
-      verifyOperation(record, operations, expectedResult, record, MapPolicy.new(order: MapOrder::UNORDERED))
+      new_policy = MapPolicy.new(order: MapOrder::KEY_ORDERED)
+      operation = MapOperation.set_policy(map_bin, new_policy)
+      client.operate(key, [operation])
+
+      expect(map_post_op.to_a).to eql([["a", 3], ["b", 2], ["c", 1]])
     end
   end
 
   describe "MapOperation.put" do
+    let(:map_value) { { "a" => 1, "b" => 2, "c" => 3 } }
+
     it "adds the item to the map and returns the map size" do
-      record = { "map" => { "a" => 1, "b" => 2, "c" => 3 } }
-      operation = MapOperation.put("map", "x", 99)
-      expectedResult = { "map" => 4 }
-      expectedRecord = { "map" => { "a" => 1, "b" => 2, "c" => 3, "x" => 99 } }
-      verifyOperation(record, operation, expectedResult, expectedRecord)
+      operation = MapOperation.put(map_bin, "x", 99)
+      result = client.operate(key, [operation])
+
+      expect(result.bins[map_bin]).to eql(4)
+      expect(map_post_op).to eql({ "a" => 1, "b" => 2, "c" => 3, "x" => 99 })
     end
 
-    it "creates a new map if it doesn't exist yet" do
-      operation = MapOperation.put("map", "a", 1)
-      expectedResult = { "map" => 1 }
-      expectedRecord = { "map" => { "a" => 1 } }
-      verifyOperation(nil, operation, expectedResult, expectedRecord)
-    end
-
-    context "MapWriteMode::UPDATE_ONLY" do
-      it "overwrites an existing key" do
-        record = { "map" => { "a" => 1, "b" => 2, "c" => 3 } }
-        policy = MapPolicy.new(write_mode: MapWriteMode::UPDATE_ONLY)
-        operation = MapOperation.put("map", "b", 99, policy: policy)
-        expectedResult = { "map" => 3 }
-        expectedRecord = { "map" => { "a" => 1, "b" => 99, "c" => 3 } }
-        verifyOperation(record, operation, expectedResult, expectedRecord)
-      end
-
-      it "fails to write a non-existing key" do
-        record = { "map" => { "a" => 1, "c" => 3 } }
-        policy = MapPolicy.new(write_mode: MapWriteMode::UPDATE_ONLY)
-        operation = MapOperation.put("map", "b", 99, policy: policy)
-        expectedResult = Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::ELEMENT_NOT_FOUND, "Element not found")
-        verifyOperation(record, operation, expectedResult)
-      end
-    end
-
-    context "MapWriteMode::CREATE_ONLY" do
-      it "fails to write an existing key" do
-        record = { "map" => { "a" => 1, "b" => 2, "c" => 3 } }
-        policy = MapPolicy.new(write_mode: MapWriteMode::CREATE_ONLY)
-        operation = MapOperation.put("map", "b", 99, policy: policy)
-        expectedResult = Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::ELEMENT_EXISTS, "Element already exists")
-        verifyOperation(record, operation, expectedResult)
-      end
-
-      it "creates a new key if it does not exist" do
-        record = { "map" => { "a" => 1, "c" => 3 } }
-        policy = MapPolicy.new(write_mode: MapWriteMode::CREATE_ONLY)
-        operation = MapOperation.put("map", "b", 99, policy: policy)
-        expectedResult = { "map" => 3 }
-        expectedRecord = { "map" => { "a" => 1, "b" => 99, "c" => 3 } }
-        verifyOperation(record, operation, expectedResult, expectedRecord)
-      end
-    end
   end
 
   describe "MapOperation.put_items" do
+    let(:map_value) { { "a" => 1, "b" => 2, "c" => 3 } }
+
     it "adds the items to the map and returns the map size" do
-      record = { "map" => { "a" => 1, "b" => 2, "c" => 3 } }
-      operation = MapOperation.put_items("map", { "x" => 99 })
-      expectedResult = { "map" => 4 }
-      expectedRecord = { "map" => { "a" => 1, "b" => 2, "c" => 3, "x" => 99 } }
-      verifyOperation(record, operation, expectedResult, expectedRecord)
+      operation = MapOperation.put_items(map_bin, { "x" => 99 })
+      result = client.operate(key, [operation])
+
+      expect(result.bins[map_bin]).to eql(4)
+      expect(map_post_op).to eql({ "a" => 1, "b" => 2, "c" => 3, "x" => 99 })
     end
   end
 
   describe "MapOperation.increment" do
+    let(:map_value) { { "a" => 1, "b" => 2, "c" => 3 } }
+
     it "increments the value for all items identified by the key and returns the final result" do
-      record = { "map" => { "a" => 1, "b" => 2, "c" => 3 } }
-      operation = MapOperation.increment("map", "b", 3)
-      expectedResult = { "map" => 5 }
-      expectedRecord = { "map" => { "a" => 1, "b" => 5, "c" => 3 } }
-      verifyOperation(record, operation, expectedResult, expectedRecord)
+      operation = MapOperation.increment(map_bin, "b", 3)
+      result = client.operate(key, [operation])
+
+      expect(result.bins[map_bin]).to eql(5)
+      expect(map_post_op).to eql({ "a" => 1, "b" => 5, "c" => 3 })
     end
   end
 
   describe "MapOperation.decrement" do
+    let(:map_value) { { "a" => 1, "b" => 2, "c" => 3 } }
+
     it "decrements the value for all items identified by the key and returns the final result" do
-      record = { "map" => { "a" => 1, "b" => 2, "c" => 3 } }
-      operation = MapOperation.decrement("map", "b", 3)
-      expectedResult = { "map" => -1 }
-      expectedRecord = { "map" => { "a" => 1, "b" => -1, "c" => 3 } }
-      verifyOperation(record, operation, expectedResult, expectedRecord)
+      operation = MapOperation.decrement(map_bin, "b", 3)
+      result = client.operate(key, [operation])
+
+      expect(result.bins[map_bin]).to eql(-1)
+      expect(map_post_op).to eql({ "a" => 1, "b" => -1, "c" => 3 })
     end
   end
 
   describe "MapOperation.clear" do
+    let(:map_value) { { "a" => 1, "b" => 2, "c" => 3 } }
+
     it "removes all items from the map" do
-      record = { "map" => { "a" => 1, "b" => 2, "c" => 3 } }
-      operation = MapOperation.clear("map")
-      expectedResult = nil
-      expectedRecord = { "map" => { } }
-      verifyOperation(record, operation, expectedResult, expectedRecord)
+      operation = MapOperation.clear(map_bin)
+      result = client.operate(key, [operation])
+
+      expect(result.bins).to be_nil
+      expect(map_post_op).to eql({ })
     end
   end
 
   describe "MapOperation.remove_keys" do
+    let(:map_value) { { "a" => 1, "b" => 2, "c" => 3 } }
+
     it "removes a single key from the map" do
-      record = { "map" => { "a" => 1, "b" => 2, "c" => 3 } }
-      operation = MapOperation.remove_keys("map", "b")
-      expectedResult = nil
-      expectedRecord = { "map" => { "a" => 1, "c" => 3 } }
-      verifyOperation(record, operation, expectedResult, expectedRecord)
+      operation = MapOperation.remove_keys(map_bin, "b")
+      result = client.operate(key, [operation])
+
+      expect(result.bins).to be_nil
+      expect(map_post_op).to eql({ "a" => 1, "c" => 3 })
     end
 
     it "removes a list of keys from the map" do
-      record = { "map" => { "a" => 1, "b" => 2, "c" => 3 } }
-      operation = MapOperation.remove_keys("map", "a", "b")
-      expectedResult = nil
-      expectedRecord = { "map" => { "c" => 3 } }
-      verifyOperation(record, operation, expectedResult, expectedRecord)
+      operation = MapOperation.remove_keys(map_bin, "a", "b")
+      result = client.operate(key, [operation])
+
+      expect(result.bins).to be_nil
+      expect(map_post_op).to eql({ "c" => 3 })
     end
   end
 
   describe "MapOperation.remove_key_range" do
+    let(:map_value) { { "a" => 1, "b" => 2, "c" => 3 } }
+
     it "removes the specified key range from the map" do
-      record = { "map" => { "a" => 1, "b" => 2, "c" => 3 } }
-      operation = MapOperation.remove_key_range("map", "b", "c")
-      expectedResult = nil
-      expectedRecord = { "map" => { "a" => 1, "c" => 3 } }
-      verifyOperation(record, operation, expectedResult, expectedRecord)
+      operation = MapOperation.remove_key_range(map_bin, "b", "c")
+      result = client.operate(key, [operation])
+
+      expect(result.bins).to be_nil
+      expect(map_post_op).to eql({ "a" => 1, "c" => 3 })
     end
 
     it "removes the all keys from the specified start key until the end" do
-      record = { "map" => { "a" => 1, "b" => 2, "c" => 3 } }
-      operation = MapOperation.remove_key_range("map", "b")
-      expectedResult = nil
-      expectedRecord = { "map" => { "a" => 1 } }
-      verifyOperation(record, operation, expectedResult, expectedRecord)
+      operation = MapOperation.remove_key_range(map_bin, "b")
+      result = client.operate(key, [operation])
+
+      expect(result.bins).to be_nil
+      expect(map_post_op).to eql({ "a" => 1 })
     end
 
     it "removes the all keys until the specified end key" do
-      record = { "map" => { "a" => 1, "b" => 2, "c" => 3 } }
-      operation = MapOperation.remove_key_range("map", nil, "b")
-      expectedResult = nil
-      expectedRecord = { "map" => { "b" => 2, "c" => 3 } }
-      verifyOperation(record, operation, expectedResult, expectedRecord)
+      operation = MapOperation.remove_key_range(map_bin, nil, "b")
+      result = client.operate(key, [operation])
+
+      expect(result.bins).to be_nil
+      expect(map_post_op).to eql({ "b" => 2, "c" => 3 })
     end
   end
 
   describe "MapOperation.remove_values" do
+    let(:map_value) { { "a" => 1, "b" => 2, "c" => 3, "d" => 2 } }
+
     it "removes the items identified by a single value" do
-      record = { "map" => { "a" => 1, "b" => 2, "c" => 3, "d" => 2 } }
-      operation = MapOperation.remove_values("map", 2)
-      expectedResult = nil
-      expectedRecord = { "map" => { "a" => 1, "c" => 3 } }
-      verifyOperation(record, operation, expectedResult, expectedRecord)
+      operation = MapOperation.remove_values(map_bin, 2)
+      result = client.operate(key, [operation])
+
+      expect(result.bins).to be_nil
+      expect(map_post_op).to eql({ "a" => 1, "c" => 3 })
     end
 
     it "removes the items identified by a list of values" do
-      record = { "map" => { "a" => 1, "b" => 2, "c" => 3, "d" => 2 } }
-      operation = MapOperation.remove_values("map", 2, 3)
-      expectedResult = nil
-      expectedRecord = { "map" => { "a" => 1 } }
-      verifyOperation(record, operation, expectedResult, expectedRecord)
+      operation = MapOperation.remove_values(map_bin, 2, 3)
+      result = client.operate(key, [operation])
+
+      expect(result.bins).to be_nil
+      expect(map_post_op).to eql({ "a" => 1 })
     end
   end
 
   describe "MapOperation.remove_value_range" do
+    let(:map_value) { { "a" => 1, "b" => 2, "c" => 3 } }
+
     it "removes the specified value range from the map" do
-      record = { "map" => { "a" => 1, "b" => 2, "c" => 3 } }
-      operation = MapOperation.remove_value_range("map", 2, 3)
-      expectedResult = nil
-      expectedRecord = { "map" => { "a" => 1, "c" => 3 } }
-      verifyOperation(record, operation, expectedResult, expectedRecord)
+      operation = MapOperation.remove_value_range(map_bin, 2, 3)
+      result = client.operate(key, [operation])
+
+      expect(result.bins).to be_nil
+      expect(map_post_op).to eql({ "a" => 1, "c" => 3 })
     end
 
     it "removes all elements starting from the specified start value until the end" do
-      record = { "map" => { "a" => 1, "b" => 2, "c" => 3 } }
-      operation = MapOperation.remove_value_range("map", 2)
-      expectedResult = nil
-      expectedRecord = { "map" => { "a" => 1 } }
-      verifyOperation(record, operation, expectedResult, expectedRecord)
+      operation = MapOperation.remove_value_range(map_bin, 2)
+      result = client.operate(key, [operation])
+
+      expect(result.bins).to be_nil
+      expect(map_post_op).to eql({ "a" => 1 })
     end
 
     it "removes all elements until the specified end value" do
-      record = { "map" => { "a" => 1, "b" => 2, "c" => 3 } }
-      operation = MapOperation.remove_value_range("map", nil, 3)
-      expectedResult = nil
-      expectedRecord = { "map" => { "c" => 3 } }
-      verifyOperation(record, operation, expectedResult, expectedRecord)
+      operation = MapOperation.remove_value_range(map_bin, nil, 3)
+      result = client.operate(key, [operation])
+
+      expect(result.bins).to be_nil
+      expect(map_post_op).to eql({ "c" => 3 })
     end
   end
 
   describe "MapOperation.remove_index" do
+    let(:map_value) { { "a" => 1, "b" => 2, "c" => 3 } }
+
     it "removes a map item identified by index from the map" do
-      record = { "map" => { "a" => 1, "b" => 2, "c" => 3 } }
-      operation = MapOperation.remove_index("map", 1)
-      expectedResult = nil
-      expectedRecord = { "map" => { "a" => 1, "c" => 3 } }
-      verifyOperation(record, operation, expectedResult, expectedRecord)
+      operation = MapOperation.remove_index(map_bin, 1)
+      result = client.operate(key, [operation])
+
+      expect(result.bins).to be_nil
+      expect(map_post_op).to eql({ "a" => 1, "c" => 3 })
     end
   end
 
   describe "MapOperation.remove_index_range" do
+    let(:map_value) { { "a" => 1, "b" => 2, "c" => 3 } }
+
     it "removes 'count' map items starting at the specified index from the map" do
-      record = { "map" => { "a" => 1, "b" => 2, "c" => 3 } }
-      operation = MapOperation.remove_index_range("map", 1, 2)
-      expectedResult = nil
-      expectedRecord = { "map" => { "a" => 1 } }
-      verifyOperation(record, operation, expectedResult, expectedRecord)
+      operation = MapOperation.remove_index_range(map_bin, 1, 2)
+      result = client.operate(key, [operation])
+
+      expect(result.bins).to be_nil
+      expect(map_post_op).to eql({ "a" => 1 })
     end
 
     it "removes all items starting at the specified index to the end of the map" do
-      record = { "map" => { "a" => 1, "b" => 2, "c" => 3 } }
-      operation = MapOperation.remove_index_range("map", 1)
-      expectedResult = nil
-      expectedRecord = { "map" => { "a" => 1 } }
-      verifyOperation(record, operation, expectedResult, expectedRecord)
+      operation = MapOperation.remove_index_range(map_bin, 1)
+      result = client.operate(key, [operation])
+
+      expect(result.bins).to be_nil
+      expect(map_post_op).to eql({ "a" => 1 })
     end
   end
 
   describe "MapOperation.remove_by_rank" do
+    let(:map_value) { { "a" => 1, "b" => 2, "c" => 3 } }
+
     it "removes a map item identified by rank from the map" do
-      record = { "map" => { "a" => 1, "b" => 2, "c" => 3 } }
-      operation = MapOperation.remove_by_rank("map", 1)
-      expectedResult = nil
-      expectedRecord = { "map" => { "a" => 1, "c" => 3 } }
-      verifyOperation(record, operation, expectedResult, expectedRecord)
+      operation = MapOperation.remove_by_rank(map_bin, 1)
+      result = client.operate(key, [operation])
+
+      expect(result.bins).to be_nil
+      expect(map_post_op).to eql({ "a" => 1, "c" => 3 })
     end
   end
 
   describe "MapOperation.remove_by_rank_range" do
+    let(:map_value) { { "a" => 1, "b" => 2, "c" => 3 } }
+
     it "removes 'count' map items starting at the specified rank from the map" do
-      record = { "map" => { "a" => 1, "b" => 2, "c" => 3 } }
-      operation = MapOperation.remove_by_rank_range("map", 1, 2)
-      expectedResult = nil
-      expectedRecord = { "map" => { "a" => 1 } }
-      verifyOperation(record, operation, expectedResult, expectedRecord)
+      operation = MapOperation.remove_by_rank_range(map_bin, 1, 2)
+      result = client.operate(key, [operation])
+
+      expect(result.bins).to be_nil
+      expect(map_post_op).to eql({ "a" => 1 })
     end
 
     it "removes all items starting at the specified rank to the end of the map" do
-      record = { "map" => { "a" => 1, "b" => 2, "c" => 3 } }
-      operation = MapOperation.remove_by_rank_range("map", 1)
-      expectedResult = nil
-      expectedRecord = { "map" => { "a" => 1 } }
-      verifyOperation(record, operation, expectedResult, expectedRecord)
+      operation = MapOperation.remove_by_rank_range(map_bin, 1)
+      result = client.operate(key, [operation])
+
+      expect(result.bins).to be_nil
+      expect(map_post_op).to eql({ "a" => 1 })
     end
   end
 
   describe "MapOperation.size" do
+    let(:map_value) { { "a" => 1, "b" => 2, "c" => 3 } }
+
     it "returns the size of the map" do
-      record = { "map" => { "a" => 1, "b" => 2, "c" => 3 } }
-      operation = MapOperation.size("map")
-      expectedResult = { "map" => 3 }
-      verifyOperation(record, operation, expectedResult)
+      operation = MapOperation.size(map_bin)
+      result = client.operate(key, [operation])
+
+      expect(result.bins[map_bin]).to eql(3)
     end
   end
 
   describe "MapOperation.get_key" do
+    let(:map_value) { { "a" => 1, "b" => 2, "c" => 3 } }
+    let(:return_type) { MapReturnType::KEY_VALUE }
+
     it "gets a single key from the map" do
-      record = { "map" => { "a" => 1, "b" => 2, "c" => 3 } }
-      operation = MapOperation.get_key("map", "b", return_type: MapReturnType::KEY_VALUE)
-      expectedResult = { "map" => { "b" => 2 } }
-      verifyOperation(record, operation, expectedResult)
+      operation = MapOperation.get_key(map_bin, "b")
+        .and_return(return_type)
+      result = client.operate(key, [operation])
+
+      expect(result.bins[map_bin]).to eql({ "b" => 2 })
     end
   end
 
   describe "MapOperation.get_key_range" do
+    let(:map_value) { { "a" => 1, "b" => 2, "c" => 3 } }
+    let(:return_type) { MapReturnType::KEY_VALUE }
+
     it "gets the specified key range from the map" do
-      record = { "map" => { "a" => 1, "b" => 2, "c" => 3 } }
-      operation = MapOperation.get_key_range("map", "b", "c", return_type: MapReturnType::KEY_VALUE)
-      expectedResult = { "map" => { "b" => 2 } }
-      verifyOperation(record, operation, expectedResult)
+      operation = MapOperation.get_key_range(map_bin, "b", "c")
+        .and_return(return_type)
+      result = client.operate(key, [operation])
+
+      expect(result.bins[map_bin]).to eql({ "b" => 2 })
     end
 
     it "gets all keys from the specified start key until the end" do
-      record = { "map" => { "a" => 1, "b" => 2, "c" => 3 } }
-      operation = MapOperation.get_key_range("map", "b", return_type: MapReturnType::KEY_VALUE)
-      expectedResult = { "map" => { "b" => 2, "c" => 3 } }
-      verifyOperation(record, operation, expectedResult)
+      operation = MapOperation.get_key_range(map_bin, "b")
+        .and_return(return_type)
+      result = client.operate(key, [operation])
+
+      expect(result.bins[map_bin]).to eql({ "b" => 2, "c" => 3 })
     end
 
     it "gets all keys from the start to the specified end key" do
-      record = { "map" => { "a" => 1, "b" => 2, "c" => 3 } }
-      operation = MapOperation.get_key_range("map", nil, "b", return_type: MapReturnType::KEY_VALUE)
-      expectedResult = { "map" => { "a" => 1 } }
-      verifyOperation(record, operation, expectedResult)
+      operation = MapOperation.get_key_range(map_bin, nil, "b")
+        .and_return(return_type)
+      result = client.operate(key, [operation])
+
+      expect(result.bins[map_bin]).to eql({ "a" => 1 })
     end
   end
 
   describe "MapOperation.get_value" do
+    let(:map_value) { { "a" => 1, "b" => 2, "c" => 3, "d" => 2 } }
+    let(:return_type) { MapReturnType::KEY_VALUE }
+
     it "gets the item identified by a single value" do
-      record = { "map" => { "a" => 1, "b" => 2, "c" => 3, "d" => 2 } }
-      operation = MapOperation.get_value("map", 2, return_type: MapReturnType::KEY_VALUE)
-      expectedResult = { "map" => { "b" => 2, "d" => 2 } }
-      verifyOperation(record, operation, expectedResult)
+      operation = MapOperation.get_value(map_bin, 2)
+        .and_return(return_type)
+      result = client.operate(key, [operation])
+
+      expect(result.bins[map_bin]).to eql({ "b" => 2, "d" => 2 })
     end
   end
 
   describe "MapOperation.get_value_range" do
+    let(:map_value) { { "a" => 1, "b" => 2, "c" => 3, "d" => 2} }
+    let(:return_type) { MapReturnType::KEY_VALUE }
+
     it "gets the specified key range from the map" do
-      record = { "map" => { "a" => 1, "b" => 2, "c" => 3, "d" => 2} }
-      operation = MapOperation.get_value_range("map", 2, 3, return_type: MapReturnType::KEY_VALUE)
-      expectedResult = { "map" => { "b" => 2, "d" => 2 } }
-      verifyOperation(record, operation, expectedResult)
+      operation = MapOperation.get_value_range(map_bin, 2, 3)
+        .and_return(return_type)
+      result = client.operate(key, [operation])
+
+      expect(result.bins[map_bin]).to eql({ "b" => 2, "d" => 2 })
     end
 
     it "gets all values from the specified start value until the end" do
-      record = { "map" => { "a" => 1, "b" => 2, "c" => 3, "d" => 2} }
-      operation = MapOperation.get_value_range("map", 2, return_type: MapReturnType::KEY_VALUE)
-      expectedResult = { "map" => { "b" => 2, "d" => 2, "c" => 3 } }
-      verifyOperation(record, operation, expectedResult)
+      operation = MapOperation.get_value_range(map_bin, 2)
+        .and_return(return_type)
+      result = client.operate(key, [operation])
+
+      expect(result.bins[map_bin]).to eql({ "b" => 2, "d" => 2, "c" => 3 })
     end
 
     it "gets all values from the start of the map until the specified end value" do
-      record = { "map" => { "a" => 1, "b" => 2, "c" => 3, "d" => 2} }
-      operation = MapOperation.get_value_range("map", nil, 3, return_type: MapReturnType::KEY_VALUE)
-      expectedResult = { "map" => { "a" => 1, "b" => 2, "d" => 2 } }
-      verifyOperation(record, operation, expectedResult)
+      operation = MapOperation.get_value_range(map_bin, nil, 3)
+        .and_return(return_type)
+      result = client.operate(key, [operation])
+
+      expect(result.bins[map_bin]).to eql({ "a" => 1, "b" => 2, "d" => 2 })
     end
   end
 
   describe "MapOperation.get_index" do
+    let(:map_value) { { "a" => 1, "b" => 2, "c" => 3 } }
+    let(:return_type) { MapReturnType::KEY_VALUE }
+
     it "gets a map item identified by index from the map" do
-      record = { "map" => { "a" => 1, "b" => 2, "c" => 3 } }
-      operation = MapOperation.get_index("map", 1, return_type: MapReturnType::KEY_VALUE)
-      expectedResult = { "map" => { "b" => 2 } }
-      verifyOperation(record, operation, expectedResult)
+      operation = MapOperation.get_index(map_bin, 1)
+        .and_return(return_type)
+      result = client.operate(key, [operation])
+
+      expect(result.bins[map_bin]).to eql({ "b" => 2 })
     end
   end
 
   describe "MapOperation.get_index_range" do
+    let(:map_value) { { "c" => 1, "b" => 2, "a" => 3 } }
+    let(:return_type) { MapReturnType::KEY }
+
     it "gets 'count' map items starting at the specified index from the map" do
-      record = { "map" => { "c" => 1, "b" => 2, "a" => 3 } }
-      operation = MapOperation.get_index_range("map", 1, 2, return_type: MapReturnType::KEY)
-      expectedResult = { "map" => [ "b", "c" ] }
-      verifyOperation(record, operation, expectedResult)
+      operation = MapOperation.get_index_range(map_bin, 1, 2)
+        .and_return(return_type)
+      result = client.operate(key, [operation])
+
+      expect(result.bins[map_bin]).to eql([ "b", "c" ])
     end
 
     it "gets all items starting at the specified index to the end of the map" do
-      record = { "map" => { "c" => 1, "b" => 2, "a" => 3 } }
-      operation = MapOperation.get_index_range("map", 1, return_type: MapReturnType::KEY)
-      expectedResult = { "map" => [ "b", "c" ] }
-      verifyOperation(record, operation, expectedResult)
+      operation = MapOperation.get_index_range(map_bin, 1)
+        .and_return(return_type)
+      result = client.operate(key, [operation])
+
+      expect(result.bins[map_bin]).to eql([ "b", "c" ])
     end
   end
 
   describe "MapOperation.get_by_rank" do
+    let(:map_value) { { "a" => 1, "b" => 2, "c" => 3 } }
+    let(:return_type) { MapReturnType::KEY_VALUE }
+
     it "gets a map item identified by rank from the map" do
-      record = { "map" => { "a" => 1, "b" => 2, "c" => 3 } }
-      operation = MapOperation.get_by_rank("map", 1).and_return(MapReturnType::KEY_VALUE)
-      expectedResult = { "map" => { "b" => 2 } }
-      verifyOperation(record, operation, expectedResult)
+      operation = MapOperation.get_by_rank(map_bin, 1)
+        .and_return(return_type)
+      result = client.operate(key, [operation])
+
+      expect(result.bins[map_bin]).to eql({ "b" => 2 })
     end
   end
 
   describe "MapOperation.get_by_rank_range" do
+    let(:map_value) { { "a" => 3, "b" => 2, "c" => 1 } }
+    let(:return_type) { MapReturnType::KEY }
+
     it "gets 'count' map items starting at the specified rank from the map" do
-      record = { "map" => { "a" => 3, "b" => 2, "c" => 1 } }
-      operation = MapOperation.get_by_rank_range("map", 1, 2).and_return(MapReturnType::KEY)
-      expectedResult = { "map" => [ "b", "a" ] }
-      verifyOperation(record, operation, expectedResult)
+      operation = MapOperation.get_by_rank_range(map_bin, 1, 2)
+        .and_return(return_type)
+      result = client.operate(key, [operation])
+
+      expect(result.bins[map_bin]).to eql([ "b", "a" ])
     end
 
     it "gets all items starting at the specified rank to the end of the map" do
-      record = { "map" => { "a" => 3, "b" => 2, "c" => 1 } }
-      operation = MapOperation.get_by_rank_range("map", 1).and_return(MapReturnType::KEY)
-      expectedResult = { "map" => [ "b", "a" ] }
-      verifyOperation(record, operation, expectedResult)
+      operation = MapOperation.get_by_rank_range(map_bin, 1)
+        .and_return(return_type)
+      result = client.operate(key, [operation])
+
+      expect(result.bins[map_bin]).to eql([ "b", "a" ])
     end
   end
 
-  describe "MapOperation#and_return" do
+  context "MapReturnType" do
+    let(:map_value) { { "a" => 3, "b" => 2, "c" => 1 } }
+    let(:map_order) { MapOrder::KEY_ORDERED }
 
-    let(:map_policy) { MapPolicy.new(order: MapOrder::KEY_ORDERED) }
+    context "NONE" do
+      it "returns nothing" do
+        operation = MapOperation.get_key(map_bin, "a")
+          .and_return(MapReturnType::NONE)
+        result = client.operate(key, [operation])
 
-    it "returns nothing" do
-      record = { "map" => { "a" => 1, "b" => 2, "c" => 3 } }
-      operation = MapOperation.get_key("map", "b").and_return(MapReturnType::NONE)
-      expectedResult = { "map" => nil }
-      verifyOperation(record, operation, expectedResult, record, map_policy)
+        expect(result.bins[map_bin]).to eql(nil)
+      end
     end
 
-    it "returns key index" do
-      record = { "map" => { "a" => 1, "b" => 2, "c" => 3 } }
-      operation = MapOperation.get_key("map", "a").and_return(MapReturnType::INDEX)
-      expectedResult = { "map" => 0 }
-      verifyOperation(record, operation, expectedResult, record, map_policy)
+    context "INDEX" do
+      it "returns key index" do
+        operation = MapOperation.get_key(map_bin, "a")
+          .and_return(MapReturnType::INDEX)
+        result = client.operate(key, [operation])
+
+        expect(result.bins[map_bin]).to eql(0)
+      end
     end
 
-    it "returns reverse key index" do
-      record = { "map" => { "a" => 1, "b" => 2, "c" => 3 } }
-      operation = MapOperation.get_key("map", "a").and_return(MapReturnType::REVERSE_INDEX)
-      expectedResult = { "map" => 2 }
-      verifyOperation(record, operation, expectedResult, record, map_policy)
+    context "REVERSE_INDEX" do
+      it "returns reverse key index" do
+        operation = MapOperation.get_key(map_bin, "a")
+          .and_return(MapReturnType::REVERSE_INDEX)
+        result = client.operate(key, [operation])
+
+        expect(result.bins[map_bin]).to eql(2)
+      end
     end
 
-    it "returns value order (rank)" do
-      record = { "map" => { "a" => 3, "b" => 2, "c" => 1 } }
-      operation = MapOperation.get_key("map", "a").and_return(MapReturnType::RANK)
-      expectedResult = { "map" => 2 }
-      verifyOperation(record, operation, expectedResult, record, map_policy)
+    context "RANK" do
+      it "returns value order (rank)" do
+        operation = MapOperation.get_key(map_bin, "a")
+          .and_return(MapReturnType::RANK)
+        result = client.operate(key, [operation])
+
+        expect(result.bins[map_bin]).to eql(2)
+      end
     end
 
-    it "returns reverse value order (reverse rank)" do
-      record = { "map" => { "a" => 3, "b" => 2, "c" => 1 } }
-      operation = MapOperation.get_key("map", "a").and_return(MapReturnType::REVERSE_RANK)
-      expectedResult = { "map" => 0 }
-      verifyOperation(record, operation, expectedResult, record, map_policy)
+    context "REVERSE_RANK" do
+      it "returns reverse value order (reverse rank)" do
+        operation = MapOperation.get_key(map_bin, "a")
+          .and_return(MapReturnType::REVERSE_RANK)
+        result = client.operate(key, [operation])
+
+        expect(result.bins[map_bin]).to eql(0)
+      end
     end
 
-    it "returns count of items selected" do
-      record = { "map" => { "a" => 1, "b" => 2, "c" => 3 } }
-      operation = MapOperation.get_key_range("map", "a", "c").and_return(MapReturnType::COUNT)
-      expectedResult = { "map" => 2 }
-      verifyOperation(record, operation, expectedResult, record, map_policy)
+    context "COUNT" do
+      it "returns count of items selected" do
+        operation = MapOperation.get_key_range(map_bin, "a", "c")
+          .and_return(MapReturnType::COUNT)
+        result = client.operate(key, [operation])
+
+        expect(result.bins[map_bin]).to eql(2)
+      end
     end
 
-    it "returns key for a single read" do
-      record = { "map" => { "a" => 1, "b" => 2, "c" => 3 } }
-      operation = MapOperation.get_index("map", 0).and_return(MapReturnType::KEY)
-      expectedResult = { "map" => "a" }
-      verifyOperation(record, operation, expectedResult, record, map_policy)
+    context "KEY" do
+      it "returns the map key" do
+        operation = MapOperation.get_index(map_bin, 0)
+          .and_return(MapReturnType::KEY)
+        result = client.operate(key, [operation])
+
+        expect(result.bins[map_bin]).to eql("a")
+      end
     end
 
-    it "returns keys for range read" do
-      record = { "map" => { "a" => 1, "b" => 2, "c" => 3 } }
-      operation = MapOperation.get_index_range("map", 0, 2).and_return(MapReturnType::KEY)
-      expectedResult = { "map" => [ "a", "b" ] }
-      verifyOperation(record, operation, expectedResult, record, map_policy)
+    context "VALUE" do
+      it "returns the map value" do
+        operation = MapOperation.get_index(map_bin, 0)
+          .and_return(MapReturnType::VALUE)
+        result = client.operate(key, [operation])
+
+        expect(result.bins[map_bin]).to eql(3)
+      end
     end
 
-    it "returns value for a single read" do
-      record = { "map" => { "a" => 1, "b" => 2, "c" => 3 } }
-      operation = MapOperation.get_index("map", 0).and_return(MapReturnType::VALUE)
-      expectedResult = { "map" => 1 }
-      verifyOperation(record, operation, expectedResult, record, map_policy)
+    context "KEY_VALUE" do
+      it "returns the map key & value" do
+        operation = MapOperation.get_index(map_bin, 0)
+          .and_return(MapReturnType::KEY_VALUE)
+        result = client.operate(key, [operation])
+
+        expect(result.bins[map_bin]).to eql({ "a" => 3 })
+      end
+    end
+  end
+
+  context "MapOrder" do
+    let(:map_value) { { "c" => 1, "b" => 2, "a" => 3 } }
+    let(:ordered_key_values) do
+      ops = [
+        MapOperation.set_policy(map_bin, map_policy),
+        MapOperation.get_by_key_range(map_bin, "a")
+          .and_return(MapReturnType::KEY_VALUE)
+      ]
+      result = client.operate(key, ops)
+      result.bins[map_bin].to_a
     end
 
-    it "returns value for range read" do
-      record = { "map" => { "a" => 1, "b" => 2, "c" => 3 } }
-      operation = MapOperation.get_index_range("map", 0, 2).and_return(MapReturnType::VALUE)
-      expectedResult = { "map" => [ 1, 2] }
-      verifyOperation(record, operation, expectedResult, record, map_policy)
+    context "UNORDERED" do
+      let(:map_order) { MapOrder::UNORDERED }
+      it { expect(ordered_key_values).to eql([["c", 1], ["b", 2], ["a", 3]]) }
     end
 
-    it "returns key/value for a single read" do
-      record = { "map" => { "a" => 1, "b" => 2, "c" => 3 } }
-      operation = MapOperation.get_index("map", 0).and_return(MapReturnType::KEY_VALUE)
-      expectedResult = { "map" => { "a" => 1 } }
-      verifyOperation(record, operation, expectedResult, record, map_policy)
+    context "KEY_ORDERED" do
+      let(:map_order) { MapOrder::KEY_ORDERED }
+      it { expect(ordered_key_values).to eql([["a", 3], ["b", 2], ["c", 1]]) }
     end
 
-    it "returns key/value for a range read" do
-      record = { "map" => { "a" => 1, "b" => 2, "c" => 3 } }
-      operation = MapOperation.get_index_range("map", 0, 2).and_return(MapReturnType::KEY_VALUE)
-      expectedResult = { "map" => { "a" => 1, "b" => 2 } }
-      verifyOperation(record, operation, expectedResult, record, map_policy)
+    context "KEY_VALUE_ORDERED" do
+      let(:map_order) { MapOrder::KEY_VALUE_ORDERED }
+      it { expect(ordered_key_values).to eql([["a", 3], ["b", 2], ["c", 1]]) }
+    end
+  end
+
+  context "MapWriteMode" do
+    let(:operation) { MapOperation.put(map_bin, "b", 99, policy: map_policy) }
+
+    context "UPDATE" do
+      let(:write_mode) { MapWriteMode::UPDATE }
+
+      context "map does not exist" do
+        it "creates a new map" do
+          client.operate(key, [operation])
+
+          expect(map_post_op).to eql({ "b" => 99 })
+        end
+      end
+
+      context "map exists" do
+        context "element exists" do
+          let(:map_value) { { "a" => 1, "b" => 2, "c" => 3 } }
+
+          it "updates the element" do
+            client.operate(key, [operation])
+
+            expect(map_post_op).to eql({ "a" => 1, "b" => 99, "c" => 3 })
+          end
+        end
+
+        context "element does not exist" do
+          let(:map_value) { { "a" => 1, "c" => 3 } }
+
+          it "creates the element" do
+            client.operate(key, [operation])
+
+            expect(map_post_op).to eql({ "a" => 1, "b" => 99, "c" => 3 })
+          end
+        end
+      end
+    end
+
+    context "UPDATE_ONLY" do
+      let(:write_mode) { MapWriteMode::UPDATE_ONLY }
+
+      context "map does not exist" do
+        it "returns an error" do
+          expect { client.operate(key, [operation]) }.to raise_error(/Element not found/)
+        end
+      end
+
+      context "map exists" do
+        context "element exists" do
+          let(:map_value) { { "a" => 1, "b" => 2, "c" => 3 } }
+
+          it "updates the element" do
+            client.operate(key, [operation])
+
+            expect(map_post_op).to eql({ "a" => 1, "b" => 99, "c" => 3 })
+          end
+        end
+
+        context "element does not exist" do
+          let(:map_value) { { "a" => 1, "c" => 3 } }
+
+          it "returns an error" do
+            expect { client.operate(key, [operation]) }.to raise_error(/Element not found/)
+          end
+        end
+      end
+    end
+
+    context "CREATE_ONLY" do
+      let(:write_mode) { MapWriteMode::CREATE_ONLY }
+
+      context "map does not exist" do
+        it "creates a new map" do
+          client.operate(key, [operation])
+
+          expect(map_post_op).to eql({ "b" => 99 })
+        end
+      end
+
+      context "map exists" do
+        context "element exists" do
+          let(:map_value) { { "a" => 1, "b" => 2, "c" => 3 } }
+
+          it "returns an error" do
+            expect { client.operate(key, [operation]) }.to raise_error(/Element already exists/)
+          end
+        end
+
+        context "element does not exist" do
+          let(:map_value) { { "a" => 1, "c" => 3 } }
+
+          it "adds the element" do
+            client.operate(key, [operation])
+
+            expect(map_post_op).to eql({ "a" => 1, "b" => 99, "c" => 3 })
+          end
+        end
+      end
     end
   end
 end
