@@ -108,11 +108,11 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
     end
   end
 
-  describe "MapOperation.remove_keys" do
+  describe "MapOperation.remove_by_key_list" do
     let(:map_value) { { "a" => 1, "b" => 2, "c" => 3 } }
 
     it "removes a single key from the map" do
-      operation = MapOperation.remove_keys(map_bin, "b")
+      operation = MapOperation.remove_by_key_list(map_bin, "b")
       result = client.operate(key, [operation])
 
       expect(result.bins).to be_nil
@@ -120,7 +120,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
     end
 
     it "removes a list of keys from the map" do
-      operation = MapOperation.remove_keys(map_bin, "a", "b")
+      operation = MapOperation.remove_by_key_list(map_bin, "a", "b")
       result = client.operate(key, [operation])
 
       expect(result.bins).to be_nil
@@ -128,11 +128,11 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
     end
   end
 
-  describe "MapOperation.remove_key_range" do
+  describe "MapOperation.remove_by_key_range" do
     let(:map_value) { { "a" => 1, "b" => 2, "c" => 3 } }
 
     it "removes the specified key range from the map" do
-      operation = MapOperation.remove_key_range(map_bin, "b", "c")
+      operation = MapOperation.remove_by_key_range(map_bin, "b", "c")
       result = client.operate(key, [operation])
 
       expect(result.bins).to be_nil
@@ -140,7 +140,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
     end
 
     it "removes the all keys from the specified start key until the end" do
-      operation = MapOperation.remove_key_range(map_bin, "b")
+      operation = MapOperation.remove_by_key_range(map_bin, "b")
       result = client.operate(key, [operation])
 
       expect(result.bins).to be_nil
@@ -148,7 +148,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
     end
 
     it "removes the all keys until the specified end key" do
-      operation = MapOperation.remove_key_range(map_bin, nil, "b")
+      operation = MapOperation.remove_by_key_range(map_bin, nil, "b")
       result = client.operate(key, [operation])
 
       expect(result.bins).to be_nil
@@ -156,11 +156,11 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
     end
   end
 
-  describe "MapOperation.remove_values" do
+  describe "MapOperation.remove_by_value_list" do
     let(:map_value) { { "a" => 1, "b" => 2, "c" => 3, "d" => 2 } }
 
     it "removes the items identified by a single value" do
-      operation = MapOperation.remove_values(map_bin, 2)
+      operation = MapOperation.remove_by_value_list(map_bin, 2)
       result = client.operate(key, [operation])
 
       expect(result.bins).to be_nil
@@ -168,7 +168,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
     end
 
     it "removes the items identified by a list of values" do
-      operation = MapOperation.remove_values(map_bin, 2, 3)
+      operation = MapOperation.remove_by_value_list(map_bin, 2, 3)
       result = client.operate(key, [operation])
 
       expect(result.bins).to be_nil
@@ -176,11 +176,11 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
     end
   end
 
-  describe "MapOperation.remove_value_range" do
+  describe "MapOperation.remove_by_value_range" do
     let(:map_value) { { "a" => 1, "b" => 2, "c" => 3 } }
 
     it "removes the specified value range from the map" do
-      operation = MapOperation.remove_value_range(map_bin, 2, 3)
+      operation = MapOperation.remove_by_value_range(map_bin, 2, 3)
       result = client.operate(key, [operation])
 
       expect(result.bins).to be_nil
@@ -188,7 +188,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
     end
 
     it "removes all elements starting from the specified start value until the end" do
-      operation = MapOperation.remove_value_range(map_bin, 2)
+      operation = MapOperation.remove_by_value_range(map_bin, 2)
       result = client.operate(key, [operation])
 
       expect(result.bins).to be_nil
@@ -196,7 +196,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
     end
 
     it "removes all elements until the specified end value" do
-      operation = MapOperation.remove_value_range(map_bin, nil, 3)
+      operation = MapOperation.remove_by_value_range(map_bin, nil, 3)
       result = client.operate(key, [operation])
 
       expect(result.bins).to be_nil
@@ -204,11 +204,11 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
     end
   end
 
-  describe "MapOperation.remove_index" do
+  describe "MapOperation.remove_by_index" do
     let(:map_value) { { "a" => 1, "b" => 2, "c" => 3 } }
 
     it "removes a map item identified by index from the map" do
-      operation = MapOperation.remove_index(map_bin, 1)
+      operation = MapOperation.remove_by_index(map_bin, 1)
       result = client.operate(key, [operation])
 
       expect(result.bins).to be_nil
@@ -216,11 +216,11 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
     end
   end
 
-  describe "MapOperation.remove_index_range" do
+  describe "MapOperation.remove_by_index_range" do
     let(:map_value) { { "a" => 1, "b" => 2, "c" => 3 } }
 
     it "removes 'count' map items starting at the specified index from the map" do
-      operation = MapOperation.remove_index_range(map_bin, 1, 2)
+      operation = MapOperation.remove_by_index_range(map_bin, 1, 2)
       result = client.operate(key, [operation])
 
       expect(result.bins).to be_nil
@@ -228,7 +228,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
     end
 
     it "removes all items starting at the specified index to the end of the map" do
-      operation = MapOperation.remove_index_range(map_bin, 1)
+      operation = MapOperation.remove_by_index_range(map_bin, 1)
       result = client.operate(key, [operation])
 
       expect(result.bins).to be_nil
@@ -279,11 +279,11 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
     end
   end
 
-  describe "MapOperation.get_key" do
+  describe "MapOperation.get_by_key" do
     let(:map_value) { { "a" => 1, "b" => 2, "c" => 3 } }
 
     it "gets a single key from the map" do
-      operation = MapOperation.get_key(map_bin, "b")
+      operation = MapOperation.get_by_key(map_bin, "b")
         .and_return(MapReturnType::KEY_VALUE)
       result = client.operate(key, [operation])
 
@@ -291,11 +291,11 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
     end
   end
 
-  describe "MapOperation.get_key_range" do
+  describe "MapOperation.get_by_key_range" do
     let(:map_value) { { "a" => 1, "b" => 2, "c" => 3 } }
 
     it "gets the specified key range from the map" do
-      operation = MapOperation.get_key_range(map_bin, "b", "c")
+      operation = MapOperation.get_by_key_range(map_bin, "b", "c")
         .and_return(MapReturnType::KEY_VALUE)
       result = client.operate(key, [operation])
 
@@ -303,7 +303,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
     end
 
     it "gets all keys from the specified start key until the end" do
-      operation = MapOperation.get_key_range(map_bin, "b")
+      operation = MapOperation.get_by_key_range(map_bin, "b")
         .and_return(MapReturnType::KEY_VALUE)
       result = client.operate(key, [operation])
 
@@ -311,7 +311,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
     end
 
     it "gets all keys from the start to the specified end key" do
-      operation = MapOperation.get_key_range(map_bin, nil, "b")
+      operation = MapOperation.get_by_key_range(map_bin, nil, "b")
         .and_return(MapReturnType::KEY_VALUE)
       result = client.operate(key, [operation])
 
@@ -319,11 +319,11 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
     end
   end
 
-  describe "MapOperation.get_value" do
+  describe "MapOperation.get_by_value" do
     let(:map_value) { { "a" => 1, "b" => 2, "c" => 3, "d" => 2 } }
 
     it "gets the item identified by a single value" do
-      operation = MapOperation.get_value(map_bin, 2)
+      operation = MapOperation.get_by_value(map_bin, 2)
         .and_return(MapReturnType::KEY_VALUE)
       result = client.operate(key, [operation])
 
@@ -331,11 +331,11 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
     end
   end
 
-  describe "MapOperation.get_value_range" do
+  describe "MapOperation.get_by_value_range" do
     let(:map_value) { { "a" => 1, "b" => 2, "c" => 3, "d" => 2} }
 
     it "gets the specified key range from the map" do
-      operation = MapOperation.get_value_range(map_bin, 2, 3)
+      operation = MapOperation.get_by_value_range(map_bin, 2, 3)
         .and_return(MapReturnType::KEY_VALUE)
       result = client.operate(key, [operation])
 
@@ -343,7 +343,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
     end
 
     it "gets all values from the specified start value until the end" do
-      operation = MapOperation.get_value_range(map_bin, 2)
+      operation = MapOperation.get_by_value_range(map_bin, 2)
         .and_return(MapReturnType::KEY_VALUE)
       result = client.operate(key, [operation])
 
@@ -351,7 +351,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
     end
 
     it "gets all values from the start of the map until the specified end value" do
-      operation = MapOperation.get_value_range(map_bin, nil, 3)
+      operation = MapOperation.get_by_value_range(map_bin, nil, 3)
         .and_return(MapReturnType::KEY_VALUE)
       result = client.operate(key, [operation])
 
@@ -359,11 +359,11 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
     end
   end
 
-  describe "MapOperation.get_index" do
+  describe "MapOperation.get_by_index" do
     let(:map_value) { { "a" => 1, "b" => 2, "c" => 3 } }
 
     it "gets a map item identified by index from the map" do
-      operation = MapOperation.get_index(map_bin, 1)
+      operation = MapOperation.get_by_index(map_bin, 1)
         .and_return(MapReturnType::KEY_VALUE)
       result = client.operate(key, [operation])
 
@@ -371,11 +371,11 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
     end
   end
 
-  describe "MapOperation.get_index_range" do
+  describe "MapOperation.get_by_index_range" do
     let(:map_value) { { "c" => 1, "b" => 2, "a" => 3 } }
 
     it "gets 'count' map items starting at the specified index from the map" do
-      operation = MapOperation.get_index_range(map_bin, 1, 2)
+      operation = MapOperation.get_by_index_range(map_bin, 1, 2)
         .and_return(MapReturnType::KEY)
       result = client.operate(key, [operation])
 
@@ -383,7 +383,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
     end
 
     it "gets all items starting at the specified index to the end of the map" do
-      operation = MapOperation.get_index_range(map_bin, 1)
+      operation = MapOperation.get_by_index_range(map_bin, 1)
         .and_return(MapReturnType::KEY)
       result = client.operate(key, [operation])
 
@@ -428,7 +428,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
 
     context "NONE" do
       it "returns nothing" do
-        operation = MapOperation.get_key(map_bin, "a")
+        operation = MapOperation.get_by_key(map_bin, "a")
           .and_return(MapReturnType::NONE)
         result = client.operate(key, [operation])
 
@@ -438,7 +438,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
 
     context "INDEX" do
       it "returns returns the elements index" do
-        operation = MapOperation.get_key(map_bin, "a")
+        operation = MapOperation.get_by_key(map_bin, "a")
           .and_return(MapReturnType::INDEX)
         result = client.operate(key, [operation])
 
@@ -448,7 +448,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
 
     context "REVERSE_INDEX" do
       it "returns the elements reverse index" do
-        operation = MapOperation.get_key(map_bin, "a")
+        operation = MapOperation.get_by_key(map_bin, "a")
           .and_return(MapReturnType::REVERSE_INDEX)
         result = client.operate(key, [operation])
 
@@ -458,7 +458,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
 
     context "RANK" do
       it "returns the elements rank" do
-        operation = MapOperation.get_key(map_bin, "a")
+        operation = MapOperation.get_by_key(map_bin, "a")
           .and_return(MapReturnType::RANK)
         result = client.operate(key, [operation])
 
@@ -468,7 +468,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
 
     context "REVERSE_RANK" do
       it "returns the elements reverse rank" do
-        operation = MapOperation.get_key(map_bin, "a")
+        operation = MapOperation.get_by_key(map_bin, "a")
           .and_return(MapReturnType::REVERSE_RANK)
         result = client.operate(key, [operation])
 
@@ -478,7 +478,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
 
     context "COUNT" do
       it "returns the count of items selected" do
-        operation = MapOperation.get_key_range(map_bin, "a", "c")
+        operation = MapOperation.get_by_key_range(map_bin, "a", "c")
           .and_return(MapReturnType::COUNT)
         result = client.operate(key, [operation])
 
@@ -488,7 +488,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
 
     context "KEY" do
       it "returns the map key" do
-        operation = MapOperation.get_index(map_bin, 0)
+        operation = MapOperation.get_by_index(map_bin, 0)
           .and_return(MapReturnType::KEY)
         result = client.operate(key, [operation])
 
@@ -498,7 +498,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
 
     context "VALUE" do
       it "returns the map value" do
-        operation = MapOperation.get_index(map_bin, 0)
+        operation = MapOperation.get_by_index(map_bin, 0)
           .and_return(MapReturnType::VALUE)
         result = client.operate(key, [operation])
 
@@ -508,7 +508,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
 
     context "KEY_VALUE" do
       it "returns the map key & value" do
-        operation = MapOperation.get_index(map_bin, 0)
+        operation = MapOperation.get_by_index(map_bin, 0)
           .and_return(MapReturnType::KEY_VALUE)
         result = client.operate(key, [operation])
 
