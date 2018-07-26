@@ -15,6 +15,8 @@
 # the License.
 
 require "spec_helper"
+
+include Aerospike
 include Aerospike::CDT
 
 describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-map") do
@@ -22,27 +24,13 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
   let(:client) { Support.client }
   let(:key) { Support.gen_random_key }
   let(:map_bin) { "map" }
-  let(:map_value) { }
-  let(:return_type) { MapReturnType::VALUE }
-  let(:map_order) { MapOrder::UNORDERED }
-  let(:write_mode) { MapWriteMode::UPDATE }
-  let(:map_policy) { MapPolicy.new(order: map_order, write_mode: write_mode) }
+  let(:map_value) { nil }
 
   before(:each) do
     next unless map_value
 
-    case map_order
-    when MapOrder::UNORDERED
-      client.put(key, { map_bin => map_value })
-    else
-      # Use put_items op to create map so that we can control map order.
-      create_policy = MapPolicy.new(
-        order: map_policy.order,
-        write_mode: MapWriteMode::CREATE_ONLY
-      )
-      op = MapOperation.put_items(map_bin, map_value, policy: create_policy)
-      client.operate(key, [op])
-    end
+    create_policy = WritePolicy.new(record_exists_action: RecordExistsAction::CREATE_ONLY)
+    client.put(key, { map_bin => map_value }, create_policy)
   end
 
   def map_post_op
@@ -51,14 +39,12 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
 
   describe "MapOperation.set_policy" do
     let(:map_value) { { "c" => 1, "b" => 2, "a" => 3 } }
-    let(:map_order) { MapOrder::UNORDERED }
 
-    it "changes the map order" do
+    it "sets the map order" do
       new_policy = MapPolicy.new(order: MapOrder::KEY_ORDERED)
       operation = MapOperation.set_policy(map_bin, new_policy)
-      client.operate(key, [operation])
 
-      expect(map_post_op.to_a).to eql([["a", 3], ["b", 2], ["c", 1]])
+      expect { client.operate(key, [operation]) }.not_to raise_error
     end
   end
 
@@ -72,7 +58,6 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
       expect(result.bins[map_bin]).to eql(4)
       expect(map_post_op).to eql({ "a" => 1, "b" => 2, "c" => 3, "x" => 99 })
     end
-
   end
 
   describe "MapOperation.put_items" do
@@ -296,11 +281,10 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
 
   describe "MapOperation.get_key" do
     let(:map_value) { { "a" => 1, "b" => 2, "c" => 3 } }
-    let(:return_type) { MapReturnType::KEY_VALUE }
 
     it "gets a single key from the map" do
       operation = MapOperation.get_key(map_bin, "b")
-        .and_return(return_type)
+        .and_return(MapReturnType::KEY_VALUE)
       result = client.operate(key, [operation])
 
       expect(result.bins[map_bin]).to eql({ "b" => 2 })
@@ -309,11 +293,10 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
 
   describe "MapOperation.get_key_range" do
     let(:map_value) { { "a" => 1, "b" => 2, "c" => 3 } }
-    let(:return_type) { MapReturnType::KEY_VALUE }
 
     it "gets the specified key range from the map" do
       operation = MapOperation.get_key_range(map_bin, "b", "c")
-        .and_return(return_type)
+        .and_return(MapReturnType::KEY_VALUE)
       result = client.operate(key, [operation])
 
       expect(result.bins[map_bin]).to eql({ "b" => 2 })
@@ -321,7 +304,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
 
     it "gets all keys from the specified start key until the end" do
       operation = MapOperation.get_key_range(map_bin, "b")
-        .and_return(return_type)
+        .and_return(MapReturnType::KEY_VALUE)
       result = client.operate(key, [operation])
 
       expect(result.bins[map_bin]).to eql({ "b" => 2, "c" => 3 })
@@ -329,7 +312,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
 
     it "gets all keys from the start to the specified end key" do
       operation = MapOperation.get_key_range(map_bin, nil, "b")
-        .and_return(return_type)
+        .and_return(MapReturnType::KEY_VALUE)
       result = client.operate(key, [operation])
 
       expect(result.bins[map_bin]).to eql({ "a" => 1 })
@@ -338,11 +321,10 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
 
   describe "MapOperation.get_value" do
     let(:map_value) { { "a" => 1, "b" => 2, "c" => 3, "d" => 2 } }
-    let(:return_type) { MapReturnType::KEY_VALUE }
 
     it "gets the item identified by a single value" do
       operation = MapOperation.get_value(map_bin, 2)
-        .and_return(return_type)
+        .and_return(MapReturnType::KEY_VALUE)
       result = client.operate(key, [operation])
 
       expect(result.bins[map_bin]).to eql({ "b" => 2, "d" => 2 })
@@ -351,11 +333,10 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
 
   describe "MapOperation.get_value_range" do
     let(:map_value) { { "a" => 1, "b" => 2, "c" => 3, "d" => 2} }
-    let(:return_type) { MapReturnType::KEY_VALUE }
 
     it "gets the specified key range from the map" do
       operation = MapOperation.get_value_range(map_bin, 2, 3)
-        .and_return(return_type)
+        .and_return(MapReturnType::KEY_VALUE)
       result = client.operate(key, [operation])
 
       expect(result.bins[map_bin]).to eql({ "b" => 2, "d" => 2 })
@@ -363,7 +344,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
 
     it "gets all values from the specified start value until the end" do
       operation = MapOperation.get_value_range(map_bin, 2)
-        .and_return(return_type)
+        .and_return(MapReturnType::KEY_VALUE)
       result = client.operate(key, [operation])
 
       expect(result.bins[map_bin]).to eql({ "b" => 2, "d" => 2, "c" => 3 })
@@ -371,7 +352,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
 
     it "gets all values from the start of the map until the specified end value" do
       operation = MapOperation.get_value_range(map_bin, nil, 3)
-        .and_return(return_type)
+        .and_return(MapReturnType::KEY_VALUE)
       result = client.operate(key, [operation])
 
       expect(result.bins[map_bin]).to eql({ "a" => 1, "b" => 2, "d" => 2 })
@@ -380,11 +361,10 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
 
   describe "MapOperation.get_index" do
     let(:map_value) { { "a" => 1, "b" => 2, "c" => 3 } }
-    let(:return_type) { MapReturnType::KEY_VALUE }
 
     it "gets a map item identified by index from the map" do
       operation = MapOperation.get_index(map_bin, 1)
-        .and_return(return_type)
+        .and_return(MapReturnType::KEY_VALUE)
       result = client.operate(key, [operation])
 
       expect(result.bins[map_bin]).to eql({ "b" => 2 })
@@ -393,11 +373,10 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
 
   describe "MapOperation.get_index_range" do
     let(:map_value) { { "c" => 1, "b" => 2, "a" => 3 } }
-    let(:return_type) { MapReturnType::KEY }
 
     it "gets 'count' map items starting at the specified index from the map" do
       operation = MapOperation.get_index_range(map_bin, 1, 2)
-        .and_return(return_type)
+        .and_return(MapReturnType::KEY)
       result = client.operate(key, [operation])
 
       expect(result.bins[map_bin]).to eql([ "b", "c" ])
@@ -405,7 +384,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
 
     it "gets all items starting at the specified index to the end of the map" do
       operation = MapOperation.get_index_range(map_bin, 1)
-        .and_return(return_type)
+        .and_return(MapReturnType::KEY)
       result = client.operate(key, [operation])
 
       expect(result.bins[map_bin]).to eql([ "b", "c" ])
@@ -414,11 +393,10 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
 
   describe "MapOperation.get_by_rank" do
     let(:map_value) { { "a" => 1, "b" => 2, "c" => 3 } }
-    let(:return_type) { MapReturnType::KEY_VALUE }
 
     it "gets a map item identified by rank from the map" do
       operation = MapOperation.get_by_rank(map_bin, 1)
-        .and_return(return_type)
+        .and_return(MapReturnType::KEY_VALUE)
       result = client.operate(key, [operation])
 
       expect(result.bins[map_bin]).to eql({ "b" => 2 })
@@ -427,11 +405,10 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
 
   describe "MapOperation.get_by_rank_range" do
     let(:map_value) { { "a" => 3, "b" => 2, "c" => 1 } }
-    let(:return_type) { MapReturnType::KEY }
 
     it "gets 'count' map items starting at the specified rank from the map" do
       operation = MapOperation.get_by_rank_range(map_bin, 1, 2)
-        .and_return(return_type)
+        .and_return(MapReturnType::KEY)
       result = client.operate(key, [operation])
 
       expect(result.bins[map_bin]).to eql([ "b", "a" ])
@@ -439,7 +416,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
 
     it "gets all items starting at the specified rank to the end of the map" do
       operation = MapOperation.get_by_rank_range(map_bin, 1)
-        .and_return(return_type)
+        .and_return(MapReturnType::KEY)
       result = client.operate(key, [operation])
 
       expect(result.bins[map_bin]).to eql([ "b", "a" ])
@@ -448,7 +425,6 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
 
   context "MapReturnType" do
     let(:map_value) { { "a" => 3, "b" => 2, "c" => 1 } }
-    let(:map_order) { MapOrder::KEY_ORDERED }
 
     context "NONE" do
       it "returns nothing" do
@@ -461,7 +437,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
     end
 
     context "INDEX" do
-      it "returns key index" do
+      it "returns returns the elements index" do
         operation = MapOperation.get_key(map_bin, "a")
           .and_return(MapReturnType::INDEX)
         result = client.operate(key, [operation])
@@ -471,7 +447,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
     end
 
     context "REVERSE_INDEX" do
-      it "returns reverse key index" do
+      it "returns the elements reverse index" do
         operation = MapOperation.get_key(map_bin, "a")
           .and_return(MapReturnType::REVERSE_INDEX)
         result = client.operate(key, [operation])
@@ -481,7 +457,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
     end
 
     context "RANK" do
-      it "returns value order (rank)" do
+      it "returns the elements rank" do
         operation = MapOperation.get_key(map_bin, "a")
           .and_return(MapReturnType::RANK)
         result = client.operate(key, [operation])
@@ -491,7 +467,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
     end
 
     context "REVERSE_RANK" do
-      it "returns reverse value order (reverse rank)" do
+      it "returns the elements reverse rank" do
         operation = MapOperation.get_key(map_bin, "a")
           .and_return(MapReturnType::REVERSE_RANK)
         result = client.operate(key, [operation])
@@ -501,7 +477,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
     end
 
     context "COUNT" do
-      it "returns count of items selected" do
+      it "returns the count of items selected" do
         operation = MapOperation.get_key_range(map_bin, "a", "c")
           .and_return(MapReturnType::COUNT)
         result = client.operate(key, [operation])
@@ -541,35 +517,9 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
     end
   end
 
-  context "MapOrder" do
-    let(:map_value) { { "c" => 1, "b" => 2, "a" => 3 } }
-    let(:ordered_key_values) do
-      ops = [
-        MapOperation.set_policy(map_bin, map_policy),
-        MapOperation.get_by_key_range(map_bin, "a")
-          .and_return(MapReturnType::KEY_VALUE)
-      ]
-      result = client.operate(key, ops)
-      result.bins[map_bin].to_a
-    end
-
-    context "UNORDERED" do
-      let(:map_order) { MapOrder::UNORDERED }
-      it { expect(ordered_key_values).to eql([["c", 1], ["b", 2], ["a", 3]]) }
-    end
-
-    context "KEY_ORDERED" do
-      let(:map_order) { MapOrder::KEY_ORDERED }
-      it { expect(ordered_key_values).to eql([["a", 3], ["b", 2], ["c", 1]]) }
-    end
-
-    context "KEY_VALUE_ORDERED" do
-      let(:map_order) { MapOrder::KEY_VALUE_ORDERED }
-      it { expect(ordered_key_values).to eql([["a", 3], ["b", 2], ["c", 1]]) }
-    end
-  end
-
   context "MapWriteMode" do
+    let(:write_mode) { MapWriteMode::UPDATE }
+    let(:map_policy) { MapPolicy.new(write_mode: write_mode) }
     let(:operation) { MapOperation.put(map_bin, "b", 99, policy: map_policy) }
 
     context "UPDATE" do
