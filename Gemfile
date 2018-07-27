@@ -11,15 +11,14 @@ end
 
 gem 'rake'
 gem 'bcrypt'
+gem 'msgpack', '~> 1.2'
 
 platforms :mri, :rbx do
-  gem 'msgpack', '~> 1.0'
   gem 'openssl'
 end
 
 platforms :jruby do
-  gem 'msgpack-jruby', require: 'msgpack'
-  gem 'jruby-openssl'
+  gem 'jruby-openssl', '~> 0.10', require: 'openssl'
 end
 
 gemspec
