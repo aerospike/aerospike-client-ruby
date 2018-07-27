@@ -224,7 +224,7 @@ describe Aerospike::Client do
         key = Support.gen_random_key
         value = {
           "string" => nil,
-          rand(2**63) => {2 => 11},
+          rand(2**31) => {2 => 11},
           [1, nil, 'this'] => {nil => "nihilism"},
           nil => ["embedded array", 1984, nil, {2 => 'string'}],
           {11 => [11, 'str']} => nil,
@@ -233,7 +233,7 @@ describe Aerospike::Client do
         bin = Aerospike::Bin.new('bin', value)
         client.put(key, bin)
         record = client.get(key)
-        expect(record.bins['bin']).to eq value
+        expect(record.bins['bin']).to eql value
       end
 
       it "should convert symbols to strings in MAP bin values" do
