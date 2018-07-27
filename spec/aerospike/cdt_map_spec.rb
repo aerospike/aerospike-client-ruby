@@ -108,22 +108,28 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
     end
   end
 
-  describe "MapOperation.remove_by_key_list" do
+  describe "MapOperation.remove_by_key" do
     let(:map_value) { { "a" => 1, "b" => 2, "c" => 3 } }
 
     it "removes a single key from the map" do
-      operation = MapOperation.remove_by_key_list(map_bin, "b")
+      operation = MapOperation.remove_by_key(map_bin, "b")
+        .and_return(MapReturnType::VALUE)
       result = client.operate(key, [operation])
 
-      expect(result.bins).to be_nil
+      expect(result.bins[map_bin]).to be(2)
       expect(map_post_op).to eql({ "a" => 1, "c" => 3 })
     end
+  end
+
+  describe "MapOperation.remove_by_key_list" do
+    let(:map_value) { { "a" => 1, "b" => 2, "c" => 3 } }
 
     it "removes a list of keys from the map" do
-      operation = MapOperation.remove_by_key_list(map_bin, "a", "b")
+      operation = MapOperation.remove_by_key_list(map_bin, ["a", "b"])
+        .and_return(MapReturnType::VALUE)
       result = client.operate(key, [operation])
 
-      expect(result.bins).to be_nil
+      expect(result.bins[map_bin]).to contain_exactly(1, 2)
       expect(map_post_op).to eql({ "c" => 3 })
     end
   end
@@ -156,22 +162,50 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
     end
   end
 
-  describe "MapOperation.remove_by_value_list" do
+  describe "MapOperation.remove_by_key_rel_index_range" do
+    let(:map_value) { { "a" => 17, "e" => 2, "f" => 15, "j" => 10 } }
+
+    it "removes specified number of elements" do
+      operation = MapOperation.remove_by_key_rel_index_range(map_bin, "f", 1, 2)
+        .and_return(MapReturnType::KEY)
+      result = client.operate(key, [operation])
+
+      expect(result.bins[map_bin]).to contain_exactly("j")
+      expect(map_post_op).to eql({ "a" => 17, "e" => 2, "f" => 15 })
+    end
+
+    it "removes elements from specified key until the end" do
+      operation = MapOperation.remove_by_key_rel_index_range(map_bin, "f", 1)
+        .and_return(MapReturnType::KEY)
+      result = client.operate(key, [operation])
+
+      expect(result.bins[map_bin]).to contain_exactly("j")
+      expect(map_post_op).to eql({ "a" => 17, "e" => 2, "f" => 15 })
+    end
+  end
+
+  describe "MapOperation.remove_by_value" do
     let(:map_value) { { "a" => 1, "b" => 2, "c" => 3, "d" => 2 } }
 
     it "removes the items identified by a single value" do
-      operation = MapOperation.remove_by_value_list(map_bin, 2)
+      operation = MapOperation.remove_by_value(map_bin, 2)
+          .and_return(MapReturnType::KEY)
       result = client.operate(key, [operation])
 
-      expect(result.bins).to be_nil
+      expect(result.bins[map_bin]).to eql(["b", "d"])
       expect(map_post_op).to eql({ "a" => 1, "c" => 3 })
     end
+  end
+
+  describe "MapOperation.remove_by_value_list" do
+    let(:map_value) { { "a" => 1, "b" => 2, "c" => 3, "d" => 2 } }
 
     it "removes the items identified by a list of values" do
-      operation = MapOperation.remove_by_value_list(map_bin, 2, 3)
+      operation = MapOperation.remove_by_value_list(map_bin, [2, 3])
+        .and_return(MapReturnType::KEY)
       result = client.operate(key, [operation])
 
-      expect(result.bins).to be_nil
+      expect(result.bins[map_bin]).to contain_exactly("b", "c", "d")
       expect(map_post_op).to eql({ "a" => 1 })
     end
   end
@@ -201,6 +235,28 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
 
       expect(result.bins).to be_nil
       expect(map_post_op).to eql({ "c" => 3 })
+    end
+  end
+
+  describe "MapOperation.remove_by_value_rel_rank_range" do
+    let(:map_value) { { 4 => 2, 9 => 10, 5 => 15, 0 => 17 } }
+
+    it "removes specified number of elements" do
+      operation = MapOperation.remove_by_value_rel_rank_range(map_bin, 11, -1, 1)
+        .and_return(MapReturnType::KEY_VALUE)
+      result = client.operate(key, [operation])
+
+      expect(result.bins[map_bin]).to eql({ 9 => 10 })
+      expect(map_post_op).to eql({ 4 => 2, 5  => 15, 0 => 17 })
+    end
+
+    it "removes elements from specified key until the end" do
+      operation = MapOperation.remove_by_value_rel_rank_range(map_bin, 11, -1)
+        .and_return(MapReturnType::KEY_VALUE)
+      result = client.operate(key, [operation])
+
+      expect(result.bins[map_bin]).to eql({ 9 => 10, 5 => 15, 0 => 17 })
+      expect(map_post_op).to eql({ 4 => 2 })
     end
   end
 
@@ -291,6 +347,18 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
     end
   end
 
+  describe "MapOperation.get_by_key_list" do
+    let(:map_value) { { "a" => 1, "b" => 2, "c" => 3 } }
+
+    it "gets a list of keys from the map" do
+      operation = MapOperation.get_by_key_list(map_bin, ["b", "c"])
+        .and_return(MapReturnType::VALUE)
+      result = client.operate(key, [operation])
+
+      expect(result.bins[map_bin]).to contain_exactly(2, 3)
+    end
+  end
+
   describe "MapOperation.get_by_key_range" do
     let(:map_value) { { "a" => 1, "b" => 2, "c" => 3 } }
 
@@ -319,6 +387,26 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
     end
   end
 
+  describe "MapOperation.get_by_key_rel_index_range" do
+    let(:map_value) { { "a" => 17, "e" => 2, "f" => 15, "j" => 10 } }
+
+    it "gets specified number of elements" do
+      operation = MapOperation.get_by_key_rel_index_range(map_bin, "f", 1, 2)
+        .and_return(MapReturnType::KEY)
+      result = client.operate(key, [operation])
+
+      expect(result.bins[map_bin]).to contain_exactly("j")
+    end
+
+    it "get elements from specified key until the end" do
+      operation = MapOperation.get_by_key_rel_index_range(map_bin, "f", 1)
+        .and_return(MapReturnType::KEY)
+      result = client.operate(key, [operation])
+
+      expect(result.bins[map_bin]).to contain_exactly("j")
+    end
+  end
+
   describe "MapOperation.get_by_value" do
     let(:map_value) { { "a" => 1, "b" => 2, "c" => 3, "d" => 2 } }
 
@@ -328,6 +416,18 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
       result = client.operate(key, [operation])
 
       expect(result.bins[map_bin]).to eql({ "b" => 2, "d" => 2 })
+    end
+  end
+
+  describe "MapOperation.get_by_value_list" do
+    let(:map_value) { { "a" => 1, "b" => 2, "c" => 3, "d" => 2 } }
+
+    it "gets the items identified by a list of values" do
+      operation = MapOperation.get_by_value_list(map_bin, [2, 3])
+        .and_return(MapReturnType::KEY_VALUE)
+      result = client.operate(key, [operation])
+
+      expect(result.bins[map_bin]).to eql({ "b" => 2, "c" => 3, "d" => 2 })
     end
   end
 
@@ -356,6 +456,26 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
       result = client.operate(key, [operation])
 
       expect(result.bins[map_bin]).to eql({ "a" => 1, "b" => 2, "d" => 2 })
+    end
+  end
+
+  describe "MapOperation.get_by_value_rel_rank_range" do
+    let(:map_value) { { 4 => 2, 9 => 10, 5 => 15, 0 => 17 } }
+
+    it "gets specified number of elements" do
+      operation = MapOperation.get_by_value_rel_rank_range(map_bin, 11, -1, 1)
+        .and_return(MapReturnType::KEY_VALUE)
+      result = client.operate(key, [operation])
+
+      expect(result.bins[map_bin]).to eql({ 9 => 10 })
+    end
+
+    it "gets elements from specified key until the end" do
+      operation = MapOperation.get_by_value_rel_rank_range(map_bin, 11, -1)
+        .and_return(MapReturnType::KEY_VALUE)
+      result = client.operate(key, [operation])
+
+      expect(result.bins[map_bin]).to eql({ 9 => 10, 5 => 15, 0 => 17 })
     end
   end
 
