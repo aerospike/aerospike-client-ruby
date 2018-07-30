@@ -1,3 +1,13 @@
+Unreleased
+==========
+
+* **New Features**
+  * Support latest CDT List/Map server-side operations: [[#69](https://github.com/aerospike/aerospike-client-ruby/pull/69)]
+    * Operations on Ordered Lists & Bounded Lists via new List Policy. (Requires server version v3.16.0 or later.)
+    * Option to invert selection criteria for certain List/Map get/remove operations. (Requires server version v3.16.0 or later.)
+    * List/Map index/rank relative get/remove operations. (Requires server version v4.3.0 or later.)
+    * Partial list/map updates using PARTIAL / NO_FAIL write flags. (Requires server version v4.3.0 or later.)
+
 v2.7.0 / 2018-04-12
 ===================
 
