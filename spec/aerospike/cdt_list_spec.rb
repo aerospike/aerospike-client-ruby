@@ -385,7 +385,7 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?("cdt-
     end
   end
 
-  describe "ListOperation.get_by_value_rel_rank_range" do
+  describe "ListOperation.get_by_value_rel_rank_range", skip: !Support.min_version?("4.3") do
     let(:list_value) { [0, 4, 5, 9, 11, 15] }
 
     it "returns the values of the items nearest to and greater than the specified value, by relative rank range" do
@@ -532,7 +532,7 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?("cdt-
     end
   end
 
-  describe "ListOperation.remove_by_value_rel_rank_range" do
+  describe "ListOperation.remove_by_value_rel_rank_range", skip: !Support.min_version?("4.3") do
     let(:list_value) { [0, 4, 5, 9, 11, 15] }
 
     it "removes the values of the items nearest to and greater than the specified value, by relative rank range" do
@@ -649,7 +649,7 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?("cdt-
         expect { client.operate(key, [operation]) }.to raise_error(/Element already exists/)
       end
 
-      context "with no-fail flag" do
+      context "with no-fail flag", skip: !Support.min_version?("4.3") do
         let(:write_flags) { ListWriteFlags::ADD_UNIQUE | ListWriteFlags::NO_FAIL }
 
         it "does not modify the list but returns ok" do

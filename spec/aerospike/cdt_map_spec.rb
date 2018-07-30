@@ -387,7 +387,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
     end
   end
 
-  describe "MapOperation.get_by_key_rel_index_range" do
+  describe "MapOperation.get_by_key_rel_index_range", skip: !Support.min_version?("4.3") do
     let(:map_value) { { "a" => 17, "e" => 2, "f" => 15, "j" => 10 } }
 
     it "gets specified number of elements" do
@@ -459,7 +459,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
     end
   end
 
-  describe "MapOperation.get_by_value_rel_rank_range" do
+  describe "MapOperation.get_by_value_rel_rank_range", skip: !Support.min_version?("4.3") do
     let(:map_value) { { 4 => 2, 9 => 10, 5 => 15, 0 => 17 } }
 
     it "gets specified number of elements" do
