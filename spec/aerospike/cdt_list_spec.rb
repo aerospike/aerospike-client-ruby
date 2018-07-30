@@ -685,7 +685,14 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?("cdt-
         expect(list_post_op).to eql([1, 2, 3, 6, 4, 5])
       end
 
-      it "throws an error when trying to insert an item outside the existing list boundaries" do
+      it "fails silently when trying to insert an item outside the existing list boundaries", skip: Support.min_version?("4.3") do
+        operation = ListOperation.insert(list_bin, 99, 6, policy: list_policy)
+
+        expect { client.operate(key, [operation]) }.not_to raise_error
+        expect(list_post_op).to eql([1, 2, 3, 4, 5])
+      end
+
+      it "throws an error when trying to insert an item outside the existing list boundaries", skip: !Support.min_version?("4.3") do
         operation = ListOperation.insert(list_bin, 99, 6, policy: list_policy)
 
         expect { client.operate(key, [operation]) }.to raise_error(/Parameter error/)
