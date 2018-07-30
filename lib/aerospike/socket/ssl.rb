@@ -17,6 +17,8 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
+require 'openssl'
+
 module Aerospike
   module Socket
     class SSL < ::OpenSSL::SSL::SSLSocket
