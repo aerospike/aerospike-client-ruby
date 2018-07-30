@@ -614,7 +614,7 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?("cdt-
     end
   end
 
-  describe "InvertibleListOp#invert_selection" do
+  describe "InvertibleListOp#invert_selection", skip: !Support.min_version?("3.16") do
     let(:list_value) { [1, 4, 2, 3, 5, 1, 2] }
 
     it "inverts the selection of items affected by the operation" do
@@ -628,7 +628,7 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?("cdt-
     end
   end
 
-  describe "ListPolicy" do
+  describe "ListPolicy", skip: !Support.min_version?("3.16") do
 
     context "ordered list" do
       let(:list_value) { [5, 4, 3, 2, 1] }

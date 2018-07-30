@@ -162,7 +162,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
     end
   end
 
-  describe "MapOperation.remove_by_key_rel_index_range" do
+  describe "MapOperation.remove_by_key_rel_index_range", skip: !Support.min_version?("4.3") do
     let(:map_value) { { "a" => 17, "e" => 2, "f" => 15, "j" => 10 } }
 
     it "removes specified number of elements" do
@@ -238,7 +238,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
     end
   end
 
-  describe "MapOperation.remove_by_value_rel_rank_range" do
+  describe "MapOperation.remove_by_value_rel_rank_range", skip: !Support.min_version?("4.3") do
     let(:map_value) { { 4 => 2, 9 => 10, 5 => 15, 0 => 17 } }
 
     it "removes specified number of elements" do
@@ -733,6 +733,160 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
             client.operate(key, [operation])
 
             expect(map_post_op).to eql({ "a" => 1, "b" => 99, "c" => 3 })
+          end
+        end
+      end
+    end
+  end
+
+  context "MapWriteFlags", skip: !Support.min_version?("4.3") do
+    let(:write_flags) { MapWriteFlags::DEFAULT }
+    let(:map_policy) { MapPolicy.new(flags: write_flags) }
+    let(:operation) { MapOperation.put(map_bin, "b", 99, policy: map_policy) }
+
+    context "DEFAULT" do
+      let(:write_flags) { MapWriteFlags::DEFAULT }
+
+      context "map does not exist" do
+        it "creates a new map" do
+          client.operate(key, [operation])
+
+          expect(map_post_op).to eql({ "b" => 99 })
+        end
+      end
+
+      context "map exists" do
+        context "element exists" do
+          let(:map_value) { { "a" => 1, "b" => 2, "c" => 3 } }
+
+          it "updates the element" do
+            client.operate(key, [operation])
+
+            expect(map_post_op).to eql({ "a" => 1, "b" => 99, "c" => 3 })
+          end
+        end
+
+        context "element does not exist" do
+          let(:map_value) { { "a" => 1, "c" => 3 } }
+
+          it "creates the element" do
+            client.operate(key, [operation])
+
+            expect(map_post_op).to eql({ "a" => 1, "b" => 99, "c" => 3 })
+          end
+        end
+      end
+    end
+
+    context "CREATE_ONLY" do
+      let(:write_flags) { MapWriteFlags::CREATE_ONLY }
+
+      context "map does not exist" do
+        it "creates a new map" do
+          client.operate(key, [operation])
+
+          expect(map_post_op).to eql({ "b" => 99 })
+        end
+      end
+
+      context "map exists" do
+        context "element exists" do
+          let(:map_value) { { "a" => 1, "b" => 2, "c" => 3 } }
+
+          it "returns an error" do
+            expect { client.operate(key, [operation]) }.to raise_error(/Element already exists/)
+          end
+
+          context "NO_FAIL" do
+            let(:write_flags) { MapWriteFlags::CREATE_ONLY | MapWriteFlags::NO_FAIL }
+
+            it "succeeds, but does not update the element" do
+              client.operate(key, [operation])
+
+              expect(map_post_op).to eql({ "a" => 1, "b" => 2, "c" => 3 })
+            end
+
+            context "PARTIAL" do
+              let(:write_flags) { MapWriteFlags::CREATE_ONLY | MapWriteFlags::NO_FAIL | MapWriteFlags::PARTIAL }
+              let(:operation) { MapOperation.put_items(map_bin, { "b" => 99, "d" => 4 }, policy: map_policy) }
+
+              it "inserts the unique items" do
+                client.operate(key, [operation])
+
+                expect(map_post_op).to eql({ "a" => 1, "b" => 2, "c" => 3, "d" => 4 })
+              end
+            end
+          end
+        end
+
+        context "element does not exist" do
+          let(:map_value) { { "a" => 1, "c" => 3 } }
+
+          it "adds the element" do
+            client.operate(key, [operation])
+
+            expect(map_post_op).to eql({ "a" => 1, "b" => 99, "c" => 3 })
+          end
+        end
+      end
+    end
+
+    context "UPDATE_ONLY" do
+      let(:write_flags) { MapWriteFlags::UPDATE_ONLY }
+
+      context "map does not exist" do
+        it "returns an error" do
+          expect { client.operate(key, [operation]) }.to raise_error(/Element not found/)
+        end
+
+        context "NO_FAIL" do
+          let(:write_flags) { MapWriteFlags::UPDATE_ONLY | MapWriteFlags::NO_FAIL }
+
+          it "succeeds, but does not insert the element" do
+            client.operate(key, [operation])
+
+            expect(map_post_op).to eql({})
+          end
+        end
+      end
+
+      context "map exists" do
+        context "element exists" do
+          let(:map_value) { { "a" => 1, "b" => 2, "c" => 3 } }
+
+          it "updates the element" do
+            client.operate(key, [operation])
+
+            expect(map_post_op).to eql({ "a" => 1, "b" => 99, "c" => 3 })
+          end
+        end
+
+        context "element does not exist" do
+          let(:map_value) { { "a" => 1, "c" => 3 } }
+
+          it "returns an error" do
+            expect { client.operate(key, [operation]) }.to raise_error(/Element not found/)
+          end
+
+          context "NO_FAIL" do
+            let(:write_flags) { MapWriteFlags::UPDATE_ONLY | MapWriteFlags::NO_FAIL }
+
+            it "does not insert the element" do
+              client.operate(key, [operation])
+
+              expect(map_post_op).to eql({ "a" => 1, "c" => 3 })
+            end
+
+            context "PARTIAL" do
+              let(:write_flags) { MapWriteFlags::UPDATE_ONLY | MapWriteFlags::NO_FAIL | MapWriteFlags::PARTIAL }
+              let(:operation) { MapOperation.put_items(map_bin, { "b" => 99, "c" => 100 }, policy: map_policy) }
+
+              it "updates the existing elements" do
+                client.operate(key, [operation])
+
+                expect(map_post_op).to eql({ "a" => 1, "c" => 100 })
+              end
+            end
           end
         end
       end

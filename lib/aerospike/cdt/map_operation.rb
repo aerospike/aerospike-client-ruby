@@ -81,16 +81,20 @@ module Aerospike
       # Server writes key/value item to map bin and returns map size.
       #
       # The map policy dictates the type of map to create when it does not exist.
-      # The map policy also specifies the mode used when writing items to the map.
+      # The map policy also specifies the flags used when writing items to the map.
       def self.put(bin_name, key, value, policy: MapPolicy::DEFAULT)
-        case policy.write_mode
-        when MapWriteMode::UPDATE_ONLY
-          # Replace doesn't allow map order because it does not create on non-existing key.
-          MapOperation.new(Operation::CDT_MODIFY, REPLACE, bin_name, key, value)
-        when MapWriteMode::CREATE_ONLY
-          MapOperation.new(Operation::CDT_MODIFY, ADD, bin_name, key, value, policy.order)
+        if policy.flags != MapWriteFlags::DEFAULT
+          MapOperation.new(Operation::CDT_MODIFY, PUT, bin_name, key, value, policy.order, policy.flags)
         else
-          MapOperation.new(Operation::CDT_MODIFY, PUT, bin_name, key, value, policy.order)
+          case policy.write_mode
+          when MapWriteMode::UPDATE_ONLY
+            # Replace doesn't allow map order because it does not create on non-existing key.
+            MapOperation.new(Operation::CDT_MODIFY, REPLACE, bin_name, key, value)
+          when MapWriteMode::CREATE_ONLY
+            MapOperation.new(Operation::CDT_MODIFY, ADD, bin_name, key, value, policy.order)
+          else
+            MapOperation.new(Operation::CDT_MODIFY, PUT, bin_name, key, value, policy.order)
+          end
         end
       end
 
@@ -99,16 +103,20 @@ module Aerospike
       # Server writes each map item to map bin and returns map size.
       #
       # The map policy dictates the type of map to create when it does not exist.
-      # The map policy also specifies the mode used when writing items to the map.
+      # The map policy also specifies the flags used when writing items to the map.
       def self.put_items(bin_name, values, policy: MapPolicy::DEFAULT)
-        case policy.write_mode
-        when MapWriteMode::UPDATE_ONLY
-          # Replace doesn't allow map order because it does not create on non-existing key.
-          MapOperation.new(Operation::CDT_MODIFY, REPLACE_ITEMS, bin_name, values)
-        when MapWriteMode::CREATE_ONLY
-          MapOperation.new(Operation::CDT_MODIFY, ADD_ITEMS, bin_name, values, policy.order)
+        if policy.flags != MapWriteFlags::DEFAULT
+          MapOperation.new(Operation::CDT_MODIFY, PUT_ITEMS, bin_name, values, policy.order, policy.flags)
         else
-          MapOperation.new(Operation::CDT_MODIFY, PUT_ITEMS, bin_name, values, policy.order)
+          case policy.write_mode
+          when MapWriteMode::UPDATE_ONLY
+            # Replace doesn't allow map order because it does not create on non-existing key.
+            MapOperation.new(Operation::CDT_MODIFY, REPLACE_ITEMS, bin_name, values)
+          when MapWriteMode::CREATE_ONLY
+            MapOperation.new(Operation::CDT_MODIFY, ADD_ITEMS, bin_name, values, policy.order)
+          else
+            MapOperation.new(Operation::CDT_MODIFY, PUT_ITEMS, bin_name, values, policy.order)
+          end
         end
       end
 

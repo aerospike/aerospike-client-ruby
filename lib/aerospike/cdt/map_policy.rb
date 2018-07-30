@@ -1,5 +1,5 @@
 # encoding: utf-8
-# Copyright 2016-2017 Aerospike, Inc.
+# Copyright 2016-2018 Aerospike, Inc.
 #
 # Portions may be licensed to Aerospike, Inc. under one or more contributor
 # license agreements.
@@ -16,22 +16,22 @@
 
 module Aerospike
   module CDT
-
     class MapPolicy
 
-      attr_accessor :order, :write_mode
+      attr_accessor :order, :write_mode, :flags
 
-      def initialize(order: nil, write_mode: nil)
+      def initialize(order: nil, write_mode: nil, flags: nil)
+        if write_mode && flags
+          raise ArgumentError, "Use write mode for server versions < 4.3; use write flags for server versions >= 4.3."
+        end
+
         @order = order || MapOrder::DEFAULT
         @write_mode = write_mode || MapWriteMode::DEFAULT
+        @flags = flags || MapWriteFlags::DEFAULT
       end
 
       DEFAULT = MapPolicy.new
 
-      def value
-        order.to_int
-      end
     end
-
   end
 end

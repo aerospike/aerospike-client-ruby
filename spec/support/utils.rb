@@ -20,6 +20,7 @@ require 'aerospike/key'
 module Support
 
   RAND_CHARS = ('a'..'z').to_a.concat(('A'..'Z').to_a).concat(('0'..'9').to_a)
+  VERSION_REGEX = /\d+(?:.\d+)+(:?-\d+)?(?:-[a-z0-9]{8})?/
 
   def self.rand_string(len)
     RAND_CHARS.shuffle[0,len].join
@@ -70,8 +71,9 @@ EOF
   def self.version
     @cluster_version ||=
       begin
-        version = self.client.request_info("version")["version"]
-        version = version[/\d+(?:.\d+)+(:?-\d+)?(?:-[a-z0-9]{8})?/]
+        version = ENV['AEROSPIKE_VERSION_OVERRIDE']
+        version ||= self.client.request_info("version")["version"]
+        version = version[VERSION_REGEX]
         Gem::Version.new(version).release
       end
   end
