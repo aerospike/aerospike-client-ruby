@@ -543,6 +543,52 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?("cdt-m
     end
   end
 
+  context "legacy operations" do
+    describe "MapOperation.remove_keys" do
+      let(:map_value) { { "a" => 1, "b" => 2, "c" => 3 } }
+
+      it "removes a single key from the map" do
+        operation = MapOperation.remove_keys(map_bin, "b")
+          .and_return(MapReturnType::VALUE)
+        result = client.operate(key, [operation])
+
+        expect(result.bins[map_bin]).to be(2)
+        expect(map_post_op).to eql({ "a" => 1, "c" => 3 })
+      end
+
+      it "removes multiple keys from the map" do
+        operation = MapOperation.remove_keys(map_bin, "b", "c")
+          .and_return(MapReturnType::VALUE)
+        result = client.operate(key, [operation])
+
+        expect(result.bins[map_bin]).to contain_exactly(2, 3)
+        expect(map_post_op).to eql({ "a" => 1 })
+      end
+    end
+
+    describe "MapOperation.remove_values" do
+      let(:map_value) { { "a" => 1, "b" => 2, "c" => 3, "d" => 2 } }
+
+      it "removes the items identified by a single value" do
+        operation = MapOperation.remove_values(map_bin, 2)
+          .and_return(MapReturnType::KEY)
+        result = client.operate(key, [operation])
+
+        expect(result.bins[map_bin]).to contain_exactly("b", "d")
+        expect(map_post_op).to eql({ "a" => 1, "c" => 3 })
+      end
+
+      it "removes the items identified by multiple values" do
+        operation = MapOperation.remove_values(map_bin, 2, 3)
+          .and_return(MapReturnType::KEY)
+        result = client.operate(key, [operation])
+
+        expect(result.bins[map_bin]).to contain_exactly("b", "c", "d")
+        expect(map_post_op).to eql({ "a" => 1 })
+      end
+    end
+  end
+
   context "MapReturnType" do
     let(:map_value) { { "a" => 3, "b" => 2, "c" => 1 } }
 
