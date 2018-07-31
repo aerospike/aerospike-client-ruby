@@ -171,16 +171,13 @@ module Aerospike
 
       ##
       # Create list trim operation.
+      #
       # Server removes items in list bin that do not fall into range specified
-      # by index and count. If count is not specified, server will keep all
-      # items starting at the specified index to the end of the list.
+      # by index and count.
+      #
       # Server returns number of items removed.
-      def self.trim(bin_name, index, count=nil)
-        if count
-          ListOperation.new(Operation::CDT_MODIFY, TRIM, bin_name, index, count)
-        else
-          ListOperation.new(Operation::CDT_MODIFY, TRIM, bin_name, index)
-        end
+      def self.trim(bin_name, index, count)
+        ListOperation.new(Operation::CDT_MODIFY, TRIM, bin_name, index, count)
       end
 
       ##
