@@ -35,16 +35,8 @@ module Aerospike
       end
 
       def read_from_socket(length)
-        begin
+        with_timeout(@timeout) do
           read_nonblock(length)
-        rescue ::IO::WaitReadable => e
-          if ::IO::select([self], nil, nil, @timeout)
-            retry
-          else
-            raise ::Aerospike::Exceptions::Connection.new("#{e}")
-          end
-        rescue => e
-          raise ::Aerospike::Exceptions::Connection.new("#{e}")
         end
       end
 
@@ -56,16 +48,8 @@ module Aerospike
       end
 
       def write_to_socket(data)
-        begin
+        with_timeout(@timeout) do
           write_nonblock(data)
-        rescue ::IO::WaitWritable => e
-          if ::IO::select(nil, [self], nil, @timeout)
-            retry
-          else
-            raise ::Aerospike::Exceptions::Connection.new("#{e}")
-          end
-        rescue => e
-          raise ::Aerospike::Exceptions::Connection.new("#{e}")
         end
       end
 
@@ -100,6 +84,29 @@ module Aerospike
       def close
         return if closed?
         super()
+      end
+
+      private
+
+      # Note: For SSL connections, read_nonblock may invoke write system call,
+      # which may raise IO::WaitWritable, and vice versa, due to SSL
+      # renegotiation, so we should always rescue both.
+      def with_timeout(timeout, &block)
+        block.call
+      rescue IO::WaitReadable => e
+        if IO::select([self], nil, nil, timeout)
+          retry
+        else
+          fail Aerospike::Exceptions::Connection, "Socket timeout: #{e}"
+        end
+      rescue IO::WaitWritable => e
+        if IO::select(nil, [self], nil, timeout)
+          retry
+        else
+          fail Aerospike::Exceptions::Connection, "Socket timeout: #{e}"
+        end
+      rescue => e
+        raise Aerospike::Exceptions::Connection, "Socket error: #{e}"
       end
     end
   end
