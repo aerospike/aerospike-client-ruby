@@ -77,19 +77,14 @@ module Aerospike
         !closed?
       end
 
-      # Returns whether the connection to the server is alive
+      # Returns whether the connection to the server is alive.
       #
       # It is useful to call this method before making a call to the server
-      # that would change data on the server
+      # that would change data on the server.
       #
       # Note: This method is only useful if the server closed the connection or
-      #       if a previous connection failure occurred.
-      #       If the server is hard killed this will still return true until one
-      #       or more writes are attempted
-      #
-      # Note: In testing the overhead of this call is rather low, with the ability to
-      # make about 120,000 calls per second against an active connection.
-      # I.e. About 8.3 micro seconds per call
+      # if a previous connection failure occurred. If the server is hard killed
+      # this will still return true until one or more writes are attempted.
       def alive?
         return false if closed?
 
