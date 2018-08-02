@@ -24,7 +24,7 @@ module Aerospike
   class Key
 
     @@digest_pool = Pool.new
-    @@digest_pool.create_block = Proc.new do
+    @@digest_pool.create_proc = Proc.new do
       if RUBY_PLATFORM == 'java'
         OpenSSL::Digest::RIPEMD160.new
       else

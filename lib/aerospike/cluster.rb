@@ -430,6 +430,10 @@ module Aerospike
       ::Aerospike::Node.new(self, nv)
     end
 
+    def create_connection(host)
+      ::Aerospike::Cluster::CreateConnection.(self, host)
+    end
+
     def find_nodes_to_remove(refresh_count)
       FindNodesToRemove.(self, refresh_count)
     end

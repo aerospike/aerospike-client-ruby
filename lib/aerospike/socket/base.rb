@@ -77,6 +77,26 @@ module Aerospike
         !closed?
       end
 
+      # Returns whether the connection to the server is alive.
+      #
+      # It is useful to call this method before making a call to the server
+      # that would change data on the server.
+      #
+      # Note: This method is only useful if the server closed the connection or
+      # if a previous connection failure occurred. If the server is hard killed
+      # this will still return true until one or more writes are attempted.
+      def alive?
+        return false if closed?
+
+        if IO.select([self], nil, nil, 0)
+          !eof? rescue false
+        else
+          true
+        end
+      rescue IOError
+        false
+      end
+
       def close
         return if closed?
         super()

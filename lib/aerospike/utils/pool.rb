@@ -1,5 +1,5 @@
-# encoding: utf-8
-# Copyright 2014-2017 Aerospike, Inc.
+# frozen_string_literal: true
+# Copyright 2014-2018 Aerospike, Inc.
 #
 # Portions may be licensed to Aerospike, Inc. under one or more contributor
 # license agreements.
@@ -16,15 +16,14 @@
 
 module Aerospike
 
-  private
-
   class Pool #:nodoc:
 
-    attr_accessor :create_block, :cleanup_block
+    attr_accessor :create_proc, :cleanup_proc, :check_proc
 
     def initialize(max_size = 256, &block)
-      @create_block = block
-      @cleanup_block = nil
+      @create_proc = block
+      @cleanup_proc = nil
+      @check_proc = nil
 
       @pool = Queue.new
       @max_size = max_size
@@ -33,17 +32,24 @@ module Aerospike
     def offer(obj)
       if @pool.length < @max_size
         @pool << obj
-      elsif @cleanup_block
-        @cleanup_block.call(obj)
+      else
+        cleanup(obj)
       end
     end
     alias_method :<<, :offer
 
     def poll(create_new=true)
       non_block = true
-      @pool.pop(non_block)
-    rescue
-      @create_block.call() if @create_block && create_new
+      begin
+        obj = @pool.pop(non_block)
+        if !check(obj)
+          cleanup(obj)
+          obj = nil
+        end
+      end until obj
+      obj
+    rescue ThreadError
+      create if create_new
     end
 
     def empty?
@@ -57,6 +63,23 @@ module Aerospike
 
     def inspect
       "#<Aerospike::Pool: size=#{size}>"
+    end
+
+    protected
+
+    def create
+      return unless create_proc
+      create_proc.()
+    end
+
+    def check(obj)
+      return true unless check_proc
+      check_proc.(obj)
+    end
+
+    def cleanup(obj)
+      return unless cleanup_proc
+      cleanup_proc.(obj)
     end
 
   end
