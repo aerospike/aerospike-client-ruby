@@ -22,9 +22,7 @@ RSpec.describe Aerospike::ConnectionPool do
   let(:cluster) { double(connection_queue_size: pool_size) }
   let(:host) { double() }
   let(:instance) { described_class.new(cluster, host) }
-
-  let(:good_connection) { double(:"connected?" => true, :"alive?" => true) }
-  let(:dead_connection) { spy(:"connected?" => true, :"alive?" => false) }
+  let(:good_connection) { double(:connected? => true, :alive? => true) }
 
   describe ".poll" do
     context "when pool is empty" do
@@ -52,7 +50,11 @@ RSpec.describe Aerospike::ConnectionPool do
     end
 
     context "when pool contains a dead connection" do
+      let(:dead_connection) { spy(:connected? => true, :alive? => false) }
+
       before do
+        allow(dead_connection).to receive(:close)
+
         instance << dead_connection
         instance << good_connection
       end
@@ -60,8 +62,8 @@ RSpec.describe Aerospike::ConnectionPool do
       it "discards the dead connection" do
         connection = instance.poll()
 
-        expect(dead_connection).to have_received(:close)
         expect(connection).to be(good_connection)
+        expect(dead_connection).to have_received(:close)
       end
     end
   end
