@@ -85,4 +85,10 @@ EOF
     self.version >= version
   end
 
+  def self.tls_supported?
+    # Skip TLS specs on JRuby until this issue is resolved:
+    # https://github.com/jruby/jruby-openssl/issues/172
+    RUBY_PLATFORM != "java"
+  end
+
 end

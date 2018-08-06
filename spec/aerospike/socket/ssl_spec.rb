@@ -23,7 +23,7 @@ def resource(*path)
   RESOURCE_PATH.join(*path).to_s
 end
 
-describe Aerospike::Socket::SSL do
+describe Aerospike::Socket::SSL, skip: !Support.tls_supported? do
   let(:tls_options) { {} }
 
   describe '::build_ssl_context' do
