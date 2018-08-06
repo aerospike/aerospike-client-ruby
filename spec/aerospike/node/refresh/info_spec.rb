@@ -17,7 +17,7 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-RSpec.describe Aerospike::Node::Refresh::Info do
+RSpec.describe Aerospike::Node::Refresh::Info, skip: Support.is_jruby? do
   let(:node) { double }
   let(:peers) { ::Aerospike::Peers.new }
   let(:connection) { spy }
