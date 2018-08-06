@@ -1,5 +1,10 @@
-Unreleased
-==========
+# Changelog
+
+All notable changes to this project will be documented in this file.
+
+## [Unreleased]
+
+## [2.8.0] - 2018-08-06
 
 * **New Features**
   * Support latest CDT List/Map server-side operations: [[#69](https://github.com/aerospike/aerospike-client-ruby/pull/69)]
@@ -7,9 +12,15 @@ Unreleased
     * Option to invert selection criteria for certain List/Map get/remove operations. (Requires server version v3.16.0 or later.)
     * List/Map index/rank relative get/remove operations. (Requires server version v4.3.0 or later.)
     * Partial list/map updates using PARTIAL / NO_FAIL write flags. (Requires server version v4.3.0 or later.)
+  * Benchmarks: Output total TPS metrics at end of run [[#71](https://github.com/aerospike/aerospike-client-ruby/pull/71)]
 
-v2.7.0 / 2018-04-12
-===================
+* **Bug Fixes**
+  * Check connection status of sockets retrieved from connection pool [[#72](https://github.com/aerospike/aerospike-client-ruby/pull/72)]
+
+* **Updates**
+  * Add JRuby back to CI test matrix [[#70](https://github.com/aerospike/aerospike-client-ruby/pull/70)]
+
+## [2.7.0] - 2018-04-12
 
 * **New Features**
   * Batch Index protocol support. Thanks to [@deenbandhu-agarwal](https://github.com/deenbandhu-agarwal)! [[#61](https://github.com/aerospike/aerospike-client-ruby/pull/61)]
@@ -17,8 +28,7 @@ v2.7.0 / 2018-04-12
   * New node removal strategy. Thanks to [@wallin](https://github.com/wallin)! [[#63](https://github.com/aerospike/aerospike-client-ruby/pull/63)]
   * Support for IPv6. Requires Aerospike Enterprise Edition v3.10 or later. Thanks to [@wallin](https://github.com/wallin)! [[#65](https://github.com/aerospike/aerospike-client-ruby/pull/65)]
 
-v2.6.0 / 2018-03-27
-===================
+## [2.6.0] - 2018-03-27
 
 * **New Features**
   * Support for peers protocol for cluster discovery. Requires Aerospike server version 3.10 or later. Thanks to [@wallin](https://github.com/wallin) of [castle.io](https://castle.io/)! [[#59](https://github.com/aerospike/aerospike-client-ruby/pull/59)]
@@ -30,8 +40,7 @@ v2.6.0 / 2018-03-27
 * **Updates**
   * Update minimum required Ruby version to v2.3.
 
-v2.5.1 / 2018-01-25
-===================
+## [2.5.1] - 2018-01-25
 
 * **Bug Fixes**
   * Some secondary index queries fail with parameter error on Aerospike Server v3.15.1.x [#57](https://github.com/aerospike/aerospike-client-ruby/issues/57)
@@ -40,8 +49,7 @@ v2.5.1 / 2018-01-25
   * Added Ruby 2.5 to test matrix
   * Updated documentation for Client#truncate command [CLIENT-985]
 
-v2.5.0 / 2017-10-10
-===================
+## [2.5.0] - 2017-10-10
 
 * **New Features**
   * Support nobins flag on query operations
@@ -51,8 +59,7 @@ v2.5.0 / 2017-10-10
   * The deprecated Large Data Types(LDT) feature has been removed.
   * Ruby 2.1 has been removed from the client's test matrix as [official support for Ruby 2.1 has ended in Apr 2017](https://www.ruby-lang.org/en/news/2017/04/01/support-of-ruby-2-1-has-ended/). Nothing has changed in the client that would break compatibility with Ruby 2.1 yet. But compatibility is not guaranteed for future client releases.
 
-v2.4.0 / 2017-04-06
-===================
+## [2.4.0] - 2017-04-06
 
 * **New Features**
   * Support ns/set truncate command [#47](https://github.com/aerospike/aerospike-client-ruby/issues/47)
@@ -64,8 +71,7 @@ v2.4.0 / 2017-04-06
 * **Updates**
   * Ruby 2.0 has been removed from the client's test matrix as [official support for Ruby 2.0 has ended in Feb 2016](https://www.ruby-lang.org/en/news/2016/02/24/support-plan-of-ruby-2-0-0-and-2-1/). Nothing has changed in the client that would break compatibility with Ruby 2.0 yet. But compatibility is not guaranteed for future client releases. [#52](https://github.com/aerospike/aerospike-client-ruby/pull/52)
 
-v2.3.0 / 2017-01-04
-===================
+## [2.3.0] - 2017-01-04
 
 * **Bug Fixes**
   * Fix BytesValue used as record key. [#42](https://github.com/aerospike/aerospike-client-ruby/issues/42)
@@ -73,8 +79,7 @@ v2.3.0 / 2017-01-04
 * **Changes**
   * Deprecate unsupport key types - only integer, string and byte keys are supported. [#43](https://github.com/aerospike/aerospike-client-ruby/issues/43)
 
-v2.2.1 / 2016-11-14
-===================
+## [2.2.1] - 2016-11-14
 
 * **New Features**
   * Added constants `Aerospike::TTL::*` for "special" TTL values, incl. Aerospike::TTL::DONT_UPDATE (requires Aerospike Server v3.10.1 or later)
@@ -82,8 +87,7 @@ v2.2.1 / 2016-11-14
 * **Bug Fixes**
   * Fix "Add node failed: wrong number of arguments". [#41](https://github.com/aerospike/aerospike-client-ruby/issues/41)
 
-v2.2.0 / 2016-09-20
-===================
+## [2.2.0] - 2016-09-20
 
 * **New Features**
   * Support for durable delete write policy [CLIENT-768]; requires Aerospike
@@ -102,8 +106,7 @@ v2.2.0 / 2016-09-20
   * Added note about potential issues with usage in Ruby on Rails with Phusion Passenger.
   * Amend/clean up documentation of client policies.
 
-v2.1.1 / 2016-08-16
-===================
+## [2.1.1] - 2016-08-16
 
 * **Bug Fixes**
   * Fix incorrect expiration times on records fetched via batch_get or query operations. [#38](https://github.com/aerospike/aerospike-client-ruby/issues/38)
@@ -112,8 +115,7 @@ v2.1.1 / 2016-08-16
   * Add support for two new server error codes (23 & 24) introduced in Aerospike Server v3.9.1.
   * Records returned by batch_get operation should include the full key incl. the user key part.
 
-v2.1.0 / 2016-07-19
-===================
+## [2.1.0] - 2016-07-19
 
 * **Fixes**
   * Fix a typo in the `max_retries` policy parameter name. [PR #37](https://github.com/aerospike/aerospike-client-ruby/pull/37) Thanks to [@murphyslaw](https://github.com/murphyslaw)!
@@ -124,8 +126,7 @@ v2.1.0 / 2016-07-19
   * Support for creating indexes on Lists and Maps [CLIENT-685]
   * Support GeoJSON values in Lists and Maps
 
-v2.0.0 / 2016-05-27
-===================
+## [2.0.0] - 2016-05-27
 
 * **Breaking Changes** - Please refer to detailed list of [API changes](docs/api-changes.md#v2.0.0) for further details.
   * Incompatible integer key digests: digests for integer keys computed by v2 and v1 are different; the Aerospike server uses the key digest to retrieve records. This will impact your ability to read records with integer keys that were created by a v1 client version.
@@ -142,8 +143,7 @@ v2.0.0 / 2016-05-27
   * Fix digest creation for integer keys. [PR #34](https://github.com/aerospike/aerospike-client-ruby/pull/34). Thanks to [@murphyslaw](https://github.com/murphyslaw)!
   * Prevent "value must be enumerable" error when client cannot connect to cluster. [#35](https://github.com/aerospike/aerospike-client-ruby/issues/35). Thanks to [@rohanthewiz](https://github.com/rohanthewiz)!
 
-1.0.12 / 2016-02-11
-===================
+## [1.0.12] - 2016-02-11
 
 * **Fixes**:
 
@@ -154,8 +154,7 @@ v2.0.0 / 2016-05-27
     bins; thanks to [fs-wu](https://github.com/fs-wu) for finding the issue and
     reporting it. [aerospike/aerospike-client-ruby#33]
 
-1.0.11 / 2015-12-04
-===================
+## [1.0.11] - 2015-12-04
 
   Major feature and bug fix release.
 
@@ -184,8 +183,7 @@ v2.0.0 / 2016-05-27
 
     * Scan and Query termination has been fixed.
 
-1.0.10 / 2015-09-22
-===================
+## [1.0.10] - 2015-09-22
 
   Major fix release.
 
@@ -197,8 +195,7 @@ v2.0.0 / 2016-05-27
 
     * Fixes an issue with dead connections that would cause an infinite loop.
 
-1.0.9 / 2015-08-11
-==================
+## [1.0.9] - 2015-08-11
 
   Minor fix release.
 
@@ -206,8 +203,7 @@ v2.0.0 / 2016-05-27
 
     * Sends the original key value to the server for all relevant commands, including `operate` and `execute_udf`
 
-1.0.8 / 2015-07-23
-==================
+## [1.0.8] - 2015-07-23
 
   Minor fix release.
 
@@ -223,8 +219,7 @@ v2.0.0 / 2016-05-27
 
     * Fixes an issue with including the `statement.rb` in the manifest. Thanks to [Ángel M](https://github.com/Angelmmiguel)
 
-1.0.7 / 2015-05-15
-==================
+## [1.0.7] - 2015-05-15
 
   Minor fixes.
 
@@ -244,8 +239,7 @@ v2.0.0 / 2016-05-27
 
     * Removed deprecated `SetCapacity()` and `GetCapacity()` methods for LDTs.
 
-1.0.6 / 2015-04-02
-==================
+## [1.0.6] - 2015-04-02
 
   Minor fixes.
 
@@ -253,8 +247,7 @@ v2.0.0 / 2016-05-27
 
     * Fixed running a stream query without parameters to the function.
 
-1.0.5 / 2015-03-25
-==================
+## [1.0.5] - 2015-03-25
 
   Minor improvements.
 
@@ -262,8 +255,7 @@ v2.0.0 / 2016-05-27
 
     * Added `:execute_udf_on_query` method to `Aerospike::Client`
 
-1.0.4 / 2015-03-24
-==================
+## [1.0.4] - 2015-03-24
 
   Hot fix.
 
@@ -271,8 +263,7 @@ v2.0.0 / 2016-05-27
 
     * Close a socket if connection raises an exception to avoid leaking the file descriptor.
 
-1.0.3 / 2015-03-24
-==================
+## [1.0.3] - 2015-03-24
 
   Minor fixes and improvements.
 
@@ -285,8 +276,7 @@ v2.0.0 / 2016-05-27
     * Wait for a good connection on `socket.connect_nonblock` to prevent infinite loops on read/write operations.
 
 
-1.0.2 / 2015-03-14
-==================
+## [1.0.2] - 2015-03-14
 
   Minor improvements.
 
@@ -294,8 +284,7 @@ v2.0.0 / 2016-05-27
 
     * Added `:new_many` method to `Aerospike::Client`
 
-1.0.1 / 2015-01-28
-==================
+## [1.0.1] - 2015-01-28
 
   Hot fix.
 
@@ -303,8 +292,7 @@ v2.0.0 / 2016-05-27
 
     * Added `bcrypt` to the gem dependencies.
 
-1.0.0 / 2015-01-26
-==================
+## [1.0.0] - 2015-01-26
 
   Major release. With this release, Ruby client graduates to version 1.
 
@@ -326,8 +314,7 @@ v2.0.0 / 2016-05-27
 
     * fixed size returned from `BytesValue.write`
 
-0.1.6 / 2014-12-28
-==================
+## [0.1.6] - 2014-12-28
 
   Minor features added, minor fixes and improvements.
 
@@ -341,8 +328,7 @@ v2.0.0 / 2016-05-27
     * Fixed setting timeout on connection
     * Fixed exception handling typo for Connection#write
 
-0.1.5 / 2014-12-08
-==================
+## [0.1.5] - 2014-12-08
 
   Major features added, minor fixes and improvements.
 
@@ -355,8 +341,7 @@ v2.0.0 / 2016-05-27
 
     * Fixed getting back results only for specified bin names.
 
-0.1.3 / 2014-10-27
-==================
+## [0.1.3] - 2014-10-27
 
   Minor fix.
 
@@ -364,8 +349,7 @@ v2.0.0 / 2016-05-27
 
     * Fixed LDT bin and module name packing.
 
-0.1.2 / 2014-10-25
-==================
+## [0.1.2] - 2014-10-25
 
   Minor fix.
 
@@ -373,8 +357,7 @@ v2.0.0 / 2016-05-27
 
     * Fixed String unpacking for single byte strings.
 
-0.1.1 / 2014-10-25
-==================
+## [0.1.1] - 2014-10-25
 
   Minor fixes.
 
@@ -383,7 +366,6 @@ v2.0.0 / 2016-05-27
     * Fixed String packing header in Hash and Array.
     * #find on LDTs returns `nil` instad of raising an exception if the item is not found.
 
-0.1.0 / 2014-10-14
-==================
+## [0.1.0] - 2014-10-14
 
   * Initial Release.
