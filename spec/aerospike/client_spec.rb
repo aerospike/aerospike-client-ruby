@@ -129,6 +129,35 @@ describe Aerospike::Client do
 
   describe "#put and #get" do
 
+    context "bin names", skip: !Support.min_version?("4.2") do
+
+      it "supports bin names with a max. length of 15 chars" do
+        key = Support.gen_random_key
+        bins = {
+          'bin-name-len-15' => 'bin name with 15 chars'
+        }
+
+        client.put(key, bins)
+        record = client.get(key)
+
+        expect(record.bins).to eq bins
+      end
+
+      it "returns an error when bin name length exceeds 15 chars" do
+        key = Support.gen_random_key
+        bins = {
+          'bin-name-size-16' => 'bin name with 16 chars'
+        }
+
+        expect {
+          client.put(key, bins)
+        }.to raise_error(Aerospike::Exceptions::Aerospike) { |error|
+          error.result_code == Aerospike::ResultCode::BIN_NAME_TOO_LONG
+        }
+      end
+
+    end
+
     context "data types" do
 
       it "should put a hash with bins and get it back successfully" do

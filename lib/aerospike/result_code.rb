@@ -107,7 +107,7 @@ module Aerospike
     # Invalid namespace.
     INVALID_NAMESPACE = 20
 
-    # Sent too-long bin name (>14, should be impossible in this client) or exceeded
+    # Sent too-long bin name (>15, should be impossible in this client) or exceeded
     # namespace's bin name quota.
     BIN_NAME_TOO_LONG = 21
 
