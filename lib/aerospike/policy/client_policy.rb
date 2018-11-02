@@ -26,6 +26,7 @@ module Aerospike
     attr_accessor :timeout, :connection_queue_size, :fail_if_not_connected, :tend_interval
     attr_accessor :cluster_name
     attr_accessor :tls
+    attr_accessor :policies
 
     def initialize(opt={})
       # Initial host connection timeout in seconds. The timeout when opening a connection
@@ -52,6 +53,9 @@ module Aerospike
       @cluster_name = opt[:cluster_name]
 
       @tls = opt[:tls] || opt[:ssl_options]
+
+      # Default Policies
+      @policies = opt.fetch(:policies) { Hash.new }
     end
 
     def requires_authentication
