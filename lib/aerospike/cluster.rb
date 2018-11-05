@@ -188,7 +188,7 @@ module Aerospike
     end
 
     def supports_peers_protocol?
-      nodes.all? { |node| node.supports_feature?('peers') }
+      nodes.all? { |node| node.supports_feature?(Aerospike::Features::PEERS) }
     end
 
     def change_password(user, password)

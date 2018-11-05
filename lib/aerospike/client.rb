@@ -858,8 +858,8 @@ module Aerospike
 
       # guard against unsupported particle types
       unsupported_particle_types = []
-      unsupported_particle_types << Aerospike::ParticleType::DOUBLE unless @cluster.supports_feature?("float")
-      unsupported_particle_types << Aerospike::ParticleType::GEOJSON unless @cluster.supports_feature?("geo")
+      unsupported_particle_types << Aerospike::ParticleType::DOUBLE unless supports_feature?(Aerospike::Features::FLOAT)
+      unsupported_particle_types << Aerospike::ParticleType::GEOJSON unless supports_feature?(Aerospike::Features::GEO)
       validators << UnsupportedParticleTypeValidator.new(*unsupported_particle_types) unless unsupported_particle_types.empty?
 
       @command_validators = validators

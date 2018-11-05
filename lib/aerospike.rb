@@ -26,6 +26,7 @@ require 'bcrypt'
 require 'aerospike/atomic/atomic'
 
 require 'aerospike/client'
+require 'aerospike/features'
 require 'aerospike/utils/pool'
 require 'aerospike/utils/connection_pool'
 require 'aerospike/utils/packer'

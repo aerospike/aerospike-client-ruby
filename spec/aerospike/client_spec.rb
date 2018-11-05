@@ -324,7 +324,7 @@ describe Aerospike::Client do
         expect(record.bins['bin']).to eq bin.value
       end
 
-      it "should put a GeoJSON value and get it successfully", skip: !Support.feature?('geo') do
+      it "should put a GeoJSON value and get it successfully", skip: !Support.feature?(Aerospike::Features::GEO) do
         key = Support.gen_random_key
         bin = Aerospike::Bin.new('bin', Aerospike::GeoJSON.new({type: "Point", coordinates: [103.9114, 1.3083]}))
         client.put(key, bin)

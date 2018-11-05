@@ -305,7 +305,7 @@ describe Aerospike::Client do
 
     end # context
 
-    context "Geospatial Filter", skip: !Support.feature?("geo") do
+    context "Geospatial Filter", skip: !Support.feature?(Aerospike::Features::GEO) do
 
       let(:lon){ 103.9114 }
       let(:lat){ 1.3083 }

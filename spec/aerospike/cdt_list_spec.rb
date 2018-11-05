@@ -17,7 +17,7 @@
 require "spec_helper"
 include Aerospike::CDT
 
-describe "client.operate() - CDT List Operations", skip: !Support.feature?("cdt-list") do
+describe "client.operate() - CDT List Operations", skip: !Support.feature?(Aerospike::Features::CDT_LIST) do
 
   let(:client) { Support.client }
   let(:key) { Support.gen_random_key }
