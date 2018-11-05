@@ -65,8 +65,8 @@ module Aerospike
       @ttl = opt[:ttl] || opt[:expiration] || 0
 
       # Send user defined key in addition to hash digest on a record put.
-      # The default is to send the user defined key.
-      @send_key = opt[:send_key].nil? ? true : opt[:send_key]
+      # The default is to _not_ send the user defined key.
+      @send_key = opt.fetch(:send_key, false)
 
       # If the transaction results in a record deletion, leave a tombstone for
       # the record. This prevents deleted records from reappearing after node

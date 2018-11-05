@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+* **Bug Fixes**
+  * Default policies set on Client instance do not get applied [[#74](https://github.com/aerospike/aerospike-client-ruby/issue/74)]
+
+* **Updates**
+  * Change default for send_key write policy to false [[#73](https://github.com/aerospike/aerospike-client-ruby/issue/73)]
+
+
 ## [2.8.0] - 2018-08-06
 
 * **New Features**
