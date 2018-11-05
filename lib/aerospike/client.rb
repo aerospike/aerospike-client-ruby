@@ -226,7 +226,14 @@ module Aerospike
 
       str_cmd = "truncate:namespace=#{namespace}"
       str_cmd << ";set=#{set_name}" unless set_name.to_s.strip.empty?
-      str_cmd << ";lut=#{(before_last_update.to_f * 1_000_000_000.0).round}" if before_last_update
+
+      if before_last_update
+        lut_nanos = (before_last_update.to_f * 1_000_000_000.0).round
+        str_cmd << ";lut=#{lut_nanos}"
+      elsif supports_feature?(Aerospike::Features::LUT_NOW)
+        # Servers >= 4.3.1.4 require lut argument
+        str_cmd << ";lut=now"
+      end
 
       # Send index command to one node. That node will distribute the command to other nodes.
       response = send_info_command(policy, str_cmd).upcase

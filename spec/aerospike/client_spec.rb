@@ -705,6 +705,39 @@ describe Aerospike::Client do
       count = client.scan_all(namespace, set_name, nil).to_enum(:each).count
       expect(count).to eq(records_after)
     end
+
+    context "no last-update-timestamp specified" do
+      before do
+        allow(client).to receive(:supports_feature?)
+          .with(Aerospike::Features::LUT_NOW)
+          .and_return(lut_now)
+      end
+
+      context "server requires lut=now" do
+        let(:lut_now) { true }
+
+        it "sends lut=now" do
+          expect(client).to receive(:send_info_command)
+            .with(kind_of(Aerospike::Policy), /^truncate:namespace=foo;set=bar;lut=now$/)
+            .and_return("OK")
+
+          client.truncate("foo", "bar")
+        end
+      end
+
+      context "server does not support lut=now" do
+        let(:lut_now) { false }
+
+        it "does not send lut argument" do
+          expect(client).to receive(:send_info_command)
+            .with(kind_of(Aerospike::Policy), /^truncate:namespace=foo;set=bar$/)
+            .and_return("OK")
+
+          client.truncate("foo", "bar")
+        end
+      end
+
+    end
   end
 
   describe "benchmarks", skip: true do
