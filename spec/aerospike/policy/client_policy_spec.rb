@@ -32,6 +32,7 @@ describe Aerospike::ClientPolicy do
       expect(policy.fail_if_not_connected).to eq true
       expect(policy.user).to be_nil
       expect(policy.password).to be_nil
+      expect(policy.policies).to eql({})
     end
 
     it "should make a client policy with fail_if_not_connected set to false" do

@@ -25,64 +25,163 @@ describe Aerospike::Client do
 
   describe "#initialize" do
 
-    around(:each) do |example|
-      begin
-        as_hosts = ENV.delete("AEROSPIKE_HOSTS")
-        example.call
-      ensure
-        ENV["AEROSPIKE_HOSTS"] = as_hosts
+    context "seed hosts" do
+      around(:each) do |example|
+        begin
+          as_hosts = ENV.delete("AEROSPIKE_HOSTS")
+          example.call
+        ensure
+          ENV["AEROSPIKE_HOSTS"] = as_hosts
+        end
+      end
+
+      def cluster_seeds(client)
+        client.instance_variable_get(:@cluster).seeds
+      end
+
+      it "accepts a single Host" do
+        host = Aerospike::Host.new("10.10.10.10", 3333)
+        client = Aerospike::Client.new(host, connect: false)
+
+        expect(cluster_seeds(client)).to eq [host]
+      end
+
+      it "accepts a list of Hosts" do
+        host1 = Aerospike::Host.new("10.10.10.10", 3333)
+        host2 = Aerospike::Host.new("10.10.10.11", 3333)
+        client = Aerospike::Client.new([host1, host2], connect: false)
+
+        expect(cluster_seeds(client)).to eq [host1, host2]
+      end
+
+      it "accepts a single hostname" do
+        client = Aerospike::Client.new("10.10.10.10", connect: false)
+
+        expect(cluster_seeds(client)).to eq [Aerospike::Host.new("10.10.10.10", 3000)]
+      end
+
+      it "accepts a single hostname and port" do
+        client = Aerospike::Client.new("10.10.10.10:3333", connect: false)
+
+        expect(cluster_seeds(client)).to eq [Aerospike::Host.new("10.10.10.10", 3333)]
+      end
+
+      it "accepts a list of hostnames" do
+        client = Aerospike::Client.new("10.10.10.10:3333,10.10.10.11", connect: false)
+
+        expect(cluster_seeds(client)).to eq [Aerospike::Host.new("10.10.10.10", 3333), Aerospike::Host.new("10.10.10.11", 3000)]
+      end
+
+      it "reads a list of hostnames from AEROSPIKE_HOSTS" do
+        ENV["AEROSPIKE_HOSTS"] = "10.10.10.10:3333,10.10.10.11"
+        client = Aerospike::Client.new(connect: false)
+
+        expect(cluster_seeds(client)).to eq [Aerospike::Host.new("10.10.10.10", 3333), Aerospike::Host.new("10.10.10.11", 3000)]
+      end
+
+      it "defaults to localhost:3000" do
+        ENV["AEROSPIKE_HOSTS"] = nil
+        client = Aerospike::Client.new(connect: false)
+
+        expect(cluster_seeds(client)).to eq [Aerospike::Host.new("localhost", 3000)]
       end
     end
 
-    def cluster_seeds(client)
-      client.instance_variable_get(:@cluster).seeds
-    end
+    context "default policies" do
+      it "sets a default read policy" do
+        read_policy = Aerospike::Policy.new(timeout: 2222)
+        policy = {
+          policies: {
+            read: read_policy
+          }
+        }
+        client = Aerospike::Client.new(connect: false, policy: policy)
 
-    it "accepts a single Host" do
-      host = Aerospike::Host.new("10.10.10.10", 3333)
-      client = Aerospike::Client.new(host, connect: false)
+        expect(client.default_read_policy).to eq read_policy
+      end
 
-      expect(cluster_seeds(client)).to eq [host]
-    end
+      it "creates a default read policy" do
+        policy = {}
+        client = Aerospike::Client.new(connect: false, policy: policy)
 
-    it "accepts a list of Hosts" do
-      host1 = Aerospike::Host.new("10.10.10.10", 3333)
-      host2 = Aerospike::Host.new("10.10.10.11", 3333)
-      client = Aerospike::Client.new([host1, host2], connect: false)
+        expect(client.default_read_policy).to be_an Aerospike::Policy
+      end
 
-      expect(cluster_seeds(client)).to eq [host1, host2]
-    end
+      it "sets a default write policy" do
+        write_policy = Aerospike::WritePolicy.new(send_key: true)
+        policy = {
+          policies: {
+            write: write_policy
+          }
+        }
+        client = Aerospike::Client.new(connect: false, policy: policy)
 
-    it "accepts a single hostname" do
-      client = Aerospike::Client.new("10.10.10.10", connect: false)
+        expect(client.default_write_policy).to eq write_policy
+      end
 
-      expect(cluster_seeds(client)).to eq [Aerospike::Host.new("10.10.10.10", 3000)]
-    end
+      it "creates a default write policy" do
+        policy = {}
+        client = Aerospike::Client.new(connect: false, policy: policy)
 
-    it "accepts a single hostname and port" do
-      client = Aerospike::Client.new("10.10.10.10:3333", connect: false)
+        expect(client.default_write_policy).to be_an Aerospike::WritePolicy
+      end
 
-      expect(cluster_seeds(client)).to eq [Aerospike::Host.new("10.10.10.10", 3333)]
-    end
+      it "sets a default batch policy" do
+        batch_policy = Aerospike::BatchPolicy.new(send_key: true)
+        policy = {
+          policies: {
+            batch: batch_policy
+          }
+        }
+        client = Aerospike::Client.new(connect: false, policy: policy)
 
-    it "accepts a list of hostnames" do
-      client = Aerospike::Client.new("10.10.10.10:3333,10.10.10.11", connect: false)
+        expect(client.default_batch_policy).to eq batch_policy
+      end
 
-      expect(cluster_seeds(client)).to eq [Aerospike::Host.new("10.10.10.10", 3333), Aerospike::Host.new("10.10.10.11", 3000)]
-    end
+      it "creates a default batch policy" do
+        policy = {}
+        client = Aerospike::Client.new(connect: false, policy: policy)
 
-    it "reads a list of hostnames from AEROSPIKE_HOSTS" do
-      ENV["AEROSPIKE_HOSTS"] = "10.10.10.10:3333,10.10.10.11"
-      client = Aerospike::Client.new(connect: false)
+        expect(client.default_batch_policy).to be_an Aerospike::BatchPolicy
+      end
 
-      expect(cluster_seeds(client)).to eq [Aerospike::Host.new("10.10.10.10", 3333), Aerospike::Host.new("10.10.10.11", 3000)]
-    end
+      it "sets a default query policy" do
+        query_policy = Aerospike::QueryPolicy.new(send_key: true)
+        policy = {
+          policies: {
+            query: query_policy
+          }
+        }
+        client = Aerospike::Client.new(connect: false, policy: policy)
 
-    it "defaults to localhost:3000" do
-      ENV["AEROSPIKE_HOSTS"] = nil
-      client = Aerospike::Client.new(connect: false)
+        expect(client.default_query_policy).to eq query_policy
+      end
 
-      expect(cluster_seeds(client)).to eq [Aerospike::Host.new("localhost", 3000)]
+      it "creates a default query policy" do
+        policy = {}
+        client = Aerospike::Client.new(connect: false, policy: policy)
+
+        expect(client.default_query_policy).to be_an Aerospike::QueryPolicy
+      end
+
+      it "sets a default scan policy" do
+        scan_policy = Aerospike::ScanPolicy.new(send_key: true)
+        policy = {
+          policies: {
+            scan: scan_policy
+          }
+        }
+        client = Aerospike::Client.new(connect: false, policy: policy)
+
+        expect(client.default_scan_policy).to eq scan_policy
+      end
+
+      it "creates a default scan policy" do
+        policy = {}
+        client = Aerospike::Client.new(connect: false, policy: policy)
+
+        expect(client.default_scan_policy).to be_an Aerospike::ScanPolicy
+      end
     end
 
   end
