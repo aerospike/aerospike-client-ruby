@@ -1,5 +1,24 @@
 # Backward Incompatible API Changes
 
+<a name="v2.9.0"></a>
+## Version 2.9.0
+
+### Changed Default for `send_key` Policy
+
+The default value for the `send_key` write policy has changed from true to false. I.e. by default, the client only sends the record digest to the server on writes and no longer sends the user key.
+
+The default `send_key` policy can be set through the global client policy:
+
+    require "aerospike"
+    include Aerospike
+    
+    policy = ClientPolicy.new(
+      policies: {
+        write: WritePolicy.new(send_key: true)
+      }
+    )
+    client = Client.new(policy: policy)
+
 <a name="v2.6.0"></a>
 ## Version 2.6.0
 
