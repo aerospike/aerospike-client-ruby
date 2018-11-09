@@ -938,4 +938,35 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?(Aerosp
       end
     end
   end
+
+  context "Infinity value", skip: !Support.min_version?("4.3.1") do
+    let(:map_value) { { 0 => 17, 4 => 2, 5 => 15, 9 => 10 } }
+
+    it "returns all keys from 5 to Infinity" do
+      operation = MapOperation.get_by_key_range(map_bin, 5, Value::INFINITY)
+        .and_return(MapReturnType::KEY)
+
+      result = client.operate(key, [operation])
+
+      expect(result.bins[map_bin]).to eql([5, 9])
+    end
+  end
+
+  context "Wildcard value", skip: !Support.min_version?("4.3.1") do
+    let(:map_value) { {
+      4 => ["John", 55],
+      5 => ["Jim", 95],
+      9 => ["Joe", 80],
+      12 => ["Jim", 46],
+    } }
+
+    it "returns all values that match a wildcard" do
+      operation = MapOperation.get_by_value(map_bin, ["Jim", Value::WILDCARD])
+        .and_return(MapReturnType::KEY)
+
+      result = client.operate(key, [operation])
+
+      expect(result.bins[map_bin]).to eql([5, 12])
+    end
+  end
 end

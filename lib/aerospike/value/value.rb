@@ -27,7 +27,7 @@ module Aerospike
     def self.of(value)
       case value
       when nil
-        res = NullValue.new
+        res = NULL
       when Integer
         if INTEGER_RANGE.cover?(value)
           res = IntegerValue.new(value)
@@ -59,7 +59,6 @@ module Aerospike
 
   end # Value
 
-
   # Empty value.
   class NullValue < Value #:nodoc:
 
@@ -79,7 +78,6 @@ module Aerospike
       ''
     end
 
-
     def estimate_size
       0
     end
@@ -96,6 +94,91 @@ module Aerospike
       ''
     end
   end
+
+  NULL = NullValue.new.freeze
+
+
+  # Infinity value.
+  class InfinityValue < Value #:nodoc:
+    def initialize
+      self
+    end
+
+    def type
+      raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::PARAMETER_ERROR, "Invalid particle type: INF")
+    end
+
+    def get
+      nil
+    end
+
+    def to_s
+      "INF"
+    end
+
+    def estimate_size
+      0
+    end
+
+    def write(buffer, offset)
+      0
+    end
+
+    def pack(packer)
+      packer.pack(self)
+    end
+
+    def to_bytes
+      ''
+    end
+
+    def to_msgpack_ext
+      1.chr
+    end
+  end
+
+  INFINITY = InfinityValue.new.freeze
+
+  # Wildcard value.
+  class WildcardValue < Value #:nodoc:
+    def initialize
+      self
+    end
+
+    def type
+      raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::PARAMETER_ERROR, "Invalid particle type: wildcard")
+    end
+
+    def get
+      nil
+    end
+
+    def to_s
+      "*"
+    end
+
+    def estimate_size
+      0
+    end
+
+    def write(buffer, offset)
+      0
+    end
+
+    def pack(packer)
+      packer.pack(self)
+    end
+
+    def to_bytes
+      ''
+    end
+
+    def to_msgpack_ext
+      0.chr
+    end
+  end
+
+  WILDCARD = WildcardValue.new.freeze
 
   # Byte array value.
   class BytesValue < Value #:nodoc:

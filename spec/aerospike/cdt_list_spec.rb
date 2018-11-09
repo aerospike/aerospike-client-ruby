@@ -699,4 +699,30 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?(Aeros
       end
     end
   end
+
+  context "Infinity value", skip: !Support.min_version?("4.3.1") do
+    let(:list_value) { [0, 4, 5, 9, 11, 15] }
+
+    it "returns all list elements from 10 to Infinity" do
+      operation = ListOperation.get_by_value_range(list_bin, 10, Value::INFINITY)
+        .and_return(return_type)
+
+      result = client.operate(key, [operation])
+
+      expect(result.bins[list_bin]).to eql([11, 15])
+    end
+  end
+
+  context "Wildcard value", skip: !Support.min_version?("4.3.1") do
+    let(:list_value) { [ ["John", 55], ["Jim", 95], ["Joe", 80], ["Jim", 46] ] }
+
+    it "returns all list elements that match a wildcard" do
+      operation = ListOperation.get_by_value(list_bin, ["Jim", Value::WILDCARD])
+        .and_return(return_type)
+
+      result = client.operate(key, [operation])
+
+      expect(result.bins[list_bin]).to eql([["Jim", 95], ["Jim", 46]])
+    end
+  end
 end

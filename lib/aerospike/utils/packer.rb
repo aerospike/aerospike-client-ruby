@@ -19,12 +19,17 @@ require 'aerospike/utils/pool'
 
 module Aerospike
 
-  private
-
   class Packer < MessagePack::Packer #:nodoc:
 
+    AS_EXT_TYPE = -1
+
     @@pool = Pool.new
-    @@pool.create_proc = Proc.new { Packer.new }
+    @@pool.create_proc = lambda do
+      Packer.new.tap do |p|
+        p.register_type(AS_EXT_TYPE, Aerospike::WildcardValue, :to_msgpack_ext)
+        p.register_type(AS_EXT_TYPE, Aerospike::InfinityValue, :to_msgpack_ext)
+      end
+    end
 
     def self.use
       packer = @@pool.poll
