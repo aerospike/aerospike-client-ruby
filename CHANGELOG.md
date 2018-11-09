@@ -4,12 +4,17 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.9.0] - 2018-11-09
+
+* **New Features**
+  * Add INFINITY and WILDCARD values for use in CDT map/list comparators. [AER-5945]
+
 * **Bug Fixes**
   * Default policies set on Client instance do not get applied [[#74](https://github.com/aerospike/aerospike-client-ruby/issue/74)]
 
 * **Updates**
-  * Change default for send_key write policy to false [[#73](https://github.com/aerospike/aerospike-client-ruby/issue/73)]
-
+  * *BREAKING CHANGE*: Change default for send_key write policy to false [[#73](https://github.com/aerospike/aerospike-client-ruby/issue/73)]
+  * Support truncate info command argument "lut=now" for servers that require it. [AER-5955]
 
 ## [2.8.0] - 2018-08-06
 
