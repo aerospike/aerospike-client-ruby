@@ -53,7 +53,13 @@ EOF
   end
 
   def self.client
-    @client ||= Aerospike::Client.new
+    @client ||= begin
+      policy = Aerospike::ClientPolicy.new(
+        user: ENV['AEROSPIKE_USER'],
+        password: ENV['AEROSPIKE_PASSWORD'],
+      )
+      Aerospike::Client.new(policy: policy)
+    end
   end
 
   def self.feature?(feature)
