@@ -60,10 +60,6 @@ module Aerospike
     # exists.
     KEY_EXISTS_ERROR = 5
 
-    # On create-only (write unique) operations on a bin that already
-    # exists.
-    BIN_EXISTS_ERROR = 6
-
     # Expected cluster ID was not received.
     CLUSTER_KEY_MISMATCH = 7
 
@@ -94,9 +90,6 @@ module Aerospike
 
     # Unsupported Server Feature (e.g. Scan + UDF)
     UNSUPPORTED_FEATURE = 16
-
-    # Specified bin name does not exist in record.
-    BIN_NOT_FOUND = 17
 
     # Specified bin name does not exist in record.
     DEVICE_OVERLOAD = 18
@@ -248,9 +241,6 @@ module Aerospike
       when KEY_EXISTS_ERROR
         "Key already exists"
 
-      when BIN_EXISTS_ERROR
-        "Bin already exists"
-
       when CLUSTER_KEY_MISMATCH
         "Cluster key mismatch"
 
@@ -280,9 +270,6 @@ module Aerospike
 
       when UNSUPPORTED_FEATURE
         "Unsupported Server Feature"
-
-      when BIN_NOT_FOUND
-        "Bin not found"
 
       when DEVICE_OVERLOAD
         "Device overload"
