@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+* **Updates**
+  * Change admin message version to 2 (from 0)
+  * Remove unused BIN_EXISTS_ERROR (6) and BIN_NOT_FOUND (17) error codes
+  * Tests: Support setting user/password when running specs
+
 ## [2.9.0] - 2018-11-09
 
 * **New Features**
