@@ -55,14 +55,6 @@ describe Aerospike::Client do
           expect(admin.roles).to match_array(["user-admin", "read-write", "read"])
         end
 
-        it "Must Replace Roles Perfectly" do
-          client.replace_roles("test_user", ["user-admin", "read"])
-          admin = client.query_user("test_user")
-
-          expect(admin.user).to eq "test_user"
-          expect(admin.roles).to match_array(["user-admin", "read"])
-        end
-
       end # context
 
       context "Users" do

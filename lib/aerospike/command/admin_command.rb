@@ -25,7 +25,6 @@ module Aerospike
   CHANGE_PASSWORD = 4
   GRANT_ROLES     = 5
   REVOKE_ROLES    = 6
-  REPLACE_ROLES   = 7
   #CREATE_ROLE = 8
   QUERY_USERS = 9
   #QUERY_ROLES =  10
