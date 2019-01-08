@@ -38,7 +38,7 @@ module Aerospike
   #PRIVILEGES =  11
 
   # Misc
-  MSG_VERSION  = 0
+  MSG_VERSION  = 2
   MSG_TYPE     = 2
 
   HEADER_SIZE       = 24
