@@ -36,8 +36,8 @@ Aerospike.logger = Logger.new(StringIO.new, Logger::DEBUG)
 # Aerospike.logger = Logger.new(STDOUT, Logger::DEBUG)
 
 RSpec.configure do |config|
-  # skip security tests; they are only available on enterprise edition
-  config.filter_run_excluding skip_security: true
+  # skip tests that require security features of Enterprise edition server
+  config.filter_run_excluding security: true
   config.filter_run_including focus: true
   config.run_all_when_everything_filtered = true
 

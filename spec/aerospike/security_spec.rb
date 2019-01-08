@@ -19,7 +19,7 @@ require "aerospike/query/statement"
 
 describe Aerospike::Client do
 
-    describe "Security operations", :skip_security => true do
+    describe "Security operations", security: true do
 
       let(:client) { Support.client }
 
