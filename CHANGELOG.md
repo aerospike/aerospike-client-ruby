@@ -140,7 +140,7 @@ All notable changes to this project will be documented in this file.
 
 ## [2.0.0] - 2016-05-27
 
-* **Breaking Changes** - Please refer to detailed list of [API changes](docs/api-changes.md#v2.0.0) for further details.
+* **Breaking Changes** - Please refer to detailed list of [API changes](https://www.aerospike.com/docs/client/ruby/usage/incompatible.html#version-2-0-0) for further details.
   * Incompatible integer key digests: digests for integer keys computed by v2 and v1 are different; the Aerospike server uses the key digest to retrieve records. This will impact your ability to read records with integer keys that were created by a v1 client version.
   * Backward incompatible changes to the `Aerospike::Client.new` initializer.
   * The `Aerospike::Client.new_many` initializer has been removed; use `Aerospike::Client.new` instead.
