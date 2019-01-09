@@ -65,13 +65,13 @@ describe Aerospike::Client do
       end
     end
 
-    context 'using batch index protocol', skip: Support.min_version?('4.4.0') do
+    context 'using batch index protocol' do
       let(:use_batch_direct) { false }
 
       it_behaves_like 'a batch_exists request'
     end
 
-    context 'using batch direct protocol' do
+    context 'using batch direct protocol', skip: Support.min_version?('4.4.0') do
       let(:use_batch_direct) { true }
 
       it_behaves_like 'a batch_exists request'
@@ -158,13 +158,13 @@ describe Aerospike::Client do
       end
     end
 
-    context 'using batch index protocol', skip: Support.min_version?('4.4.0') do
+    context 'using batch index protocol' do
       let(:use_batch_direct) { false }
 
       it_behaves_like 'a batch_get request'
     end
 
-    context 'using batch direct protocol' do
+    context 'using batch direct protocol', skip: Support.min_version?('4.4.0') do
       let(:use_batch_direct) { true }
 
       it_behaves_like 'a batch_get request'
@@ -225,13 +225,13 @@ describe Aerospike::Client do
       end
     end
 
-    context 'using batch index protocol', skip: Support.min_version?('4.4.0') do
+    context 'using batch index protocol' do
       let(:use_batch_direct) { false }
 
       it_behaves_like 'a batch_get_header request'
     end
 
-    context 'using batch direct protocol' do
+    context 'using batch direct protocol', skip: Support.min_version?('4.4.0') do
       let(:use_batch_direct) { true }
 
       it_behaves_like 'a batch_get_header request'
