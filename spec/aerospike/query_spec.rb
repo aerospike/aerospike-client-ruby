@@ -142,6 +142,15 @@ describe Aerospike::Client do
         expect(records).to eq @record_count
       end # it
 
+      it "does not raise a KEY_NOT_FOUND error when querying a set that does not exist", focus: true do
+        stmt = Aerospike::Statement.new(@namespace, "SetDoesNotExist")
+        rs = client.query(stmt)
+
+        records = 0
+        expect { rs.each { records += 1 } }.not_to raise_error()
+        expect(records).to eql(0)
+      end
+
     end # context
 
     context "Equal Filter" do
