@@ -142,7 +142,7 @@ describe Aerospike::Client do
         expect(records).to eq @record_count
       end # it
 
-      it "does not raise a KEY_NOT_FOUND error when querying a set that does not exist", focus: true do
+      it "does not raise a KEY_NOT_FOUND error when querying a set that does not exist" do
         stmt = Aerospike::Statement.new(@namespace, "SetDoesNotExist")
         rs = client.query(stmt)
 
