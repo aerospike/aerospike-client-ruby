@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.9.1] - 2019-04-03
+
+* **Bug Fixes**
+  * Query fails if one or more cluster nodes do not have records in the set [[#77](https://github.com/aerospike/aerospike-client-ruby/issue/77)]
+
 * **Updates**
   * Change admin message version to 2 (from 0)
   * Remove unused BIN_EXISTS_ERROR (6) and BIN_NOT_FOUND (17) error codes
