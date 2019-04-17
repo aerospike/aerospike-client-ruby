@@ -14,7 +14,6 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-require "spec_helper"
 include Aerospike::CDT
 
 describe "client.operate() - CDT List Operations", skip: !Support.feature?(Aerospike::Features::CDT_LIST) do

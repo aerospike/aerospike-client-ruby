@@ -17,8 +17,6 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-require "spec_helper"
-
 require 'aerospike/host'
 require 'aerospike/key'
 require 'aerospike/bin'
