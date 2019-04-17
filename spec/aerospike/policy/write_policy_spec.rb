@@ -14,8 +14,6 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-require "spec_helper"
-
 require "aerospike/policy/priority"
 require "aerospike/policy/generation_policy"
 require "aerospike/policy/record_exists_action"

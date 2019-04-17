@@ -1,7 +1,5 @@
 # frozen_string_literal: true
 
-require 'spec_helper'
-
 RSpec.describe Aerospike::Value do
   describe '::of' do
     subject(:of) { described_class.of(value) }
