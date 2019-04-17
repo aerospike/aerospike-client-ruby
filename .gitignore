@@ -13,3 +13,5 @@ TODO
 .ruby-version
 *.gem
 .vscode
+vendor/bundle
+.bundle
