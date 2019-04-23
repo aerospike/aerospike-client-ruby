@@ -51,7 +51,7 @@ module Aerospike
         commands = %w[node build features]
 
         unless IPAddr.new(address).loopback?
-          @address_command = @tls_options.nil? ? 'service-clear-std' : 'service-tls-std'
+          @address_command = @cluster.tls_enabled? ? 'service-tls-std': 'service-clear-std'
           commands << @address_command
         end
 
