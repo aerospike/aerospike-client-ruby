@@ -49,11 +49,7 @@ module Aerospike
         conn = Cluster::CreateConnection.(@cluster, Host.new(address, host.port, host.tls_name))
 
         commands = %w[node build features]
-
-        unless IPAddr.new(address).loopback?
-          @address_command = @cluster.tls_enabled? ? 'service-tls-std': 'service-clear-std'
-          commands << @address_command
-        end
+        commands << address_command unless is_loopback?(address)
 
         info_map = Info.request(conn, *commands)
 
@@ -72,8 +68,8 @@ module Aerospike
           end
         end
 
-        if @address_command
-          aliases = info_map[@address_command].split(',').map { |address| get_alias(*address.split(':')) }
+        unless is_loopback?(address)
+          aliases = info_map[address_command].split(',').map { |address| get_alias(*address.split(':')) }
         end
       ensure
         conn.close if conn
@@ -94,6 +90,14 @@ module Aerospike
       else
         Resolv.getaddresses(hostname)
       end
+    end
+
+    def address_command
+      @address_command ||= @cluster.tls_enabled? ? 'service-tls-std': 'service-clear-std'
+    end
+
+    def is_loopback?(address)
+      IPAddr.new(address).loopback?
     end
 
     def is_ip?(hostname)
