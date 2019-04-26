@@ -27,8 +27,19 @@ describe Aerospike::NodeValidator do
     it { expect(validator.aliases).to eq(hosts) }
   end
 
-  context 'with default nodes' do
-    let(:hosts) { ::Aerospike::Host::Parse.(ENV['AEROSPIKE_HOSTS']) }
+  context 'with seed node' do
+    let(:hosts) { [::Aerospike::Host.new('192.168.1.1', '3000')] }
+
+    before do
+      allow(::Aerospike::Cluster::CreateConnection).to receive(:call).and_return(socket)
+
+      expect(::Aerospike::Info).to receive(:request).and_return(
+        {
+          'node' => 'test-node',
+          'service-clear-std' => '192.168.1.1:3000'
+        }
+      )
+    end
 
     # map to string for non-object comparison
     it { expect(validator.aliases.map { |a| a.to_s }).to match_array(hosts.map { |a| a.to_s }) }
