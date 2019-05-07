@@ -17,8 +17,6 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-require 'ipaddr'
-
 module Aerospike
   class NodeValidator # :nodoc:
     VERSION_REGEXP = /(?<v1>\d+)\.(?<v2>\d+)\.(?<v3>\d+).*/.freeze
@@ -97,7 +95,8 @@ module Aerospike
     end
 
     def is_loopback?(address)
-      IPAddr.new(address).loopback?
+      info = Addrinfo.ip(address)
+      info.ipv4_loopback? || info.ipv6_loopback?
     end
 
     def is_ip?(hostname)
