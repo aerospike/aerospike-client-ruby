@@ -7,6 +7,7 @@ describe Aerospike::PredExp do
     @namespace = "test"
     @set = "predexp"
     @record_count = 5
+    point = Aerospike::GeoJSON.new(type: "Point", coordinates: [103.9114, 1.3083])
     @record_count.times do |i|
       key = Aerospike::Key.new(@namespace, @set, i)
       bin_map = {
@@ -14,7 +15,7 @@ describe Aerospike::PredExp do
         'bin2' => i,
         'bin3' => [ i, i + 1_000, i + 1_000_000 ],
         'bin4' => { "key#{i}" => i },
-        'bin5' => Aerospike::GeoJSON.new(type: "Point", coordinates: [103.9114, 1.3083])
+        'bin5' => Support::Geo.destination_point(point, i * 200, rand(0..359))
       }
       Support.client.put(key, bin_map)
     end
@@ -121,6 +122,34 @@ describe Aerospike::PredExp do
       rs = client.query(statement)
       rs.each do |r|
         expect(r.bins[string_bin]).not_to eq(value)
+      end
+    end
+
+    # context 'regex' do
+    #   let(:value) { '/ue3/' }
+    #   context 'default flag' do
+    #     it 'returns records matching regex' do
+    #       predexp << Aerospike::PredExp.string_regex(Aerospike::PredExp::Regex::Flags::NONE)
+    #       statement.predexp = predexp
+    #       rs = client.query(statement)
+    #       count = 0
+    #       rs.each do |r|
+    #         count += 1
+    #       end
+    #
+    #       expect(count).to eq(1)
+    #     end
+    #   end
+    # end
+
+    context 'GeoJSON bins' do
+      let(:value) { 'value3' }
+      let(:geo_json_bin) { 'bin5' }
+      let(:predexp) do
+        [
+          Aerospike::PredExp.string_bin(geo_json_bin),
+          Aerospike::PredExp.string_value(value)
+        ]
       end
     end
   end

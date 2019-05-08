@@ -52,6 +52,18 @@ module Aerospike
       other.to_json == self.to_json
     end
 
+    def lng
+      return nil unless json_data['type'] == 'Point'
+
+      json_data['coordinates'].first
+    end
+
+    def lat
+      return nil unless json_data['type'] == 'Point'
+
+      json_data['coordinates'].last
+    end
+
     protected
 
     attr_accessor :json_data
