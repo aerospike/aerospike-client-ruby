@@ -22,7 +22,7 @@ module Aerospike
         offset += 4
 
         # write predicate count
-        buffer.write_int16(nexp, offset)
+        buffer.write_int16(@nexp, offset)
         offset += 2
 
         offset

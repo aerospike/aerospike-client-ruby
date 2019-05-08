@@ -145,6 +145,7 @@ require 'aerospike/query/statement'
 require 'aerospike/query/pred_exp'
 
 require 'aerospike/query/pred_exp/and_or'
+require 'aerospike/query/pred_exp/geo_json_value'
 require 'aerospike/query/pred_exp/integer_value'
 require 'aerospike/query/pred_exp/op'
 require 'aerospike/query/pred_exp/regex'

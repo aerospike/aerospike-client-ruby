@@ -2,23 +2,35 @@
 
 module Aerospike
   class PredExp
-    class StringValue < PredExp
+    class GeoJsonValue < PredExp
       def initialize(value, type)
         @value = value
         @type = type
       end
 
       def estimate_size
-        @value.bytesize + 6
+        @value.bytesize + 9
       end
 
       def write(buffer, offset)
-        buffer.write_int16(@type, offset)
+        # tag
+        buffer.write_uint16(@type, offset)
         offset += 2
 
-        buffer.write_int32(@value.bytesize, offset)
+        # len
+        buffer.write_uint32(@value.bytesize + 3, offset)
         offset += 4
 
+        # flags
+
+        buffer.write_byte(0, offset)
+        offset += 1
+
+        # ncells
+        buffer.write_uint16(0, offset)
+        offset += 2
+
+        # value
         len = buffer.write_binary(@value, offset)
         offset += len
 

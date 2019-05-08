@@ -55,13 +55,17 @@ module Aerospike
     def lng
       return nil unless json_data['type'] == 'Point'
 
-      json_data['coordinates'].first
+      to_hash['coordinates'].last
     end
 
     def lat
       return nil unless json_data['type'] == 'Point'
 
-      json_data['coordinates'].last
+      to_hash['coordinates'].first
+    end
+
+    def coordinates
+      json_data['coordinates']
     end
 
     protected

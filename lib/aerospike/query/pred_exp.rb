@@ -58,7 +58,7 @@ module Aerospike
     end
 
     def self.geojson_value(value)
-      StringValue.new(value, GEOJSON_VALUE)
+      GeoJsonValue.new(value, GEOJSON_VALUE)
     end
 
     def self.integer_bin(name)
@@ -137,7 +137,7 @@ module Aerospike
       Regex.new(STRING_REGEX, flags)
     end
 
-    def self.geojson_within()
+    def self.geojson_within
       Op.new(GEOJSON_WITHIN)
     end
 
@@ -177,7 +177,12 @@ module Aerospike
 
     def self.write(predexp, buffer, offset)
       predexp.each do |p|
-        offset = p.write(buffer, offset)
+        begin
+          offset = p.write(buffer, offset)
+        rescue => e
+          puts "Error: #{e}"
+        end
+
       end
 
       offset

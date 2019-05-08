@@ -129,16 +129,14 @@ EOF
     ## Calculate coordinates of a point located
     ## on a set distance and bearing from start point
     ##
-    ## @param [Aerospike::GeoJSON] point starting point
+    ## @param [Float] lng longitude of starting point
+    ## @param [Float] lat latitude of starting point
     ## @param [Integer] distance distance in meters
     ## @param [Integer] bearing
     ##
     ## @return [Aerospike::GeoJSON] Point in a set distance and bearing
     ##
-    def self.destination_point(point, distance, bearing)
-      lng = point.lng
-      lat = point.lat
-
+    def self.destination_point(lng, lat, distance, bearing)
       ang_dis = (distance.to_f / EARTH_RADIUS_IN_M) # Earth's radius in meters
 
       br = deg2rad(bearing)
@@ -160,12 +158,14 @@ EOF
 
     # Create a random Point in distance of set amount of meters
     #
-    # @param point [Aerospike::GeoJSON] starting point
+    ## @param [Float] lng longitude of starting point
+    ## @param [Float] lat latitude of starting point
     # @param distance [Integer] Distance in meters
     # @return [Aerospike::Point] Random point in distance within _distance_ meters
-    def self.random_point_in_range(point, distance)
+    def self.random_point_in_range(lng, lat, distance)
       destination_point(
-        point,
+        lng,
+        lat,
         rand(1..distance),
         rand(0..360)
       )
