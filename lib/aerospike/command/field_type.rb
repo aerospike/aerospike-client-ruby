@@ -43,6 +43,7 @@ module Aerospike
     UDF_OP = 33
     QUERY_BINLIST = 40
     BATCH_INDEX = 41
+    PREDEXP = 43
 
   end # module
 

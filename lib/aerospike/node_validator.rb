@@ -31,53 +31,42 @@ module Aerospike
       @cluster_name = cluster_name
       @tls_options = tls_options
 
-      @aliases = []
-
-      resolve(host.name).each do |address|
-        @aliases += get_hosts(address)
-      end
+      set_aliases(host)
+      set_address(timeout)
     end
 
     private
 
-    def get_hosts(address)
-      aliases = [get_alias(address, host.port)]
-
-      begin
-        conn = Cluster::CreateConnection.(@cluster, Host.new(address, host.port, host.tls_name))
-
-        commands = %w[node build features]
-        commands << address_command unless is_loopback?(address)
-
-        info_map = Info.request(conn, *commands)
-
-        if node_name = info_map['node']
-          @name = node_name
-
-          # Set features
-          if features = info_map['features']
-            @features = features.split(';').to_set
-          end
-
-          # Check new info protocol support for >= 2.6.6 build
-          if build_version = info_map['build']
-            v1, v2, v3 = parse_version_string(build_version)
-            @use_new_info = v1.to_i > 2 || (v1.to_i == 2 && (v2.to_i > 6 || (v2.to_i == 6 && v3.to_i >= 6)))
-          end
-        end
-
-        unless is_loopback?(address)
-          aliases = info_map[address_command].split(',').map { |address| get_alias(*address.split(':')) }
-        end
-      ensure
-        conn.close if conn
-      end
-
-      aliases.map { |al| Host.new(al[:address], al[:port], host.tls_name) }
+    def set_aliases(host)
+      addresses = resolve(host.name)
+      @aliases = addresses.map { |addr| Host.new(addr, host.port, host.tls_name) }
+      Aerospike.logger.debug("Node Validator found #{aliases.length} addresses for host #{host}: #{@aliases}")
     end
 
-    def get_alias(address, port)
-      { address: address, port: port }
+    def set_address(timeout)
+      @aliases.each do |aliass|
+        begin
+          conn = Cluster::CreateConnection.(@cluster, @host)
+
+          info_map = Info.request(conn, 'node', 'build', 'features')
+          if node_name = info_map['node']
+            @name = node_name
+
+            # Set features
+            if features = info_map['features']
+              @features = features.split(';').to_set
+            end
+
+            # Check new info protocol support for >= 2.6.6 build
+            if build_version = info_map['build']
+              v1, v2, v3 = parse_version_string(build_version)
+              @use_new_info = v1.to_i > 2 || (v1.to_i == 2 && (v2.to_i > 6 || (v2.to_i == 6 && v3.to_i >= 6)))
+            end
+          end
+        ensure
+          conn.close if conn
+        end
+      end
     end
 
     def resolve(hostname)
@@ -88,15 +77,6 @@ module Aerospike
       else
         Resolv.getaddresses(hostname)
       end
-    end
-
-    def address_command
-      @address_command ||= @cluster.tls_enabled? ? 'service-tls-std': 'service-clear-std'
-    end
-
-    def is_loopback?(address)
-      info = Addrinfo.ip(address)
-      info.ipv4_loopback? || info.ipv6_loopback?
     end
 
     def is_ip?(hostname)
@@ -111,4 +91,4 @@ module Aerospike
       raise Aerospike::Exceptions::Parse.new("Invalid build version string in Info: #{version}")
     end
   end # class
-end # module
+end #module

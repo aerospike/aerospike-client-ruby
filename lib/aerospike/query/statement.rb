@@ -20,7 +20,7 @@ module Aerospike
 
     attr_accessor :namespace, :set_name, :index_name, :bin_names, :task_id
     attr_accessor :filters, :package_name, :function_name, :function_args
-    attr_accessor :return_data
+    attr_accessor :predexp, :return_data
 
     def initialize(namespace, set_name, bin_names=[])
       # Namespace determines query Namespace
@@ -42,6 +42,9 @@ module Aerospike
       # QueryFilter demonstrates how to add additional filters in an user-defined
       # aggregation function.
       @filters = []
+
+      # Predicate expressions
+      @predexp = nil
 
       @package_name  = nil
       @function_name = nil

@@ -20,7 +20,7 @@ module Aerospike
   # a producer is a thread that fetches records from one node and puts them on this queue
   # a consumer fetches records from this queue
   # so the production and the consumptoin are decoupled
-  # there can be an unlimited count of producer threads and consumer threads 
+  # there can be an unlimited count of producer threads and consumer threads
   class Recordset
 
     attr_reader :records
@@ -29,7 +29,7 @@ module Aerospike
       queue_size = thread_count if queue_size < thread_count
       @records = SizedQueue.new(queue_size)
 
-      # holds the count of active threads. 
+      # holds the count of active threads.
       # when it reaches zero it means the whole operations of fetching records from server nodes is finished
       @active_threads = Atomic.new(thread_count)
 
@@ -48,7 +48,7 @@ module Aerospike
     # if the operation is not finished and the queue is empty it blocks and waits for new records
     # it sets the exception if it reaches the EOF mark, and returns nil
     # EOF means the operation has finished and no more records are comming from server nodes
-    # it re-raises the exception occurred in threads, or which was set after reaching the EOF in the previous call 
+    # it re-raises the exception occurred in threads, or which was set after reaching the EOF in the previous call
     def next_record
       raise @thread_exception.get unless @thread_exception.get.nil?
 
@@ -76,7 +76,7 @@ module Aerospike
 
     # this is called by a thread who faced an exception to singnal to terminate the whole operation
     # it also may be called by the user to terminate the command in the middle of fetching records from server nodes
-    # it clears the queue so that if any threads are waiting for the queue get unblocked and find out about the cancellation 
+    # it clears the queue so that if any threads are waiting for the queue get unblocked and find out about the cancellation
     def cancel(expn=nil)
       set_exception(expn)
       @cancelled.set(true)
@@ -97,6 +97,23 @@ module Aerospike
           break
         end
       end
+    end
+
+    def to_a
+      records = []
+      r = true
+      while r
+        r = next_record
+        # nil means EOF
+        unless r.nil?
+          records << r
+        else
+          # reached the EOF
+          break
+        end
+      end
+
+      records
     end
 
     # the command is a scan if there are no filters applied otherwise it is a query
