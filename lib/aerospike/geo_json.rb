@@ -53,19 +53,20 @@ module Aerospike
     end
 
     def lng
-      return nil unless json_data['type'] == 'Point'
+      puts json_data.to_s
+      return nil unless to_h['type'] == 'Point'
 
-      to_hash['coordinates'].last
+      to_h['coordinates'].last
     end
 
     def lat
-      return nil unless json_data['type'] == 'Point'
+      return nil unless to_h['type'] == 'Point'
 
-      to_hash['coordinates'].first
+      to_h['coordinates'].first
     end
 
     def coordinates
-      json_data['coordinates']
+      to_h['coordinates']
     end
 
     protected

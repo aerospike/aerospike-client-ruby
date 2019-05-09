@@ -4,20 +4,16 @@ describe Aerospike::PredExp do
   let(:client) { Support.client }
 
   before :all do
-    @lat = 1.3083
-    @lng = 103.9114
     @namespace = "test"
     @set = "predexp"
     @record_count = 5
-    point = Aerospike::GeoJSON.new(type: "Point", coordinates: [@lng, @lat])
     @record_count.times do |i|
       key = Aerospike::Key.new(@namespace, @set, i)
       bin_map = {
         'bin1' => "value#{i}",
         'bin2' => i,
         'bin3' => [ i, i + 1_000, i + 1_000_000 ],
-        'bin4' => { "key#{i}" => i },
-        # 'bin5' => Support::Geo.destination_point(@lng, @lat, i * 200, rand(0..359))
+        'bin4' => { "key#{i}" => i }
       }
       Support.client.put(key, bin_map)
     end
@@ -28,7 +24,6 @@ describe Aerospike::PredExp do
     tasks << Support.client.create_index(@namespace, @set, "index_lst_bin3", "bin3", :numeric, :list)
     tasks << Support.client.create_index(@namespace, @set, "index_mapkey_bin4", "bin4", :string, :mapkeys)
     tasks << Support.client.create_index(@namespace, @set, "index_mapval_bin4", "bin4", :numeric, :mapvalues)
-    tasks << Support.client.create_index(@namespace, @set, "index_geo_bin5", "bin5", :geo2dsphere)
     tasks.each(&:wait_till_completed)
     expect(tasks.all?(&:completed?)).to be true
   end
@@ -148,47 +143,83 @@ describe Aerospike::PredExp do
     end
   end
 
-  # context 'expressions for GeoJSON bins' do
-  #   let(:geo_json_bin) { 'bin5' }
-  #
-  #   context 'within' do
-  #     let(:geo_json_area_circle) { Aerospike::GeoJSON.new(type: 'AeroCircle', coordinates: [[@lng, @lat], 10000]) }
-  #     let(:geo_json_polygon) do
-  #       Aerospike::GeoJSON.new(
-  #         type: "Polygon",
-  #         coordinates: [
-  #           [
-  #             [@lng - 1, @lat - 1],
-  #             [@lng + 1, @lat - 1],
-  #             [@lng + 1, @lat + 1],
-  #             [@lng - 1, @lat + 1],
-  #             [@lng - 1, @lat - 1]
-  #           ]
-  #         ]
-  #       )
-  #     end
-  #
-  #     let(:predexp) do
-  #       [
-  #         Aerospike::PredExp.geojson_bin(geo_json_bin),
-  #         Aerospike::PredExp.geojson_contains,
-  #         Aerospike::PredExp.geojson_value(geo_json_area_circle.to_json)
-  #       ]
-  #     end
-  #
-  #     it 'returns records within a circle' do
-  #       # predexp <<
-  #       statement.predexp = predexp
-  #       rs = client.query(statement)
-  #       count = 0
-  #       rs.each do |r|
-  #         puts r.bins
-  #         count += 1
-  #       end
-  #       expect(count).to eq(3)
-  #     end
-  #   end
-  # end
+  context 'expressions for GeoJSON bins' do
+    before :all do
+      @lat = 1.3083
+      @lng = 103.9114
+
+      @point = Aerospike::GeoJSON.new(type: "Point", coordinates: [@lng, @lat])
+      @record_count.times do |i|
+        key = Aerospike::Key.new(@namespace, @set, i)
+        sub_point = Support::Geo.destination_point(@lng, @lat, i * 200, rand(0..359))
+
+        sub_point_cords = sub_point.coordinates
+
+        polygon_points = [315, 45, 135, 225].map { |x|
+          Support::Geo.destination_point(sub_point_cords.first, sub_point_cords.last, 100, x).coordinates
+        }
+        polygon_points << polygon_points.first
+        polygon = Aerospike::GeoJSON.new(type: 'Polygon', coordinates: [polygon_points])
+        bin_map = {
+          'geo_point' => sub_point,
+          'geo_polygon' => polygon
+        }
+        Support.client.put(key, bin_map)
+      end
+
+
+      tasks = []
+      tasks << Support.client.create_index(@namespace, @set, "index_geo_bin5", "geo_point", :geo2dsphere)
+      tasks << Support.client.create_index(@namespace, @set, "index_geo_bin5", "geo_polygon", :geo2dsphere)
+      tasks.each(&:wait_till_completed)
+      expect(tasks.all?(&:completed?)).to be true
+    end
+
+    let(:point_bin) { 'geo_point' }
+    let(:polygon_bin) { 'geo_polygon' }
+
+    context 'contains' do
+      let(:geo_json_area_circle) { Aerospike::GeoJSON.new(type: 'AeroCircle', coordinates: [[@lng, @lat], 500]) }
+
+      let(:predexp) do
+        [
+          Aerospike::PredExp.geojson_bin(point_bin),
+          Aerospike::PredExp.geojson_value(geo_json_area_circle.to_s),
+          Aerospike::PredExp.geojson_contains
+        ]
+      end
+
+      it 'returns records with points within a circle' do
+        statement.predexp = predexp
+        rs = client.query(statement)
+        count = 0
+        rs.each do |r|
+          count += 1
+        end
+        expect(count).to eq(3)
+      end
+    end
+
+    context 'within' do
+      let(:predexp) do
+        [
+          Aerospike::PredExp.geojson_bin(polygon_bin),
+          Aerospike::PredExp.geojson_value(@point.to_s),
+          Aerospike::PredExp.geojson_within
+        ]
+      end
+
+      it 'returns records with polygons which contain point' do
+        statement.predexp = predexp
+        rs = client.query(statement)
+        count = 0
+        rs.each do |r|
+          count += 1
+        end
+        expect(count).to eq(1)
+      end
+    end
+  end
 
   context 'expressions for bins with lists' do
     let(:value) { 3 }
