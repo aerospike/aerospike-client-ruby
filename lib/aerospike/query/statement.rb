@@ -79,5 +79,4 @@ module Aerospike
   RAND_MAX = 2**63
 
   end # class
-
 end
