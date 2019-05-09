@@ -159,21 +159,6 @@ EOF
 
       Aerospike::GeoJSON.new(type: 'Point', coordinates: [f_lng, f_lat])
     end
-
-    # Create a random Point in distance of set amount of meters
-    #
-    ## @param [Float] lng longitude of starting point
-    ## @param [Float] lat latitude of starting point
-    ## @param distance [Integer] Distance in meters
-    ## @return [Aerospike::GeoJSON] Random point in distance within _distance_ meters
-    def self.random_point_in_range(lng, lat, distance)
-      destination_point(
-        lng,
-        lat,
-        rand(1..distance),
-        rand(0..360)
-      )
-    end
   end
 
 end
