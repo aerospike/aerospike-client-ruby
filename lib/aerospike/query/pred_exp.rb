@@ -93,6 +93,10 @@ module Aerospike
       StringValue.new(name, GEOJSON_VAR)
     end
 
+    def self.record_size
+      Op.new(RECSIZE)
+    end
+
     def self.last_update
       Op.new(LAST_UPDATE)
     end

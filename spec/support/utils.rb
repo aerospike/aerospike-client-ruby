@@ -102,6 +102,10 @@ EOF
     RUBY_PLATFORM == "java"
   end
 
+  def self.time_in_nanoseconds(time)
+    ("%10.9f" % time.to_f).gsub('.', '').to_i
+  end
+
   module Geo
     RAD_PER_DEG        = Math::PI / 180.to_f
     DEG_PER_RAD        = 180.to_f / Math::PI
@@ -137,7 +141,7 @@ EOF
     ## @return [Aerospike::GeoJSON] Point in a set distance and bearing
     ##
     def self.destination_point(lng, lat, distance, bearing)
-      ang_dis = (distance.to_f / EARTH_RADIUS_IN_M) # Earth's radius in meters
+      ang_dis = (distance.to_f / EARTH_RADIUS_IN_M)
 
       br = deg2rad(bearing)
       rlat = deg2rad(lat)
@@ -160,8 +164,8 @@ EOF
     #
     ## @param [Float] lng longitude of starting point
     ## @param [Float] lat latitude of starting point
-    # @param distance [Integer] Distance in meters
-    # @return [Aerospike::Point] Random point in distance within _distance_ meters
+    ## @param distance [Integer] Distance in meters
+    ## @return [Aerospike::GeoJSON] Random point in distance within _distance_ meters
     def self.random_point_in_range(lng, lat, distance)
       destination_point(
         lng,

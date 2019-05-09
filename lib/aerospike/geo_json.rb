@@ -53,20 +53,47 @@ module Aerospike
     end
 
     def lng
-      puts json_data.to_s
-      return nil unless to_h['type'] == 'Point'
-
-      to_h['coordinates'].last
+      case type
+      when 'Point'
+        coordinates.last
+      when 'AreoCircle'
+        coordinates.first.last
+      end
     end
 
     def lat
-      return nil unless to_h['type'] == 'Point'
+      case type
+      when 'Point'
+        coordinates.first
+      when 'AreoCircle'
+        coordinates.first.first
+      end
+    end
 
-      to_h['coordinates'].first
+    def range
+      return nil unless point?
+
+      coordinates.last
     end
 
     def coordinates
       to_h['coordinates']
+    end
+
+    def type
+      to_h['type']
+    end
+
+    def point?
+      type == 'Point'
+    end
+
+    def circle?
+      type == 'Point'
+    end
+
+    def polygon?
+      type == 'Polygon'
     end
 
     protected

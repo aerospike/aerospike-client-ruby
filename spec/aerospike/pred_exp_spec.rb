@@ -15,7 +15,7 @@ describe Aerospike::PredExp do
         'bin3' => [ i, i + 1_000, i + 1_000_000 ],
         'bin4' => { "key#{i}" => i }
       }
-      Support.client.put(key, bin_map)
+      Support.client.put(key, bin_map, ttl: i * 10)
     end
 
     tasks = []
@@ -33,6 +33,32 @@ describe Aerospike::PredExp do
   let(:integer_bin) { 'bin2' }
   let(:list_bin) { 'bin3' }
   let(:map_bin) { 'bin4' }
+
+  context 'void time' do
+    let(:seconds_from_now) { 30 }
+    let(:time) { Time.now + seconds_from_now }
+    let(:value) { Support.time_in_nanoseconds(time) }
+    let(:predexp) do
+      [
+        Aerospike::PredExp.integer_value(value),
+        Aerospike::PredExp.void_time,
+        Aerospike::PredExp.integer_less
+      ]
+    end
+
+    it 'returns records expiring later than set time' do
+      statement.predexp = predexp
+      rs = client.query(statement)
+
+      count = 0
+      rs.each do |r|
+        expect(r.ttl).to be > seconds_from_now
+        count += 1
+      end
+
+      expect(count).to be > 0
+    end
+  end
 
   describe 'expressions for integer bins' do
     let(:value) { 3 }
@@ -129,7 +155,7 @@ describe Aerospike::PredExp do
       let(:value) { 'lue3' }
       context 'default flag' do
         it 'returns records matching regex' do
-          predexp << Aerospike::PredExp.string_regex(Aerospike::PredExp::Regex::Flags::NONE)
+          predexp << Aerospike::PredExp.string_regex(Aerospike::PredExp::RegexFlags::NONE)
           statement.predexp = predexp
           rs = client.query(statement)
           count = 0
@@ -164,7 +190,7 @@ describe Aerospike::PredExp do
           'geo_point' => sub_point,
           'geo_polygon' => polygon
         }
-        Support.client.put(key, bin_map)
+        Support.client.put(key, bin_map, ttl: 10)
       end
 
 
@@ -474,6 +500,37 @@ describe Aerospike::PredExp do
       end
 
       expect(count).to eq(4)
+    end
+  end
+
+  context 'last update' do
+    before :all do
+      @current_time = Support.time_in_nanoseconds(Time.now)
+      sleep 0.1
+      key = Aerospike::Key.new(@namespace, @set, "new_rec")
+      bin_map = {
+        'bin1' => 'val'
+      }
+      Support.client.put(key, bin_map, ttl: 10)
+    end
+
+    let(:predexp) do
+      [
+        Aerospike::PredExp.integer_value(@current_time),
+        Aerospike::PredExp.last_update,
+        Aerospike::PredExp.integer_less
+      ]
+    end
+
+    it 'returns records updated at chosen time' do
+      statement.predexp = predexp
+      rs = client.query(statement)
+
+      count = 0
+      rs.each do |r|
+        count += 1
+      end
+      expect(count).to eq(1)
     end
   end
 end

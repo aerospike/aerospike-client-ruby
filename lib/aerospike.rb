@@ -149,6 +149,7 @@ require 'aerospike/query/pred_exp/geo_json_value'
 require 'aerospike/query/pred_exp/integer_value'
 require 'aerospike/query/pred_exp/op'
 require 'aerospike/query/pred_exp/regex'
+require 'aerospike/query/pred_exp/regex_flags'
 require 'aerospike/query/pred_exp/string_value'
 
 module Aerospike
