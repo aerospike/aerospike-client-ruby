@@ -58,7 +58,8 @@ module Aerospike
     end
 
     def self.geojson_value(value)
-      GeoJsonValue.new(value, GEOJSON_VALUE)
+      raise(ArgumentError, "value must be a GeoJSON object!") unless value.is_a?(Aerospike::GeoJSON)
+      GeoJsonValue.new(value.to_s, GEOJSON_VALUE)
     end
 
     def self.integer_bin(name)

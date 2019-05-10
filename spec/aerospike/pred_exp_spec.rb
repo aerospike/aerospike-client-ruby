@@ -210,7 +210,7 @@ describe Aerospike::PredExp do
       let(:predexp) do
         [
           Aerospike::PredExp.geojson_bin(point_bin),
-          Aerospike::PredExp.geojson_value(geo_json_area_circle.to_s),
+          Aerospike::PredExp.geojson_value(geo_json_area_circle),
           Aerospike::PredExp.geojson_contains
         ]
       end
@@ -230,7 +230,7 @@ describe Aerospike::PredExp do
       let(:predexp) do
         [
           Aerospike::PredExp.geojson_bin(polygon_bin),
-          Aerospike::PredExp.geojson_value(@point.to_s),
+          Aerospike::PredExp.geojson_value(@point),
           Aerospike::PredExp.geojson_within
         ]
       end
