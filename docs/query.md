@@ -128,3 +128,134 @@ results.each do |record|
   # proess the record
 end
 ```
+
+### Predicate Expressions
+
+Predicate Expressions have been introduced in Aerospike Server version 3.12.
+They allow additional filtering of records by the server.
+
+A single predicate consists of three parts:
+
+- bin key to check,
+- value to compare values to,
+- and the predicate to filter the record.
+
+Single expressions can also be chained together by using AND and OR predicates.
+
+Example usage:
+
+```ruby
+statement = Aerospike::Statement.new('ns', 'set')
+# Return records with bin 'int_bin' greater than 10 and 's_bin' equal to 'test'
+statement.predexp = [
+  Aerospike::PredExp.integer_bin('int_bin'),
+  Aerospike::PredExp.integer_value(10),
+  Aerospike::PredExp.integer_greater,
+  Aerospike::PredExp.string_bin('s_bin'),
+  Aerospike::PredExp.string_value('test'),
+  Aerospike::PredExp.string_equal,
+  Aerospoke::PredExp.and(2)
+]
+results = client.query(statment)
+results.each do |record|
+  # proess the record
+end
+```
+
+Predicates on bins with Lists and Maps are more complicated. Value has to be saved to a variable, which has to be added to the predicate.
+
+Example:
+
+```ruby
+statement = Aerospike::Statement.new('ns', 'set')
+# Return records with bin 'list_bin' containing string 'test'
+statement.predexp = [
+  Aerospike::PredExp.string_value('test'),
+  Aerospike::PredExp.string_var('v'),
+  Aerospike::PredExp.string_equal,
+  Aerospike::PredExp.list_bin('list_bin'),
+  Aerospike::PredExp.list_iterate_or('v')
+]
+results = client.query(statment)
+results.each do |record|
+  # proess the record
+end
+```
+
+Values:
+
+```ruby
+Aerospike::PredExp.integer_val(10)
+Aerospike::PredExp.string_val('example')
+Aerospike::PredExp.geojson_val(
+  Aerospike::GeoJSON.new(type: 'Point', coordinates: [103.9114,1.3083])
+)
+```
+
+Variables:
+```ruby
+Aerospike::PredExp.integer_var('i')
+Aerospike::PredExp.string_var('s')
+Aerospike::PredExp.geojson_var('geo')
+```
+
+
+Bins:
+
+```ruby
+Aerospike::PredExp.integer_bin('age')
+Aerospike::PredExp.string_bin('name')
+Aerospike::PredExp.geojson_bin('loc')
+Aerospike::PredExp.list_bin('list')
+Aerospike::PredExp.map_bin('map')
+```
+
+Predicates:
+
+```ruby
+# and
+Aerospike::PredExp.and(2)
+# or
+Aerospike::PredExp.or(2)
+# not
+Aerospike::PredExp.not
+
+# Integer predicates
+Aerospike::PredExp.integer_equal
+Aerospike::PredExp.integer_unequal
+Aerospike::PredExp.integer_greater
+Aerospike::PredExp.integer_greater_eq
+Aerospike::PredExp.integer_less
+Aerospike::PredExp.integer_less_eq
+
+# String predicates
+Aerospike::PredExp.string_equal
+Aerospike::PredExp.string_unequal
+Aerospike::PredExp.string_regex(Aerospike::PredExp::RegexFlags::NONE)
+
+# String regex flags
+Aerospike::PredExp::RegexFlags::NONE # Regex defaults
+Aerospike::PredExp::RegexFlags::EXTENDED # Use POSIX Extended Regular Expression syntax when interpreting regex.
+Aerospike::PredExp::RegexFlags::ICASE # Do not differentiate case.
+Aerospike::PredExp::RegexFlags::NOSUB # Do not report position of matches.
+Aerospike::PredExp::RegexFlags::NEWLINE # Match-any-character operators don't match a newline.
+
+# GeoJSON predicates
+Aerospike::PredExp.geojson_contains
+Aerospike::PredExp.geojson_within
+
+# List predicates
+Aerospike::PredExp.list_iterate_or('x')
+Aerospike::PredExp.list_iterate_and('x')
+
+# Map predicates
+Aerospike::PredExp.mapkey_iterate_or('x')
+Aerospike::PredExp.mapkey_iterate_and('x')
+Aerospike::PredExp.mapval_iterate_or('x')
+Aerospike::PredExp.mapval_iterate_and('x')
+
+# Record properties
+Aerospike::PredExp.last_update
+Aerospike::PredExp.void_time
+Aerospike::PredExp.record_size
+```
