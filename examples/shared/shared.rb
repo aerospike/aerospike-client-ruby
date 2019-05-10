@@ -24,9 +24,9 @@ module Shared
   def init
 
     @@options = {
-      # setting host as localhost returns an error on Macs
-      :host => '0.0.0.0',
-      :port => 3000,
+      # setting host as localhost returns an error on Macs, so check env variable first
+      :host => ENV['AEROSPIKE_HOST'] || 'localhost',
+      :port => ENV['AEROSPIKE_PORT']&.to_i || 3000,
       :namespace => 'test',
       :set => 'examples',
     }
