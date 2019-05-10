@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.10.0] - 2019-05-10
+
+* **New Features**
+  * Add support for LB discovery / seeding. Thanks to [@filiptepper](https://github.com/filiptepper)! [[#80](https://github.com/aerospike/aerospike-client-ruby/issue/80)]
+
 ## [2.9.1] - 2019-04-03
 
 * **Bug Fixes**
