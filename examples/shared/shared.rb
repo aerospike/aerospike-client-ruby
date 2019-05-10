@@ -22,7 +22,9 @@ module Shared
   attr_accessor :write_policy, :policy, :client, :logger
 
   def init
+
     @@options = {
+      # setting host as localhost returns an error on Macs
       :host => '0.0.0.0',
       :port => 3000,
       :namespace => 'test',

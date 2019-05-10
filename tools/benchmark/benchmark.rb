@@ -213,11 +213,11 @@ Signal.trap("INT") do
 end
 
 def run_bench(client, ident, times)
-  # writepolicy = WritePolicy.new
+  writepolicy = WritePolicy.new
   client.default_write_policy.timeout = @options[:timeout]
   client.default_write_policy.max_retries = @options[:max_retries]
 
-  # client.default_policy = writepolicy
+  client.default_write_policy = writepolicy
 
   defaultBin = getBin
 

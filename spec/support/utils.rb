@@ -54,7 +54,10 @@ EOF
 
   def self.client
     @client ||= begin
-      host = Aerospike::Host.new('0.0.0.0', '3000')
+      host = Aerospike::Host.new(
+        ENV['AEROSPIKE_HOST'] || 'localhost',
+        ENV['AEROSPIKE_PORT']&.to_i || 3000
+      )
       policy = Aerospike::ClientPolicy.new(
         user: ENV['AEROSPIKE_USER'],
         password: ENV['AEROSPIKE_PASSWORD'],

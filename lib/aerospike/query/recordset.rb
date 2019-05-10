@@ -99,23 +99,6 @@ module Aerospike
       end
     end
 
-    def to_a
-      records = []
-      r = true
-      while r
-        r = next_record
-        # nil means EOF
-        unless r.nil?
-          records << r
-        else
-          # reached the EOF
-          break
-        end
-      end
-
-      records
-    end
-
     # the command is a scan if there are no filters applied otherwise it is a query
     def is_scan?
       @filters.nil? || @filters.empty?
