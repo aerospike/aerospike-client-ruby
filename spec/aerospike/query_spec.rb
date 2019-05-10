@@ -77,6 +77,7 @@ describe Aerospike::Client do
       it "returns all record bins" do
         stmt = Aerospike::Statement.new(@namespace, @set)
         stmt.filters << Aerospike::Filter.Equal('bin2', 1)
+        puts stmt.inspect
         rs = client.query(stmt)
         count = 0
         rs.each do |rec|
