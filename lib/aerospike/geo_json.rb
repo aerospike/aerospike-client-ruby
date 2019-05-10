@@ -55,23 +55,23 @@ module Aerospike
     def lng
       case type
       when 'Point'
-        coordinates.last
-      when 'AreoCircle'
-        coordinates.first.last
+        coordinates.first
+      when 'AeroCircle'
+        coordinates.first.first
       end
     end
 
     def lat
       case type
       when 'Point'
-        coordinates.first
-      when 'AreoCircle'
-        coordinates.first.first
+        coordinates.last
+      when 'AeroCircle'
+        coordinates.first.last
       end
     end
 
     def range
-      return nil unless point?
+      return nil unless circle?
 
       coordinates.last
     end
@@ -89,7 +89,7 @@ module Aerospike
     end
 
     def circle?
-      type == 'Point'
+      type == 'AeroCircle'
     end
 
     def polygon?

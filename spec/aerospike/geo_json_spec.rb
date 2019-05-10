@@ -18,6 +18,22 @@ require "aerospike/query/statement"
 
 describe Aerospike::GeoJSON do
 
+  let(:point) { described_class.new(type: 'Point', coordinates: [103.9114, 1.3083]) }
+  let(:circle) { described_class.new(type: 'AeroCircle', coordinates: [[103.9114, 1.3083], 100]) }
+  let(:polygon) do
+    described_class.new(
+      type: 'Polygon',
+      coordinates: [
+        [
+          [103.9114, 1.3083],
+          [103.9214, 1.3083],
+          [103.9214, 1.3183],
+          [103.9114, 1.3083]
+        ]
+      ]
+    )
+  end
+
   describe "#initialize" do
 
     it "should accept GeoJSON data as Hash" do
@@ -37,5 +53,47 @@ describe Aerospike::GeoJSON do
     end # it
 
   end # describe
+
+  describe '#lng' do
+    it 'should return longitude of point' do
+      expect(point.lng).to eq(103.9114)
+    end
+
+    it 'should return longitude of circle' do
+      expect(circle.lng).to eq(103.9114)
+    end
+
+    it 'should return nil if polygon' do
+      expect(polygon.lng).to eq(nil)
+    end
+  end
+
+  describe '#lat' do
+    it 'should return longitude of point' do
+      expect(point.lat).to eq(1.3083)
+    end
+
+    it 'should return longitude of circle' do
+      expect(circle.lat).to eq(1.3083)
+    end
+
+    it 'should return nil if polygon' do
+      expect(polygon.lat).to eq(nil)
+    end
+  end
+
+  describe '#range' do
+    it 'should return nil if point' do
+      expect(point.range).to eq(nil)
+    end
+
+    it 'should return longitude of circle' do
+      expect(circle.range).to eq(100)
+    end
+
+    it 'should return nil if polygon' do
+      expect(polygon.range).to eq(nil)
+    end
+  end
 
 end # describe
