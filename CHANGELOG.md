@@ -4,10 +4,15 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.10.0] - 2019-05-10
+
+* **New Features**
+  * Add support for LB discovery / seeding. Thanks to [@filiptepper](https://github.com/filiptepper)! [[#80](https://github.com/aerospike/aerospike-client-ruby/issues/80)]
+
 ## [2.9.1] - 2019-04-03
 
 * **Bug Fixes**
-  * Query fails if one or more cluster nodes do not have records in the set [[#77](https://github.com/aerospike/aerospike-client-ruby/issue/77)]
+  * Query fails if one or more cluster nodes do not have records in the set [[#77](https://github.com/aerospike/aerospike-client-ruby/issues/77)]
 
 * **Updates**
   * Change admin message version to 2 (from 0)
@@ -20,10 +25,10 @@ All notable changes to this project will be documented in this file.
   * Add INFINITY and WILDCARD values for use in CDT map/list comparators. [AER-5945]
 
 * **Bug Fixes**
-  * Default policies set on Client instance do not get applied [[#74](https://github.com/aerospike/aerospike-client-ruby/issue/74)]
+  * Default policies set on Client instance do not get applied [[#74](https://github.com/aerospike/aerospike-client-ruby/issues/74)]
 
 * **Updates**
-  * *BREAKING CHANGE*: Change default for send_key write policy to false [[#73](https://github.com/aerospike/aerospike-client-ruby/issue/73)]
+  * *BREAKING CHANGE*: Change default for send_key write policy to false [[#73](https://github.com/aerospike/aerospike-client-ruby/issues/73)]
   * Support truncate info command argument "lut=now" for servers that require it. [AER-5955]
 
 ## [2.8.0] - 2018-08-06
