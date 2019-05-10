@@ -17,6 +17,8 @@ def main
   run_regex_predexp_example(Shared.client)
   run_mapkey_predexp_example(Shared.client)
   run_list_predexp_example(Shared.client)
+  run_geojson_predexp_example(Shared.client)
+  run_void_time_predexp_example(Shared.client)
 
   Shared.logger.info("Example finished successfully.")
 end
@@ -32,14 +34,12 @@ def setup(client)
       'level' => rand(1..100),
       'rank' => ['C-', 'C', 'C+', 'B-', 'B', 'B+', 'A-', 'A', 'A+', 'S', 'S+', 'X'].sample,
       'gear' => {
-        'headgear' => ['18K Aviators', 'Designer Headphones', 'Knitted Hat', 'Long-Billed Hat', 'Pilot Goggles'].sample,
-        'clothes' => ['Takoroka Windcrusher', 'White Tee', 'Takoroka Jersey', 'Pearl Tee', 'King Jersey', 'Chilly Mountain Coat'].sample,
-        'shoes' => ['Blue Sea Slugs', 'Green Laceups', 'N-Pacer Ag', 'N-Pacer Au', 'Neon Sea Slugs', 'Trail Boots'].sample
+        'clothes' => ['Takoroka Windcrusher', 'White Tee', 'Takoroka Jersey', 'Pearl Tee', 'King Jersey', 'Chilly Mountain Coat'].sample
       },
       'weapons' => ['Splattershot', 'Splatling', 'Slosher', 'Splat Charger', 'Splat Dualies', 'N-ZAP', 'Jet Squelcher', 'Splat Roller', 'Kensa Roller'].sample(3),
       'loc' => GeoJSON.new(type: 'Point', coordinates: [(3 + (idx * 0.003)), (4 + (idx * 0.003))])
     }
-    client.put(key, record)
+    client.put(key, record, ttl: (idx + 1) * 5)
   end
 
   task = client.create_index(Shared.namespace, Shared.set_name, "name_index", "name", :string)
@@ -59,7 +59,7 @@ def teardown(client)
 end
 
 def run_integer_predexp_example(client)
-  Shared.logger.info("Querying set using predicate expressions to return all users with level > 30")
+  Shared.logger.info("Querying set using predicate expressions to return users with level > 30")
 
   statement = Statement.new(Shared.namespace, Shared.set_name)
   statement.predexp = [
@@ -74,11 +74,11 @@ def run_integer_predexp_example(client)
     results << r.bins['name']
   end
 
-  Shared.logger.info("Found #{results.length} records with level > 30: #{results}")
+  Shared.logger.info("Found #{results.length} records with level > 30.")
 end
 
 def run_string_predexp_example(client)
-  Shared.logger.info("Querying set using predicate expressions to return all Inklings")
+  Shared.logger.info("Querying set using predicate expressions to return Inklings")
 
   statement = Statement.new(Shared.namespace, Shared.set_name)
   statement.predexp = [
@@ -93,11 +93,11 @@ def run_string_predexp_example(client)
     results << r.bins['name']
   end
 
-  Shared.logger.info("Found #{results.length} Inklings: #{results}")
+  Shared.logger.info("Found #{results.length} Inklings.")
 end
 
 def run_regex_predexp_example(client)
-  Shared.logger.info("Querying set using predicate expressions to return all B rank users")
+  Shared.logger.info("Querying set using predicate expressions to return B rank users")
 
   statement = Statement.new(Shared.namespace, Shared.set_name)
   statement.predexp = [
@@ -112,15 +112,15 @@ def run_regex_predexp_example(client)
     results << r.bins['name']
   end
 
-  Shared.logger.info("Found #{results.length} users with B rank: #{results}")
+  Shared.logger.info("Found #{results.length} users with B rank.")
 end
 
 def run_mapkey_predexp_example(client)
-  Shared.logger.info("Querying set using predicate expressions to return all users wearing 18K Aviators")
+  Shared.logger.info("Querying set using predicate expressions to return all users wearing White Tees")
 
   statement = Statement.new(Shared.namespace, Shared.set_name)
   statement.predexp = [
-    PredExp.string_value('18K Aviators'),
+    PredExp.string_value('White Tee'),
     PredExp.string_var('x'),
     PredExp.string_equal,
     PredExp.map_bin('gear'),
@@ -133,11 +133,11 @@ def run_mapkey_predexp_example(client)
     results << r.bins['name']
   end
 
-  Shared.logger.info("Found #{results.length} users wearing 18K Aviators: #{results}")
+  Shared.logger.info("Found #{results.length} users wearing White Tees.")
 end
 
 def run_list_predexp_example(client)
-  Shared.logger.info("Querying set using predicate expressions to return all users using Sloshers")
+  Shared.logger.info("Querying set using predicate expressions to return users using Sloshers")
 
   statement = Statement.new(Shared.namespace, Shared.set_name)
   statement.predexp = [
@@ -154,5 +154,53 @@ def run_list_predexp_example(client)
     results << r.bins['name']
   end
 
-  Shared.logger.info("Found #{results.length} users using Sloshers: #{results}")
+  Shared.logger.info("Found #{results.length} users using Sloshers.")
 end
+
+def run_geojson_predexp_example(client)
+  Shared.logger.info("Querying set using predicate expressions to return users in range of circle")
+
+  circle_range = 1_000
+  # circle with range of 1000 meters
+  circle = GeoJSON.new(type: 'AeroCircle', coordinates: [[3,4], circle_range])
+
+  statement = Statement.new(Shared.namespace, Shared.set_name)
+  statement.predexp = [
+    PredExp.geojson_bin('loc'),
+    PredExp.geojson_value(circle),
+    PredExp.geojson_contains
+  ]
+
+  records = client.query(statement)
+  results = []
+  records.each do |r|
+    results << r.bins['name']
+  end
+
+  Shared.logger.info("Found #{results.length} users in a circle.")
+end
+
+def run_void_time_predexp_example(client)
+  Shared.logger.info("Querying set using predicate expressions to return records expiring in less than a minute")
+
+  minute_from_now = Time.now + 60
+  # Provided time must be an Epoch in nanoseconds
+  minute_from_now = ("%10.9f" % minute_from_now.to_f).gsub('.', '').to_i
+
+  statement = Statement.new(Shared.namespace, Shared.set_name)
+  statement.predexp = [
+    Aerospike::PredExp.integer_value(minute_from_now),
+    Aerospike::PredExp.void_time,
+    Aerospike::PredExp.integer_greater
+  ]
+
+  records = client.query(statement)
+  results = []
+  records.each do |r|
+    results << r.bins['name']
+  end
+
+  Shared.logger.info("Found #{results.length} records expiring in less than a minute.")
+end
+
+main
