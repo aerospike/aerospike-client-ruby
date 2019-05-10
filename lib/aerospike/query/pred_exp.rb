@@ -177,17 +177,13 @@ module Aerospike
 
 
     def self.estimate_size(predexp)
-      predexp.map(&:estimate_size).sum
+      return 0 unless predexp
+      predexp.map(&:estimate_size).inject { |sum, size| sum + size }
     end
 
     def self.write(predexp, buffer, offset)
       predexp.each do |p|
-        begin
-          offset = p.write(buffer, offset)
-        rescue => e
-          puts "Error: #{e}"
-        end
-
+        offset = p.write(buffer, offset)
       end
 
       offset
