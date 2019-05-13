@@ -23,10 +23,17 @@ module Shared
 
   def init
 
+    env_h = ENV['AEROSPIKE_HOSTS']
+    host, port = if env_h
+      env_h.split(',')&.first&.split(':')
+    else
+      ['localhost', 3000]
+    end
+
     @@options = {
       # setting host as localhost returns an error on Macs, so check env variable first
-      :host => ENV['AEROSPIKE_HOSTS'] || 'localhost',
-      :port => ENV['AEROSPIKE_PORT']&.to_i || 3000,
+      :host => host || 'localhost',
+      :port => port || 3000,
       :namespace => 'test',
       :set => 'examples',
     }
