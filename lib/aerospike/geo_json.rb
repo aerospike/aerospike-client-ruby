@@ -70,7 +70,7 @@ module Aerospike
       end
     end
 
-    def range
+    def radius
       return nil unless circle?
 
       coordinates.last

@@ -15,7 +15,7 @@ def main
   run_integer_predexp_example(Shared.client)
   run_string_predexp_example(Shared.client)
   run_regex_predexp_example(Shared.client)
-  run_mapkey_predexp_example(Shared.client)
+  run_mapval_predexp_example(Shared.client)
   run_list_predexp_example(Shared.client)
   run_geojson_predexp_example(Shared.client)
   run_void_time_predexp_example(Shared.client)
@@ -30,13 +30,13 @@ def setup(client)
     key = Key.new(Shared.namespace, Shared.set_name, "user#{idx}")
     record = {
       'name' => %w[Timmy Alice John Arthur Mike Diana Emily Laura Nicole].sample + "_#{idx}",
-      'race' => %w[Inkling Octoling].sample,
+      'race' => %w[Squid Octopus].sample,
       'level' => rand(1..100),
       'rank' => ['C-', 'C', 'C+', 'B-', 'B', 'B+', 'A-', 'A', 'A+', 'S', 'S+', 'X'].sample,
       'gear' => {
-        'clothes' => ['Takoroka Windcrusher', 'White Tee', 'Takoroka Jersey', 'Pearl Tee', 'King Jersey', 'Chilly Mountain Coat'].sample
+        'clothes' => ['Green Hoodie', 'White Tee', 'Blue Jersey', 'Black Tee', 'Mountain Coat'].sample
       },
-      'weapons' => ['Splattershot', 'Splatling', 'Slosher', 'Splat Charger', 'Splat Dualies', 'N-ZAP', 'Jet Squelcher', 'Splat Roller', 'Kensa Roller'].sample(3),
+      'weapons' => ['Water Gun', 'Paint Roller', 'Paintbrush', 'Aerospray', 'Bucket'].sample(3),
       'loc' => GeoJSON.new(type: 'Point', coordinates: [(3 + (idx * 0.003)), (4 + (idx * 0.003))])
     }
     client.put(key, record, ttl: (idx + 1) * 5)
@@ -78,12 +78,12 @@ def run_integer_predexp_example(client)
 end
 
 def run_string_predexp_example(client)
-  Shared.logger.info("Querying set using predicate expressions to return Inklings")
+  Shared.logger.info("Querying set using predicate expressions to return Squids")
 
   statement = Statement.new(Shared.namespace, Shared.set_name)
   statement.predexp = [
     PredExp.string_bin('race'),
-    PredExp.string_value('Inkling'),
+    PredExp.string_value('Squid'),
     PredExp.string_equal
   ]
 
@@ -93,7 +93,7 @@ def run_string_predexp_example(client)
     results << r.bins['name']
   end
 
-  Shared.logger.info("Found #{results.length} Inklings.")
+  Shared.logger.info("Found #{results.length} Squids.")
 end
 
 def run_regex_predexp_example(client)
@@ -115,7 +115,7 @@ def run_regex_predexp_example(client)
   Shared.logger.info("Found #{results.length} users with B rank.")
 end
 
-def run_mapkey_predexp_example(client)
+def run_mapval_predexp_example(client)
   Shared.logger.info("Querying set using predicate expressions to return all users wearing White Tees")
 
   statement = Statement.new(Shared.namespace, Shared.set_name)
@@ -137,11 +137,11 @@ def run_mapkey_predexp_example(client)
 end
 
 def run_list_predexp_example(client)
-  Shared.logger.info("Querying set using predicate expressions to return users using Sloshers")
+  Shared.logger.info("Querying set using predicate expressions to return users using buckets")
 
   statement = Statement.new(Shared.namespace, Shared.set_name)
   statement.predexp = [
-    PredExp.string_value('Slosher'),
+    PredExp.string_value('Bucket'),
     PredExp.string_var('x'),
     PredExp.string_equal,
     PredExp.list_bin('weapons'),
@@ -154,7 +154,7 @@ def run_list_predexp_example(client)
     results << r.bins['name']
   end
 
-  Shared.logger.info("Found #{results.length} users using Sloshers.")
+  Shared.logger.info("Found #{results.length} users using buckets.")
 end
 
 def run_geojson_predexp_example(client)

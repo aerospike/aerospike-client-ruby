@@ -25,7 +25,7 @@ module Shared
 
     @@options = {
       # setting host as localhost returns an error on Macs, so check env variable first
-      :host => ENV['AEROSPIKE_HOST'] || 'localhost',
+      :host => ENV['AEROSPIKE_HOSTS'] || 'localhost',
       :port => ENV['AEROSPIKE_PORT']&.to_i || 3000,
       :namespace => 'test',
       :set => 'examples',

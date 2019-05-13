@@ -82,17 +82,17 @@ describe Aerospike::GeoJSON do
     end
   end
 
-  describe '#range' do
+  describe '#radius' do
     it 'should return nil if point' do
-      expect(point.range).to eq(nil)
+      expect(point.radius).to eq(nil)
     end
 
-    it 'should return longitude of circle' do
-      expect(circle.range).to eq(100)
+    it 'should return radius of circle' do
+      expect(circle.radius).to eq(100)
     end
 
     it 'should return nil if polygon' do
-      expect(polygon.range).to eq(nil)
+      expect(polygon.radius).to eq(nil)
     end
   end
 
