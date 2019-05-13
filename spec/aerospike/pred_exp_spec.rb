@@ -19,11 +19,11 @@ describe Aerospike::PredExp do
     end
 
     tasks = []
-    tasks << Support.client.create_index(@namespace, @set, "index_str_bin1", "bin1", :string)
-    tasks << Support.client.create_index(@namespace, @set, "index_int_bin2", "bin2", :numeric)
-    tasks << Support.client.create_index(@namespace, @set, "index_lst_bin3", "bin3", :numeric, :list)
-    tasks << Support.client.create_index(@namespace, @set, "index_mapkey_bin4", "bin4", :string, :mapkeys)
-    tasks << Support.client.create_index(@namespace, @set, "index_mapval_bin4", "bin4", :numeric, :mapvalues)
+    tasks << Support.client.create_index(@namespace, @set, "predexp_index_str_bin1", "bin1", :string)
+    tasks << Support.client.create_index(@namespace, @set, "predexp_index_int_bin2", "bin2", :numeric)
+    tasks << Support.client.create_index(@namespace, @set, "predexp_index_lst_bin3", "bin3", :numeric, :list)
+    tasks << Support.client.create_index(@namespace, @set, "predexp_index_mapkey_bin4", "bin4", :string, :mapkeys)
+    tasks << Support.client.create_index(@namespace, @set, "predexp_index_mapval_bin4", "bin4", :numeric, :mapvalues)
     tasks.each(&:wait_till_completed)
     expect(tasks.all?(&:completed?)).to be true
   end
