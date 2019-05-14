@@ -217,7 +217,7 @@ def run_bench(client, ident, times)
   client.default_write_policy.timeout = @options[:timeout]
   client.default_write_policy.max_retries = @options[:max_retries]
 
-  client.default_policy = writepolicy
+  client.default_write_policy = writepolicy
 
   defaultBin = getBin
 

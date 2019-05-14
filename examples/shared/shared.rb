@@ -22,6 +22,7 @@ module Shared
   attr_accessor :write_policy, :policy, :client, :logger
 
   def init
+
     @@options = {
       :port => 3000,
       :namespace => 'test',

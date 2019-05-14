@@ -52,6 +52,75 @@ module Aerospike
       other.to_json == self.to_json
     end
 
+    def lng
+      case type
+      when 'Point'
+        coordinates.first
+      when 'AeroCircle'
+        coordinates.first.first
+      end
+    end
+
+    def lat
+      case type
+      when 'Point'
+        coordinates.last
+      when 'AeroCircle'
+        coordinates.first.last
+      end
+    end
+
+    def radius
+      return nil unless circle?
+
+      coordinates.last
+    end
+
+    def coordinates
+      to_h['coordinates']
+    end
+
+    def type
+      to_h['type']
+    end
+
+    def point?
+      type == 'Point'
+    end
+
+    def circle?
+      type == 'AeroCircle'
+    end
+
+    def polygon?
+      type == 'Polygon'
+    end
+
+    def self.point(lng, lat)
+      new(type: 'Point', coordinates: [lng, lat])
+    end
+
+    def self.circle(lng, lat, radius)
+      new(type: 'AeroCircle', coordinates: [[lng, lat], radius])
+    end
+
+    def self.polygon(coordinates)
+      new(type: 'Polygon', coordinates: coordinates)
+    end
+
+    def to_circle(radius)
+      raise TypeError, 'Cannot create a Circle from a Polygon' if polygon?
+
+      self.class.circle(lng, lat, radius)
+    end
+
+    def to_point
+      return self if point?
+      raise TypeError, 'Cannot create a Point from a Polygon' if polygon?
+
+      self.class.point(lng, lat)
+    end
+
     protected
 
     attr_accessor :json_data

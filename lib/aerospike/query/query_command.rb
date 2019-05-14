@@ -35,6 +35,7 @@ module Aerospike
       fieldCount = 0
       filterSize = 0
       binNameSize = 0
+      predSize = 0
 
       begin_cmd
 
@@ -91,6 +92,13 @@ module Aerospike
 
       @data_offset += 8 + FIELD_HEADER_SIZE
       fieldCount+=1
+
+      if @statement.predexp
+        @data_offset += FIELD_HEADER_SIZE
+        predSize = Aerospike::PredExp.estimate_size(@statement.predexp)
+        @data_offset += predSize
+        fieldCount += 1
+      end
 
       if @statement.function_name
         @data_offset += FIELD_HEADER_SIZE + 1 # udf type
@@ -175,6 +183,13 @@ module Aerospike
       write_field_header(8, Aerospike::FieldType::TRAN_ID)
       @data_buffer.write_int64(@statement.task_id, @data_offset)
       @data_offset += 8
+
+      if @statement.predexp
+        write_field_header(predSize, Aerospike::FieldType::PREDEXP)
+        @data_offset = Aerospike::PredExp.write(
+          @statement.predexp, @data_buffer, @data_offset
+        )
+      end
 
       if @statement.function_name
         write_field_header(1, Aerospike::FieldType::UDF_OP)

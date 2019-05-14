@@ -101,4 +101,50 @@ EOF
     RUBY_PLATFORM == "java"
   end
 
+  def self.time_in_nanoseconds(time)
+    ("%10.9f" % time.to_f).gsub('.', '').to_i
+  end
+
+  module Geo
+    RAD_PER_DEG        = Math::PI / 180.to_f
+    DEG_PER_RAD        = 180.to_f / Math::PI
+    EARTH_RADIUS_IN_KM = 6371.to_f
+    EARTH_RADIUS_IN_M  = EARTH_RADIUS_IN_KM * 1000;
+
+    #
+    # Radians to degrees
+    #
+    def self.rad2deg(rad)
+      rad.to_f * DEG_PER_RAD
+    end
+
+    #
+    # Degrees to radians
+    #
+    def self.deg2rad(deg)
+      deg.to_f * RAD_PER_DEG
+    end
+
+    #
+    # Calculate coordinates of a point located
+    # on a set distance and bearing from start point
+    #
+    #
+    def self.destination_point(lng, lat, distance, bearing)
+      ang_dis = (distance.to_f / EARTH_RADIUS_IN_M)
+
+      br = deg2rad(bearing)
+      rlat = deg2rad(lat)
+      rlng = deg2rad(lng)
+
+      f_lat = Math.asin((Math.sin(rlat) * Math.cos(ang_dis)) + (Math.cos(rlat) * Math.sin(ang_dis) * Math.cos(br)))
+      f_lng = rlng + Math.atan2((Math.sin(br) * Math.sin(ang_dis) * Math.cos(rlat)), Math.cos(ang_dis) - (Math.sin(rlat) * Math.sin(f_lat)))
+
+      f_lat = rad2deg(f_lat)
+      f_lng = rad2deg(f_lng)
+
+      Aerospike::GeoJSON.new(type: 'Point', coordinates: [f_lng, f_lat])
+    end
+  end
+
 end
