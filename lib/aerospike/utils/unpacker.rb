@@ -85,7 +85,12 @@ module Aerospike
     def normalize_elem(elem)
       case elem
       when String
-       elem[1..-1].encode(Aerospike.encoding)
+        ptype = elem.ord
+        value = elem[1..-1]
+        if (ptype == ParticleType::STRING)
+          value.encode!(Aerospike.encoding)
+        end
+        value
       when Array
         normalize_strings_in_array(elem)
       when Hash
