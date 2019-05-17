@@ -388,6 +388,16 @@ describe Aerospike::Client do
         record = client.get(key)
         expect(record.bins['bin']).to eq bytes
       end
+
+      it "should put a LIST OF BYTE ARRAYS and get it successfully" do
+        key = Support.gen_random_key
+        bytes = Array.new(5) { SecureRandom.random_bytes(100) }
+        values = bytes.map { |blob| Aerospike::BytesValue.new(blob) }
+        bin = Aerospike::Bin.new('bin', values)
+        client.put(key, bin)
+        record = client.get(key)
+        expect(record.bins['bin']).to eq bytes
+      end
     end
 
     it "should raise an error if hash with non-string keys is passed as record" do
