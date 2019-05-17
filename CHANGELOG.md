@@ -4,6 +4,15 @@ All notable changes to this project will be documented in this file.
 
 ## [Unreleased]
 
+## [2.11.0] - 2019-05-17
+
+* **New Features**
+  * Support for predicate expressions in queries. Thanks to [@Minus10Degrees](https://github.com/Minus10Degrees)! [[#78](https://github.com/aerospike/aerospike-client-ruby/issues/78)]
+
+* **Bug Fixes**
+  * Client#execute\_udf\_on\_query should not modify the statement argument. [[#79](https://github.com/aerospike/aerospike-client-ruby/issues/79)]
+  * Encoding::UndefinedConversionError when reading blob data from CDT list/map bin. [[#84](https://github.com/aerospike/aerospike-client-ruby/issues/84)]
+
 ## [2.10.0] - 2019-05-10
 
 * **New Features**
