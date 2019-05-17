@@ -526,7 +526,7 @@ module Aerospike
         raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::SERVER_NOT_AVAILABLE, "Executing UDF failed because cluster is empty.")
       end
 
-      # TODO: wait until all migrations are finished
+      statement = statement.clone
       statement.set_aggregate_function(package_name, function_name, function_args, false)
 
       # Use a thread per node
