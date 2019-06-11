@@ -1,4 +1,4 @@
-# Copyright 2014-2018 Aerospike, Inc.
+# Copyright 2014-2019 Aerospike, Inc.
 #
 # Portions may be licensed to Aerospike, Inc. under one or more contributor
 # license agreements.
@@ -101,11 +101,10 @@ require 'aerospike/connection/create'
 
 require 'aerospike/cluster'
 require 'aerospike/cluster/create_connection'
-require 'aerospike/cluster/partition'
 require 'aerospike/cluster/find_nodes_to_remove'
 require 'aerospike/cluster/find_node'
-require 'aerospike/cluster/partition_tokenizer_new'
-require 'aerospike/cluster/partition_tokenizer_old'
+require 'aerospike/cluster/partition'
+require 'aerospike/cluster/partition_parser'
 require 'aerospike/node'
 require 'aerospike/node/generation'
 require 'aerospike/node/refresh/failed'

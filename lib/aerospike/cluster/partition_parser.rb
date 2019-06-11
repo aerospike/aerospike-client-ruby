@@ -1,5 +1,6 @@
-# encoding: utf-8
-# Copyright 2014-2017 Aerospike, Inc.
+# frozen_string_literal: true
+
+# Copyright 2014-2019 Aerospike, Inc.
 #
 # Portions may be licensed to Aerospike, Inc. under one or more contributor
 # license agreements.
@@ -18,37 +19,33 @@ require 'base64'
 
 module Aerospike
 
-  private
+  class PartitionParser #:nodoc:
 
-  REPLICAS_NAME = 'replicas-master'
+    REPLICAS_NAME = 'replicas-master'
 
-  class PartitionTokenizerNew #:nodoc:
+    def initialize(node, conn)
+      @node = node
+      @conn = conn
+    end
 
-    def initialize(conn)
+    def update_partitions(nmap)
       # Use low-level info methods and parse byte array directly for maximum performance.
       # Send format:    replicas-master\n
       # Receive format: replicas-master\t<ns1>:<base 64 encoded bitmap>;<ns2>:<base 64 encoded bitmap>... \n
-      info_map = Info.request(conn, REPLICAS_NAME)
+      info_map = Info.request(@conn, REPLICAS_NAME)
 
       info = info_map[REPLICAS_NAME]
-
-      @length = info ? info.length : 0
-
-      if !info || @length == 0
-        raise Aerospike::Exceptions::Connection.new("#{replicas_name} is empty")
+      if !info || info.length == 0
+        raise Aerospike::Exceptions::Connection.new("#{REPLICAS_NAME} response for node #{@node.name} is empty")
       end
 
       @buffer = info
+      @length = info.length
       @offset = 0
 
-      self
-    end
-
-    def update_partition(nmap, node)
       amap = nil
-
-      beginning = @offset
       copied = false
+      beginning = @offset
 
       while @offset < @length
         if @buffer[@offset] == ':'
@@ -101,7 +98,7 @@ module Aerospike
           while i < Aerospike::Node::PARTITIONS
             if (restore_buffer[i>>3].ord & (0x80 >> (i & 7))) != 0
               # Logger.Info("Map: `" + namespace + "`," + strconv.Itoa(i) + "," + node.String)
-              node_array.update{|v| v[i] = node; v}
+              node_array.update{|v| v[i] = @node; v}
             end
             i = i.succ
           end

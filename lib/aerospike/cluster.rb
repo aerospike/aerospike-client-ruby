@@ -167,12 +167,9 @@ module Aerospike
       end
     end
 
-    def update_partitions(tokens, node)
-      nmap = tokens.update_partition(partitions, node)
-      # update partition write map
+    def update_partitions(parser)
+      nmap = parser.update_partitions(partitions)
       set_partitions(nmap) if nmap
-
-      Aerospike.logger.info("Partitions for node #{node.name} updated")
     end
 
     def request_info(policy, *commands)
