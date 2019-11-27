@@ -8,19 +8,18 @@ rvm:
 - 2.3
 - rbx-3
 - jruby
-env:
-  global:
-    - AEROSPIKE_HOSTS=127.0.0.1:3000,127.0.0.1:3100
-    - CODECOV_ENABLED=true
-sudo: false
-os:
-- linux
-dist: trusty
 matrix:
   allow_failures:
   - rvm: rbx-3
   - rvm: jruby
   fast_finish: true
+env:
+  global:
+    - AEROSPIKE_HOSTS=127.0.0.1:3000,127.0.0.1:3100
+    - CODECOV_ENABLED=true
+sudo: false
+os: linux
+dist: xenial
 before_script:
 - .travis/start_cluster.sh 2
 install:
