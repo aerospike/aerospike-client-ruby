@@ -137,7 +137,7 @@ module Aerospike
     end
   end
 
-  INFINITY = InfinityValue.new.freeze
+  INFINITY = Value::INFINITY = InfinityValue.new.freeze
 
   # Wildcard value.
   class WildcardValue < Value #:nodoc:
@@ -178,7 +178,7 @@ module Aerospike
     end
   end
 
-  WILDCARD = WildcardValue.new.freeze
+  WILDCARD = Value::WILDCARD = WildcardValue.new.freeze
 
   # Byte array value.
   class BytesValue < Value #:nodoc:

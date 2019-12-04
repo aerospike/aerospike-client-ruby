@@ -116,6 +116,9 @@ module Aerospike
     # Enterprise-only feature not supported by the community edition
     ENTERPRISE_ONLY = 25
 
+    # The operation cannot be applied to the current bin value on the server.
+    OP_NOT_APPLICABLE = 26
+
     # There are no more records left for query.
     QUERY_END = 50
 
@@ -294,6 +297,9 @@ module Aerospike
 
       when ENTERPRISE_ONLY
         "Enterprise-only feature not supported by community edition"
+
+      when OP_NOT_APPLICABLE
+        "The operation cannot be applied to the current bin value on the server."
 
       when QUERY_END
         "Query end"

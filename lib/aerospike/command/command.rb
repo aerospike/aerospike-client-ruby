@@ -205,18 +205,21 @@ module Aerospike
       operations.each do |operation|
         case operation.op_type
         when Aerospike::Operation::READ
-            read_attr |= INFO1_READ
+          read_attr |= INFO1_READ
 
           # Read all bins if no bin is specified.
           read_attr |= INFO1_GET_ALL unless operation.bin_name
 
         when Aerospike::Operation::READ_HEADER
-            # The server does not currently return record header data with _INFO1_NOBINDATA attribute set.
-            # The workaround is to request a non-existent bin.
-            # TODO: Fix this on server.
-            # read_attr |= _INFO1_READ | _INFO1_NOBINDATA
-            read_attr |= INFO1_READ
+          # The server does not currently return record header data with _INFO1_NOBINDATA attribute set.
+          # The workaround is to request a non-existent bin.
+          # TODO: Fix this on server.
+          # read_attr |= _INFO1_READ | _INFO1_NOBINDATA
+          read_attr |= INFO1_READ
           read_header = true
+
+        when Aerospike::Operation::CDT_READ
+          read_attr |= INFO1_READ
 
         else
           write_attr = INFO2_WRITE

@@ -596,7 +596,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?(Aerosp
           .and_return(MapReturnType::NONE)
         result = client.operate(key, [operation])
 
-        expect(result.bins[map_bin]).to eql(nil)
+        expect(result.bins).to eql(nil)
       end
     end
 
@@ -941,7 +941,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?(Aerosp
     let(:map_value) { { 0 => 17, 4 => 2, 5 => 15, 9 => 10 } }
 
     it "returns all keys from 5 to Infinity" do
-      operation = MapOperation.get_by_key_range(map_bin, 5, Value::INFINITY)
+      operation = MapOperation.get_by_key_range(map_bin, 5, Aerospike::Value::INFINITY)
         .and_return(MapReturnType::KEY)
 
       result = client.operate(key, [operation])
@@ -959,7 +959,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?(Aerosp
     } }
 
     it "returns all values that match a wildcard" do
-      operation = MapOperation.get_by_value(map_bin, ["Jim", Value::WILDCARD])
+      operation = MapOperation.get_by_value(map_bin, ["Jim", Aerospike::Value::WILDCARD])
         .and_return(MapReturnType::KEY)
 
       result = client.operate(key, [operation])
