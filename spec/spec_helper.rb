@@ -17,6 +17,7 @@
 
 require 'rspec'
 require 'support/utils'
+require 'support/matchers'
 
 require 'simplecov'
 SimpleCov.start

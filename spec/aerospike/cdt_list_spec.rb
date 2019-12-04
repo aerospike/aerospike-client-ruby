@@ -15,6 +15,7 @@
 # the License.
 
 include Aerospike::CDT
+include Aerospike::ResultCode
 
 describe "client.operate() - CDT List Operations", skip: !Support.feature?(Aerospike::Features::CDT_LIST) do
 
@@ -238,7 +239,7 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?(Aeros
     it "returns an error if the index is out of bounds" do
       operation = ListOperation.get(list_bin, 99)
 
-      expect { client.operate(key, [operation]) }.to raise_error(/Parameter error/)
+      expect { client.operate(key, [operation]) }.to raise_aerospike_error(OP_NOT_APPLICABLE)
     end
   end
 
@@ -281,7 +282,7 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?(Aeros
     it "returns an error if the index is out of bounds" do
       operation = ListOperation.get_by_index(list_bin, 99)
 
-      expect { client.operate(key, [operation]) }.to raise_error(/Parameter error/)
+      expect { client.operate(key, [operation]) }.to raise_aerospike_error(OP_NOT_APPLICABLE)
     end
   end
 
@@ -419,7 +420,7 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?(Aeros
     it "returns an error if the index is out of bounds" do
       operation = ListOperation.remove_by_index(list_bin, 99)
 
-      expect { client.operate(key, [operation]) }.to raise_error(/Parameter error/)
+      expect { client.operate(key, [operation]) }.to raise_aerospike_error(OP_NOT_APPLICABLE)
     end
   end
 
@@ -694,7 +695,7 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?(Aeros
       it "throws an error when trying to insert an item outside the existing list boundaries", skip: !Support.min_version?("4.3") do
         operation = ListOperation.insert(list_bin, 99, 6, policy: list_policy)
 
-        expect { client.operate(key, [operation]) }.to raise_error(/Parameter error/)
+        expect { client.operate(key, [operation]) }.to raise_aerospike_error(OP_NOT_APPLICABLE)
       end
     end
   end
