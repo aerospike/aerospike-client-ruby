@@ -1,7 +1,5 @@
 require 'rspec/expectations'
 
-puts 'defining raise_aerospike_error'
-
 module RSpec
   module Matchers
     def raise_aerospike_error(expected_result_code)
