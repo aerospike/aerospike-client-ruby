@@ -894,7 +894,6 @@ module Aerospike
 
       batch_nodes.each do |batch|
         threads << Thread.new do
-          Thread.current.abort_on_exception = true
           command = yield batch.node, batch
           execute_command(command)
         end
