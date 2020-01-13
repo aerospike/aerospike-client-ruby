@@ -22,14 +22,11 @@ require 'aerospike/aerospike_exception'
 module Aerospike
   # Polymorphic value classes used to efficiently serialize objects into the wire protocol.
   class Value #:nodoc:
-    INTEGER_RANGE = Range.new(-2**63, 2**63 - 1).freeze
 
     def self.of(value)
       case value
-      when nil
-        res = NULL
       when Integer
-        if INTEGER_RANGE.cover?(value)
+        if value.bit_length < 64
           res = IntegerValue.new(value)
         else
           # big nums > 2**63 are not supported
@@ -49,6 +46,8 @@ module Aerospike
         res = ListValue.new(value)
       when GeoJSON
         res = GeoJSONValue.new(value)
+      when nil
+        res = NULL
       else
         # throw an exception for anything that is not supported.
         raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::TYPE_NOT_SUPPORTED, "Value type #{value.class} not supported.")
@@ -356,21 +355,16 @@ module Aerospike
   class ListValue < Value #:nodoc:
 
     def initialize(list)
-      @list = list || nil
-      Packer.use do |packer|
-        pack(packer)
-        @bytes = packer.bytes
-      end
-      self
+      @list = list || []
     end
 
     def estimate_size
-      @bytes.bytesize
+      bytes.bytesize
     end
 
     def write(buffer, offset)
-      buffer.write_binary(@bytes, offset)
-      @bytes.bytesize
+      buffer.write_binary(bytes, offset)
+      bytes.bytesize
     end
 
     def pack(packer)
@@ -389,11 +383,24 @@ module Aerospike
     end
 
     def to_bytes
-      @bytes
+      bytes
     end
 
     def to_s
       @list.map{|v| v.to_s}.to_s
+    end
+
+    private
+
+    def bytes
+      return @bytes if @bytes
+
+      Packer.use do |packer|
+        pack(packer)
+        @bytes = packer.bytes
+      end
+
+      @bytes
     end
 
   end
@@ -406,22 +413,15 @@ module Aerospike
 
     def initialize(vmap)
       @vmap = vmap || {}
-
-      Packer.use do |packer|
-        pack(packer)
-        @bytes = packer.bytes
-      end
-
-      self
     end
 
     def estimate_size
-      @bytes.bytesize
+      bytes.bytesize
     end
 
     def write(buffer, offset)
-      buffer.write_binary(@bytes, offset)
-      @bytes.bytesize
+      buffer.write_binary(bytes, offset)
+      bytes.bytesize
     end
 
     def pack(packer)
@@ -442,11 +442,24 @@ module Aerospike
     end
 
     def to_bytes
-      @bytes
+      bytes
     end
 
     def to_s
       @vmap.map{|k, v| "#{k.to_s} => #{v.to_s}" }.to_s
+    end
+
+    private
+
+    def bytes
+      return @bytes if @bytes
+
+      Packer.use do |packer|
+        pack(packer)
+        @bytes = packer.bytes
+      end
+
+      @bytes
     end
 
   end
