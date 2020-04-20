@@ -188,7 +188,7 @@ describe Aerospike::Client do
   describe "#connect" do
     subject(:client) { described_class.new(policy: client_policy, connect: false) }
 
-    let(:client_policy) { Hash.new }
+    let(:client_policy) { Support.client_policy }
 
     shared_examples_for 'a cluster' do
       before do
@@ -206,7 +206,7 @@ describe Aerospike::Client do
       end
 
       context "with non-matching cluster name" do
-        let(:client_policy) { { cluster_name: 'thisIsNotTheRealClusterName' } }
+        let(:client_policy) { Support.client_policy({ cluster_name: 'thisIsNotTheRealClusterName' }) }
 
         it { expect { client.connect }.to raise_error(Aerospike::Exceptions::Aerospike) }
       end

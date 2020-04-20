@@ -22,10 +22,9 @@ require "benchmark"
 describe Aerospike::Info do
 
   describe "#request" do
-    let(:host) { Support.client.nodes.first.get_host }
+    let(:conn) { Support.client.nodes.first.get_connection(3) }
 
     it "should connect and request info from the server" do
-      conn = Aerospike::Connection::Create.(host.name, host.port)
       info = Aerospike::Info.request(conn)
       expect(info).to include("version")
     end

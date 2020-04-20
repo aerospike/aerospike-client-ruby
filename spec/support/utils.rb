@@ -52,13 +52,18 @@ EOF
     remove_task.wait_till_completed or fail "Could not un-register delete_record UDF to delete set #{set_name}"
   end
 
-  def self.client
+  def self.client_policy(opt={})
+    envs = {
+      user: ENV['AEROSPIKE_USER'],
+      password: ENV['AEROSPIKE_PASSWORD'],
+    }.merge!(opt)
+
+    Aerospike::ClientPolicy.new(envs)
+  end
+
+  def self.client(opt={})
     @client ||= begin
-      policy = Aerospike::ClientPolicy.new(
-        user: ENV['AEROSPIKE_USER'],
-        password: ENV['AEROSPIKE_PASSWORD'],
-      )
-      Aerospike::Client.new(policy: policy)
+      Aerospike::Client.new(policy: self.client_policy(opt))
     end
   end
 
