@@ -31,6 +31,7 @@ module Aerospike
     APPEND      = 9
     PREPEND     = 10
     TOUCH       = 11
+    DELETE      = 14
 
     def initialize(op_type, bin_name=nil, bin_value=NullValue.new)
       @op_type = op_type
@@ -69,6 +70,10 @@ module Aerospike
 
     def self.touch
       Operation.new(TOUCH)
+    end
+
+    def self.delete
+      Operation.new(DELETE)
     end
 
   end

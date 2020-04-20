@@ -629,6 +629,26 @@ describe Aerospike::Client do
       expect(rec.generation).to eq 2
     end
 
+    it "should #put, #delete" do
+      rec = client.operate(key, [
+                             Aerospike::Operation.put(bin_int),
+                             Aerospike::Operation.get,
+      ])
+
+      expect(rec.bins[bin_int.name]).to eq bin_int.value
+      expect(rec.generation).to eq 1
+
+      client.operate(key, [
+                             Aerospike::Operation.delete,
+      ])
+
+      rec = client.operate(key, [
+                             Aerospike::Operation.get,
+      ])
+
+      expect(rec).to be_nil
+    end
+
     context "with multiple read operations on same bin" do
 
       let(:map_bin) { Aerospike::Bin.new("map", { "a" => 3, "b" => 2, "c" => 1 }) }
