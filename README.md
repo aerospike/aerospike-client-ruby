@@ -97,7 +97,7 @@ This library is packaged with a number of tests.
 
 To run all the test cases:
 
-    $ bundle exec rspec
+    $ AEROSPIKE_HOSTS="<host:port>[,<hoist:port>]" AEROSPIKE_USER="<user>" AEROSPIKE_PASSWORD="<pass>" bundle exec rspec
 
 <a name="Examples"></a>
 ## Examples
