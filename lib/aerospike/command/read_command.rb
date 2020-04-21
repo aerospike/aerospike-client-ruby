@@ -76,29 +76,36 @@ module Aerospike
 
       end
 
-      if result_code != 0
-        return nil if result_code == Aerospike::ResultCode::KEY_NOT_FOUND_ERROR
-        return nil if result_code == Aerospike::ResultCode::LARGE_ITEM_NOT_FOUND
-        if result_code == Aerospike::ResultCode::UDF_BAD_RESPONSE
-          begin
-            @record = parse_record(op_count, field_count, generation, expiration)
-            handle_udf_error(result_code)
-          rescue => e
-            Aerospike.logger.error("UDF execution error: #{e}")
-            raise e
-          end
-
+      if result_code == 0
+        if op_count == 0
+          @record = Record.new(@node, @key, nil, generation, expiration)
+          return
         end
-
-        raise Aerospike::Exceptions::Aerospike.new(result_code)
-      end
-
-      if op_count == 0
-        @record = Record.new(@node, @key, nil, generation, expiration)
+  
+        @record = parse_record(op_count, field_count, generation, expiration)
         return
       end
 
-      @record = parse_record(op_count, field_count, generation, expiration)
+      return nil if result_code == Aerospike::ResultCode::KEY_NOT_FOUND_ERROR
+
+      if result_code == Aerospike::ResultCode::FILTERED_OUT
+        if @policy.fail_on_filtered_out
+          raise Aerospike::Exceptions::Aerospike.new(result_code)
+        end
+        return
+      end
+
+      if result_code == Aerospike::ResultCode::UDF_BAD_RESPONSE
+        begin
+          @record = parse_record(op_count, field_count, generation, expiration)
+          handle_udf_error(result_code)
+        rescue => e
+          Aerospike.logger.error("UDF execution error: #{e}")
+          raise e
+        end
+      end
+
+      raise Aerospike::Exceptions::Aerospike.new(result_code)
     end
 
     def handle_udf_error(result_code)

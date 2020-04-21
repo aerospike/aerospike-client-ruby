@@ -93,9 +93,11 @@ module Aerospike
       @data_offset += 8 + FIELD_HEADER_SIZE
       fieldCount+=1
 
-      if @statement.predexp
+      predexp = @policy.predexp || @statement.predexp
+
+      if predexp
         @data_offset += FIELD_HEADER_SIZE
-        predSize = Aerospike::PredExp.estimate_size(@statement.predexp)
+        predSize = Aerospike::PredExp.estimate_size(predexp)
         @data_offset += predSize
         fieldCount += 1
       end
@@ -184,10 +186,10 @@ module Aerospike
       @data_buffer.write_int64(@statement.task_id, @data_offset)
       @data_offset += 8
 
-      if @statement.predexp
+      if predexp
         write_field_header(predSize, Aerospike::FieldType::PREDEXP)
         @data_offset = Aerospike::PredExp.write(
-          @statement.predexp, @data_buffer, @data_offset
+          predexp, @data_buffer, @data_offset
         )
       end
 

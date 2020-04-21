@@ -47,15 +47,23 @@ module Aerospike
         generation = @data_buffer.read_int32(14)
         expiration = @data_buffer.read_int32(18)
         @record = Record.new(@node, @key, nil,  generation, expiration)
-      else
-        if result_code == Aerospike::ResultCode::KEY_NOT_FOUND_ERROR
-          @record = nil
-        else
-          raise Aerospike::Exceptions::Aerospike.new(result_code)
-        end
+        return
       end
 
-      empty_socket
+      if result_code == Aerospike::ResultCode::KEY_NOT_FOUND_ERROR
+        @record = nil
+        return
+      end
+
+      if result_code == Aerospike::ResultCode::FILTERED_OUT
+        @record = nil
+        if @policy.fail_on_filtered_out
+          raise Aerospike::Exceptions::Aerospike.new(result_code)
+        end
+        return
+      end
+
+      raise Aerospike::Exceptions::Aerospike.new(result_code)
     end
 
   end # class

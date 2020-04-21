@@ -2,7 +2,19 @@
 
 All notable changes to this project will be documented in this file.
 
-## [Unreleased]
+## [2.12.0] - 2019-04-21
+
+* **New Features**
+  * Support for predicate expressions in all transaction.
+  * Support for `operation.delete` in `client#operate`.
+
+* **Improvements**
+  * Optimize serialization for nested structures. Thanks to [@Kacper Madej](https://github.com/madejejej)! [[#94](https://github.com/aerospike/aerospike-client-ruby/pull/94)]
+  * Remove `Thread#abort_on_exception` from `batch_index_command`. Thanks to [@Kacper Madej](https://github.com/madejejej)! [[#94](https://github.com/aerospike/aerospike-client-ruby/pull/92)]
+
+* **Bug Fixes**
+  * Fixes tests that weren't using ENV variables for connections. This will allow the tests to be run on any server.
+
 
 ## [2.11.0] - 2019-05-17
 

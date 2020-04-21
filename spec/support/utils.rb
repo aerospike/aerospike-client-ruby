@@ -26,10 +26,19 @@ module Support
     RAND_CHARS.shuffle[0,len].join
   end
 
-  def self.gen_random_key(len=50, opts = {set: 'test'})
+  def self.namespace
+    ENV['AEROSPIKE_NAMESPACE'] || 'test'
+  end
+
+  def self.set_name
+    ENV['AEROSPIKE_SET_NAME'] || 'test'
+  end
+
+  def self.gen_random_key(len=50, opts = {})
     key_val = rand_string(len)
-    set_name = opts[:set] || 'test'
-    Aerospike::Key.new('test', set_name, key_val)
+    set_name = opts[:set] || self.set_name
+    ns_name = opts[:ns] || self.namespace
+    Aerospike::Key.new(ns_name, set_name, key_val)
   end
 
   def self.delete_set(client, namespace, set_name)

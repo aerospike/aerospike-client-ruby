@@ -78,13 +78,16 @@ module Aerospike
   class Command #:nodoc:
 
     def initialize(node)
+      @data_offset = 0
+      @data_buffer = nil
+
       @node = node
 
       self
     end
 
     # List of all bins that this command will write to - sub-classes should
-    # overrite this as appropriate.
+    # override this as appropriate.
     def write_bins
       []
     end
@@ -93,6 +96,9 @@ module Aerospike
     def set_write(policy, operation, key, bins)
       begin_cmd
       field_count = estimate_key_size(key, policy)
+      
+      predexp_size = estimate_predexp(policy.predexp)
+      field_count += 1 if predexp_size > 0
 
       bins.each do |bin|
         estimate_operation_size_for_bin(bin)
@@ -102,6 +108,7 @@ module Aerospike
 
       write_header_with_policy(policy, 0, INFO2_WRITE, field_count, bins.length)
       write_key(key, policy)
+      write_predexp(policy.predexp, predexp_size)
 
       bins.each do |bin|
         write_operation_for_bin(bin, operation)
@@ -114,9 +121,14 @@ module Aerospike
     def set_delete(policy, key)
       begin_cmd
       field_count = estimate_key_size(key)
+      
+      predexp_size = estimate_predexp(policy.predexp)
+      field_count += 1 if predexp_size > 0
+
       size_buffer
       write_header_with_policy(policy, 0, INFO2_WRITE|INFO2_DELETE, field_count, 0)
       write_key(key)
+      write_predexp(policy.predexp, predexp_size)
       end_cmd
     end
 
@@ -124,10 +136,15 @@ module Aerospike
     def set_touch(policy, key)
       begin_cmd
       field_count = estimate_key_size(key)
+      
+      predexp_size = estimate_predexp(policy.predexp)
+      field_count += 1 if predexp_size > 0
+
       estimate_operation_size
       size_buffer
       write_header_with_policy(policy, 0, INFO2_WRITE, field_count, 1)
       write_key(key)
+      write_predexp(policy.predexp, predexp_size)
       write_operation_for_operation_type(Aerospike::Operation::TOUCH)
       end_cmd
     end
@@ -136,9 +153,14 @@ module Aerospike
     def set_exists(policy, key)
       begin_cmd
       field_count = estimate_key_size(key)
+      
+      predexp_size = estimate_predexp(policy.predexp)
+      field_count += 1 if predexp_size > 0
+
       size_buffer
       write_header(policy, INFO1_READ|INFO1_NOBINDATA, 0, field_count, 0)
       write_key(key)
+      write_predexp(policy.predexp, predexp_size)
       end_cmd
     end
 
@@ -146,9 +168,14 @@ module Aerospike
     def set_read_for_key_only(policy, key)
       begin_cmd
       field_count = estimate_key_size(key)
+      
+      predexp_size = estimate_predexp(policy.predexp)
+      field_count += 1 if predexp_size > 0
+
       size_buffer
       write_header(policy, INFO1_READ|INFO1_GET_ALL, 0, field_count, 0)
       write_key(key)
+      write_predexp(policy.predexp, predexp_size)
       end_cmd
     end
 
@@ -157,6 +184,10 @@ module Aerospike
       if bin_names && bin_names.length > 0
         begin_cmd
         field_count = estimate_key_size(key)
+        
+        predexp_size = estimate_predexp(policy.predexp)
+        field_count += 1 if predexp_size > 0
+
 
         bin_names.each do |bin_name|
           estimate_operation_size_for_bin_name(bin_name)
@@ -165,6 +196,7 @@ module Aerospike
         size_buffer
         write_header(policy, INFO1_READ, 0, field_count, bin_names.length)
         write_key(key)
+        write_predexp(policy.predexp, predexp_size)
 
         bin_names.each do |bin_name|
           write_operation_for_bin_name(bin_name, Aerospike::Operation::READ)
@@ -180,6 +212,10 @@ module Aerospike
     def set_read_header(policy, key)
       begin_cmd
       field_count = estimate_key_size(key)
+      
+      predexp_size = estimate_predexp(policy.predexp)
+      field_count += 1 if predexp_size > 0
+
       estimate_operation_size_for_bin_name('')
       size_buffer
 
@@ -190,6 +226,7 @@ module Aerospike
       write_header(policy, INFO1_READ, 0, field_count, 1)
 
       write_key(key)
+      write_predexp(policy.predexp, predexp_size)
       write_operation_for_bin_name('', Aerospike::Operation::READ)
       end_cmd
     end
@@ -198,6 +235,10 @@ module Aerospike
     def set_operate(policy, key, operations)
       begin_cmd
       field_count = estimate_key_size(key, policy)
+      
+      predexp_size = estimate_predexp(policy.predexp)
+      field_count += 1 if predexp_size > 0
+
       read_attr = 0
       write_attr = 0
       read_header = false
@@ -235,6 +276,7 @@ module Aerospike
         write_header(policy, read_attr, write_attr, field_count, operations.length)
       end
       write_key(key, policy)
+      write_predexp(policy.predexp, predexp_size)
 
       operations.each do |operation|
         write_operation_for_operation(operation)
@@ -248,6 +290,10 @@ module Aerospike
     def set_udf(policy, key, package_name, function_name, args)
       begin_cmd
       field_count = estimate_key_size(key, policy)
+      
+      predexp_size = estimate_predexp(policy.predexp)
+      field_count += 1 if predexp_size > 0
+
       arg_bytes = args.to_bytes
 
       field_count += estimate_udf_size(package_name, function_name, arg_bytes)
@@ -255,6 +301,7 @@ module Aerospike
 
       write_header(policy, 0, INFO2_WRITE, field_count, 0)
       write_key(key, policy)
+      write_predexp(policy.predexp, predexp_size)
       write_field_string(package_name, Aerospike::FieldType::UDF_PACKAGE_NAME)
       write_field_string(function_name, Aerospike::FieldType::UDF_FUNCTION)
       write_field_bytes(arg_bytes, Aerospike::FieldType::UDF_ARGLIST)
@@ -276,6 +323,9 @@ module Aerospike
         @data_offset += set_name.bytesize + FIELD_HEADER_SIZE
         field_count += 1
       end
+      
+      predexp_size = estimate_predexp(policy.predexp)
+      field_count += 1 if predexp_size > 0
 
       # Estimate scan options size.
       @data_offset += 2 + FIELD_HEADER_SIZE
@@ -312,6 +362,8 @@ module Aerospike
       if set_name
         write_field_string(set_name, Aerospike::FieldType::TABLE)
       end
+
+      write_predexp(policy.predexp, predexp_size)
 
       write_field_header(2, Aerospike::FieldType::SCAN_OPTIONS)
 
@@ -499,6 +551,16 @@ module Aerospike
 
     def estimate_operation_size
       @data_offset += OPERATION_HEADER_SIZE
+    end
+
+    def estimate_predexp(predexp)
+      if predexp && predexp.size > 0
+        @data_offset += FIELD_HEADER_SIZE
+        sz = Aerospike::PredExp.estimate_size(predexp)
+        @data_offset += sz
+        return sz
+      end
+      return 0
     end
 
     # Generic header write.
@@ -697,6 +759,15 @@ module Aerospike
       @data_offset += 4
       @data_buffer.write_byte(ftype, @data_offset)
       @data_offset += 1
+    end
+
+    def write_predexp(predexp, predexp_size)
+      if predexp && predexp.size > 0
+        write_field_header(predexp_size, Aerospike::FieldType::PREDEXP)
+        @data_offset = Aerospike::PredExp.write(
+          predexp, @data_buffer, @data_offset
+        )
+      end
     end
 
     def begin_cmd

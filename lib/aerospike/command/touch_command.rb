@@ -40,9 +40,16 @@ module Aerospike
 
       result_code = @data_buffer.read(13).ord & 0xFF
 
-      raise Aerospike::Exceptions::Aerospike.new(result_code) if result_code != 0
+      return if result_code == 0
 
-      empty_socket
+      if result_code == Aerospike::ResultCode::FILTERED_OUT
+        if @policy.fail_on_filtered_out
+          raise Aerospike::Exceptions::Aerospike.new(result_code)
+        end
+        return
+      end
+
+      raise Aerospike::Exceptions::Aerospike.new(result_code)
     end
 
   end # class

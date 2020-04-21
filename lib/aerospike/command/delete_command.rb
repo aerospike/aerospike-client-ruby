@@ -43,13 +43,25 @@ module Aerospike
 
       result_code = @data_buffer.read(13).ord & 0xFF
 
-      if (result_code != 0) && (result_code != Aerospike::ResultCode::KEY_NOT_FOUND_ERROR)
-        raise Aerospike::Exceptions::Aerospike.new(result_code)
+      if result_code == 0
+        @existed = true
+        return
       end
 
-      @existed = (result_code == 0)
+      if result_code == Aerospike::ResultCode::KEY_NOT_FOUND_ERROR
+        @existed = false
+        return
+      end
 
-      empty_socket
+      if result_code == Aerospike::ResultCode::FILTERED_OUT
+        if @policy.fail_on_filtered_out
+          raise Aerospike::Exceptions::Aerospike.new(result_code)
+        end
+        @existed = true
+        return
+      end
+
+      raise Aerospike::Exceptions::Aerospike.new(result_code)
     end
 
   end # class

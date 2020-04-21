@@ -39,7 +39,12 @@ module Aerospike
     def write_buffer
       bin_name_size = 0
       operation_count = 0
+      field_count_row = 1
       field_count = 1
+
+      predexp_size = estimate_predexp(@policy.predexp)
+      field_count += 1 if predexp_size > 0
+
       if bin_names
         bin_names.each do |bin_name|
           bin_name_size += bin_name.bytesize + OPERATION_HEADER_SIZE
@@ -61,7 +66,10 @@ module Aerospike
         end
       end
       size_buffer
-      write_header(policy,read_attr | INFO1_BATCH, 0, 1, 0)
+      write_header(policy,read_attr | INFO1_BATCH, 0, field_count, 0)
+
+      write_predexp(@policy.predexp, predexp_size)
+
       write_field_header(0, Aerospike::FieldType::BATCH_INDEX)
       @data_offset += @data_buffer.write_int32(batch.keys.length, @data_offset)
       @data_offset += @data_buffer.write_byte(1, @data_offset)
@@ -77,7 +85,7 @@ module Aerospike
         else
           @data_offset += @data_buffer.write_byte(0, @data_offset)
           @data_offset += @data_buffer.write_byte(read_attr, @data_offset)
-          @data_offset += @data_buffer.write_int16(field_count, @data_offset)
+          @data_offset += @data_buffer.write_int16(field_count_row, @data_offset)
           @data_offset += @data_buffer.write_int16(operation_count, @data_offset)
           write_field_string(key.namespace, Aerospike::FieldType::NAMESPACE)
 

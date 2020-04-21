@@ -43,7 +43,14 @@ module Aerospike
       # aggregation function.
       @filters = []
 
-      # Predicate expressions
+      # Predicate expressions in postfix notation. If the expression is evaluated to false,
+      # the record will be ommited in the results.
+      #
+      # This method is redundant because PredExp can now be set in the base Policy for
+      # any transaction (including queries).
+      #
+      # NOTE : Policy.predexp takes precedence to this value. This value will be 
+      # deprecated in the future.
       @predexp = nil
 
       @package_name  = nil

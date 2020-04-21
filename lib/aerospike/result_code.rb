@@ -119,6 +119,9 @@ module Aerospike
     # The operation cannot be applied to the current bin value on the server.
     OP_NOT_APPLICABLE = 26
 
+    # The transaction was not performed because the predexp was false.
+    FILTERED_OUT = 27
+
     # There are no more records left for query.
     QUERY_END = 50
 
@@ -169,9 +172,6 @@ module Aerospike
 
     # A user defined function returned an error code.
     UDF_BAD_RESPONSE = 100
-
-    # The requested item in a large collection was not found.
-    LARGE_ITEM_NOT_FOUND = 125
 
     # Secondary index already exists.
     INDEX_FOUND = 200
@@ -301,6 +301,9 @@ module Aerospike
       when OP_NOT_APPLICABLE
         "The operation cannot be applied to the current bin value on the server."
 
+      when FILTERED_OUT
+        "The transaction was not performed because the predexp was false."
+
       when QUERY_END
         "Query end"
 
@@ -357,9 +360,6 @@ module Aerospike
 
       when UDF_BAD_RESPONSE
         "UDF d error"
-
-      when LARGE_ITEM_NOT_FOUND
-         "Large collection item not found"
 
       when INDEX_FOUND
         "Index already exists"
