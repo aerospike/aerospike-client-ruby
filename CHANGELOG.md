@@ -11,6 +11,7 @@ All notable changes to this project will be documented in this file.
 * **Improvements**
   * Optimize serialization for nested structures. Thanks to [@Kacper Madej](https://github.com/madejejej)! [[#94](https://github.com/aerospike/aerospike-client-ruby/pull/94)]
   * Remove `Thread#abort_on_exception` from `batch_index_command`. Thanks to [@Kacper Madej](https://github.com/madejejej)! [[#94](https://github.com/aerospike/aerospike-client-ruby/pull/92)]
+  * Does not allow values other than Integer, Float, String, Symbol and nil to be used as keys in Maps.
 
 * **Bug Fixes**
   * Fixes tests that weren't using ENV variables for connections. This will allow the tests to be run on any server.
