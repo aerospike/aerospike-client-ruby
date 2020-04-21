@@ -56,6 +56,22 @@ module Aerospike
       res
     end
 
+    def self.validate_hash_key(value)
+      case value
+      when Integer
+        if value.bit_length >= 64
+          raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::TYPE_NOT_SUPPORTED, "Value type #{value.class} not supported as hash key.")
+        end
+      when Float
+      when String
+      when Symbol
+      when nil
+      else
+        # throw an exception for anything that is not supported.
+        raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::TYPE_NOT_SUPPORTED, "Value type #{value.class} not supported as hash key.")
+      end
+    end
+
   end # Value
 
   # Empty value.
@@ -426,8 +442,9 @@ module Aerospike
 
     def pack(packer)
       packer.write_map_header(@vmap.length)
-      # @vmap.each do |key, val|
       for key, val in @vmap
+        Value.validate_hash_key(key)
+
         Value.of(key).pack(packer)
         Value.of(val).pack(packer)
       end

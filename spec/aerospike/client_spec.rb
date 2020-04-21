@@ -352,10 +352,10 @@ describe Aerospike::Client do
         value = {
           "string" => nil,
           rand(2**31) => {2 => 11},
-          [1, nil, 'this'] => {nil => "nihilism"},
+          # [1, nil, 'this'] => {nil => "nihilism"},
           nil => ["embedded array", 1984, nil, {2 => 'string'}],
-          {11 => [11, 'str']} => nil,
-          {} => {'array' => ["another string", 17]},
+          # {11 => [11, 'str']} => nil,
+          # {} => {'array' => ["another string", 17]},
         }
         bin = Aerospike::Bin.new('bin', value)
         client.put(key, bin)
