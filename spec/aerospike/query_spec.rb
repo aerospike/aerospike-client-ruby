@@ -150,6 +150,23 @@ describe Aerospike::Client do
         expect(records).to eql(0)
       end
 
+      it "should return relevant records with records_per_second" do
+        stmt = Aerospike::Statement.new(@namespace, @set, ['bin1', 'bin2'])
+        rs = client.query(stmt, :records_per_second => (@record_count / 4).to_i)
+
+        i = 0
+        tm = Time.now
+        rs.each do |rec|
+          i += 1
+          expect(rec.bins['bin1']).to eq "value#{rec.bins['bin2']}"
+          expect(rec.bins.length).to eq 2
+        end
+
+        expect(i).to eq @record_count
+        expect((Time.now - tm).to_i).to be >= 1
+
+      end # it
+
     end # context
 
     context "Equal Filter" do

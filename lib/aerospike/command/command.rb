@@ -324,6 +324,11 @@ module Aerospike
         field_count += 1
       end
       
+      if policy.records_per_second > 0
+        @data_offset += 4 + FIELD_HEADER_SIZE
+        field_count += 1
+      end
+
       predexp_size = estimate_predexp(policy.predexp)
       field_count += 1 if predexp_size > 0
 
@@ -361,6 +366,10 @@ module Aerospike
 
       if set_name
         write_field_string(set_name, Aerospike::FieldType::TABLE)
+      end
+
+      if policy.records_per_second > 0
+        write_field_int(policy.records_per_second, Aerospike::FieldType::RECORDS_PER_SECOND)
       end
 
       write_predexp(policy.predexp, predexp_size)
@@ -746,15 +755,19 @@ module Aerospike
       @data_offset += len
     end
 
+    def write_field_int(i, ftype)
+      @data_buffer.write_int32(i, @data_offset+FIELD_HEADER_SIZE)
+      write_field_header(4, ftype)
+      @data_offset += 4
+    end
+
     def write_field_bytes(bytes, ftype)
       @data_buffer.write_binary(bytes, @data_offset+FIELD_HEADER_SIZE)
-
       write_field_header(bytes.bytesize, ftype)
       @data_offset += bytes.bytesize
     end
 
     def write_field_header(size, ftype)
-      # Buffer.Int32ToBytes(size+1), @data_buffer, @data_offset
       @data_buffer.write_int32(size+1, @data_offset)
       @data_offset += 4
       @data_buffer.write_byte(ftype, @data_offset)

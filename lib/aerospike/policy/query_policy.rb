@@ -24,6 +24,7 @@ module Aerospike
 
     attr_accessor :include_bin_data
     attr_accessor :record_queue_size
+    attr_accessor :records_per_second
 
     def initialize(opt={})
       super(opt)
@@ -41,6 +42,12 @@ module Aerospike
       # threads will block until records are consumed.
       # Default is 5000.
       @record_queue_size = opt[:record_queue_size] || 5000
+
+      # Limit returned records per second (rps) rate for each server.
+      # Will not apply rps limit if records_per_second is zero.
+      # Currently only applicable to a query without a defined filter (scan).
+      # Default is 0
+      @records_per_second = opt[:records_per_second] || 0
 
       self
     end

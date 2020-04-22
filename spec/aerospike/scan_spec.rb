@@ -72,6 +72,25 @@ describe Aerospike::Client do
 
         end # it
 
+        it "should return all records with all bins with records_per_second" do
+          rs_list = scan_method(type, nil, :record_queue_size => 10, :records_per_second => (@record_count/4).to_i)
+
+          i = 0
+          rs_list.each do |rs|
+            rs.each do |rec|
+              i +=1
+              expect(rec.bins['bin1']).to eq "value#{rec.bins['bin2']}"
+              expect(rec.bins.length).to eq 4
+
+              # make sure the key was sent to the server
+              expect(rec.key.user_key).to eq rec.bins['bin2']
+            end
+          end
+
+          expect(i).to eq @record_count
+
+        end # it
+
         it "should return only the selected bins" do
           rs_list = scan_method(type, ['bin1', 'bin2'], :record_queue_size => 10)
 

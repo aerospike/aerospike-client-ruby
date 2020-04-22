@@ -82,6 +82,11 @@ module Aerospike
           fieldCount+=1
         end
       else
+        if @policy.records_per_second > 0
+          @data_offset += 4 + FIELD_HEADER_SIZE
+          fieldCount += 1
+        end
+
         # Calling query with no filters is more efficiently handled by a primary index scan.
         # Estimate scan options size.
         @data_offset += (2 + FIELD_HEADER_SIZE)
@@ -172,6 +177,10 @@ module Aerospike
           end
         end
       else
+        if @policy.records_per_second > 0
+          write_field_int(@policy.records_per_second, Aerospike::FieldType::RECORDS_PER_SECOND)
+        end
+
         # Calling query with no filters is more efficiently handled by a primary index scan.
         write_field_header(2, Aerospike::FieldType::SCAN_OPTIONS)
         priority = @policy.priority.ord
