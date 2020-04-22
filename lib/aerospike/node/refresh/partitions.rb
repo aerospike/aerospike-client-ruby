@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Copyright 2018 Aerospike, Inc.
+# Copyright 2018-2019 Aerospike, Inc.
 #
 # Portions may be licensed to Aerospike, Inc. under one or more contributor
 # license agreements.
@@ -25,22 +25,13 @@ module Aerospike
           def call(node, peers)
             return unless should_refresh?(node, peers)
 
-            node.cluster.update_partitions(tokenizer(node), node)
-          rescue ::Aerospike::Exceptions::Aerospike => e
-            node.tend_connection.close
-            Refresh::Failed.(node, e)
-          end
-
-          # Return correct tokenizer depending on version
-          def tokenizer(node)
+            Aerospike.logger.info("Updating partitions for node #{node.name}")
             conn = node.tend_connection
-            if node.use_new_info?
-              Aerospike.logger.info("Updating partitions for node #{node.name} using new protocol")
-              PartitionTokenizerNew.new(conn)
-            else
-              Aerospike.logger.info("Updating partitions for node #{node.name} using old protocol")
-              PartitionTokenizerOld.new(conn)
-            end
+            parser = PartitionParser.new(node, conn)
+            node.cluster.update_partitions(parser)
+          rescue ::Aerospike::Exceptions::Aerospike => e
+            conn.close
+            Refresh::Failed.(node, e)
           end
 
           # Do not refresh partitions when node connection has already failed

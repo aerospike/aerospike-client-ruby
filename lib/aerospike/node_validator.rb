@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Copyright 2014-2018 Aerospike, Inc.
+# Copyright 2014-2019 Aerospike, Inc.
 #
 # Portions may be licensed to Aerospike, Inc. under one or more contributor
 # license agreements.
@@ -19,13 +19,11 @@
 
 module Aerospike
   class NodeValidator # :nodoc:
-    VERSION_REGEXP = /(?<v1>\d+)\.(?<v2>\d+)\.(?<v3>\d+).*/.freeze
 
-    attr_reader :host, :aliases, :name, :use_new_info, :features, :cluster_name, :tls_options, :conn
+    attr_reader :host, :aliases, :name, :features, :cluster_name, :tls_options, :conn
 
     def initialize(cluster, host, timeout, cluster_name, tls_options = {})
       @cluster = cluster
-      @use_new_info = true
       @features = Set.new
       @host = host
       @cluster_name = cluster_name
@@ -46,7 +44,7 @@ module Aerospike
       begin
         conn = Cluster::CreateConnection.(@cluster, Host.new(address, host.port, host.tls_name))
 
-        commands = %w[node build features]
+        commands = %w[node features]
         commands << address_command unless is_loopback?(address)
 
         info_map = Info.request(conn, *commands)
@@ -58,16 +56,10 @@ module Aerospike
           if features = info_map['features']
             @features = features.split(';').to_set
           end
-
-          # Check new info protocol support for >= 2.6.6 build
-          if build_version = info_map['build']
-            v1, v2, v3 = parse_version_string(build_version)
-            @use_new_info = v1.to_i > 2 || (v1.to_i == 2 && (v2.to_i > 6 || (v2.to_i == 6 && v3.to_i >= 6)))
-          end
         end
 
         unless is_loopback?(address)
-          aliases = info_map[address_command].split(',').map { |address| get_alias(*address.split(':')) }
+          aliases = info_map[address_command].split(',').map { |addr| get_alias(*addr.split(':')) }
         end
       ensure
         conn.close if conn
@@ -103,12 +95,5 @@ module Aerospike
       !!((hostname =~ Resolv::IPv4::Regex) || (hostname =~ Resolv::IPv6::Regex))
     end
 
-    def parse_version_string(version)
-      if v = VERSION_REGEXP.match(version)
-        return v['v1'], v['v2'], v['v3']
-      end
-
-      raise Aerospike::Exceptions::Parse.new("Invalid build version string in Info: #{version}")
-    end
   end # class
 end # module

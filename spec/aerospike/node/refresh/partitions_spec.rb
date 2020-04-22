@@ -26,6 +26,7 @@ RSpec.describe Aerospike::Node::Refresh::Partitions do
   let(:healthy) { true }
 
   before do
+    allow(node).to receive(:name).and_return('dummy')
     allow(node).to receive(:tend_connection).and_return(conn)
     allow(node).to receive(:cluster).and_return(cluster)
     allow(cluster).to receive(:update_partitions)
@@ -37,7 +38,6 @@ RSpec.describe Aerospike::Node::Refresh::Partitions do
     subject(:refresh) { described_class.call(node, peers) }
 
     before do
-      allow(described_class).to receive(:tokenizer)
       allow(described_class).to receive(:should_refresh?).and_return(healthy)
     end
 

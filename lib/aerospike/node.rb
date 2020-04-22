@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Copyright 2014-2018 Aerospike, Inc.
+# Copyright 2014-2019 Aerospike, Inc.
 #
 # Portions may be licensed to Aerospike, Inc. under one or more contributor
 # license agreements.
@@ -33,7 +33,6 @@ module Aerospike
       @name = nv.name
       @aliases = Atomic.new(nv.aliases)
       @host = nv.host
-      @use_new_info = Atomic.new(nv.use_new_info)
       @features = nv.features
       @cluster_name = nv.cluster_name
 
@@ -177,10 +176,6 @@ module Aerospike
       other && other.is_a?(Node) && (@name == other.name)
     end
     alias eql? ==
-
-    def use_new_info?
-      @use_new_info.value
-    end
 
     def hash
       @name.hash
