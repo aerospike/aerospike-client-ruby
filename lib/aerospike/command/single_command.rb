@@ -27,11 +27,17 @@ module Aerospike
       @cluster = cluster
       @key = key
 
-      node = cluster.get_node_for_key(key)
-      super(node)
+      @partition = Partition.new_by_key(key)
+
+      super()
     end
 
     protected
+
+    def get_node
+      # abstract method
+      raise Aerospike::Exceptions::InvalidNode
+    end
 
     def empty_socket
       # There should not be any more bytes.

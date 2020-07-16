@@ -22,6 +22,21 @@ describe Aerospike::Client do
 
   let(:client) { Support.client }
 
+  [Aerospike::Replica::MASTER, Aerospike::Replica::MASTER_PROLES, Aerospike::Replica::SEQUENCE, Aerospike::Replica::RANDOM].each do |replica_policy|
+  context "alternate #replica_policies" do
+
+  before do
+    client.default_read_policy.replica = replica_policy
+    client.default_write_policy.replica = replica_policy
+    client.default_batch_policy.replica = replica_policy
+  end
+
+  after do
+    client.default_read_policy.replica = Aerospike::Replica::MASTER
+    client.default_write_policy.replica = Aerospike::Replica::MASTER
+    client.default_batch_policy.replica = Aerospike::Replica::MASTER
+  end
+
   describe "#initialize" do
 
     context "seed hosts" do
@@ -786,4 +801,6 @@ describe Aerospike::Client do
 
   end
 
+  end # context for alternate replicas
+  end # each
 end

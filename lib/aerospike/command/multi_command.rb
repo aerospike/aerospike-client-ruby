@@ -32,6 +32,10 @@ module Aerospike
       self
     end
 
+    def get_node
+      @node
+    end
+
     def parse_result
       # Read socket into receive buffer one record at a time.  Do not read entire receive size
       # because the receive buffer would be too big.

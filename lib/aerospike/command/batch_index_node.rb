@@ -22,9 +22,9 @@ module Aerospike
     attr_accessor :node
     attr_accessor :keys_by_idx
 
-    def self.generate_list(cluster, keys)
+    def self.generate_list(cluster, replica_policy, keys)
       keys.each_with_index
-        .group_by { |key, _| cluster.get_node_for_key(key) }
+        .group_by { |key, _| cluster.get_node_for_key(replica_policy, key) }
         .map { |node, keys_with_idx| BatchIndexNode.new(node, keys_with_idx) }
     end
 

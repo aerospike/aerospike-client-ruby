@@ -38,6 +38,8 @@ module Aerospike
       @cluster_name = policy.cluster_name
       @tls_options = policy.tls
 
+      @replica_index = Atomic.new(0)
+
       @aliases = {}
       @cluster_nodes = []
       @partition_write_map = {}
@@ -102,18 +104,92 @@ module Aerospike
       (node_array.length > 0) && !@closed.value
     end
 
-    def get_node_for_key(key)
-      partition = Partition.new_by_key(key)
+    # Returns a node on the cluster for read operations
+    def batch_read_node(partition, replica_policy)
+      case replica_policy
+        when Aerospike::Replica::MASTER, Aerospike::Replica::SEQUENCE
+          return master_node(partition)
+        when Aerospike::Replica::MASTER_PROLES
+          return master_proles_node(partition)
+        when Aerospike::Replica::RANDOM
+          return random_node
+        else
+          raise Aerospike::Exceptions::InvalidNode("invalid policy.replica value")
+      end
+    end
 
-      # Must copy hashmap reference for copy on write semantics to work.
-      nmap = partitions
-      if node_array = nmap[partition.namespace]
-        node = node_array.value[partition.partition_id]
+    # Returns a node on the cluster for read operations
+    def read_node(partition, replica_policy, seq)
+      case replica_policy
+        when Aerospike::Replica::MASTER
+          return master_node(partition)
+        when Aerospike::Replica::MASTER_PROLES
+          return master_proles_node(partition)
+        when Aerospike::Replica::SEQUENCE
+          return sequence_node(partition, seq)
+        when Aerospike::Replica::RANDOM
+          return random_node
+        else
+          raise Aerospike::Exceptions::InvalidNode("invalid policy.replica value")
+      end
+    end
+
+    # Returns a node on the cluster for read operations
+    def master_node(partition)
+      partition_map = partitions
+      replica_array = partition_map[partition.namespace]
+      raise Aerospike::Exceptions::InvalidNamespace("namespace not found in the partition map") if !replica_array
+
+      node_array = (replica_array.get)[0]
+      raise Aerospike::Exceptions::InvalidNamespace("namespace not found in the partition map") if !node_array
+
+      node = (node_array.get)[partition.partition_id]
+      raise Aerospike::Exceptions::InvalidNode if !node || !node.active?
+
+      node
+    end
+
+    # Returns a node on the cluster for read operations
+    def master_proles_node(partition)
+      partition_map = partitions
+      replica_array = partition_map[partition.namespace]
+      raise Aerospike::Exceptions::InvalidNamespace("namespace not found in the partition map") if !replica_array
+
+      replica_array = replica_array.get
+
+      node = nil
+      for replica in replica_array
+        idx = (@replica_index.update{|v| v.succ} % replica_array.size).abs
+        node = (replica_array[idx].get)[partition.partition_id]
 
         return node if node && node.active?
       end
 
-      random_node
+      raise Aerospike::Exceptions::InvalidNode
+    end
+
+    # Returns a random node on the cluster
+    def sequence_node(partition, seq)
+      partition_map = partitions
+      replica_array = partition_map[partition.namespace]
+      raise Aerospike::Exceptions::InvalidNamespace("namespace not found in the partition map") if !replica_array
+
+      replica_array = replica_array.get
+
+      node = nil
+      for replica in replica_array
+        idx = (seq.update{|v| v.succ} % replica_array.size).abs
+        node = (replica_array[idx].get)[partition.partition_id]
+
+        return node if node && node.active?
+      end
+
+      raise Aerospike::Exceptions::InvalidNode
+    end
+
+    def get_node_for_key(replica_policy, key)
+      partition = Partition.new_by_key(key)
+      batch_read_node(partition, replica_policy)
     end
 
     # Returns a random node on the cluster
@@ -124,8 +200,8 @@ module Aerospike
       i = 0
       while i < length
         # Must handle concurrency with other non-tending threads, so node_index is consistent.
-        index = (@node_index.update{ |v| v+1 } % node_array.length).abs
-        node = node_array[index]
+        idx = (@node_index.update{ |v| v.succ } % node_array.length).abs
+        node = node_array[idx]
 
         return node if node.active?
 
@@ -438,8 +514,10 @@ module Aerospike
     def find_node_in_partition_map(filter)
       partitions_list = partitions
 
-      partitions_list.values.each do |node_array|
-        return true if node_array.value.any? { |node| node == filter }
+      partitions_list.values.each do |replica_array|
+        replica_array.get.each do |node_array|
+          return true if node_array.value.any? { |node| node == filter }
+        end
       end
       false
     end

@@ -77,11 +77,14 @@ module Aerospike
 
   class Command #:nodoc:
 
-    def initialize(node)
+    def initialize(node=nil)
       @data_offset = 0
       @data_buffer = nil
 
       @node = node
+
+      # will add before use
+      @sequence = Atomic.new(-1)
 
       self
     end
@@ -419,6 +422,7 @@ module Aerospike
         break if @policy.timeout > 0 && Time.now > limit
 
         begin
+          @node = get_node
           @conn = @node.get_connection(@policy.timeout)
         rescue => e
           # Socket connection error has occurred. Decrease health and retry.

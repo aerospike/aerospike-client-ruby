@@ -33,6 +33,10 @@ module Aerospike
       self
     end
 
+    def get_node
+      @cluster.master_node(@partition)
+    end
+
     def write_buffer
       set_delete(@policy, @key)
     end

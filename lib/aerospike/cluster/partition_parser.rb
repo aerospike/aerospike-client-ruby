@@ -21,99 +21,141 @@ module Aerospike
 
   class PartitionParser #:nodoc:
 
-    REPLICAS_NAME = 'replicas-master'
+    attr_accessor :copied, :partition_generation
+
+    PARTITION_GENERATION = "partition-generation";
+    REPLICAS_ALL = "replicas-all";
 
     def initialize(node, conn)
       @node = node
       @conn = conn
     end
 
-    def update_partitions(nmap)
+    def update_partitions(current_map)
       # Use low-level info methods and parse byte array directly for maximum performance.
-      # Send format:    replicas-master\n
-      # Receive format: replicas-master\t<ns1>:<base 64 encoded bitmap>;<ns2>:<base 64 encoded bitmap>... \n
-      info_map = Info.request(@conn, REPLICAS_NAME)
+      # Receive format: replicas-all\t
+      #                 <ns1>:<count>,<base 64 encoded bitmap1>,<base 64 encoded bitmap2>...;
+      #                 <ns2>:<count>,<base 64 encoded bitmap1>,<base 64 encoded bitmap2>...;\n
+      info_map = Info.request(@conn, PARTITION_GENERATION, REPLICAS_ALL)
 
-      info = info_map[REPLICAS_NAME]
+      @partition_generation = info_map[PARTITION_GENERATION].to_i
+
+      info = info_map[REPLICAS_ALL]
       if !info || info.length == 0
-        raise Aerospike::Exceptions::Connection.new("#{REPLICAS_NAME} response for node #{@node.name} is empty")
+        raise Aerospike::Exceptions::Connection.new("#{REPLICAS_ALL} response for node #{@node.name} is empty")
       end
 
       @buffer = info
       @length = info.length
       @offset = 0
 
-      amap = nil
+      new_map = nil
       copied = false
       beginning = @offset
 
-      while @offset < @length
-        if @buffer[@offset] == ':'
-          # Parse namespace.
-          namespace = @buffer[beginning...@offset].strip
+      while @offset < @length && @buffer[@offset] != '\n'
+        namespace = parse_name
+        replica_count = parse_replica_count
 
-          if namespace.length <= 0 || namespace.length >= 32
-            response = get_truncated_response
-            raise Aerospike::Exceptions::Parse.new(
-              "Invalid partition namespace #{namespace}. Response=#{response}"
-            )
+        replica_array = current_map[namespace]
+        if !replica_array
+          if !copied
+            # Make shallow copy of map.
+            new_map = current_map.clone
+            copied = true
           end
 
-          @offset+=1
-          beginning = @offset
+          replica_array = Atomic.new(Array.new(replica_count))
+          new_map[namespace] = replica_array
+        end
 
-          # Parse partition id.
-          while @offset < @length
-            b = @buffer[@offset]
-
-            break if b == ';' || b == "\n"
-            @offset+=1
-          end
-
-          if @offset == beginning
-            response = get_truncated_response
-
-            raise Aerospike::Exceptions::Parse.new(
-              "Empty partition id for namespace #{namespace}. Response=#{response}"
-            )
-          end
-
-          node_array = nmap[namespace]
+        for replica in 0...replica_count do
+          node_array = (replica_array.get)[replica]
 
           if !node_array
             if !copied
               # Make shallow copy of map.
-              amap = {}
-              nmap.each {|k, v| amap[k] = Atomic.new(v)}
+              new_map = current_map.clone
               copied = true
             end
 
             node_array = Atomic.new(Array.new(Aerospike::Node::PARTITIONS))
-            amap[namespace] = node_array
+            new_map[namespace].update{|v| v[replica] = node_array; v}
           end
 
-          bit_map_length = @offset - beginning
-          restore_buffer = Base64.strict_decode64(@buffer[beginning, bit_map_length])
+          restore_buffer = parse_bitmap
           i = 0
           while i < Aerospike::Node::PARTITIONS
             if (restore_buffer[i>>3].ord & (0x80 >> (i & 7))) != 0
-              # Logger.Info("Map: `" + namespace + "`," + strconv.Itoa(i) + "," + node.String)
               node_array.update{|v| v[i] = @node; v}
             end
             i = i.succ
           end
-
-          @offset+=1
-          beginning = @offset
-        else
-          @offset+=1
         end
       end
 
-      copied ? amap : nil
+      copied ? new_map : nil
     end
 
     private
+
+    def parse_name
+      beginning = @offset
+      while @offset < @length
+        break if @buffer[@offset] == ':'
+        @offset+=1
+      end
+
+      # Parse namespace.
+      namespace = @buffer[beginning...@offset].strip
+
+      if namespace.length <= 0 || namespace.length >= 32
+        response = get_truncated_response
+        raise Aerospike::Exceptions::Parse.new(
+          "Invalid partition namespace #{namespace}. Response=#{response}"
+        )
+      end
+
+      @offset+=1
+      namespace
+    end
+
+    def parse_replica_count
+      beginning = @offset
+      while @offset < @length
+        break if @buffer[@offset] == ','
+        @offset+=1
+      end
+
+      # Parse count
+      count = @buffer[beginning...@offset].strip.to_i
+
+      if count < 0 || count > 4096
+        response = get_truncated_response
+        raise Aerospike::Exceptions::Parse.new(
+          "Invalid partition count #{count}. Response=#{response}"
+        )
+      end
+
+      @offset+=1
+      count
+    end
+
+    def parse_bitmap
+      beginning = @offset
+      while @offset < @length
+        break if @buffer[@offset] == ','
+        break if @buffer[@offset] == ';'
+        @offset+=1
+      end
+
+      bit_map_length = @offset - beginning
+      restore_buffer = Base64.strict_decode64(@buffer[beginning, bit_map_length])
+
+      @offset+=1
+      restore_buffer
+    end
+
 
     def get_truncated_response
       max = @length

@@ -90,5 +90,11 @@ module Aerospike
         super(ResultCode::COMMAND_REJECTED, msg)
       end
     end
+
+    class InvalidNamespace < Aerospike
+      def initialize(msg=nil)
+        super(ResultCode::INVALID_NAMESPACE, msg)
+      end
+    end
   end
 end

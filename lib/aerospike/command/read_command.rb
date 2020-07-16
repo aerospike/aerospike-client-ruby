@@ -39,6 +39,10 @@ module Aerospike
       self
     end
 
+    def get_node
+      @cluster.read_node(@partition, @policy.replica, @sequence)
+    end
+
     def write_buffer
       set_read(@policy, @key, @bin_names)
     end

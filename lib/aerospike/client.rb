@@ -322,11 +322,11 @@ module Aerospike
 
       if policy.use_batch_direct
         key_map = BatchItem.generate_map(keys)
-        execute_batch_direct_commands(keys) do |node, batch|
+        execute_batch_direct_commands(policy, keys) do |node, batch|
           BatchDirectCommand.new(node, batch, policy, key_map, bin_names, results, info_flags)
         end
       else
-        execute_batch_index_commands(keys) do |node, batch|
+        execute_batch_index_commands(policy, keys) do |node, batch|
           BatchIndexCommand.new(node, batch, policy, bin_names, results, info_flags)
         end
       end
@@ -351,11 +351,11 @@ module Aerospike
 
       if policy.use_batch_direct
         key_map = BatchItem.generate_map(keys)
-        execute_batch_direct_commands(keys) do |node, batch|
+        execute_batch_direct_commands(policy, keys) do |node, batch|
           BatchDirectExistsCommand.new(node, batch, policy, key_map, results)
         end
       else
-        execute_batch_index_commands(keys) do |node, batch|
+        execute_batch_index_commands(policy, keys) do |node, batch|
           BatchIndexExistsCommand.new(node, batch, policy, results)
         end
       end
@@ -884,12 +884,12 @@ module Aerospike
       command.execute
     end
 
-    def execute_batch_index_commands(keys)
+    def execute_batch_index_commands(policy, keys)
       if @cluster.nodes.empty?
         raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::SERVER_NOT_AVAILABLE, "Executing Batch Index command failed because cluster is empty.")
       end
 
-      batch_nodes = BatchIndexNode.generate_list(@cluster, keys)
+      batch_nodes = BatchIndexNode.generate_list(@cluster, policy.replica, keys)
       threads = []
 
       batch_nodes.each do |batch|
@@ -902,12 +902,12 @@ module Aerospike
       threads.each(&:join)
     end
 
-    def execute_batch_direct_commands(keys)
+    def execute_batch_direct_commands(policy, keys)
       if @cluster.nodes.empty?
         raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::SERVER_NOT_AVAILABLE, "Executing Batch Direct command failed because cluster is empty.")
       end
 
-      batch_nodes = BatchDirectNode.generate_list(@cluster, keys)
+      batch_nodes = BatchDirectNode.generate_list(@cluster, policy.replica, keys)
       threads = []
 
       # Use a thread per namespace per node

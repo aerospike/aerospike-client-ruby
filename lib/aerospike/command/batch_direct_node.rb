@@ -24,8 +24,8 @@ module Aerospike
     attr_accessor :node
     attr_accessor :batch_namespaces
 
-    def self.generate_list(cluster, keys)
-      keys.group_by { |key| cluster.get_node_for_key(key) }
+    def self.generate_list(cluster, replica_policy, keys)
+      keys.group_by { |key| cluster.get_node_for_key(replica_policy, key) }
         .map { |node, keys_for_node| BatchDirectNode.new(node, keys_for_node) }
     end
 

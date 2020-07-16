@@ -51,6 +51,8 @@ module Aerospike
       @active = Atomic.new(true)
       @failures = Atomic.new(0)
 
+      @replica_index = Atomic.new(0)
+
       @connections = ::Aerospike::ConnectionPool.new(cluster, host)
     end
 

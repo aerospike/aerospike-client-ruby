@@ -15,6 +15,7 @@
 
 require 'aerospike/policy/priority'
 require 'aerospike/policy/consistency_level'
+require 'aerospike/policy/replica'
 
 
 module Aerospike
@@ -23,7 +24,7 @@ module Aerospike
   class Policy
 
     attr_accessor :priority, :timeout, :max_retries, :sleep_between_retries, :consistency_level,
-                  :predexp, :fail_on_filtered_out
+                  :predexp, :fail_on_filtered_out, :replica
 
     def initialize(opt={})
       # Container object for transaction policy attributes used in all database
@@ -82,7 +83,15 @@ module Aerospike
       # read operation.
       @consistency_level = opt[:consistency_level] || Aerospike::ConsistencyLevel::CONSISTENCY_ONE
 
-      # Transaction timeout.
+
+      # Send read commands to the node containing the key's partition replica type.
+      # Write commands are not affected by this setting, because all writes are directed 
+      # to the node containing the key's master partition.
+      #
+      # Default to sending read commands to the node containing the key's master partition.
+      @replica = opt[:replica] || Aerospike::Replica::MASTER;
+
+        # Transaction timeout.
       # This timeout is used to set the socket timeout and is also sent to the
       # server along with the transaction in the wire protocol.
       # Default to no timeout (0).

@@ -28,6 +28,11 @@ module Aerospike
       @operations = operations
     end
 
+    def get_node
+      @cluster.master_node(@partition)
+    end
+
+
     def write_bins
       @operations.select{|op| op.op_type == Aerospike::Operation::WRITE}.map(&:bin).compact
     end
