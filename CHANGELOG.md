@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.13.0] - 2019-07-17
+
+* **New Features**
+  * Adds support for replica policies.
+
+* **Improvements**
+  * Remove support for "old" partition tokenizer.
+  * Refactor how partition parser is initialized and called.
+  * Adds support for 'replicas' and remove the old partition table queries from the server.
+
 ## [2.12.0] - 2019-04-21
 
 * **New Features**
