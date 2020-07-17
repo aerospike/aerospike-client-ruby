@@ -23,7 +23,7 @@ describe Aerospike::Client do
   let(:client) { Support.client }
 
   [Aerospike::Replica::MASTER, Aerospike::Replica::MASTER_PROLES, Aerospike::Replica::SEQUENCE, Aerospike::Replica::RANDOM].each do |replica_policy|
-  context "alternate #replica_policies" do
+  context "alternate #replica_policies: #{replica_policy}" do
 
   before do
     client.default_read_policy.replica = replica_policy

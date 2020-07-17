@@ -151,7 +151,20 @@ describe Aerospike::Client do
       end
 
       it "should return relevant records with records_per_second" do
-        stmt = Aerospike::Statement.new(@namespace, @set, ['bin1', 'bin2'])
+        set = "query1000"
+        record_count = 1000
+        record_count.times do |i|
+          key = Aerospike::Key.new(@namespace, set, i)
+          bin_map = {
+            'bin1' => "value#{i}",
+            'bin2' => i,
+            'bin3' => [ i, i + 1_000, i + 1_000_000 ],
+            'bin4' => { "key#{i}" => i },
+          }
+          Support.client.put(key, bin_map)
+        end
+
+        stmt = Aerospike::Statement.new(@namespace, set, ['bin1', 'bin2'])
         rs = client.query(stmt, :records_per_second => (@record_count / 4).to_i)
 
         i = 0
@@ -162,7 +175,7 @@ describe Aerospike::Client do
           expect(rec.bins.length).to eq 2
         end
 
-        expect(i).to eq @record_count
+        expect(i).to eq record_count
         expect((Time.now - tm).to_i).to be >= 1
 
       end # it
