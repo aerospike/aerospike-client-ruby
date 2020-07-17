@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Copyright 2018-2019 Aerospike, Inc.
+# Copyright 2018-2020 Aerospike, Inc.
 #
 # Portions may be licensed to Aerospike, Inc. under one or more contributor
 # license agreements.
