@@ -24,14 +24,17 @@ module Aerospike
         CMDS_BASE = %w[node partition-generation cluster-name].freeze
         CMDS_PEERS = (CMDS_BASE + ['peers-generation']).freeze
         CMDS_SERVICES = (CMDS_BASE + ['services']).freeze
+        CMDS_REBALANCE = (CMDS_PEERS + ['rebalance-generation']).freeze
 
         class << self
           def call(node, peers)
             conn = node.tend_connection
             if peers.use_peers?
-              info_map = ::Aerospike::Info.request(conn, *CMDS_PEERS)
+              cmds = node.cluster.rack_aware ? CMDS_REBALANCE : CMDS_PEERS 
+              info_map = ::Aerospike::Info.request(conn, *cmds)
               Verify::PeersGeneration.(node, info_map, peers)
               Verify::PartitionGeneration.(node, info_map)
+              Verify::RebalanceGeneration.(node, info_map) if node.cluster.rack_aware
               Verify::Name.(node, info_map)
               Verify::ClusterName.(node, info_map)
             else

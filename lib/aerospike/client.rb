@@ -44,6 +44,7 @@ module Aerospike
     attr_accessor :default_read_policy
     attr_accessor :default_scan_policy
     attr_accessor :default_write_policy
+    attr_accessor :cluster
 
     def initialize(hosts = nil, policy: ClientPolicy.new, connect: true)
 

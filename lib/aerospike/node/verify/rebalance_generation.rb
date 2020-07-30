@@ -17,18 +17,24 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-
 module Aerospike
   class Node
-    module Refresh
-      # Reset a node before running a refresh cycle
-      module Reset
+    module Verify
+      # Fetch and set rebalance generation. If racks needs to be refreshed
+      # this will be indicated in node.rebalance_changed
+      module RebalanceGeneration
         class << self
-          def call(node)
-            node.reset_reference_count!
-            node.reset_responded!
-            node.partition_generation.reset_changed!
-            node.rebalance_generation.reset_changed!
+          def call(node, info_map)
+            gen_string = info_map.fetch('rebalance-generation', nil)
+
+            raise Aerospike::Exceptions::Parse.new('rebalance-generation is empty') if gen_string.to_s.empty?
+
+            generation = gen_string.to_i
+
+            node.rebalance_generation.update(generation)
+
+            return unless node.rebalance_generation.changed?
+            Aerospike.logger.info("Node #{node.name} rebalance generation #{generation} changed")
           end
         end
       end

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Copyright 2018 Aerospike, Inc.
+# Copyright 2018-2020 Aerospike, Inc.
 #
 # Portions may be licensed to Aerospike, Inc. under one or more contributor
 # license agreements.
@@ -17,18 +17,28 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-
 module Aerospike
   class Node
     module Refresh
-      # Reset a node before running a refresh cycle
-      module Reset
+      module Racks
         class << self
           def call(node)
-            node.reset_reference_count!
-            node.reset_responded!
-            node.partition_generation.reset_changed!
-            node.rebalance_generation.reset_changed!
+            return unless should_refresh?(node)
+
+            Aerospike.logger.info("Updating racks for node #{node.name}")
+            conn = node.tend_connection
+            parser = RackParser.new(node, conn)
+            node.update_racks(parser)
+          rescue ::Aerospike::Exceptions::Aerospike => e
+            conn.close
+            Refresh::Failed.(node, e)
+          end
+
+          # Do not refresh racks when node connection has already failed
+          # during this cluster tend iteration.
+          def should_refresh?(node)
+            return false if node.failed? || !node.active?
+            true
           end
         end
       end

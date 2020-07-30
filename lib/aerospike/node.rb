@@ -22,7 +22,7 @@ require 'aerospike/atomic/atomic'
 module Aerospike
   class Node
 
-    attr_reader :reference_count, :responded, :name, :features, :cluster_name, :partition_generation, :peers_generation, :failures, :cluster, :peers_count, :host
+    attr_reader :reference_count, :responded, :name, :features, :cluster_name, :partition_generation, :rebalance_generation, :peers_generation, :failures, :cluster, :peers_count, :host
 
     PARTITIONS = 4096
     FULL_HEALTH = 100
@@ -46,14 +46,27 @@ module Aerospike
       @peers_count = Atomic.new(0)
       @peers_generation = ::Aerospike::Node::Generation.new
       @partition_generation = ::Aerospike::Node::Generation.new
+      @rebalance_generation = ::Aerospike::Node::Rebalance.new
       @reference_count = Atomic.new(0)
       @responded = Atomic.new(false)
       @active = Atomic.new(true)
       @failures = Atomic.new(0)
 
       @replica_index = Atomic.new(0)
+      @racks = Atomic.new(nil)
 
       @connections = ::Aerospike::ConnectionPool.new(cluster, host)
+    end
+
+    def update_racks(parser)
+      new_racks = parser.update_racks
+      @racks.value = new_racks if new_racks
+    end
+
+    def has_rack(ns, rack_id)
+      racks = @racks.value
+      return false if !racks
+      racks[ns] == rack_id
     end
 
     # Get a connection to the node. If no cached connection is not available,
@@ -197,6 +210,10 @@ module Aerospike
 
     def refresh_partitions(peers)
       Node::Refresh::Partitions.(self, peers)
+    end
+
+    def refresh_racks()
+      Node::Refresh::Racks.(self)
     end
 
     def refresh_peers(peers)

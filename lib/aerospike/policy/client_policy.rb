@@ -27,6 +27,7 @@ module Aerospike
     attr_accessor :cluster_name
     attr_accessor :tls
     attr_accessor :policies
+    attr_accessor :rack_aware, :rack_id
 
     def initialize(opt={})
       # Initial host connection timeout in seconds. The timeout when opening a connection
@@ -56,6 +57,20 @@ module Aerospike
 
       # Default Policies
       @policies = opt.fetch(:policies) { Hash.new }
+
+      # Track server rack data.  This field is useful when directing read commands to the server node
+      # that contains the key and exists on the same rack as the client.  This serves to lower cloud
+      # provider costs when nodes are distributed across different racks/data centers.
+      #
+      # ClientPolicy#rack_id, Replica#PREFER_RACK and server rack
+      # configuration must also be set to enable this functionality.
+      @rack_aware = opt[:rack_aware] || false
+
+      # Rack where this client instance resides.
+      #
+      # ClientPolicy#rack_aware, Replica#PREFER_RACK and server rack
+      # configuration must also be set to enable this functionality.
+      @rack_id = opt[:rack_id] || 0
     end
 
     def requires_authentication

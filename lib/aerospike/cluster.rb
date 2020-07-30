@@ -28,6 +28,7 @@ module Aerospike
     attr_reader :features, :tls_options
     attr_reader :cluster_id, :aliases
     attr_reader :cluster_name
+    attr_accessor :rack_aware, :rack_id
 
     def initialize(policy, hosts)
       @cluster_seeds = hosts
@@ -37,6 +38,8 @@ module Aerospike
       @tend_interval = policy.tend_interval
       @cluster_name = policy.cluster_name
       @tls_options = policy.tls
+      @rack_aware = policy.rack_aware
+      @rack_id = policy.rack_id
 
       @replica_index = Atomic.new(0)
 
@@ -111,6 +114,8 @@ module Aerospike
           return master_node(partition)
         when Aerospike::Replica::MASTER_PROLES
           return master_proles_node(partition)
+        when Aerospike::Replica::PREFER_RACK
+          return rack_node(partition, seq)
         when Aerospike::Replica::RANDOM
           return random_node
         else
@@ -125,6 +130,8 @@ module Aerospike
           return master_node(partition)
         when Aerospike::Replica::MASTER_PROLES
           return master_proles_node(partition)
+        when Aerospike::Replica::PREFER_RACK
+          return rack_node(partition, seq)
         when Aerospike::Replica::SEQUENCE
           return sequence_node(partition, seq)
         when Aerospike::Replica::RANDOM
@@ -147,6 +154,38 @@ module Aerospike
       raise Aerospike::Exceptions::InvalidNode if !node || !node.active?
 
       node
+    end
+
+    # Returns a node on the cluster
+    def rack_node(partition, seq)
+      partition_map = partitions
+      replica_array = partition_map[partition.namespace]
+      raise Aerospike::Exceptions::InvalidNamespace("namespace not found in the partition map") if !replica_array
+
+      replica_array = replica_array.get
+
+      is_retry = seq.value > -1
+
+      node = nil
+      fallback = nil
+      for i in 1..replica_array.length
+        idx = (seq.update{|v| v.succ} % replica_array.size).abs
+        node = (replica_array[idx].get)[partition.partition_id]
+
+        next if !node
+
+        fallback = node
+
+        # If fallback exists, do not retry on node where command failed,
+        # even if fallback is not on the same rack.
+        return fallback if is_retry && fallback && i == replica_array.length
+
+        return node if node && node.active? && node.has_rack(partition.namespace, @rack_id)
+      end
+
+      return fallback if fallback
+
+      raise Aerospike::Exceptions::InvalidNode
     end
 
     # Returns a node on the cluster for read operations
@@ -352,6 +391,7 @@ module Aerospike
 
       nodes.each do |node|
         node.refresh_partitions(peers) if node.partition_generation.changed?
+        node.refresh_racks if node.rebalance_generation.changed?
       end
 
       if peers.generation_changed? || !peers.use_peers?

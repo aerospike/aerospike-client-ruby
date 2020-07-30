@@ -17,20 +17,33 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-
 module Aerospike
   class Node
-    module Refresh
-      # Reset a node before running a refresh cycle
-      module Reset
-        class << self
-          def call(node)
-            node.reset_reference_count!
-            node.reset_responded!
-            node.partition_generation.reset_changed!
-            node.rebalance_generation.reset_changed!
-          end
-        end
+    # generic class for representing changes in eg. peer and partition generation
+    class Rebalance
+      attr_reader :generation
+
+      def initialize(generation = -1)
+        @generation = ::Aerospike::Atomic.new(generation)
+        @changed = ::Aerospike::Atomic.new(false)
+      end
+
+      def changed?
+        @changed.value == true
+      end
+
+      def eql?(generation)
+        @generation.value == generation
+      end
+
+      def reset_changed!
+        @changed.value = false
+      end
+
+      def update(new_generation)
+        return if @generation.value == new_generation
+        @generation.value = new_generation
+        @changed.value = true
       end
     end
   end

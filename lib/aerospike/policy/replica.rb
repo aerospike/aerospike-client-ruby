@@ -28,6 +28,13 @@ module Aerospike
     # Policy#retryOnTimeout is true, try nodes containing prole partition.
     SEQUENCE = 2
 
+    # Try node on the same rack as the client first.  If there are no nodes on the
+    # same rack, use SEQUENCE instead.
+    #
+    # ClientPolicy#rack_aware}, ClientPolicy#rack_id, and server rack
+    # configuration must also be set to enable this functionality.
+    PREFER_RACK = 3
+
     # Distribute reads across all nodes in cluster in round-robin fashion.
     # This option is useful when the replication factor equals the number
     # of nodes in the cluster and the overhead of requesting proles is not desired.

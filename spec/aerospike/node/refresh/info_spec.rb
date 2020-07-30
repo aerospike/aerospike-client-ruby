@@ -19,12 +19,14 @@
 
 RSpec.describe Aerospike::Node::Refresh::Info, skip: Support.is_jruby? do
   let(:node) { double }
+  let(:cluster) { double }
   let(:peers) { ::Aerospike::Peers.new }
   let(:connection) { spy }
 
   before do
     allow(::Aerospike::Node::Verify::PeersGeneration).to receive(:call)
     allow(::Aerospike::Node::Verify::PartitionGeneration).to receive(:call)
+    allow(::Aerospike::Node::Verify::RebalanceGeneration).to receive(:call)
     allow(::Aerospike::Node::Verify::ClusterName).to receive(:call)
     allow(::Aerospike::Node::Verify::Name).to receive(:call)
     allow(::Aerospike::Node::Refresh::Failed).to receive(:call)
@@ -35,6 +37,8 @@ RSpec.describe Aerospike::Node::Refresh::Info, skip: Support.is_jruby? do
     allow(node).to receive(:responded!)
     allow(node).to receive(:reset_failures!)
     allow(node).to receive(:get_connection).and_return(connection)
+    allow(node).to receive(:cluster).and_return(cluster)
+    allow(cluster).to receive(:rack_aware).and_return(true)
   end
 
   describe '::call' do

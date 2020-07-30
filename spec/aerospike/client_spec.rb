@@ -22,16 +22,24 @@ describe Aerospike::Client do
 
   let(:client) { Support.client }
 
-  [Aerospike::Replica::MASTER, Aerospike::Replica::MASTER_PROLES, Aerospike::Replica::SEQUENCE, Aerospike::Replica::RANDOM].each do |replica_policy|
-  context "alternate #replica_policies: #{replica_policy}" do
+  [true, false].each do |rack_aware|
+  [0, 1].each do |rack_id|
+  [Aerospike::Replica::MASTER, Aerospike::Replica::MASTER_PROLES, Aerospike::Replica::PREFER_RACK, Aerospike::Replica::SEQUENCE, Aerospike::Replica::RANDOM].each do |replica_policy|
+  context "alternate #replica_policies: #{replica_policy} and rack_aware: #{rack_aware}" do
 
   before do
+    client.cluster.rack_aware = rack_aware
+    client.cluster.rack_id = rack_id
     client.default_read_policy.replica = replica_policy
     client.default_write_policy.replica = replica_policy
     client.default_batch_policy.replica = replica_policy
+
+    client.cluster.tend
   end
 
   after do
+    client.cluster.rack_aware = false
+    client.cluster.rack_id = 0
     client.default_read_policy.replica = Aerospike::Replica::MASTER
     client.default_write_policy.replica = Aerospike::Replica::MASTER
     client.default_batch_policy.replica = Aerospike::Replica::MASTER
@@ -802,5 +810,7 @@ describe Aerospike::Client do
   end
 
   end # context for alternate replicas
+  end # context for alternate rack_id values
+  end # context for alternate rack_aware values
   end # each
 end
