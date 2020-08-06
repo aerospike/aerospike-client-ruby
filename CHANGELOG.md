@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.14.0] - 2019-08-06
+
+* **New Features**
+  * Adds support for rake-aware reads.
+  * Adds support for client-server compression.
+
+* **Improvements**
+  * Adds support for `truncate-namespace` command.
+
 ## [2.13.0] - 2019-07-17
 
 * **New Features**
