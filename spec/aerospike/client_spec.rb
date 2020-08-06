@@ -722,7 +722,7 @@ describe Aerospike::Client do
     it "deletes all records in the set" do
       records_before = 20
       namespace = 'test'
-      set_name = Support.rand_string(10)
+      set_name = 'test'
       records_before.times do
         client.put(Support.gen_random_key(20, set: set_name), {"i" => 42})
       end
@@ -739,7 +739,7 @@ describe Aerospike::Client do
       records_before = 20
       records_after = 2
       namespace = 'test'
-      set_name = Support.rand_string(10)
+      set_name = 'test'
       records_before.times do
         client.put(Support.gen_random_key(20, set: set_name), {"i" => 42})
       end
@@ -765,12 +765,12 @@ describe Aerospike::Client do
           .and_return(lut_now)
       end
 
-      context "server requires lut=now" do
+      context "server requires lut=now", skip: Support.min_version?('4.5.0.1') do
         let(:lut_now) { true }
 
         it "sends lut=now" do
           expect(client).to receive(:send_info_command)
-            .with(kind_of(Aerospike::Policy), /^truncate:namespace=foo;set=bar;lut=now$/)
+            .with(kind_of(Aerospike::Policy), /^truncate:namespace=foo;set=bar;lut=now$/, kind_of(Aerospike::Node))
             .and_return("OK")
 
           client.truncate("foo", "bar")
@@ -782,7 +782,7 @@ describe Aerospike::Client do
 
         it "does not send lut argument" do
           expect(client).to receive(:send_info_command)
-            .with(kind_of(Aerospike::Policy), /^truncate:namespace=foo;set=bar$/)
+            .with(kind_of(Aerospike::Policy), /^truncate:namespace=foo;set=bar$/, kind_of(Aerospike::Node))
             .and_return("OK")
 
           client.truncate("foo", "bar")

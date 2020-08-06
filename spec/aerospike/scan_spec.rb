@@ -38,7 +38,8 @@ describe Aerospike::Client do
       end
     end
 
-    def scan_method(type, bin_names=[], ops={})
+    def scan_method(type, compressed, bin_names=[], ops={})
+      ops[:use_compression] = compressed
       case type
       when :single_node
         client.nodes.map do |node|
@@ -49,12 +50,13 @@ describe Aerospike::Client do
       end
     end
 
+    [true, false].each do |compressed|
     [:single_node, :multiple_nodes].each do |type|
 
       context "#{type.to_s}" do
 
         it "should return all records with all bins" do
-          rs_list = scan_method(type, nil, :record_queue_size => 10)
+          rs_list = scan_method(type, compressed, nil, :record_queue_size => 10)
 
           i = 0
           rs_list.each do |rs|
@@ -73,7 +75,7 @@ describe Aerospike::Client do
         end # it
 
         it "should return all records with all bins with records_per_second" do
-          rs_list = scan_method(type, nil, :record_queue_size => 10, :records_per_second => (@record_count/4).to_i)
+          rs_list = scan_method(type, compressed, nil, :record_queue_size => 10, :records_per_second => (@record_count/4).to_i)
 
           i = 0
           rs_list.each do |rs|
@@ -92,7 +94,7 @@ describe Aerospike::Client do
         end # it
 
         it "should return only the selected bins" do
-          rs_list = scan_method(type, ['bin1', 'bin2'], :record_queue_size => 10)
+          rs_list = scan_method(type, compressed, ['bin1', 'bin2'], :record_queue_size => 10)
 
           count = 0
           rs_list.each do |rs|
@@ -106,7 +108,7 @@ describe Aerospike::Client do
         end
 
         it "should return only record meta data" do
-          rs_list = scan_method(type, nil, include_bin_data: false)
+          rs_list = scan_method(type, compressed, nil, include_bin_data: false)
 
           count = 0
           rs_list.each do |rs|
@@ -121,14 +123,14 @@ describe Aerospike::Client do
 
         it "should cancel without deadlock" do
 
-          rs_list = scan_method(type, nil, :record_queue_size => 10)
+          rs_list = scan_method(type, compressed, nil, :record_queue_size => 10)
           rs_list.each do |rs|
             sleep(1) # fill the queue to make sure deadlock doesn't happen
             rs.cancel
             expect {rs.next_record}.to raise_exception(Aerospike::ResultCode.message(Aerospike::ResultCode::SCAN_TERMINATED))
           end
 
-          rs_list = scan_method(type)
+          rs_list = scan_method(type, compressed)
           rs_list.each do |rs|
             rs = rs_list.first
             rs.cancel
@@ -139,7 +141,7 @@ describe Aerospike::Client do
 
         it "should cancel without deadlock inside each block" do
 
-          rs_list = scan_method(type, nil, :record_queue_size => 10)
+          rs_list = scan_method(type, compressed, nil, :record_queue_size => 10)
           rs_list.each do |rs|
             i = 0
             rs.each do |rec|
@@ -156,7 +158,8 @@ describe Aerospike::Client do
 
       end # context
 
-    end # do
+    end # do type
+    end # do compressed
 
   end
 

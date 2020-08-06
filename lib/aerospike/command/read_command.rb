@@ -15,6 +15,8 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
+require 'zlib'
+
 require 'aerospike/record'
 
 require 'aerospike/command/single_command'
@@ -50,10 +52,38 @@ module Aerospike
     def parse_result
       # Read header.
       begin
-        @conn.read(@data_buffer, MSG_TOTAL_HEADER_SIZE)
+        @conn.read(@data_buffer, 8)
       rescue => e
         Aerospike.logger.error("parse result error: #{e}")
         raise e
+      end
+
+      # inflate if compressed
+      compressed_sz = compressed_size
+      if compressed_sz
+        begin
+          # waste 8 size bytes
+          @conn.read(@data_buffer, 8)
+
+          # read compressed message
+          @conn.read(@data_buffer, compressed_sz - 8)
+
+          # inflate the results
+          # TODO: reuse the current buffer
+          uncompressed = Zlib::inflate(@data_buffer.buf)
+
+          @data_buffer = Buffer.new(-1, uncompressed)
+        rescue => e
+          Aerospike.logger.error("parse result error: #{e}")
+          raise e
+        end
+      else
+        begin
+          bytes_read = @conn.read(@data_buffer, MSG_TOTAL_HEADER_SIZE - 8, 8)
+        rescue => e
+          Aerospike.logger.error("parse result error: #{e}")
+          raise e
+        end
       end
 
       # A number of these are commented out because we just don't care enough to read
@@ -68,7 +98,9 @@ module Aerospike
       receive_size = (sz & 0xFFFFFFFFFFFF) - header_length
 
       # Read remaining message bytes.
-      if receive_size > 0
+      if compressed_sz 
+        @data_buffer.eat!(MSG_TOTAL_HEADER_SIZE)
+      elsif receive_size > 0
         size_buffer_sz(receive_size)
 
         begin

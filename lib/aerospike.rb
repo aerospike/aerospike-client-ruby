@@ -22,6 +22,7 @@ require "timeout"
 require 'resolv'
 require 'msgpack'
 require 'bcrypt'
+require 'zlib'
 
 require 'aerospike/atomic/atomic'
 

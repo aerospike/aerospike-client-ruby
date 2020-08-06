@@ -25,13 +25,14 @@ module Aerospike
         @timeout = nil
       end
 
-      def read(buffer, length)
+      def read(buffer, length, offset = 0)
         bytes_read = 0
         until bytes_read >= length
           result = read_from_socket(length - bytes_read)
-          buffer.write_binary(result, bytes_read)
+          buffer.write_binary(result, offset + bytes_read)
           bytes_read += result.bytesize
         end
+        bytes_read
       end
 
       def read_from_socket(length)

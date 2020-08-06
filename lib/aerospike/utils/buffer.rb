@@ -42,9 +42,9 @@ module Aerospike
     DEFAULT_BUFFER_SIZE = 16 * 1024
     MAX_BUFFER_SIZE = 10 * 1024 * 1024
 
-    def initialize(size=DEFAULT_BUFFER_SIZE)
-      @buf = "%0#{size}d" % 0
-
+    def initialize(size=DEFAULT_BUFFER_SIZE, buf = nil)
+      @buf = (buf ? buf : ("%0#{size}d" % 0))
+      @buf.force_encoding('binary')
       @slice_end = @buf.bytesize
     end
 
@@ -60,6 +60,10 @@ module Aerospike
       @buf.bytesize
     end
     alias_method :length, :size
+
+    def eat!(n)
+      @buf.replace(@buf[n..-1])
+    end
 
     def resize(length)
       if @buf.bytesize < length
@@ -154,6 +158,12 @@ module Aerospike
 
     def to_s
       @buf[0..@slice_end-1]
+    end
+
+    def reset
+      for i in 0..@buf.size-1
+        @buf[i] = ' '
+      end
     end
 
     def dump(from=nil, to=nil)

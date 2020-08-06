@@ -24,7 +24,7 @@ module Aerospike
   class Policy
 
     attr_accessor :priority, :timeout, :max_retries, :sleep_between_retries, :consistency_level,
-                  :predexp, :fail_on_filtered_out, :replica
+                  :predexp, :fail_on_filtered_out, :replica, :use_compression
 
     def initialize(opt={})
       # Container object for transaction policy attributes used in all database
@@ -89,9 +89,17 @@ module Aerospike
       # to the node containing the key's master partition.
       #
       # Default to sending read commands to the node containing the key's master partition.
-      @replica = opt[:replica] || Aerospike::Replica::MASTER;
+      @replica = opt[:replica] || Aerospike::Replica::MASTER
 
-        # Transaction timeout.
+      # Use zlib compression on write or batch read commands when the command buffer size is greater
+      # than 128 bytes. In addition, tell the server to compress its response on read commands.
+      # The server response compression threshold is also 128 bytes.
+      #
+      # This option will increase cpu and memory usage (for extra compressed buffers), but
+      # decrease the size of data sent over the network.
+      @use_compression = opt[:use_compression] || false
+
+      # Transaction timeout.
       # This timeout is used to set the socket timeout and is also sent to the
       # server along with the transaction in the wire protocol.
       # Default to no timeout (0).

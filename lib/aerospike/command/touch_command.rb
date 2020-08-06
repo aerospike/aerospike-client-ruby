@@ -40,7 +40,40 @@ module Aerospike
 
     def parse_result
       # Read header.
-      @conn.read(@data_buffer, MSG_TOTAL_HEADER_SIZE)
+      begin
+        @conn.read(@data_buffer, 8)
+      rescue => e
+        Aerospike.logger.error("parse result error: #{e}")
+        raise e
+      end
+
+      # inflate if compressed
+      compressed_sz = compressed_size
+      if compressed_sz
+        begin
+          #waste 8 size bytes
+          @conn.read(@data_buffer, 8)
+
+          # read compressed message
+          @conn.read(@data_buffer, sz - 8)
+
+          # inflate the results
+          # TODO: reuse the current buffer
+          uncompressed = Zlib::inflate(@data_buffer.buf)
+
+          @data_buffer = Buffer.new(-1, uncompressed)
+        rescue => e
+          Aerospike.logger.error("parse result error: #{e}")
+          raise e
+        end
+      else
+        begin
+          bytes_read = @conn.read(@data_buffer, MSG_TOTAL_HEADER_SIZE - 8, 8)
+        rescue => e
+          Aerospike.logger.error("parse result error: #{e}")
+          raise e
+        end
+      end
 
       result_code = @data_buffer.read(13).ord & 0xFF
 

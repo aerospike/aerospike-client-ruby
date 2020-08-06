@@ -75,6 +75,7 @@ module Aerospike
       end
 
       end_cmd
+      mark_compressed(@policy)
     end
 
     # Parse all results in the batch.  Add records to shared list.

@@ -16,6 +16,7 @@
 # the License.
 
 require 'time'
+require 'zlib'
 
 require 'msgpack'
 require 'aerospike/result_code'
@@ -41,6 +42,9 @@ module Aerospike
 
   # Involve all replicas in read operation.
   INFO1_CONSISTENCY_ALL = Integer(1 << 6)
+
+  # Tell server to compress it's response.
+  INFO1_COMPRESS_RESPONSE = (1 << 7)
 
   # Create or update record
   INFO2_WRITE = Integer(1 << 0)
@@ -72,8 +76,10 @@ module Aerospike
   OPERATION_HEADER_SIZE      = 8
   MSG_REMAINING_HEADER_SIZE  = 22
   DIGEST_SIZE                = 20
+  COMPRESS_THRESHOLD         = 128
   CL_MSG_VERSION             = 2
   AS_MSG_TYPE                = 3
+  AS_MSG_TYPE_COMPRESSED     = 4
 
   class Command #:nodoc:
 
@@ -82,6 +88,8 @@ module Aerospike
       @data_buffer = nil
 
       @node = node
+
+      @compress = false
 
       # will add before use
       @sequence = Atomic.new(-1)
@@ -118,6 +126,7 @@ module Aerospike
       end
 
       end_cmd
+      mark_compressed(policy)
     end
 
     # Writes the command for delete operations
@@ -288,6 +297,7 @@ module Aerospike
       write_operation_for_bin(nil, Aerospike::Operation::READ) if read_header
 
       end_cmd
+      mark_compressed(policy)
     end
 
     def set_udf(policy, key, package_name, function_name, args)
@@ -310,6 +320,7 @@ module Aerospike
       write_field_bytes(arg_bytes, Aerospike::FieldType::UDF_ARGLIST)
 
       end_cmd
+      mark_compressed(policy)
     end
 
     def set_scan(policy, namespace, set_name, bin_names)
@@ -579,6 +590,7 @@ module Aerospike
     # Generic header write.
     def write_header(policy, read_attr, write_attr, field_count, operation_count)
       read_attr |= INFO1_CONSISTENCY_ALL if policy.consistency_level == Aerospike::ConsistencyLevel::CONSISTENCY_ALL
+      read_attr |= INFO1_COMPRESS_RESPONSE if policy.use_compression
 
       # Write all header data except total size which must be written last.
       @data_buffer.write_byte(MSG_REMAINING_HEADER_SIZE, 8) # Message heade.length.
@@ -628,6 +640,7 @@ module Aerospike
       info_attr |= INFO3_COMMIT_MASTER if policy.commit_level == Aerospike::CommitLevel::COMMIT_MASTER
       read_attr |= INFO1_CONSISTENCY_ALL if policy.consistency_level == Aerospike::ConsistencyLevel::CONSISTENCY_ALL
       write_attr |= INFO2_DURABLE_DELETE if policy.durable_delete
+      read_attr |= INFO1_COMPRESS_RESPONSE if policy.use_compression
 
       # Write all header data except total size which must be written last.
       @data_buffer.write_byte(MSG_REMAINING_HEADER_SIZE, 8) # Message heade.length.
@@ -808,6 +821,48 @@ module Aerospike
     def end_cmd
       size = (@data_offset-8) | Integer(CL_MSG_VERSION << 56) | Integer(AS_MSG_TYPE << 48)
       @data_buffer.write_int64(size, 0)
+    end
+
+    def use_compression?
+      @compress
+    end
+
+    def compress_buffer
+      if @data_offset > COMPRESS_THRESHOLD
+        compressed = Zlib::deflate(@data_buffer.buf, Zlib::DEFAULT_COMPRESSION)
+
+        # write original size as header
+        proto_s = "%08d" % 0
+        proto_s[0, 8] = [@data_offset].pack('q>')
+        compressed.prepend(proto_s)
+
+        # write proto
+        proto = (compressed.size+8) | Integer(CL_MSG_VERSION << 56) | Integer(AS_MSG_TYPE << 48)
+        proto_s = "%08d" % 0
+        proto_s[0, 8] = [proto].pack('q>')
+        compressed.prepend(proto_s)
+
+        @data_buffer = Buffer.new(-1, compressed)
+        @data_offset = @data_buffer.size
+      end
+    end
+
+    # isCompressed returns the length of the compressed buffer.
+    # If the buffer is not compressed, the result will be -1
+    def compressed_size
+      # A number of these are commented out because we just don't care enough to read
+      # that section of the header. If we do care, uncomment and check!
+      proto = @data_buffer.read_int64(0)
+      size = proto & 0xFFFFFFFFFFFF
+      msg_type = (proto >> 48) & 0xFF
+
+      return nil if msg_type != AS_MSG_TYPE_COMPRESSED
+
+      size
+    end
+
+    def mark_compressed(policy)
+      @compress = policy.use_compression
     end
 
   end # class

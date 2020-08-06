@@ -29,6 +29,9 @@ module Aerospike
       @valid = true
       @mutex = Mutex.new
 
+      @compressed_data_buffer = nil
+      @compressed_data_offset = nil
+
       self
     end
 
@@ -42,11 +45,40 @@ module Aerospike
       status = true
 
       while status
+        @data_offset = 0
+        @compressed_data_buffer = nil
+
         # Read header.
         read_bytes(8)
 
         size = @data_buffer.read_int64(0)
         receive_size = size & 0xFFFFFFFFFFFF
+
+        # inflate if compressed
+        compressed_sz = compressed_size
+        if compressed_sz
+          begin
+            # read compressed msg header
+            @conn.read(@data_buffer, 8)
+
+            # read compressed message
+            @conn.read(@data_buffer, compressed_sz - 8)
+
+            # inflate the results
+            # TODO: reuse the current buffer
+            uncompressed = Zlib::inflate(@data_buffer.buf)
+            receive_size = uncompressed.size - 8
+
+            @compressed_data_buffer = Buffer.new(-1, uncompressed)
+            @compressed_data_offset = 0
+
+            # waste the first 8 header bytes
+            @compressed_data_buffer.eat!(8)
+          rescue => e
+            Aerospike.logger.error("parse result error: #{e}")
+            raise e
+          end
+        end
 
         if receive_size > 0
           status = parse_group(receive_size)
@@ -157,7 +189,13 @@ module Aerospike
         @data_buffer = Buffer.new(length)
       end
 
-      @conn.read(@data_buffer, length)
+      if compressed?
+        @data_buffer.write_binary(@compressed_data_buffer.buf[@compressed_data_offset...@compressed_data_offset+length], 0)
+        @compressed_data_offset += length
+      else
+        @conn.read(@data_buffer, length)
+      end
+
       @data_offset += length
     end
 
@@ -175,6 +213,11 @@ module Aerospike
 
       res
     end
+
+    def compressed?
+      @compressed_data_buffer != nil
+    end
+
 
   end # class
 
