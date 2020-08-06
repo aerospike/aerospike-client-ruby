@@ -40,5 +40,7 @@ module Aerospike
     # Server supports the new "peers" protocol for automatic node discovery
     PEERS = :peers
 
+    # Server supports the "truncate-namespace" command
+    TRUNCATE_NAMESPACE = :"truncate-namespace"
   end
 end

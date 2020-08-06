@@ -225,8 +225,19 @@ module Aerospike
     def truncate(namespace, set_name = nil, before_last_update = nil, options = {})
       policy = create_policy(options, Policy, default_info_policy)
 
-      str_cmd = "truncate:namespace=#{namespace}"
-      str_cmd << ";set=#{set_name}" unless set_name.to_s.strip.empty?
+      node = @cluster.random_node
+      conn = node.get_connection(policy.timeout)
+
+      if set_name && !set_name.to_s.strip.empty?
+        str_cmd = "truncate:namespace=#{namespace}"
+        str_cmd << ";set=#{set_name}" unless set_name.to_s.strip.empty?
+      else
+        if node.supports_feature(Aerospike::Features::TRUNCATE_NAMESPACE)
+          str_cmd = "truncate-namespace:namespace=#{namespace}"
+        else
+          str_cmd = "truncate:namespace=#{namespace}"
+        end
+      end
 
       if before_last_update
         lut_nanos = (before_last_update.to_f * 1_000_000_000.0).round
@@ -236,8 +247,7 @@ module Aerospike
         str_cmd << ";lut=now"
       end
 
-      # Send index command to one node. That node will distribute the command to other nodes.
-      response = send_info_command(policy, str_cmd).upcase
+      response = send_info_command(policy, str_cmd, node).upcase
       return if response == 'OK'
       raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::SERVER_ERROR, "Truncate failed: #{response}")
     end
@@ -819,9 +829,13 @@ module Aerospike
       self.default_write_policy = create_policy(policies[:write], WritePolicy)
     end
 
-    def send_info_command(policy, command)
+    def send_info_command(policy, command, node = nil)
       Aerospike.logger.debug { "Sending info command: #{command}" }
-      _, response = @cluster.request_info(policy, command).first
+      if node
+        _, response = @cluster.request_node_info(node, policy, command).first
+      else
+        _, response = @cluster.request_info(policy, command).first
+      end
       response.to_s
     end
 

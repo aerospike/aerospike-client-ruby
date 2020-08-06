@@ -295,6 +295,13 @@ module Aerospike
       end
     end
 
+    def request_node_info(node, policy, *commands)
+      conn = node.get_connection(policy.timeout)
+      Info.request(conn, *commands).tap do
+        node.put_connection(conn)
+      end
+    end
+
     def supports_feature?(feature)
       @features.get.include?(feature.to_s)
     end
