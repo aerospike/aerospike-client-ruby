@@ -31,7 +31,7 @@ module Aerospike
     # Try node on the same rack as the client first.  If there are no nodes on the
     # same rack, use SEQUENCE instead.
     #
-    # ClientPolicy#rack_aware}, ClientPolicy#rack_id, and server rack
+    # ClientPolicy#rack_aware, ClientPolicy#rack_id, and server rack
     # configuration must also be set to enable this functionality.
     PREFER_RACK = 3
 

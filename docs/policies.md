@@ -13,7 +13,8 @@ operations and the allowed values for some of the policies.
 	- [`Query Policy`](#QueryPolicy)
 	- [`Scan Policy`](#ScanPolicy)
 - [`Policy Values`](#Values)
-	- [`Generation Policy Value`](#gen)
+	- [`Replica Policy Value`](#replica)
+  - [`Generation Policy Value`](#gen)
 	- [`Exists Policy Value`](#exists)
 	- [`Commit Policy Value`](#commit)
 	- [`Priority Policy Value`](#priority)
@@ -86,6 +87,14 @@ Attributes:
     [`SSLContext`](https://ruby.github.io/openssl/OpenSSL/SSL/SSLContext.html)
     can be passed using the `context` property of the `tls` options hash. In this case,
     all other properties in `tls` are ignored.
+* `rack_aware` - Track server rack data. This field is useful when directing read commands to the server node
+  that contains the key and exists on the same rack as the client.  This serves to lower cloud
+  provider costs when nodes are distributed across different racks/data centers.
+  `ClientPolicy.rack_id`, `Replica.PREFER_RACK` and server rack
+  configuration must also be set to enable this functionality.
+* `rack_id` - Rack where this client instance resides on.
+    `ClientPolicy.rack_aware`, `Replica.PREFER_RACK` and server rack
+    configuration must also be set to enable this functionality.
 
 #### Examples
 
@@ -144,6 +153,10 @@ Attributes:
   * Default: 2
 * `sleep_between_retries` – Duration of waiting between retries.
   * Default: `0.500` (500ms)
+* `replica` - Specifies to send read commands to which node containing the key's partition replica type.
+  * Default: `Replica.MASTER`
+* `use_compression` - Specifies to use compression between client and server.
+  * Default: false.
 
 <a name="WritePolicy"></a>
 ### WritePolicy Object
@@ -254,6 +267,15 @@ Includes All Policy attributes, plus:
 ## Values
 
 The following are values allowed for various policies.
+
+<a name="replica"></a>
+### ReplicaPolicy Values
+
+* `MASTER` - Read from node containing key's master partition.
+* `MASTER_PROLES` - Distribute reads across nodes containing key's master and replicated partitions in round-robin fashion.
+* `SEQUENCE` - Always try node containing master partition first. If connection fails and `Policy.max_retries` is > 0, try nodes containing prole partition.
+* `PREFER_RACK` - Try node on the same rack as the client first.  If there are no nodes on the same rack, use `SEQUENCE` instead.
+* `RANDOM` - Distribute reads across all nodes in cluster in round-robin fashion.
 
 <a name="gen"></a>
 ### GenerationPolicy Values
