@@ -59,6 +59,9 @@ module Aerospike
   # Create only. Fail if record already exists.
   INFO2_CREATE_ONLY = Integer(1 << 5)
 
+  # Return a result for every operation.
+  INFO2_RESPOND_ALL_OPS = Integer(1 << 7)
+
   # This is the last of a multi-part message.
   INFO3_LAST = Integer(1 << 0)
   # Commit to master only before declaring success.
@@ -254,6 +257,7 @@ module Aerospike
       read_attr = 0
       write_attr = 0
       read_header = false
+      record_bin_multiplicity = policy.record_bin_multiplicity == RecordBinMultiplicity::ARRAY
 
       operations.each do |operation|
         case operation.op_type
@@ -271,16 +275,23 @@ module Aerospike
           read_attr |= INFO1_READ
           read_header = true
 
-        when Aerospike::Operation::CDT_READ
+        when Aerospike::Operation::CDT_READ,Aerospike::Operation::HLL_READ
           read_attr |= INFO1_READ
 
         else
           write_attr = INFO2_WRITE
         end
 
+        if [Aerospike::Operation::HLL_MODIFY, Aerospike::Operation::HLL_READ].include?(operation.op_type)
+          record_bin_multiplicity = true
+        end
+
         estimate_operation_size_for_operation(operation)
       end
       size_buffer
+
+
+      write_attr |= INFO2_RESPOND_ALL_OPS if write_attr != 0 && record_bin_multiplicity
 
       if write_attr != 0
         write_header_with_policy(policy, read_attr, write_attr, field_count, operations.length)

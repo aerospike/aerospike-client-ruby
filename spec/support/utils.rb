@@ -35,7 +35,7 @@ module Support
   end
 
   def self.gen_random_key(len=50, opts = {})
-    key_val = rand_string(len)
+    key_val = opts[:key_val] || rand_string(len)
     set_name = opts[:set] || self.set_name
     ns_name = opts[:ns] || self.namespace
     Aerospike::Key.new(ns_name, set_name, key_val)

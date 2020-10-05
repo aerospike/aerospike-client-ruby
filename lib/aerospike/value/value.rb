@@ -526,6 +526,49 @@ module Aerospike
 
   end
 
+  # #######################################/
+
+  # HLLValue value. Encapsulates a HyperLogLog value.
+  # Supported by Aerospike server version 4.9 and later.
+  class HLLValue < Value #:nodoc:
+
+    def initialize(value)
+      @bytes = value
+      @bytes.force_encoding('binary')
+
+      self
+    end
+
+    def type
+      Aerospike::ParticleType::HLL
+    end
+
+    def get
+      self
+    end
+
+    def to_s
+      @bytes.to_s
+    end
+
+    def to_bytes
+      @bytes
+    end
+
+    def estimate_size
+      @bytes.bytesize
+    end
+
+    def write(buffer, offset)
+      buffer.write_binary(@bytes, offset)
+    end
+
+    def pack(packer)
+      packer.write(Aerospike::ParticleType::BLOB.chr + @bytes)
+    end
+
+  end
+
   #######################################
 
   def self.encoding
@@ -571,6 +614,10 @@ module Aerospike
       ncells = buf.read_int16(offset + 1)
       hdrsz = 1 + 2 + (ncells * 8)
       Aerospike::GeoJSON.new(buf.read(offset + hdrsz, length - hdrsz))
+
+    when Aerospike::ParticleType::HLL
+      bytes = buf.read(offset,length)
+      Aerospike::HLLValue.new(bytes)
 
     else
       nil

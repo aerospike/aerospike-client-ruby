@@ -44,6 +44,7 @@ module Aerospike
     attr_accessor :default_read_policy
     attr_accessor :default_scan_policy
     attr_accessor :default_write_policy
+    attr_accessor :default_operate_policy
     attr_accessor :cluster
 
     def initialize(hosts = nil, policy: ClientPolicy.new, connect: true)
@@ -383,7 +384,7 @@ module Aerospike
     #  read the result, all in one database call. Operations are executed in
     #  the order they are specified.
     def operate(key, operations, options = nil)
-      policy = create_policy(options, WritePolicy, default_write_policy)
+      policy = create_policy(options, OperatePolicy, default_operate_policy)
 
       command = OperateCommand.new(@cluster, policy, key, operations)
       execute_command(command)
@@ -827,6 +828,7 @@ module Aerospike
       self.default_query_policy = create_policy(policies[:query], QueryPolicy)
       self.default_scan_policy = create_policy(policies[:scan], ScanPolicy)
       self.default_write_policy = create_policy(policies[:write], WritePolicy)
+      self.default_operate_policy = create_policy(policies[:operate], OperatePolicy)
     end
 
     def send_info_command(policy, command, node = nil)

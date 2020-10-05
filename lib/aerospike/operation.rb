@@ -32,6 +32,8 @@ module Aerospike
     PREPEND     = 10
     TOUCH       = 11
     DELETE      = 14
+    HLL_READ    = 15
+    HLL_MODIFY  = 16
 
     def initialize(op_type, bin_name=nil, bin_value=NullValue.new)
       @op_type = op_type

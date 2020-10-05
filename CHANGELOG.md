@@ -2,7 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
-## [2.14.0] - 2019-08-06
+## [2.15.0] - 2020-10-05
+
+* **New Features**
+  * [CLIENT-1254] Adds support for HyperLogLog.
+
+* **Changes**
+  * `Client#operate` now uses `OperatePolicy` by default.
+
+## [2.14.0] - 2020-08-06
 
 * **New Features**
   * Adds support for rake-aware reads.
@@ -11,7 +19,7 @@ All notable changes to this project will be documented in this file.
 * **Improvements**
   * Adds support for `truncate-namespace` command.
 
-## [2.13.0] - 2019-07-17
+## [2.13.0] - 2020-07-17
 
 * **New Features**
   * Adds support for replica policies.
