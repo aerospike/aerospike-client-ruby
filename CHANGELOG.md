@@ -13,7 +13,7 @@ All notable changes to this project will be documented in this file.
 ## [2.14.0] - 2020-08-06
 
 * **New Features**
-  * Adds support for rake-aware reads.
+  * Adds support for rack-aware reads.
   * Adds support for client-server compression.
 
 * **Improvements**
