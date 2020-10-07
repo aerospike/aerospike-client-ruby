@@ -628,6 +628,67 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?(Aeros
     end
   end
 
+  describe "Context", skip: !Support.min_version?("4.6") do
+
+    it "is used to change nested list" do
+      client.delete(key)
+
+      list = [
+          [7, 9, 5],
+          [1, 2, 3],
+          [6, 5, 4, 1],
+        ]
+
+      client.put(key, Aerospike::Bin.new(list_bin, list))
+
+      record = client.operate(key, [Aerospike::Operation.get(list_bin)])
+      expect(record.bins[list_bin]).to eq(list)
+
+      record = client.operate(key, [ListOperation.append(list_bin, 11, ctx: [Context.list_index(-1)]), Aerospike::Operation.get(list_bin)])
+      expect(record.bins[list_bin]).to eq([
+        [7, 9, 5],
+        [1, 2, 3],
+        [6, 5, 4, 1, 11],
+      ])
+    end
+
+    it "is used to change a map in nested list" do
+      client.delete(key)
+
+      m = {
+        "key1" => [
+          [7, 9, 5],
+          [13],
+        ],
+        "key2" => [
+          [9],
+          [2, 4],
+          [6, 1, 9],
+        ],
+      }
+
+      client.put(key, Aerospike::Bin.new(list_bin, m))
+
+      record = client.operate(key, [Aerospike::Operation.get(list_bin)])
+      expect(record.bins[list_bin]).to eq(m)
+
+      record = client.operate(key, [ListOperation.append(list_bin, 11, ctx: [Context.map_key("key2"), Context.list_rank(0)]), Aerospike::Operation.get(list_bin)])
+      expect(record.bins[list_bin]).to eq(
+        {
+          "key1" => [
+            [7, 9, 5],
+            [13],
+          ],
+          "key2" => [
+            [9],
+            [2, 4, 11],
+            [6, 1, 9],
+          ],
+      })
+    end
+  end
+
+
   describe "ListPolicy", skip: !Support.min_version?("3.16") do
 
     context "ordered list" do

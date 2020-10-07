@@ -17,6 +17,47 @@
 module Aerospike
   module CDT
 
+    ##
+    # Unique key map bin operations. Create map operations used by the client operate command.
+    # The default unique key map is unordered.
+    #
+    # All maps maintain an index and a rank.  The index is the item offset from the start of the map,
+    # for both unordered and ordered maps.  The rank is the sorted index of the value component.
+    # Map supports negative indexing for index and rank.
+    #
+    # Index examples:
+    #
+    # Index 0: First item in map.
+    # Index 4: Fifth item in map.
+    # Index -1: Last item in map.
+    # Index -3: Third to last item in map.
+    # Index 1 Count 2: Second and third items in map.
+    # Index -3 Count 3: Last three items in map.
+    # Index -5 Count 4: Range between fifth to last item to second to last item inclusive.
+    #
+    #
+    # Rank examples:
+    #
+    # Rank 0: Item with lowest value rank in map.
+    # Rank 4: Fifth lowest ranked item in map.
+    # Rank -1: Item with highest ranked value in map.
+    # Rank -3: Item with third highest ranked value in map.
+    # Rank 1 Count 2: Second and third lowest ranked items in map.
+    # Rank -3 Count 3: Top three ranked items in map.
+    #
+    #
+    # Nested CDT operations are supported by optional CTX context arguments.  Examples:
+    #
+    # bin = {key1:{key11:9,key12:4}, key2:{key21:3,key22:5}}
+    # Set map value to 11 for map key "key21" inside of map key "key2".
+    # MapOperation.put("bin", "key21", 11, ctx: [Context.map_key("key2")])
+    # bin result = {key1:{key11:9,key12:4},key2:{key21:11,key22:5}}
+    #
+    # bin : {key1:{key11:{key111:1},key12:{key121:5}}, key2:{key21:{"key211":7}}}
+    # Set map value to 11 in map key "key121" for highest ranked map ("key12") inside of map key "key1".
+    # MapOperation.put("bin", "key121", 11, ctx: [Context.map_key("key1"), Context.map_rank(-1)])
+    # bin result = {key1:{key11:{key111:1},key12:{key121:11}}, key2:{key21:{"key211":7}}}
+
     class MapOperation < Operation
 
       SET_TYPE = 64
@@ -55,13 +96,14 @@ module Aerospike
       GET_BY_KEY_REL_INDEX_RANGE = 109
       GET_BY_VALUE_REL_RANK_RANGE = 110
 
-      attr_reader :map_op, :arguments, :return_type
+      attr_reader :map_op, :arguments, :return_type, :ctx
 
-      def initialize(op_type, map_op, bin_name, *arguments, return_type: nil)
+      def initialize(op_type, map_op, bin_name, *arguments, ctx: nil, return_type: nil)
         @op_type = op_type
         @bin_name = bin_name
         @bin_value = nil
         @map_op = map_op
+        @ctx = ctx
         @arguments = arguments
         @return_type = return_type
         self
@@ -72,8 +114,8 @@ module Aerospike
       # Server sets map policy attributes. Server returns null.
       #
       # The required map policy attributes can be changed after the map is created.
-      def self.set_policy(bin_name, policy)
-        MapOperation.new(Operation::CDT_MODIFY, SET_TYPE, bin_name, policy.order)
+      def self.set_policy(bin_name, policy, ctx: nil)
+        MapOperation.new(Operation::CDT_MODIFY, SET_TYPE, bin_name, policy.order, ctx: ctx)
       end
 
       ##
@@ -82,18 +124,18 @@ module Aerospike
       #
       # The map policy dictates the type of map to create when it does not exist.
       # The map policy also specifies the flags used when writing items to the map.
-      def self.put(bin_name, key, value, policy: MapPolicy::DEFAULT)
+      def self.put(bin_name, key, value, ctx: nil, policy: MapPolicy::DEFAULT)
         if policy.flags != MapWriteFlags::DEFAULT
-          MapOperation.new(Operation::CDT_MODIFY, PUT, bin_name, key, value, policy.order, policy.flags)
+          MapOperation.new(Operation::CDT_MODIFY, PUT, bin_name, key, value, policy.order, policy.flags, ctx: ctx)
         else
           case policy.write_mode
           when MapWriteMode::UPDATE_ONLY
             # Replace doesn't allow map order because it does not create on non-existing key.
-            MapOperation.new(Operation::CDT_MODIFY, REPLACE, bin_name, key, value)
+            MapOperation.new(Operation::CDT_MODIFY, REPLACE, bin_name, key, value, ctx: ctx)
           when MapWriteMode::CREATE_ONLY
-            MapOperation.new(Operation::CDT_MODIFY, ADD, bin_name, key, value, policy.order)
+            MapOperation.new(Operation::CDT_MODIFY, ADD, bin_name, key, value, policy.order, ctx: ctx)
           else
-            MapOperation.new(Operation::CDT_MODIFY, PUT, bin_name, key, value, policy.order)
+            MapOperation.new(Operation::CDT_MODIFY, PUT, bin_name, key, value, policy.order, ctx: ctx)
           end
         end
       end
@@ -104,18 +146,18 @@ module Aerospike
       #
       # The map policy dictates the type of map to create when it does not exist.
       # The map policy also specifies the flags used when writing items to the map.
-      def self.put_items(bin_name, values, policy: MapPolicy::DEFAULT)
+      def self.put_items(bin_name, values, ctx: nil, policy: MapPolicy::DEFAULT)
         if policy.flags != MapWriteFlags::DEFAULT
-          MapOperation.new(Operation::CDT_MODIFY, PUT_ITEMS, bin_name, values, policy.order, policy.flags)
+          MapOperation.new(Operation::CDT_MODIFY, PUT_ITEMS, bin_name, values, policy.order, policy.flags, ctx: ctx)
         else
           case policy.write_mode
           when MapWriteMode::UPDATE_ONLY
             # Replace doesn't allow map order because it does not create on non-existing key.
-            MapOperation.new(Operation::CDT_MODIFY, REPLACE_ITEMS, bin_name, values)
+            MapOperation.new(Operation::CDT_MODIFY, REPLACE_ITEMS, bin_name, values, ctx: ctx)
           when MapWriteMode::CREATE_ONLY
-            MapOperation.new(Operation::CDT_MODIFY, ADD_ITEMS, bin_name, values, policy.order)
+            MapOperation.new(Operation::CDT_MODIFY, ADD_ITEMS, bin_name, values, policy.order, ctx: ctx)
           else
-            MapOperation.new(Operation::CDT_MODIFY, PUT_ITEMS, bin_name, values, policy.order)
+            MapOperation.new(Operation::CDT_MODIFY, PUT_ITEMS, bin_name, values, policy.order, ctx: ctx)
           end
         end
       end
@@ -127,8 +169,8 @@ module Aerospike
       #
       # The map policy dictates the type of map to create when it does not exist.
       # The map policy also specifies the mode used when writing items to the map.
-      def self.increment(bin_name, key, incr, policy: MapPolicy::DEFAULT)
-        MapOperation.new(Operation::CDT_MODIFY, INCREMENT, bin_name, key, incr, policy.order)
+      def self.increment(bin_name, key, incr, ctx: nil, policy: MapPolicy::DEFAULT)
+        MapOperation.new(Operation::CDT_MODIFY, INCREMENT, bin_name, key, incr, policy.order, ctx: ctx)
       end
 
       ##
@@ -138,15 +180,15 @@ module Aerospike
       #
       # The map policy dictates the type of map to create when it does not exist.
       # The map policy also specifies the mode used when writing items to the map.
-      def self.decrement(bin_name, key, decr, policy: MapPolicy::DEFAULT)
-        MapOperation.new(Operation::CDT_MODIFY, DECREMENT, bin_name, key, decr, policy.order)
+      def self.decrement(bin_name, key, decr, ctx: nil, policy: MapPolicy::DEFAULT)
+        MapOperation.new(Operation::CDT_MODIFY, DECREMENT, bin_name, key, decr, policy.order, ctx: ctx)
       end
 
       ##
       # Create map clear operation.
       # Server removes all items in map.  Server returns null.
-      def self.clear(bin_name)
-        MapOperation.new(Operation::CDT_MODIFY, CLEAR, bin_name)
+      def self.clear(bin_name, ctx: nil)
+        MapOperation.new(Operation::CDT_MODIFY, CLEAR, bin_name, ctx: ctx)
       end
 
       ##
@@ -154,8 +196,8 @@ module Aerospike
       #
       # Server removes map item identified by key and returns removed data
       # specified by return_type.
-      def self.remove_by_key(bin_name, key, return_type: nil)
-        MapOperation.new(Operation::CDT_MODIFY, REMOVE_BY_KEY, bin_name, key, return_type: return_type)
+      def self.remove_by_key(bin_name, key, ctx: nil, return_type: nil)
+        MapOperation.new(Operation::CDT_MODIFY, REMOVE_BY_KEY, bin_name, key, ctx: ctx, return_type: return_type)
       end
 
       ##
@@ -164,8 +206,8 @@ module Aerospike
       # Server removes map items identified by keys.
       #
       # Server returns removed data specified by return_type.
-      def self.remove_by_key_list(bin_name, keys, return_type: MapReturnType::NONE)
-        MapOperation.new(Operation::CDT_MODIFY, REMOVE_BY_KEY_LIST, bin_name, keys, return_type: return_type)
+      def self.remove_by_key_list(bin_name, keys, ctx: nil, return_type: MapReturnType::NONE)
+        MapOperation.new(Operation::CDT_MODIFY, REMOVE_BY_KEY_LIST, bin_name, keys, ctx: ctx, return_type: return_type)
       end
 
       ##
@@ -176,11 +218,11 @@ module Aerospike
       # Server returns removed data specified by return_type.
       #
       # Deprecated. Use remove_by_key / remove_by_key_list instead.
-      def self.remove_keys(bin_name, *keys, return_type: MapReturnType::NONE)
+      def self.remove_keys(bin_name, *keys, ctx: nil, return_type: MapReturnType::NONE)
         if keys.length > 1
-          remove_by_key_list(bin_name, keys, return_type: return_type)
+          remove_by_key_list(bin_name, keys, ctx: ctx, return_type: return_type)
         else
-          remove_by_key(bin_name, keys.first, return_type: return_type)
+          remove_by_key(bin_name, keys.first, ctx: ctx, return_type: return_type)
         end
       end
 
@@ -192,11 +234,11 @@ module Aerospike
       # If key_end is null, the range is greater than equal to key_begin.
       #
       # Server returns removed data specified by return_type.
-      def self.remove_by_key_range(bin_name, key_begin, key_end = nil, return_type: MapReturnType::NONE)
+      def self.remove_by_key_range(bin_name, key_begin, key_end = nil, ctx: nil, return_type: MapReturnType::NONE)
         if key_end
-          MapOperation.new(Operation::CDT_MODIFY, REMOVE_BY_KEY_INTERVAL, bin_name, key_begin, key_end, return_type: return_type)
+          MapOperation.new(Operation::CDT_MODIFY, REMOVE_BY_KEY_INTERVAL, bin_name, key_begin, key_end, ctx: ctx, return_type: return_type)
         else
-          MapOperation.new(Operation::CDT_MODIFY, REMOVE_BY_KEY_INTERVAL, bin_name, key_begin, return_type: return_type)
+          MapOperation.new(Operation::CDT_MODIFY, REMOVE_BY_KEY_INTERVAL, bin_name, key_begin, ctx: ctx, return_type: return_type)
         end
       end
       singleton_class.send(:alias_method, :remove_key_range, :remove_by_key_range)
@@ -226,11 +268,11 @@ module Aerospike
       # * (5, -1) = [{4=2}, {5=15}, {9=10}]
       # * (3, 2) = [{9=10}]
       # * (3, -2) = [{0=17}, {4=2}, {5=15}, {9=10}]
-      def self.remove_by_key_rel_index_range(bin_name, key, index, count = nil, return_type: nil)
+      def self.remove_by_key_rel_index_range(bin_name, key, index, count = nil, ctx: nil, return_type: nil)
         if count
-          MapOperation.new(Operation::CDT_MODIFY, REMOVE_BY_KEY_REL_INDEX_RANGE, bin_name, key, index, count, return_type: return_type)
+          MapOperation.new(Operation::CDT_MODIFY, REMOVE_BY_KEY_REL_INDEX_RANGE, bin_name, key, index, count, ctx: ctx, return_type: return_type)
         else
-          MapOperation.new(Operation::CDT_MODIFY, REMOVE_BY_KEY_REL_INDEX_RANGE, bin_name, key, index, return_type: return_type)
+          MapOperation.new(Operation::CDT_MODIFY, REMOVE_BY_KEY_REL_INDEX_RANGE, bin_name, key, index, ctx: ctx, return_type: return_type)
         end
       end
 
@@ -240,8 +282,8 @@ module Aerospike
       # Server removes map item identified by value.
       #
       # Server returns removed data specified by return_type.
-      def self.remove_by_value(bin_name, value, return_type: MapReturnType::NONE)
-        MapOperation.new(Operation::CDT_MODIFY, REMOVE_BY_VALUE, bin_name, value, return_type: return_type)
+      def self.remove_by_value(bin_name, value, ctx: nil, return_type: MapReturnType::NONE)
+        MapOperation.new(Operation::CDT_MODIFY, REMOVE_BY_VALUE, bin_name, value, ctx: ctx, return_type: return_type)
       end
 
       ##
@@ -250,8 +292,8 @@ module Aerospike
       # Server removes map items identified by value.
       #
       # Server returns removed data specified by return_type.
-      def self.remove_by_value_list(bin_name, values, return_type: MapReturnType::NONE)
-        MapOperation.new(Operation::CDT_MODIFY, REMOVE_BY_VALUE_LIST, bin_name, values, return_type: return_type)
+      def self.remove_by_value_list(bin_name, values, ctx: nil, return_type: MapReturnType::NONE)
+        MapOperation.new(Operation::CDT_MODIFY, REMOVE_BY_VALUE_LIST, bin_name, values, ctx: ctx, return_type: return_type)
       end
 
       ##
@@ -262,11 +304,11 @@ module Aerospike
       # Server returns removed data specified by return_type.
       #
       # Deprecated. Use remove_by_value / remove_by_value_list instead.
-      def self.remove_values(bin_name, *values, return_type: MapReturnType::NONE)
+      def self.remove_values(bin_name, *values, ctx: nil, return_type: MapReturnType::NONE)
         if values.length > 1
-          remove_by_value_list(bin_name, values, return_type: return_type)
+          remove_by_value_list(bin_name, values, ctx: ctx, return_type: return_type)
         else
-          remove_by_value(bin_name, values.first, return_type: return_type)
+          remove_by_value(bin_name, values.first, ctx: ctx, return_type: return_type)
         end
       end
 
@@ -279,11 +321,11 @@ module Aerospike
       # equal to value_begin.
       #
       # Server returns removed data specified by return_type.
-      def self.remove_by_value_range(bin_name, value_begin, value_end = nil, return_type: MapReturnType::NONE)
+      def self.remove_by_value_range(bin_name, value_begin, value_end = nil, ctx: nil, return_type: MapReturnType::NONE)
         if value_end
-          MapOperation.new(Operation::CDT_MODIFY, REMOVE_BY_VALUE_INTERVAL, bin_name, value_begin, value_end, return_type: return_type)
+          MapOperation.new(Operation::CDT_MODIFY, REMOVE_BY_VALUE_INTERVAL, bin_name, value_begin, value_end, ctx: ctx, return_type: return_type)
         else
-          MapOperation.new(Operation::CDT_MODIFY, REMOVE_BY_VALUE_INTERVAL, bin_name, value_begin, return_type: return_type)
+          MapOperation.new(Operation::CDT_MODIFY, REMOVE_BY_VALUE_INTERVAL, bin_name, value_begin, ctx: ctx, return_type: return_type)
         end
       end
       singleton_class.send(:alias_method, :remove_value_range, :remove_by_value_range)
@@ -308,11 +350,11 @@ module Aerospike
       # * (value, rank) = [removed items]
       # * (11, 1) = [{0=17}]
       # * (11, -1) = [{9=10}, {5=15}, {0=17}]
-      def self.remove_by_value_rel_rank_range(bin_name, value, rank, count = nil, return_type: nil)
+      def self.remove_by_value_rel_rank_range(bin_name, value, rank, count = nil, ctx: nil, return_type: nil)
         if count
-          MapOperation.new(Operation::CDT_MODIFY, REMOVE_BY_VALUE_REL_RANK_RANGE, bin_name, value, rank, count, return_type: return_type)
+          MapOperation.new(Operation::CDT_MODIFY, REMOVE_BY_VALUE_REL_RANK_RANGE, bin_name, value, rank, count, ctx: ctx, return_type: return_type)
         else
-          MapOperation.new(Operation::CDT_MODIFY, REMOVE_BY_VALUE_REL_RANK_RANGE, bin_name, value, rank, return_type: return_type)
+          MapOperation.new(Operation::CDT_MODIFY, REMOVE_BY_VALUE_REL_RANK_RANGE, bin_name, value, rank, ctx: ctx, return_type: return_type)
         end
       end
 
@@ -322,8 +364,8 @@ module Aerospike
       # Server removes map item identified by index.
       #
       # Server returns removed data specified by return_type.
-      def self.remove_by_index(bin_name, index, return_type: MapReturnType::NONE)
-        MapOperation.new(Operation::CDT_MODIFY, REMOVE_BY_INDEX, bin_name, index, return_type: return_type)
+      def self.remove_by_index(bin_name, index, ctx: nil, return_type: MapReturnType::NONE)
+        MapOperation.new(Operation::CDT_MODIFY, REMOVE_BY_INDEX, bin_name, index, ctx: ctx, return_type: return_type)
       end
       singleton_class.send(:alias_method, :remove_index, :remove_by_index)
 
@@ -335,11 +377,11 @@ module Aerospike
       # specified index to the end of map.
       #
       # Server returns removed data specified by return_type.
-      def self.remove_by_index_range(bin_name, index, count = nil, return_type: MapReturnType::NONE)
+      def self.remove_by_index_range(bin_name, index, count = nil, ctx: nil, return_type: MapReturnType::NONE)
         if count
-          MapOperation.new(Operation::CDT_MODIFY, REMOVE_BY_INDEX_RANGE, bin_name, index, count, return_type: return_type)
+          MapOperation.new(Operation::CDT_MODIFY, REMOVE_BY_INDEX_RANGE, bin_name, index, count, ctx: ctx, return_type: return_type)
         else
-          MapOperation.new(Operation::CDT_MODIFY, REMOVE_BY_INDEX_RANGE, bin_name, index, return_type: return_type)
+          MapOperation.new(Operation::CDT_MODIFY, REMOVE_BY_INDEX_RANGE, bin_name, index, ctx: ctx, return_type: return_type)
         end
       end
       singleton_class.send(:alias_method, :remove_index_range, :remove_by_index_range)
@@ -350,8 +392,8 @@ module Aerospike
       # Server removes map item identified by rank.
       #
       # Server returns removed data specified by return_type.
-      def self.remove_by_rank(bin_name, rank, return_type: MapReturnType::NONE)
-        MapOperation.new(Operation::CDT_MODIFY, REMOVE_BY_RANK, bin_name, rank, return_type: return_type)
+      def self.remove_by_rank(bin_name, rank, ctx: nil, return_type: MapReturnType::NONE)
+        MapOperation.new(Operation::CDT_MODIFY, REMOVE_BY_RANK, bin_name, rank, ctx: ctx, return_type: return_type)
       end
 
       ##
@@ -362,26 +404,26 @@ module Aerospike
       # to the last ranked.
       #
       # Server returns removed data specified by return_type.
-      def self.remove_by_rank_range(bin_name, rank, count = nil, return_type: MapReturnType::NONE)
+      def self.remove_by_rank_range(bin_name, rank, count = nil, ctx: nil, return_type: MapReturnType::NONE)
         if count
-          MapOperation.new(Operation::CDT_MODIFY, REMOVE_BY_RANK_RANGE, bin_name, rank, count, return_type: return_type)
+          MapOperation.new(Operation::CDT_MODIFY, REMOVE_BY_RANK_RANGE, bin_name, rank, count, ctx: ctx, return_type: return_type)
         else
-          MapOperation.new(Operation::CDT_MODIFY, REMOVE_BY_RANK_RANGE, bin_name, rank, return_type: return_type)
+          MapOperation.new(Operation::CDT_MODIFY, REMOVE_BY_RANK_RANGE, bin_name, rank, ctx: ctx, return_type: return_type)
         end
       end
 
       ##
       # Create map size operation.
       # Server returns size of map.
-      def self.size(bin_name)
-        MapOperation.new(Operation::CDT_READ, SIZE, bin_name)
+      def self.size(bin_name, ctx: nil)
+        MapOperation.new(Operation::CDT_READ, SIZE, bin_name, ctx: ctx)
       end
 
       ##
       # Create map get by key operation.
       # Server selects map item identified by key and returns selected data specified by return_type.
-      def self.get_by_key(bin_name, key, return_type: MapReturnType::NONE)
-        MapOperation.new(Operation::CDT_READ, GET_BY_KEY, bin_name, key, return_type: return_type)
+      def self.get_by_key(bin_name, key, ctx: nil, return_type: MapReturnType::NONE)
+        MapOperation.new(Operation::CDT_READ, GET_BY_KEY, bin_name, key, ctx: ctx, return_type: return_type)
       end
       singleton_class.send(:alias_method, :get_key, :get_by_key)
 
@@ -391,8 +433,8 @@ module Aerospike
       # Server selects map items identified by keys.
       #
       # Server returns selected data specified by return_type.
-      def self.get_by_key_list(bin_name, keys, return_type: MapReturnType::NONE)
-        MapOperation.new(Operation::CDT_READ, GET_BY_KEY_LIST, bin_name, keys, return_type: return_type)
+      def self.get_by_key_list(bin_name, keys, ctx: nil, return_type: MapReturnType::NONE)
+        MapOperation.new(Operation::CDT_READ, GET_BY_KEY_LIST, bin_name, keys, ctx: ctx, return_type: return_type)
       end
 
       # Create map get by key range operation.
@@ -403,11 +445,11 @@ module Aerospike
       # key_begin.
       #
       # Server returns selected data specified by return_type.
-      def self.get_by_key_range(bin_name, key_begin, key_end = nil, return_type: MapReturnType::NONE)
+      def self.get_by_key_range(bin_name, key_begin, key_end = nil, ctx: nil, return_type: MapReturnType::NONE)
         if key_end
-          MapOperation.new(Operation::CDT_READ, GET_BY_KEY_INTERVAL, bin_name, key_begin, key_end, return_type: return_type)
+          MapOperation.new(Operation::CDT_READ, GET_BY_KEY_INTERVAL, bin_name, key_begin, key_end, ctx: ctx, return_type: return_type)
         else
-          MapOperation.new(Operation::CDT_READ, GET_BY_KEY_INTERVAL, bin_name, key_begin, return_type: return_type)
+          MapOperation.new(Operation::CDT_READ, GET_BY_KEY_INTERVAL, bin_name, key_begin, ctx: ctx, return_type: return_type)
         end
       end
       singleton_class.send(:alias_method, :get_key_range, :get_by_key_range)
@@ -438,11 +480,11 @@ module Aerospike
       # * (5, -1) = [{4=2}, {5=15}, {9=10}]
       # * (3, 2) = [{9=10}]
       # * (3, -2) = [{0=17}, {4=2}, {5=15}, {9=10}]
-      def self.get_by_key_rel_index_range(bin_name, key, index, count = nil, return_type: nil)
+      def self.get_by_key_rel_index_range(bin_name, key, index, count = nil, ctx: nil, return_type: nil)
         if count
-          MapOperation.new(Operation::CDT_READ, GET_BY_KEY_REL_INDEX_RANGE, bin_name, key, index, count, return_type: return_type)
+          MapOperation.new(Operation::CDT_READ, GET_BY_KEY_REL_INDEX_RANGE, bin_name, key, index, count, ctx: ctx, return_type: return_type)
         else
-          MapOperation.new(Operation::CDT_READ, GET_BY_KEY_REL_INDEX_RANGE, bin_name, key, index, return_type: return_type)
+          MapOperation.new(Operation::CDT_READ, GET_BY_KEY_REL_INDEX_RANGE, bin_name, key, index, ctx: ctx, return_type: return_type)
         end
       end
 
@@ -451,8 +493,8 @@ module Aerospike
       # Server selects map items identified by value.
       #
       # Server returns selected data specified by return_type.
-      def self.get_by_value(bin_name, value, return_type: MapReturnType::NONE)
-        MapOperation.new(Operation::CDT_READ, GET_BY_VALUE, bin_name, value, return_type: return_type)
+      def self.get_by_value(bin_name, value, ctx: nil, return_type: MapReturnType::NONE)
+        MapOperation.new(Operation::CDT_READ, GET_BY_VALUE, bin_name, value, ctx: ctx, return_type: return_type)
       end
       singleton_class.send(:alias_method, :get_value, :get_by_value)
 
@@ -461,8 +503,8 @@ module Aerospike
       # Server selects map items identified by value list.
       #
       # Server returns selected data specified by return_type.
-      def self.get_by_value_list(bin_name, values, return_type: MapReturnType::NONE)
-        MapOperation.new(Operation::CDT_READ, GET_BY_VALUE_LIST, bin_name, values, return_type: return_type)
+      def self.get_by_value_list(bin_name, values, ctx: nil, return_type: MapReturnType::NONE)
+        MapOperation.new(Operation::CDT_READ, GET_BY_VALUE_LIST, bin_name, values, ctx: ctx, return_type: return_type)
       end
 
       # Create map get by value range operation.
@@ -473,11 +515,11 @@ module Aerospike
       # equal to value_begin.
       #
       # Server returns selected data specified by return_type.
-      def self.get_by_value_range(bin_name, value_begin, value_end = nil, return_type: MapReturnType::NONE)
+      def self.get_by_value_range(bin_name, value_begin, value_end = nil, ctx: nil, return_type: MapReturnType::NONE)
         if value_end
-          MapOperation.new(Operation::CDT_READ, GET_BY_VALUE_INTERVAL, bin_name, value_begin, value_end, return_type: return_type)
+          MapOperation.new(Operation::CDT_READ, GET_BY_VALUE_INTERVAL, bin_name, value_begin, value_end, ctx: ctx, return_type: return_type)
         else
-          MapOperation.new(Operation::CDT_READ, GET_BY_VALUE_INTERVAL, bin_name, value_begin, return_type: return_type)
+          MapOperation.new(Operation::CDT_READ, GET_BY_VALUE_INTERVAL, bin_name, value_begin, ctx: ctx, return_type: return_type)
         end
       end
       singleton_class.send(:alias_method, :get_value_range, :get_by_value_range)
@@ -502,11 +544,11 @@ module Aerospike
       # * (value, rank) = [selected items]
       # * (11, 1) = [{0=17}]
       # * (11, -1) = [{9=10}, {5=15}, {0=17}]
-      def self.get_by_value_rel_rank_range(bin_name, value, rank, count = nil, return_type: nil)
+      def self.get_by_value_rel_rank_range(bin_name, value, rank, count = nil, ctx: nil, return_type: nil)
         if count
-          MapOperation.new(Operation::CDT_READ, GET_BY_VALUE_REL_RANK_RANGE, bin_name, value, rank, count, return_type: return_type)
+          MapOperation.new(Operation::CDT_READ, GET_BY_VALUE_REL_RANK_RANGE, bin_name, value, rank, count, ctx: ctx, return_type: return_type)
         else
-          MapOperation.new(Operation::CDT_READ, GET_BY_VALUE_REL_RANK_RANGE, bin_name, value, rank, return_type: return_type)
+          MapOperation.new(Operation::CDT_READ, GET_BY_VALUE_REL_RANK_RANGE, bin_name, value, rank, ctx: ctx, return_type: return_type)
         end
       end
 
@@ -516,8 +558,8 @@ module Aerospike
       # Server selects map item identified by index.
       #
       # Server returns selected data specified by return_type.
-      def self.get_by_index(bin_name, index, return_type: MapReturnType::NONE)
-        MapOperation.new(Operation::CDT_READ, GET_BY_INDEX, bin_name, index, return_type: return_type)
+      def self.get_by_index(bin_name, index, ctx: nil, return_type: MapReturnType::NONE)
+        MapOperation.new(Operation::CDT_READ, GET_BY_INDEX, bin_name, index, ctx: ctx, return_type: return_type)
       end
       singleton_class.send(:alias_method, :get_index, :get_by_index)
 
@@ -528,11 +570,11 @@ module Aerospike
       # specified index to the end of map.
       #
       # Server returns selected data specified by return_type.
-      def self.get_by_index_range(bin_name, index, count = nil, return_type: MapReturnType::NONE)
+      def self.get_by_index_range(bin_name, index, count = nil, ctx: nil, return_type: MapReturnType::NONE)
         if count
-          MapOperation.new(Operation::CDT_READ, GET_BY_INDEX_RANGE, bin_name, index, count, return_type: return_type)
+          MapOperation.new(Operation::CDT_READ, GET_BY_INDEX_RANGE, bin_name, index, count, ctx: ctx, return_type: return_type)
         else
-          MapOperation.new(Operation::CDT_READ, GET_BY_INDEX_RANGE, bin_name, index, return_type: return_type)
+          MapOperation.new(Operation::CDT_READ, GET_BY_INDEX_RANGE, bin_name, index, ctx: ctx, return_type: return_type)
         end
       end
       singleton_class.send(:alias_method, :get_index_range, :get_by_index_range)
@@ -542,8 +584,8 @@ module Aerospike
       # Server selects map item identified by rank.
       #
       # Server returns selected data specified by return_type.
-      def self.get_by_rank(bin_name, rank, return_type: MapReturnType::NONE)
-        MapOperation.new(Operation::CDT_READ, GET_BY_RANK, bin_name, rank, return_type: return_type)
+      def self.get_by_rank(bin_name, rank, ctx: nil, return_type: MapReturnType::NONE)
+        MapOperation.new(Operation::CDT_READ, GET_BY_RANK, bin_name, rank, ctx: ctx, return_type: return_type)
       end
 
       # Create map get by rank range operation.
@@ -553,11 +595,11 @@ module Aerospike
       # to the last ranked item.
       #
       # Server returns selected data specified by return_type.
-      def self.get_by_rank_range(bin_name, rank, count = nil, return_type: MapReturnType::NONE)
+      def self.get_by_rank_range(bin_name, rank, count = nil, ctx: nil, return_type: MapReturnType::NONE)
         if count
-          MapOperation.new(Operation::CDT_READ, GET_BY_RANK_RANGE, bin_name, rank, count, return_type: return_type)
+          MapOperation.new(Operation::CDT_READ, GET_BY_RANK_RANGE, bin_name, rank, count, ctx: ctx, return_type: return_type)
         else
-          MapOperation.new(Operation::CDT_READ, GET_BY_RANK_RANGE, bin_name, rank, return_type: return_type)
+          MapOperation.new(Operation::CDT_READ, GET_BY_RANK_RANGE, bin_name, rank, ctx: ctx, return_type: return_type)
         end
       end
 
@@ -575,12 +617,31 @@ module Aerospike
 
       def pack_bin_value
         bytes = nil
+
+        args = arguments.dup
+        args.unshift(return_type) if return_type
+
         Packer.use do |packer|
-          packer.write_raw_short(map_op)
-          args = arguments.dup
-          args.unshift(return_type) if return_type
+          if @ctx != nil && @ctx.length > 0
+            packer.write_array_header(3)
+            Value.of(0xff).pack(packer)
+
+            packer.write_array_header(@ctx.length*2)
+            @ctx.each do |ctx|
+              Value.of(ctx.id).pack(packer)
+              Value.of(ctx.value).pack(packer)
+            end
+
+            packer.write_array_header(args.length+1)
+            Value.of(@map_op).pack(packer)
+          else
+            packer.write_raw_short(@map_op)
+            if args.length > 0
+              packer.write_array_header(args.length)
+            end
+          end
+
           if args.length > 0
-            packer.write_array_header(args.length)
             args.each do |value|
               Value.of(value).pack(packer)
             end

@@ -21,23 +21,32 @@ module Aerospike
   module CDT
 
     ##
-    # List bin operations. Create list operations used by the Client#operate
-    # command. List operations support negative indexing. If the index is
-    # negative, the resolved index starts backwards from end of list.
+    # List operations support negative indexing.  If the index is negative, the
+    # resolved index starts backwards from end of list. If an index is out of bounds,
+    # a parameter error will be returned. If a range is partially out of bounds, the
+    # valid part of the range will be returned. Index/Range examples:
     #
     # Index/Range examples:
-    # * Index 0: First item in list.
-    # * Index 4: Fifth item in list.
-    # * Index -1: Last item in list.
-    # * Index -3: Third to last item in list.
-    # * Index 1 Count 2: Second and third items in list.
-    # * Index -3 Count 3: Last three items in list.
-    # * Index -5 Count 4: Range between fifth to last item to second to last
-    #   item inclusive.
     #
-    # If an index is out of bounds, a parameter error will be returned. If a
-    # range is partially out of bounds, the valid part of the range will be
-    # returned.
+    #    Index 0: First item in list.
+    #    Index 4: Fifth item in list.
+    #    Index -1: Last item in list.
+    #    Index -3: Third to last item in list.
+    #    Index 1 Count 2: Second and third items in list.
+    #    Index -3 Count 3: Last three items in list.
+    #    Index -5 Count 4: Range between fifth to last item to second to last item inclusive.
+    #
+    # Nested CDT operations are supported by optional Ctx context arguments.  Examples:
+    #
+    # bin = [[7,9,5],[1,2,3],[6,5,4,1]]
+    # Append 11 to last list.
+    # ListOperation.append("bin", 11, ctx: [Context.list_index(-1)])
+    # bin result = [[7,9,5],[1,2,3],[6,5,4,1,11]]
+    #
+    # bin = {key1:[[7,9,5],[13]], key2:[[9],[2,4],[6,1,9]], key3:[[6,5]]}
+    # Append 11 to lowest ranked list in map identified by "key2".
+    # ListOperation.append("bin", 11, ctx: [Context.map_key("key2"), Context.list_rank(0)])
+    # bin result = {key1:[[7,9,5],[13]], key2:[[9],[2,4,11],[6,1,9]], key3:[[6,5]]}
 
     class ListOperation < Operation
 
@@ -75,13 +84,14 @@ module Aerospike
       REMOVE_BY_RANK_RANGE = 39
       REMOVE_BY_VALUE_REL_RANK_RANGE = 40
 
-      attr_reader :list_op, :arguments, :policy, :return_type
+      attr_reader :list_op, :arguments, :policy, :return_type, :ctx
 
-      def initialize(op_type, list_op, bin_name, *arguments, return_type: nil)
+      def initialize(op_type, list_op, bin_name, *arguments, return_type: nil, ctx: nil)
         @op_type = op_type
         @bin_name = bin_name
         @bin_value = nil
         @list_op = list_op
+        @ctx = ctx
         @arguments = arguments
         @return_type = return_type
       end
@@ -90,19 +100,19 @@ module Aerospike
       #  Create a set list order operation.
       #  Server sets list order.
       #  Server returns null.
-      def self.set_order(bin_name, order)
-        ListOperation.new(Operation::CDT_MODIFY, SET_TYPE, bin_name, order)
+      def self.set_order(bin_name, order, ctx: nil)
+        ListOperation.new(Operation::CDT_MODIFY, SET_TYPE, bin_name, order, ctx: ctx)
       end
 
       ##
       #  Create list append operation.
       #  Server appends value(s) to end of the list bin.
       #  Server returns list size.
-      def self.append(bin_name, *values, policy: ListPolicy::DEFAULT)
+      def self.append(bin_name, *values, ctx: nil, policy: ListPolicy::DEFAULT)
         if values.length > 1
-          ListOperation.new(Operation::CDT_MODIFY, APPEND_ITEMS, bin_name, values, policy.order, policy.flags)
+          ListOperation.new(Operation::CDT_MODIFY, APPEND_ITEMS, bin_name, values, policy.order, policy.flags, ctx: ctx)
         else
-          ListOperation.new(Operation::CDT_MODIFY, APPEND, bin_name, values.first, policy.order, policy.flags)
+          ListOperation.new(Operation::CDT_MODIFY, APPEND, bin_name, values.first, policy.order, policy.flags, ctx: ctx)
         end
       end
 
@@ -110,19 +120,19 @@ module Aerospike
       #  Create list insert operation.
       #  Server inserts value(s) at the specified index of the list bin.
       #  Server returns list size.
-      def self.insert(bin_name, index, *values, policy: ListPolicy::DEFAULT)
+      def self.insert(bin_name, index, *values, ctx: nil, policy: ListPolicy::DEFAULT)
         if values.length > 1
-          ListOperation.new(Operation::CDT_MODIFY, INSERT_ITEMS, bin_name, index, values, policy.flags)
+          ListOperation.new(Operation::CDT_MODIFY, INSERT_ITEMS, bin_name, index, values, policy.flags, ctx: ctx)
         else
-          ListOperation.new(Operation::CDT_MODIFY, INSERT, bin_name, index, values.first, policy.flags)
+          ListOperation.new(Operation::CDT_MODIFY, INSERT, bin_name, index, values.first, policy.flags, ctx: ctx)
         end
       end
 
       ##
       # Create list pop operation.
       # Server returns item at specified index and removes item from list bin.
-      def self.pop(bin_name, index)
-        ListOperation.new(Operation::CDT_MODIFY, POP, bin_name, index)
+      def self.pop(bin_name, index, ctx: nil)
+        ListOperation.new(Operation::CDT_MODIFY, POP, bin_name, index, ctx: ctx)
       end
 
       ##
@@ -131,11 +141,11 @@ module Aerospike
       # items from list bin. If "count" is not specified, the server returns
       # items starting at the specified index to the end of the list and
       # removes those items from the list bin.
-      def self.pop_range(bin_name, index, count=nil)
+      def self.pop_range(bin_name, index, count=nil, ctx: nil)
         if count
-          ListOperation.new(Operation::CDT_MODIFY, POP_RANGE, bin_name, index, count)
+          ListOperation.new(Operation::CDT_MODIFY, POP_RANGE, bin_name, index, count, ctx: ctx)
         else
-          ListOperation.new(Operation::CDT_MODIFY, POP_RANGE, bin_name, index)
+          ListOperation.new(Operation::CDT_MODIFY, POP_RANGE, bin_name, index, ctx: ctx)
         end
       end
 
@@ -143,8 +153,8 @@ module Aerospike
       # Create list remove operation.
       # Server removes item at specified index from list bin.
       # Server returns number of items removed.
-      def self.remove(bin_name, index)
-        ListOperation.new(Operation::CDT_MODIFY, REMOVE, bin_name, index)
+      def self.remove(bin_name, index, ctx: nil)
+        ListOperation.new(Operation::CDT_MODIFY, REMOVE, bin_name, index, ctx: ctx)
       end
 
       ##
@@ -153,11 +163,11 @@ module Aerospike
       # "count" is not specified, the server removes all items starting at the
       # specified index to the end of the list.
       # Server returns number of items removed.
-      def self.remove_range(bin_name, index, count=nil)
+      def self.remove_range(bin_name, index, count=nil, ctx: nil)
         if count
-          ListOperation.new(Operation::CDT_MODIFY, REMOVE_RANGE, bin_name, index, count)
+          ListOperation.new(Operation::CDT_MODIFY, REMOVE_RANGE, bin_name, index, count, ctx: ctx)
         else
-          ListOperation.new(Operation::CDT_MODIFY, REMOVE_RANGE, bin_name, index)
+          ListOperation.new(Operation::CDT_MODIFY, REMOVE_RANGE, bin_name, index, ctx: ctx)
         end
       end
 
@@ -165,8 +175,8 @@ module Aerospike
       # Create list set operation.
       # Server sets item value at specified index in list bin.
       # Server does not return a result by default.
-      def self.set(bin_name, index, value, policy: ListPolicy::DEFAULT)
-        ListOperation.new(Operation::CDT_MODIFY, SET, bin_name, index, value, policy.flags)
+      def self.set(bin_name, index, value, ctx: nil, policy: ListPolicy::DEFAULT)
+        ListOperation.new(Operation::CDT_MODIFY, SET, bin_name, index, value, policy.flags, ctx: ctx)
       end
 
       ##
@@ -176,24 +186,24 @@ module Aerospike
       # by index and count.
       #
       # Server returns number of items removed.
-      def self.trim(bin_name, index, count)
-        ListOperation.new(Operation::CDT_MODIFY, TRIM, bin_name, index, count)
+      def self.trim(bin_name, index, count, ctx: nil)
+        ListOperation.new(Operation::CDT_MODIFY, TRIM, bin_name, index, count, ctx: ctx)
       end
 
       ##
       # Create list clear operation.
       # Server removes all items in the list bin.
       # Server does not return a result by default.
-      def self.clear(bin_name)
-        ListOperation.new(Operation::CDT_MODIFY, CLEAR, bin_name)
+      def self.clear(bin_name, ctx: nil)
+        ListOperation.new(Operation::CDT_MODIFY, CLEAR, bin_name, ctx: ctx)
       end
 
       ##
       # Create list increment operation.
       # Server increments list[index] by value. If not specified, value defaults to 1.
       # Server returns the value of list[index] after the operation.
-      def self.increment(bin_name, index, value = 1, policy: ListPolicy::DEFAULT)
-        ListOperation.new(Operation::CDT_MODIFY, INCREMENT, bin_name, index, value, policy.order, policy.flags)
+      def self.increment(bin_name, index, value = 1, ctx: nil, policy: ListPolicy::DEFAULT)
+        ListOperation.new(Operation::CDT_MODIFY, INCREMENT, bin_name, index, value, policy.order, policy.flags, ctx: ctx)
       end
 
       ##
@@ -207,15 +217,15 @@ module Aerospike
       ##
       # Create list size operation.
       # Server returns size of list.
-      def self.size(bin_name)
-        ListOperation.new(Operation::CDT_READ, SIZE, bin_name)
+      def self.size(bin_name, ctx: nil)
+        ListOperation.new(Operation::CDT_READ, SIZE, bin_name, ctx: ctx)
       end
 
       ##
       # Create list get operation.
       # Server returns the item at the specified index in the list bin.
-      def self.get(bin_name, index)
-        ListOperation.new(Operation::CDT_READ, GET, bin_name, index)
+      def self.get(bin_name, index, ctx: nil)
+        ListOperation.new(Operation::CDT_READ, GET, bin_name, index, ctx: ctx)
       end
 
       ##
@@ -223,11 +233,11 @@ module Aerospike
       # Server returns "count" items starting at the specified index in the
       # list bin. If "count" is not specified, the server returns all items
       # starting at the specified index to the end of the list.
-      def self.get_range(bin_name, index, count=nil)
+      def self.get_range(bin_name, index, count=nil, ctx: nil)
         if count
-          ListOperation.new(Operation::CDT_READ, GET_RANGE, bin_name, index, count)
+          ListOperation.new(Operation::CDT_READ, GET_RANGE, bin_name, index, count, ctx: ctx)
         else
-          ListOperation.new(Operation::CDT_READ, GET_RANGE, bin_name, index)
+          ListOperation.new(Operation::CDT_READ, GET_RANGE, bin_name, index, ctx: ctx)
         end
       end
 
@@ -236,8 +246,8 @@ module Aerospike
       # Server selects list item identified by index.
       #
       # Server returns selected data specified by return_type.
-      def self.get_by_index(bin_name, index, return_type: ListReturnType::NONE)
-        ListOperation.new(Operation::CDT_READ, GET_BY_INDEX, bin_name, index, return_type: return_type)
+      def self.get_by_index(bin_name, index, ctx: nil, return_type: ListReturnType::NONE)
+        ListOperation.new(Operation::CDT_READ, GET_BY_INDEX, bin_name, index, return_type: return_type, ctx: ctx)
       end
 
       # Create list get by index range operation.
@@ -245,11 +255,11 @@ module Aerospike
       # Server selects list item identified by index range
       #
       # Server returns selected data specified by return_type.
-      def self.get_by_index_range(bin_name, index, count=nil, return_type: ListReturnType::NONE)
+      def self.get_by_index_range(bin_name, index, count=nil, ctx: nil, return_type: ListReturnType::NONE)
         if count
-          InvertibleListOp.new(Operation::CDT_READ, GET_BY_INDEX_RANGE, bin_name, index, count, return_type: return_type)
+          InvertibleListOp.new(Operation::CDT_READ, GET_BY_INDEX_RANGE, bin_name, index, count, ctx: ctx, return_type: return_type)
         else
-          InvertibleListOp.new(Operation::CDT_READ, GET_BY_INDEX_RANGE, bin_name, index, return_type: return_type)
+          InvertibleListOp.new(Operation::CDT_READ, GET_BY_INDEX_RANGE, bin_name, index, ctx: ctx, return_type: return_type)
         end
       end
 
@@ -258,8 +268,8 @@ module Aerospike
       # Server selects list item identified by rank.
       #
       # Server returns selected data specified by return_type.
-      def self.get_by_rank(bin_name, rank, return_type: ListReturnType::NONE)
-        ListOperation.new(Operation::CDT_READ, GET_BY_RANK, bin_name, rank, return_type: return_type)
+      def self.get_by_rank(bin_name, rank, ctx: nil, return_type: ListReturnType::NONE)
+        ListOperation.new(Operation::CDT_READ, GET_BY_RANK, bin_name, rank, ctx: ctx, return_type: return_type)
       end
 
       # Create list get by rank range operation.
@@ -267,11 +277,11 @@ module Aerospike
       # Server selects list item identified by rank range.
       #
       # Server returns selected data specified by return_type.
-      def self.get_by_rank_range(bin_name, rank, count=nil, return_type: ListReturnType::NONE)
+      def self.get_by_rank_range(bin_name, rank, count=nil, ctx: nil, return_type: ListReturnType::NONE)
         if count
-          InvertibleListOp.new(Operation::CDT_READ, GET_BY_RANK_RANGE, bin_name, rank, count, return_type: return_type)
+          InvertibleListOp.new(Operation::CDT_READ, GET_BY_RANK_RANGE, bin_name, rank, count, ctx: ctx, return_type: return_type)
         else
-          InvertibleListOp.new(Operation::CDT_READ, GET_BY_RANK_RANGE, bin_name, rank, return_type: return_type)
+          InvertibleListOp.new(Operation::CDT_READ, GET_BY_RANK_RANGE, bin_name, rank, ctx: ctx, return_type: return_type)
         end
       end
 
@@ -280,8 +290,8 @@ module Aerospike
       # Server selects list items identified by value.
       #
       # Server returns selected data specified by return_type.
-      def self.get_by_value(bin_name, value, return_type: ListReturnType::NONE)
-        InvertibleListOp.new(Operation::CDT_READ, GET_BY_VALUE, bin_name, value, return_type: return_type)
+      def self.get_by_value(bin_name, value, ctx: nil, return_type: ListReturnType::NONE)
+        InvertibleListOp.new(Operation::CDT_READ, GET_BY_VALUE, bin_name, value, ctx: ctx, return_type: return_type)
       end
 
       # Create list get by value range operation.
@@ -292,11 +302,11 @@ module Aerospike
       # equal to value_begin.
       #
       # Server returns selected data specified by return_type.
-      def self.get_by_value_range(bin_name, value_begin, value_end = nil, return_type: ListReturnType::NONE)
+      def self.get_by_value_range(bin_name, value_begin, value_end = nil, ctx: nil, return_type: ListReturnType::NONE)
         if value_end
-          InvertibleListOp.new(Operation::CDT_READ, GET_BY_VALUE_INTERVAL, bin_name, value_begin, value_end, return_type: return_type)
+          InvertibleListOp.new(Operation::CDT_READ, GET_BY_VALUE_INTERVAL, bin_name, value_begin, value_end, ctx: ctx, return_type: return_type)
         else
-          InvertibleListOp.new(Operation::CDT_READ, GET_BY_VALUE_INTERVAL, bin_name, value_begin, return_type: return_type)
+          InvertibleListOp.new(Operation::CDT_READ, GET_BY_VALUE_INTERVAL, bin_name, value_begin, ctx: ctx, return_type: return_type)
         end
       end
 
@@ -305,8 +315,8 @@ module Aerospike
       # Server selects list items identified by values.
       #
       # Server returns selected data specified by return_type.
-      def self.get_by_value_list(bin_name, values, return_type: ListReturnType::NONE)
-        InvertibleListOp.new(Operation::CDT_READ, GET_BY_VALUE_LIST, bin_name, values, return_type: return_type)
+      def self.get_by_value_list(bin_name, values, ctx: nil, return_type: ListReturnType::NONE)
+        InvertibleListOp.new(Operation::CDT_READ, GET_BY_VALUE_LIST, bin_name, values, ctx: ctx, return_type: return_type)
       end
 
       # Create list get by value relative to rank range list operation.
@@ -339,11 +349,11 @@ module Aerospike
       # <li>(3, 3) = [11, 15]</li>
       # <li>(3, -3) = [0, 4, 5, 9, 11, 15]</li>
       # </ul>
-      def self.get_by_value_rel_rank_range(bin_name, value, rank, count = nil, return_type: ListReturnType::NONE)
+      def self.get_by_value_rel_rank_range(bin_name, value, rank, count = nil, ctx: nil, return_type: ListReturnType::NONE)
         if count
-          InvertibleListOp.new(Operation::CDT_READ, GET_BY_VALUE_REL_RANK_RANGE, bin_name, value, rank, count, return_type: return_type)
+          InvertibleListOp.new(Operation::CDT_READ, GET_BY_VALUE_REL_RANK_RANGE, bin_name, value, rank, count, ctx: ctx, return_type: return_type)
         else
-          InvertibleListOp.new(Operation::CDT_READ, GET_BY_VALUE_REL_RANK_RANGE, bin_name, value, rank, return_type: return_type)
+          InvertibleListOp.new(Operation::CDT_READ, GET_BY_VALUE_REL_RANK_RANGE, bin_name, value, rank, ctx: ctx, return_type: return_type)
         end
       end
 
@@ -352,8 +362,8 @@ module Aerospike
       # Server removes list item identified by index.
       #
       # Server returns selected data specified by return_type.
-      def self.remove_by_index(bin_name, index, return_type: ListReturnType::NONE)
-        ListOperation.new(Operation::CDT_MODIFY, REMOVE_BY_INDEX, bin_name, index, return_type: return_type)
+      def self.remove_by_index(bin_name, index, ctx: nil, return_type: ListReturnType::NONE)
+        ListOperation.new(Operation::CDT_MODIFY, REMOVE_BY_INDEX, bin_name, index, ctx: ctx, return_type: return_type)
       end
 
       # Create list remove by index range operation.
@@ -361,11 +371,11 @@ module Aerospike
       # Server removes list item identified by index range
       #
       # Server returns selected data specified by return_type.
-      def self.remove_by_index_range(bin_name, index, count=nil, return_type: ListReturnType::NONE)
+      def self.remove_by_index_range(bin_name, index, count=nil, ctx: nil, return_type: ListReturnType::NONE)
         if count
-          InvertibleListOp.new(Operation::CDT_MODIFY, REMOVE_BY_INDEX_RANGE, bin_name, index, count, return_type: return_type)
+          InvertibleListOp.new(Operation::CDT_MODIFY, REMOVE_BY_INDEX_RANGE, bin_name, index, count, ctx: ctx, return_type: return_type)
         else
-          InvertibleListOp.new(Operation::CDT_MODIFY, REMOVE_BY_INDEX_RANGE, bin_name, index, return_type: return_type)
+          InvertibleListOp.new(Operation::CDT_MODIFY, REMOVE_BY_INDEX_RANGE, bin_name, index, ctx: ctx, return_type: return_type)
         end
       end
 
@@ -374,8 +384,8 @@ module Aerospike
       # Server removes list item identified by rank.
       #
       # Server returns selected data specified by return_type.
-      def self.remove_by_rank(bin_name, rank, return_type: ListReturnType::NONE)
-        ListOperation.new(Operation::CDT_MODIFY, REMOVE_BY_RANK, bin_name, rank, return_type: return_type)
+      def self.remove_by_rank(bin_name, rank, ctx: nil, return_type: ListReturnType::NONE)
+        ListOperation.new(Operation::CDT_MODIFY, REMOVE_BY_RANK, bin_name, rank, ctx: ctx, return_type: return_type)
       end
 
       # Create list remove by rank range operation.
@@ -383,11 +393,11 @@ module Aerospike
       # Server removes list item identified by rank range.
       #
       # Server returns selected data specified by return_type.
-      def self.remove_by_rank_range(bin_name, rank, count=nil, return_type: ListReturnType::NONE)
+      def self.remove_by_rank_range(bin_name, rank, count=nil, ctx: nil, return_type: ListReturnType::NONE)
         if count
-          InvertibleListOp.new(Operation::CDT_MODIFY, REMOVE_BY_RANK_RANGE, bin_name, rank, count, return_type: return_type)
+          InvertibleListOp.new(Operation::CDT_MODIFY, REMOVE_BY_RANK_RANGE, bin_name, rank, count, ctx: ctx, return_type: return_type)
         else
-          InvertibleListOp.new(Operation::CDT_MODIFY, REMOVE_BY_RANK_RANGE, bin_name, rank, return_type: return_type)
+          InvertibleListOp.new(Operation::CDT_MODIFY, REMOVE_BY_RANK_RANGE, bin_name, rank, ctx: ctx, return_type: return_type)
         end
       end
 
@@ -396,8 +406,8 @@ module Aerospike
       # Server removes list items identified by value.
       #
       # Server returns selected data specified by return_type.
-      def self.remove_by_value(bin_name, value, return_type: ListReturnType::NONE)
-        InvertibleListOp.new(Operation::CDT_MODIFY, REMOVE_BY_VALUE, bin_name, value, return_type: return_type)
+      def self.remove_by_value(bin_name, value, ctx: nil, return_type: ListReturnType::NONE)
+        InvertibleListOp.new(Operation::CDT_MODIFY, REMOVE_BY_VALUE, bin_name, value, ctx: ctx, return_type: return_type)
       end
 
       # Create list remove by value range operation.
@@ -408,11 +418,11 @@ module Aerospike
       # equal to value_begin.
       #
       # Server returns selected data specified by return_type.
-      def self.remove_by_value_range(bin_name, value_begin, value_end = nil, return_type: ListReturnType::NONE)
+      def self.remove_by_value_range(bin_name, value_begin, value_end = nil, ctx: nil, return_type: ListReturnType::NONE)
         if value_end
-          InvertibleListOp.new(Operation::CDT_MODIFY, REMOVE_BY_VALUE_INTERVAL, bin_name, value_begin, value_end, return_type: return_type)
+          InvertibleListOp.new(Operation::CDT_MODIFY, REMOVE_BY_VALUE_INTERVAL, bin_name, value_begin, value_end, ctx: ctx, return_type: return_type)
         else
-          InvertibleListOp.new(Operation::CDT_MODIFY, REMOVE_BY_VALUE_INTERVAL, bin_name, value_begin, return_type: return_type)
+          InvertibleListOp.new(Operation::CDT_MODIFY, REMOVE_BY_VALUE_INTERVAL, bin_name, value_begin, ctx: ctx, return_type: return_type)
         end
       end
 
@@ -421,8 +431,8 @@ module Aerospike
       # Server removes list items identified by values.
       #
       # Server returns selected data specified by return_type.
-      def self.remove_by_value_list(bin_name, values, return_type: ListReturnType::NONE)
-        InvertibleListOp.new(Operation::CDT_MODIFY, REMOVE_BY_VALUE_LIST, bin_name, values, return_type: return_type)
+      def self.remove_by_value_list(bin_name, values, ctx: nil, return_type: ListReturnType::NONE)
+        InvertibleListOp.new(Operation::CDT_MODIFY, REMOVE_BY_VALUE_LIST, bin_name, values, ctx: ctx, return_type: return_type)
       end
 
       # Create list remove by value relative to rank range list operation.
@@ -455,11 +465,11 @@ module Aerospike
       # <li>(3, 3) = [11, 15]</li>
       # <li>(3, -3) = [0, 4, 5, 9, 11, 15]</li>
       # </ul>
-      def self.remove_by_value_rel_rank_range(bin_name, value, rank, count = nil, return_type: ListReturnType::NONE)
+      def self.remove_by_value_rel_rank_range(bin_name, value, rank, count = nil, ctx: nil, return_type: ListReturnType::NONE)
         if count
-          InvertibleListOp.new(Operation::CDT_MODIFY, REMOVE_BY_VALUE_REL_RANK_RANGE, bin_name, value, rank, count, return_type: return_type)
+          InvertibleListOp.new(Operation::CDT_MODIFY, REMOVE_BY_VALUE_REL_RANK_RANGE, bin_name, value, rank, count, ctx: ctx, return_type: return_type)
         else
-          InvertibleListOp.new(Operation::CDT_MODIFY, REMOVE_BY_VALUE_REL_RANK_RANGE, bin_name, value, rank, return_type: return_type)
+          InvertibleListOp.new(Operation::CDT_MODIFY, REMOVE_BY_VALUE_REL_RANK_RANGE, bin_name, value, rank, ctx: ctx, return_type: return_type)
         end
       end
 
@@ -481,16 +491,36 @@ module Aerospike
 
       def pack_bin_value
         bytes = nil
+
+        args = arguments.dup
+        if return_type
+          rt = return_type
+          rt |= ListReturnType::INVERTED if invert_selection?
+          args.unshift(rt)
+        end
+
         Packer.use do |packer|
-          packer.write_raw_short(list_op)
-          args = arguments.dup
-          if return_type
-            rt = return_type
-            rt |= ListReturnType::INVERTED if invert_selection?
-            args.unshift(rt)
+          if @ctx != nil && @ctx.length > 0
+            packer.write_array_header(3)
+            Value.of(0xff).pack(packer)
+
+            packer.write_array_header(@ctx.length*2)
+            @ctx.each do |ctx|
+              Value.of(ctx.id).pack(packer)
+              Value.of(ctx.value).pack(packer)
+            end
+
+            packer.write_array_header(args.length+1)
+            Value.of(@list_op).pack(packer)
+          else
+            packer.write_raw_short(@list_op)
+
+            if args.length > 0
+              packer.write_array_header(args.length)
+            end
           end
+
           if args.length > 0
-            packer.write_array_header(args.length)
             args.each do |value|
               Value.of(value).pack(packer)
             end

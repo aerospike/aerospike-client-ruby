@@ -20,7 +20,7 @@ module Aerospike
 
   class Operation
 
-    attr_reader :op_type, :bin_name, :bin_value
+    attr_reader :op_type, :bin_name, :bin_value, :ctx
 
     READ        = 1
     READ_HEADER = 1
@@ -35,10 +35,11 @@ module Aerospike
     HLL_READ    = 15
     HLL_MODIFY  = 16
 
-    def initialize(op_type, bin_name=nil, bin_value=NullValue.new)
+    def initialize(op_type, bin_name=nil, bin_value=NullValue.new, ctx = nil)
       @op_type = op_type
       @bin_name = bin_name
       @bin_value = Value.of(bin_value)
+      @ctx = ctx
       self
     end
 

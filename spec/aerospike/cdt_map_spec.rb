@@ -35,6 +35,65 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?(Aerosp
     client.get(key).bins[map_bin]
   end
 
+  describe "MapOperation Context", skip: !Support.min_version?("4.6") do
+
+    it "should support Nested Map ops" do
+      client.delete(key)
+
+      m = {
+        "key1" => {
+          "key11" => 9, "key12" => 4,
+        },
+        "key2" => {
+          "key21" => 3, "key22" => 5,
+        },
+      }
+
+      client.put(key, Aerospike::Bin.new(map_bin, m))
+      record = client.operate(key, [Aerospike::Operation.get(map_bin)])
+      expect(record.bins[map_bin]).to eq(m)
+
+      record = client.operate(key, [MapOperation.put(map_bin, "key21", 11, ctx: [Context::map_key("key2")]), Aerospike::Operation.get(map_bin)])
+      expect(record.bins[map_bin]).to eq({
+          "key1" => {
+            "key11" => 9, "key12" => 4,
+          },
+          "key2" => {
+            "key21" => 11, "key22" => 5,
+          },
+      })
+    end
+
+    it "should support Double Nested Map ops" do
+      client.delete(key)
+
+      m = {
+        "key1" => {
+          "key11" => {"key111" => 1}, "key12" => {"key121" => 5},
+        },
+        "key2" => {
+          "key21" => {"key211" => 7},
+        },
+      }
+
+      client.put(key, Aerospike::Bin.new(map_bin, m))
+
+      record = client.operate(key, [Aerospike::Operation.get(map_bin)])
+      expect(record.bins[map_bin]).to eq(m)
+
+      record = client.operate(key, [MapOperation.put(map_bin, "key121", 11, ctx: [Context::map_key("key1"), Context.map_rank(-1)]), Aerospike::Operation.get(map_bin)])
+
+      expect(record.bins[map_bin]).to eq({
+        "key1" => {
+          "key11" => {"key111" => 1}, "key12" => {"key121" => 11},
+        },
+        "key2" => {
+          "key21" => {"key211" => 7},
+        },
+      })
+    end
+  end
+
   describe "MapOperation.set_policy" do
     let(:map_value) { { "c" => 1, "b" => 2, "a" => 3 } }
 

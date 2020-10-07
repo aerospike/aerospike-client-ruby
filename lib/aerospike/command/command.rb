@@ -261,7 +261,7 @@ module Aerospike
 
       operations.each do |operation|
         case operation.op_type
-        when Aerospike::Operation::READ
+        when Aerospike::Operation::READ, Aerospike::Operation::CDT_READ, Aerospike::Operation::HLL_READ
           read_attr |= INFO1_READ
 
           # Read all bins if no bin is specified.
@@ -274,9 +274,6 @@ module Aerospike
           # read_attr |= _INFO1_READ | _INFO1_NOBINDATA
           read_attr |= INFO1_READ
           read_header = true
-
-        when Aerospike::Operation::CDT_READ,Aerospike::Operation::HLL_READ
-          read_attr |= INFO1_READ
 
         else
           write_attr = INFO2_WRITE

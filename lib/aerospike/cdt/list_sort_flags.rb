@@ -22,8 +22,12 @@ module Aerospike
     module ListSortFlags
 
       ##
-      # Default. Preserve duplicate values when sorting list.
+      # Default. Preserve duplicate values when sorting list, and sort in ascending order
       DEFAULT = 0
+
+      ##
+      # Sort the contents of the list in descending order.
+      DESCENDING = 1
 
       ##
       # Drop duplicate values when sorting list.
