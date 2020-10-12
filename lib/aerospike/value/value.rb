@@ -23,14 +23,24 @@ module Aerospike
   # Polymorphic value classes used to efficiently serialize objects into the wire protocol.
   class Value #:nodoc:
 
-    def self.of(value)
+    def self.of(value, allow_64bits = false)
       case value
       when Integer
-        if value.bit_length < 64
-          res = IntegerValue.new(value)
+        if !allow_64bits
+          if value.bit_length < 64
+            res = IntegerValue.new(value)
+          else
+            # big nums > 2**63 are not supported
+            raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::TYPE_NOT_SUPPORTED, "Value type #{value.class} not supported with more than 64 bits.")
+          end
         else
-          # big nums > 2**63 are not supported
-          raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::TYPE_NOT_SUPPORTED, "Value type #{value.class} not supported.")
+          # used in bitwise operations
+          if value.bit_length <= 64
+            res = IntegerValue.new(value)
+          else
+            # nums with more than 64 bits are not supported
+            raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::TYPE_NOT_SUPPORTED, "Value type #{value.class} not supported with more than 64 bits.")
+          end
         end
       when Float
         res = FloatValue.new(value)
@@ -48,6 +58,8 @@ module Aerospike
         res = GeoJSONValue.new(value)
       when nil
         res = NULL
+      when TrueClass, FalseClass
+        res = BoolValue.new(value)
       else
         # throw an exception for anything that is not supported.
         raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::TYPE_NOT_SUPPORTED, "Value type #{value.class} not supported.")
@@ -640,4 +652,47 @@ module Aerospike
       nil
     end
   end
+
+  private
+
+  #######################################
+
+  # Boolean value.
+  # This is private, and only used internally for bitwise CDTs
+  class BoolValue < Value #:nodoc:
+
+    def initialize(val)
+      @value = val || false
+      self
+    end
+
+    def estimate_size
+      1
+    end
+
+    def write(buffer, offset)
+      raise Exception.new("Unreachable")
+    end
+
+    def pack(packer)
+      packer.write(@value)
+    end
+
+    def type
+      raise Exception.new("Unreachable")
+    end
+
+    def get
+      @value
+    end
+
+    def to_bytes
+      raise Exception.new("Unreachable")
+    end
+
+    def to_s
+      @value.to_s
+    end
+
+  end # BoolValue
 end # module

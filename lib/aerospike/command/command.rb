@@ -261,7 +261,8 @@ module Aerospike
 
       operations.each do |operation|
         case operation.op_type
-        when Aerospike::Operation::READ, Aerospike::Operation::CDT_READ, Aerospike::Operation::HLL_READ
+        when Aerospike::Operation::READ, Aerospike::Operation::CDT_READ, 
+              Aerospike::Operation::HLL_READ, Aerospike::Operation::BIT_READ
           read_attr |= INFO1_READ
 
           # Read all bins if no bin is specified.
@@ -279,7 +280,8 @@ module Aerospike
           write_attr = INFO2_WRITE
         end
 
-        if [Aerospike::Operation::HLL_MODIFY, Aerospike::Operation::HLL_READ].include?(operation.op_type)
+        if [Aerospike::Operation::HLL_MODIFY, Aerospike::Operation::HLL_READ, 
+              Aerospike::Operation::BIT_MODIFY, Aerospike::Operation::BIT_READ].include?(operation.op_type)
           record_bin_multiplicity = true
         end
 

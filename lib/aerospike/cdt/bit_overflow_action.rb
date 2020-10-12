@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Copyright 2018 Aerospike, Inc.
+# Copyright 2020 Aerospike, Inc.
 #
 # Portions may be licensed to Aerospike, Inc. under one or more contributor
 # license agreements.
@@ -19,23 +19,28 @@
 
 module Aerospike
   module CDT
-    module ListSortFlags
+
+    # BitOverflowAction specifies the action to take when bitwise add/subtract results in overflow/underflow.
+    module BitOverflowAction
 
       ##
-      # Preserve duplicate values when sorting list, and sort in ascending order
-      ASCENDING = 0
+      # Fail specifies to fail operation with error.
+      FAIL  = 0
 
       ##
-      # Sort the contents of the list in descending order.
-      DESCENDING = 1
+      # SATURATE specifies that in add/subtract overflows/underflows, set to max/min value.
+      # Example: MAXINT + 1 = MAXINT
+      SATURATE  = 2
 
       ##
-      # Drop duplicate values when sorting list.
-      DROP_DUPLICATES = 2
+      # Wrap specifies that in add/subtract overflows/underflows, WRAP the value.
+      # Example: MAXINT + 1 = -1
+      WRAP = 4
 
       ##
       # Default behavior
-      DEFAULT = ASCENDING
+      DEFAULT = FAIL
+
     end
   end
 end

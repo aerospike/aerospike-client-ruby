@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Copyright 2018 Aerospike, Inc.
+# Copyright 2020 Aerospike, Inc.
 #
 # Portions may be licensed to Aerospike, Inc. under one or more contributor
 # license agreements.
@@ -19,23 +19,26 @@
 
 module Aerospike
   module CDT
-    module ListSortFlags
+
+    ##
+    # BitResizeFlags specifies the bitwise operation flags for resize.
+    module BitResizeFlags
 
       ##
-      # Preserve duplicate values when sorting list, and sort in ascending order
-      ASCENDING = 0
+      # Default specifies the defalt flag.
+      DEFAULT = 0
 
       ##
-      # Sort the contents of the list in descending order.
-      DESCENDING = 1
+      # Adds/removes bytes from the beginning instead of the end.
+      FROM_FRONT = 1
 
       ##
-      # Drop duplicate values when sorting list.
-      DROP_DUPLICATES = 2
+      # only allow the byte array size to increase.
+      GROW_ONLY = 2
 
       ##
-      # Default behavior
-      DEFAULT = ASCENDING
+      # only allow the byte array size to decrease.
+      SHRINK_ONLY = 4
     end
   end
 end

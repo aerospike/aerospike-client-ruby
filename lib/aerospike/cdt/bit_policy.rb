@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Copyright 2018 Aerospike, Inc.
+# Copyright 2020 Aerospike, Inc.
 #
 # Portions may be licensed to Aerospike, Inc. under one or more contributor
 # license agreements.
@@ -19,23 +19,18 @@
 
 module Aerospike
   module CDT
-    module ListSortFlags
 
-      ##
-      # Preserve duplicate values when sorting list, and sort in ascending order
-      ASCENDING = 0
+    # BitPolicy determines the Bit operation policy.
+    class BitPolicy
 
-      ##
-      # Sort the contents of the list in descending order.
-      DESCENDING = 1
+      attr_accessor :flags
 
-      ##
-      # Drop duplicate values when sorting list.
-      DROP_DUPLICATES = 2
+      def initialize(flags = BitWriteFlags::DEFAULT)
+        @flags = flags
+      end
 
-      ##
-      # Default behavior
-      DEFAULT = ASCENDING
+      DEFAULT = BitPolicy.new
+
     end
   end
 end

@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-# Copyright 2018 Aerospike, Inc.
+# Copyright 2020 Aerospike, Inc.
 #
 # Portions may be licensed to Aerospike, Inc. under one or more contributor
 # license agreements.
@@ -19,23 +19,33 @@
 
 module Aerospike
   module CDT
-    module ListSortFlags
 
-      ##
-      # Preserve duplicate values when sorting list, and sort in ascending order
-      ASCENDING = 0
+    ##
+    # BitWriteFlags specify bitwise operation policy write flags.
+    module BitWriteFlags
 
-      ##
-      # Sort the contents of the list in descending order.
-      DESCENDING = 1
+    ##
+    # Default allows create or update.
+    DEFAULT = 0
 
-      ##
-      # Drop duplicate values when sorting list.
-      DROP_DUPLICATES = 2
+    ##
+    # If the bin already exists, the operation will be denied.
+    # If the bin does not exist, a new bin will be created.
+    CREATE_ONLY = 1
 
-      ##
-      # Default behavior
-      DEFAULT = ASCENDING
+    ##
+    # If the bin already exists, the bin will be overwritten.
+    # If the bin does not exist, the operation will be denied.
+    UPDATE_ONLY = 2
+
+    ##
+    # Will not raise error if operation is denied.
+    NO_FAIL = 4
+
+    ##
+    # Partial allows other valid operations to be committed if this operations is
+    # denied due to flag constraints.
+    PARTIAL = 8
     end
   end
 end

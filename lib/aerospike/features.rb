@@ -42,5 +42,8 @@ module Aerospike
 
     # Server supports the "truncate-namespace" command
     TRUNCATE_NAMESPACE = :"truncate-namespace"
+
+    # Server supports the "blob-bits" command
+    BLOB_BITS = :"blob-bits"
   end
 end

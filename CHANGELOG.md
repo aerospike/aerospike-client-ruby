@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.16.0] - 2020-10-12
+
+* **New Features**
+  * [CLIENT-1173], [CLIENT-1246] Support Nested CDT operations with Context.
+  * [CLIENT-1179], Support Bitwise operations.
+
+* **Changes**
+  * `ListSortFlags` now has an `ASCENDING` option, with `DEFAULT` mapping to it.
+
 ## [2.15.0] - 2020-10-05
 
 * **New Features**
