@@ -92,9 +92,9 @@ module Aerospike
         end
         value
       when Array
-        normalize_strings_in_array(elem)
+        unpack_list(elem)
       when Hash
-        normalize_strings_in_map(elem)
+        unpack_map(elem)
       else
         elem
       end
