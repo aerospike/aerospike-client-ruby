@@ -84,16 +84,31 @@ module Aerospike
       REMOVE_BY_RANK_RANGE = 39
       REMOVE_BY_VALUE_REL_RANK_RANGE = 40
 
-      attr_reader :list_op, :arguments, :policy, :return_type, :ctx
+      attr_reader :list_op, :arguments, :policy, :return_type, :ctx, :flag
 
-      def initialize(op_type, list_op, bin_name, *arguments, return_type: nil, ctx: nil)
+      def initialize(op_type, list_op, bin_name, *arguments, return_type: nil, ctx: nil, flag: nil)
         @op_type = op_type
         @bin_name = bin_name
         @bin_value = nil
         @list_op = list_op
         @ctx = ctx
+        @flag = flag
         @arguments = arguments
         @return_type = return_type
+      end
+
+      ##
+      # creates list create operation.
+      # Server creates list at given context level. The context is allowed to be beyond list
+      # boundaries only if pad is set to true.  In that case, nil list entries will be inserted to
+      # satisfy the context position.
+      def self.create(bin_name, order, pad, ctx: nil)
+        # If context not defined, the set order for top-level bin list.
+        if !ctx || ctx.length == 0
+          self.set_order(bin_name, order)
+        else
+          ListOperation.new(Operation::CDT_MODIFY, SET_TYPE, bin_name, order, ctx: ctx, flag: ListOrder.flag(order, pad))
+        end
       end
 
       ##
@@ -504,11 +519,7 @@ module Aerospike
             packer.write_array_header(3)
             Value.of(0xff).pack(packer)
 
-            packer.write_array_header(@ctx.length*2)
-            @ctx.each do |ctx|
-              Value.of(ctx.id).pack(packer)
-              Value.of(ctx.value).pack(packer)
-            end
+            pack_context(packer)
 
             packer.write_array_header(args.length+1)
             Value.of(@list_op).pack(packer)
@@ -528,6 +539,24 @@ module Aerospike
           bytes = packer.bytes
         end
         BytesValue.new(bytes)
+      end
+
+      def pack_context(packer)
+        packer.write_array_header(@ctx.length*2)
+        if @flag
+          (1...@ctx.length).each do |i|
+            Value.of(@ctx[i].id).pack(packer)
+            Value.of(@ctx[i].value).pack(packer)
+          end
+
+          Value.of(@ctx[-1].id | @flag).pack(packer)
+          Value.of(@ctx[-1].value).pack(packer)
+        else
+          @ctx.each do |ctx|
+            Value.of(ctx.id).pack(packer)
+            Value.of(ctx.value).pack(packer)
+          end
+        end
       end
     end
 

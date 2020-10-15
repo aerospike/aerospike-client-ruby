@@ -21,7 +21,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?(Aerosp
 
   let(:client) { Support.client }
   let(:key) { Support.gen_random_key }
-  let(:map_bin) { "map" }
+  let(:map_bin) { "map_bin" }
   let(:map_value) { nil }
 
   before(:each) do
@@ -36,6 +36,59 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?(Aerosp
   end
 
   describe "MapOperation Context", skip: !Support.min_version?("4.6") do
+
+    it "should support Create Map ops" do
+      client.delete(key)
+
+      m = {
+        "key1" => [7, 9, 5],
+      }
+
+      client.put(key, Aerospike::Bin.new(map_bin, m))
+      expect(map_post_op).to eq(m)
+
+      ctx = [Context.map_key("key2")]
+      record = client.operate(key,
+        [
+          ListOperation.create(map_bin, ListOrder::ORDERED, false, ctx: ctx),
+          ListOperation.append(map_bin, 2, ctx: ctx),
+          ListOperation.append(map_bin, 1, ctx: ctx),
+          Operation.get(map_bin),
+        ]
+      )
+
+      expect(record.bins[map_bin]).to eq({
+        "key1" => [7, 9, 5],
+        "key2" => [1, 2],
+      })
+    end
+
+    it "should support Nested Map ops with Lists" do
+      client.delete(key)
+
+      m = {
+        "key1" => {
+          "key11" => 9, "key12" => 4,
+        },
+        "key2" => {
+          "key21" => 3, "key22" => 5,
+        },
+      }
+
+      client.put(key, Aerospike::Bin.new(map_bin, m))
+      record = client.operate(key, [Aerospike::Operation.get(map_bin)])
+      expect(record.bins[map_bin]).to eq(m)
+
+      record = client.operate(key, [MapOperation.put(map_bin, "key21", 11, ctx: [Context::map_key("key2")]), Aerospike::Operation.get(map_bin)])
+      expect(record.bins[map_bin]).to eq({
+          "key1" => {
+            "key11" => 9, "key12" => 4,
+          },
+          "key2" => {
+            "key21" => 11, "key22" => 5,
+          },
+      })
+    end
 
     it "should support Nested Map ops" do
       client.delete(key)

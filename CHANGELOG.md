@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.17.0] - 2020-10-15
+
+* **New Features**
+  * [CLIENT-1246] Adds missing API for Context#list_index_create and Context#map_key_create
+
+* **Bug Fixes**
+  * Fixed an issue were MsgPack extensions were not recursively cleared from the CDTs during unpacking.
+
 ## [2.16.0] - 2020-10-12
 
 * **New Features**

@@ -20,15 +20,15 @@ module Aerospike
 
       ##
       # Map is not ordered. This is the default.
-      UNORDERED = 0
+      UNORDERED = {attr: 0, flag: 0x40}
 
       ##
       # Order map by key.
-      KEY_ORDERED = 1
+      KEY_ORDERED = {attr: 1, flag: 0x80}
 
       ##
       # Order map by key, then value.
-      KEY_VALUE_ORDERED = 3
+      KEY_VALUE_ORDERED = {attr: 3, flag: 0xc0}
 
       ##
       # Default order

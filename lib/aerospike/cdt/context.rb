@@ -34,6 +34,12 @@ module Aerospike
         @value = value
       end
 
+      ##
+      # Create list with given type at index offset, given an order and pad.
+      def self.list_index_create(index, order, pad)
+      Context.new(0x10 | ListOrder.flag(order, pad), index)
+      end
+
 	  ##
 	  # Lookup list by index offset.
 	  # If the index is negative, the resolved index starts backwards from end of list.
@@ -90,6 +96,12 @@ module Aerospike
 	  	Context.new(0x22, key)
 	  end
 	  
+      ##
+      # Create map with given type at map key.
+      def self.map_key_create(key, order)
+        Context.new(0x22 | order[:flag], key)
+      end
+
 	  ##
 	  # Lookup map by value.
 	  def self.map_value(key)

@@ -32,6 +32,13 @@ module Aerospike
       ##
       # Default order
       DEFAULT = UNORDERED
+
+      private
+
+      def self.flag(attributes, pad)
+        (attributes == 1) ? 0xc0 : (pad ? 0x80 : 0x40)
+      end
+
     end
   end
 end

@@ -96,17 +96,30 @@ module Aerospike
       GET_BY_KEY_REL_INDEX_RANGE = 109
       GET_BY_VALUE_REL_RANK_RANGE = 110
 
-      attr_reader :map_op, :arguments, :return_type, :ctx
+      attr_reader :map_op, :arguments, :return_type, :ctx, :flag
 
-      def initialize(op_type, map_op, bin_name, *arguments, ctx: nil, return_type: nil)
+      def initialize(op_type, map_op, bin_name, *arguments, ctx: nil, return_type: nil, flag: nil)
         @op_type = op_type
         @bin_name = bin_name
         @bin_value = nil
         @map_op = map_op
         @ctx = ctx
+        @flag = flag
         @arguments = arguments
         @return_type = return_type
         self
+      end
+
+      ##
+      # Creates a map create operation.
+      # Server creates map at given context level.
+      def self.create(bin_name, order, ctx: nil)
+        if !ctx || ctx.length == 0
+          # If context not defined, the set order for top-level bin map.
+          self.set_policy(MapPolicy.new(order: order, flag: 0), bin_name)
+        else
+          MapOperation.new(Operation::CDT_MODIFY, SET_TYPE, bin_name, order[:attr], ctx: ctx, flag: order[:flag])
+        end
       end
 
       ##
@@ -115,7 +128,7 @@ module Aerospike
       #
       # The required map policy attributes can be changed after the map is created.
       def self.set_policy(bin_name, policy, ctx: nil)
-        MapOperation.new(Operation::CDT_MODIFY, SET_TYPE, bin_name, policy.order, ctx: ctx)
+        MapOperation.new(Operation::CDT_MODIFY, SET_TYPE, bin_name, policy.order[:attr], ctx: ctx)
       end
 
       ##
@@ -126,16 +139,16 @@ module Aerospike
       # The map policy also specifies the flags used when writing items to the map.
       def self.put(bin_name, key, value, ctx: nil, policy: MapPolicy::DEFAULT)
         if policy.flags != MapWriteFlags::DEFAULT
-          MapOperation.new(Operation::CDT_MODIFY, PUT, bin_name, key, value, policy.order, policy.flags, ctx: ctx)
+          MapOperation.new(Operation::CDT_MODIFY, PUT, bin_name, key, value, policy.order[:attr], policy.flags, ctx: ctx)
         else
           case policy.write_mode
           when MapWriteMode::UPDATE_ONLY
             # Replace doesn't allow map order because it does not create on non-existing key.
             MapOperation.new(Operation::CDT_MODIFY, REPLACE, bin_name, key, value, ctx: ctx)
           when MapWriteMode::CREATE_ONLY
-            MapOperation.new(Operation::CDT_MODIFY, ADD, bin_name, key, value, policy.order, ctx: ctx)
+            MapOperation.new(Operation::CDT_MODIFY, ADD, bin_name, key, value, policy.order[:attr], ctx: ctx)
           else
-            MapOperation.new(Operation::CDT_MODIFY, PUT, bin_name, key, value, policy.order, ctx: ctx)
+            MapOperation.new(Operation::CDT_MODIFY, PUT, bin_name, key, value, policy.order[:attr], ctx: ctx)
           end
         end
       end
@@ -148,16 +161,16 @@ module Aerospike
       # The map policy also specifies the flags used when writing items to the map.
       def self.put_items(bin_name, values, ctx: nil, policy: MapPolicy::DEFAULT)
         if policy.flags != MapWriteFlags::DEFAULT
-          MapOperation.new(Operation::CDT_MODIFY, PUT_ITEMS, bin_name, values, policy.order, policy.flags, ctx: ctx)
+          MapOperation.new(Operation::CDT_MODIFY, PUT_ITEMS, bin_name, values, policy.order[:attr], policy.flags, ctx: ctx)
         else
           case policy.write_mode
           when MapWriteMode::UPDATE_ONLY
             # Replace doesn't allow map order because it does not create on non-existing key.
             MapOperation.new(Operation::CDT_MODIFY, REPLACE_ITEMS, bin_name, values, ctx: ctx)
           when MapWriteMode::CREATE_ONLY
-            MapOperation.new(Operation::CDT_MODIFY, ADD_ITEMS, bin_name, values, policy.order, ctx: ctx)
+            MapOperation.new(Operation::CDT_MODIFY, ADD_ITEMS, bin_name, values, policy.order[:attr], ctx: ctx)
           else
-            MapOperation.new(Operation::CDT_MODIFY, PUT_ITEMS, bin_name, values, policy.order, ctx: ctx)
+            MapOperation.new(Operation::CDT_MODIFY, PUT_ITEMS, bin_name, values, policy.order[:attr], ctx: ctx)
           end
         end
       end
@@ -170,7 +183,7 @@ module Aerospike
       # The map policy dictates the type of map to create when it does not exist.
       # The map policy also specifies the mode used when writing items to the map.
       def self.increment(bin_name, key, incr, ctx: nil, policy: MapPolicy::DEFAULT)
-        MapOperation.new(Operation::CDT_MODIFY, INCREMENT, bin_name, key, incr, policy.order, ctx: ctx)
+        MapOperation.new(Operation::CDT_MODIFY, INCREMENT, bin_name, key, incr, policy.order[:attr], ctx: ctx)
       end
 
       ##
@@ -181,7 +194,7 @@ module Aerospike
       # The map policy dictates the type of map to create when it does not exist.
       # The map policy also specifies the mode used when writing items to the map.
       def self.decrement(bin_name, key, decr, ctx: nil, policy: MapPolicy::DEFAULT)
-        MapOperation.new(Operation::CDT_MODIFY, DECREMENT, bin_name, key, decr, policy.order, ctx: ctx)
+        MapOperation.new(Operation::CDT_MODIFY, DECREMENT, bin_name, key, decr, policy.order[:attr], ctx: ctx)
       end
 
       ##
@@ -626,11 +639,7 @@ module Aerospike
             packer.write_array_header(3)
             Value.of(0xff).pack(packer)
 
-            packer.write_array_header(@ctx.length*2)
-            @ctx.each do |ctx|
-              Value.of(ctx.id).pack(packer)
-              Value.of(ctx.value).pack(packer)
-            end
+            pack_context(packer)
 
             packer.write_array_header(args.length+1)
             Value.of(@map_op).pack(packer)
@@ -651,6 +660,23 @@ module Aerospike
         BytesValue.new(bytes)
       end
 
+      def pack_context(packer)
+        packer.write_array_header(@ctx.length*2)
+        if @flag
+          (1...@ctx.length).each do |i|
+            Value.of(@ctx[i].id).pack(packer)
+            Value.of(@ctx[i].value).pack(packer)
+          end
+
+          Value.of(@ctx[-1].id | @flag).pack(packer)
+          Value.of(@ctx[-1].value).pack(packer)
+        else
+          @ctx.each do |ctx|
+            Value.of(ctx.id).pack(packer)
+            Value.of(ctx.value).pack(packer)
+          end
+        end
+      end
     end
 
   end

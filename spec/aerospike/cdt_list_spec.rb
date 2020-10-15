@@ -630,6 +630,28 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?(Aeros
 
   describe "Context", skip: !Support.min_version?("4.6") do
 
+    it "appends a single item to the list and returns the list size" do
+      client.delete(key)
+
+      list = [
+          [7, 9, 5],
+          [1, 2, 3],
+          [6, 5, 4, 1],
+        ]
+
+      client.put(key, Aerospike::Bin.new(list_bin, list))
+
+      # Append value to new list created after the original 3 lists.
+      operation = [
+        ListOperation.append(list_bin, 2, ctx: [Context.list_index_create(3, ListOrder::ORDERED, false)], policy: ListPolicy.new(order: ListOrder::ORDERED)),
+        Aerospike::Operation.get(list_bin),
+      ]
+      record = client.operate(key, operation)
+
+      results = record.bins[list_bin]
+      expect(record.bins[list_bin]).to eq [ [7, 9, 5], [1, 2, 3], [6, 5, 4,1], [2] ]
+    end
+
     it "is used to change nested list" do
       client.delete(key)
 
