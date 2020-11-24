@@ -233,7 +233,7 @@ module Aerospike
         str_cmd = "truncate:namespace=#{namespace}"
         str_cmd << ";set=#{set_name}" unless set_name.to_s.strip.empty?
       else
-        if node.supports_feature(Aerospike::Features::TRUNCATE_NAMESPACE)
+        if node.supports_feature?(Aerospike::Features::TRUNCATE_NAMESPACE)
           str_cmd = "truncate-namespace:namespace=#{namespace}"
         else
           str_cmd = "truncate:namespace=#{namespace}"
