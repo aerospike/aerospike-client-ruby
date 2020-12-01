@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.18.0] - 2020-12-01
+
+* **Bug Fixes**
+  * Avoid panic if `Command#get_node` fails in `Command#execute`. Resolves issue #101.
+  * Fix wrong method invocation inside `Client#truncate` method. Thanks to [Alexander](https://github.com/selivandex)
+
+* **Improvements**
+  * Added missing server error codes.
+
 ## [2.17.0] - 2020-10-15
 
 * **New Features**
