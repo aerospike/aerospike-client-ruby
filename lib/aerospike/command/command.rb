@@ -446,10 +446,14 @@ module Aerospike
           @node = get_node
           @conn = @node.get_connection(@policy.timeout)
         rescue => e
-          # Socket connection error has occurred. Decrease health and retry.
-          @node.decrease_health
+          if @node
+            # Socket connection error has occurred. Decrease health and retry.
+            @node.decrease_health
 
-          Aerospike.logger.error("Node #{@node.to_s}: #{e}")
+            Aerospike.logger.error("Node #{@node.to_s}: #{e}")
+          else
+            Aerospike.logger.error("No node available for transaction: #{e}")
+          end
           next
         end
 
