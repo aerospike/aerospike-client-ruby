@@ -132,8 +132,13 @@ module Aerospike
     # There are no more records left for query.
     QUERY_END = 50
 
+    # Security functionality not supported by connected server.
     SECURITY_NOT_SUPPORTED = 51
+
+    # Security functionality not enabled by connected server.
     SECURITY_NOT_ENABLED = 52
+
+    # Security scheme not supported.
     SECURITY_SCHEME_NOT_SUPPORTED = 53
 
     # Administration command is invalid.
@@ -162,6 +167,9 @@ module Aerospike
     # Security credential is invalid.
     INVALID_CREDENTIAL = 65
 
+    # Expired session token.
+    EXPIRED_SESSION = 66
+
     # Role name is invalid.
     INVALID_ROLE = 70
 
@@ -171,14 +179,47 @@ module Aerospike
     # Privilege is invalid.
     INVALID_PRIVILEGE = 72
 
+    # Specified IP whitelist is invalid.
+    INVALID_WHITELIST = 73
+
     # User must be authentication before performing database operations.
     NOT_AUTHENTICATED = 80
 
     # User does not posses the required role to perform the database operation.
     ROLE_VIOLATION = 81
 
+    # Client IP address is not on the IP whitelist.
+    NOT_WHITELISTED = 82
+
+    # LDAP feature not enabled on server.
+    LDAP_NOT_ENABLED = 90
+
+    # Error in LDAP setup.
+    LDAP_SETUP = 91
+
+    # Error in LDAP TLS setup.
+    LDAP_TLS_SETUP = 92
+
+    # Error authenticating LDAP user.
+    LDAP_AUTHENTICATION = 93
+
+    # Error querying LDAP server.
+    LDAP_QUERY = 94
+
     # A user defined function returned an error code.
     UDF_BAD_RESPONSE = 100
+
+    # Batch functionality has been disabled by configuring the batch-index-thread=0.
+    BATCH_DISABLED = 150
+
+    # Batch max requests has been exceeded.
+    BATCH_MAX_REQUESTS = 151
+
+    # All batch queues are full.
+    BATCH_QUEUES_FULL = 152
+
+    # GeoJSON is malformed or not supported.
+    INVALID_GEOJSON = 160
 
     # Secondary index already exists.
     INDEX_FOUND = 200
@@ -212,6 +253,12 @@ module Aerospike
 
     # Generic query error.
     QUERY_GENERIC = 213
+
+    # Network error. Query is aborted.
+    QUERY_NET_IO = 214
+
+    # Internal error.
+    QUERY_DUPLICATE = 215
 
     def self.message(code)
       case code
@@ -356,6 +403,9 @@ module Aerospike
       when INVALID_CREDENTIAL
         "Invalid credential"
 
+      when EXPIRED_SESSION
+        "Expired session token"
+
       when INVALID_ROLE
         "Invalid role"
 
@@ -365,14 +415,47 @@ module Aerospike
       when INVALID_PRIVILEGE
         "Invalid privilege"
 
+      when INVALID_WHITELIST
+        "Specified IP whitelist is invalid"
+
       when NOT_AUTHENTICATED
         "Not authenticated"
 
       when ROLE_VIOLATION
         "Role violation"
 
+      when NOT_WHITELISTED
+        "Client IP address is not on the IP whitelist"
+
+      when LDAP_NOT_ENABLED
+        "LDAP feature not enabled on server"
+
+      when LDAP_SETUP
+        "Error in LDAP setup"
+
+      when LDAP_TLS_SETUP
+        "Error in LDAP TLS setup"
+
+      when LDAP_AUTHENTICATION
+        "Error authenticating LDAP user"
+
+      when LDAP_QUERY
+        "Error querying LDAP server"
+
       when UDF_BAD_RESPONSE
         "UDF d error"
+
+      when BATCH_DISABLED
+        "Batch functionality has been disabled by configuring the batch-index-thread=0"
+
+      when BATCH_MAX_REQUESTS
+        "Batch max requests has been exceeded"
+
+      when BATCH_QUEUES_FULL
+        "All batch queues are full"
+
+      when INVALID_GEOJSON
+        "GeoJSON is malformed or not supported"
 
       when INDEX_FOUND
         "Index already exists"
@@ -406,6 +489,12 @@ module Aerospike
 
       when QUERY_GENERIC
         "Query error"
+
+      when QUERY_NET_IO
+        "Network error. Query is aborted"
+
+      when QUERY_DUPLICATE
+        "Internal query error"
 
       else
         "ResultCode #{code} unknown in the client. Please file a github issue."
