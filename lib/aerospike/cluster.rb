@@ -18,7 +18,6 @@
 # the License.
 
 require 'set'
-require 'timeout'
 
 require 'aerospike/atomic/atomic'
 
@@ -428,6 +427,7 @@ module Aerospike
 
     def wait_till_stablized
       count = -1
+      done = false
 
       # will run until the cluster is stablized
       thr = Thread.new do
@@ -438,20 +438,20 @@ module Aerospike
           # If not, assume cluster has stabilized and return.
           break if count == nodes.length
 
-          sleep(0.001) # sleep for a miliseconds
+          # Break if timed out
+          break if done
+
+          sleep(0.001) # sleep for a milisecond
 
           count = nodes.length
         end
       end
 
       # wait for the thread to finish or timeout
-      begin
-        Timeout.timeout(@connection_timeout) do
-          thr.join
-        end
-      rescue Timeout::Error
-        thr.kill if thr.alive?
-      end
+      thr.join(@connection_timeout)
+      done = true
+      sleep(0.001)
+      thr.kill if thr.alive?
 
       @closed.value = false if @cluster_nodes.length > 0
     end
