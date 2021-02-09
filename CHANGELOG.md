@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.19.0] - 2020-02-09
+
+* **Improvements**
+  * Remove Timeout in `wait_till_stabilized` in favor of `thread.join(timeout)` . Thanks to [Marcelo](https://github.com/MarcPer) [[#104](https://github.com/aerospike/aerospike-client-ruby/pull/104)]
+  * Adds `ResultCode::LOST_CONFLICT`
+
 ## [2.18.0] - 2020-12-01
 
 * **Bug Fixes**
@@ -63,7 +69,7 @@ All notable changes to this project will be documented in this file.
 
 * **Improvements**
   * Optimize serialization for nested structures. Thanks to [@Kacper Madej](https://github.com/madejejej)! [[#94](https://github.com/aerospike/aerospike-client-ruby/pull/94)]
-  * Remove `Thread#abort_on_exception` from `batch_index_command`. Thanks to [@Kacper Madej](https://github.com/madejejej)! [[#94](https://github.com/aerospike/aerospike-client-ruby/pull/92)]
+  * Remove `Thread#abort_on_exception` from `batch_index_command`. Thanks to [@Kacper Madej](https://github.com/madejejej)! [[#92](https://github.com/aerospike/aerospike-client-ruby/pull/92)]
   * Does not allow values other than Integer, Float, String, Symbol and nil to be used as keys in Maps.
 
 * **Bug Fixes**
