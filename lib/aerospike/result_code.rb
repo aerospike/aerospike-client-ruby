@@ -129,6 +129,9 @@ module Aerospike
     # The transaction was not performed because the predexp was false.
     FILTERED_OUT = 27
 
+    # Write command loses conflict to XDR.
+    LOST_CONFLICT = 28
+
     # There are no more records left for query.
     QUERY_END = 50
 
@@ -363,6 +366,9 @@ module Aerospike
 
       when FILTERED_OUT
         "The transaction was not performed because the predexp was false."
+
+      when LOST_CONFLICT
+        "Write command loses conflict to XDR."
 
       when QUERY_END
         "Query end"
