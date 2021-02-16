@@ -493,6 +493,7 @@ module Aerospike
 
           # Parse results.
           begin
+            raise "Boom"
             parse_result
           rescue => e
             case e
