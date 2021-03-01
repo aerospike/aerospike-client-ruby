@@ -494,7 +494,7 @@ module Aerospike
           # Parse results.
           begin
             parse_result
-          rescue => e
+          rescue Aerospike::Exceptions::Aerospike => e
             case e
             # do not log the following exceptions
             when Aerospike::Exceptions::ScanTerminated
@@ -509,6 +509,9 @@ module Aerospike
             # situation. We will not put back the connection in the buffer.
             @conn.close if @conn
             raise e
+          rescue
+            @conn.close if @conn
+            next
           end
 
           # Reflect healthy status.
