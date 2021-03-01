@@ -756,7 +756,7 @@ module Aerospike
           # Parse results.
           begin
             parse_result
-          rescue => e
+          rescue Aerospike::Exceptions::Aerospike => e
             failed_nodes << @node if @node
             case e
               # do not log the following exceptions
@@ -772,6 +772,9 @@ module Aerospike
             # situation. We will not put back the connection in the buffer.
             @conn.close if @conn
             raise e
+          rescue
+            @conn.close if @conn
+            next
           end
 
           # Reflect healthy status.
