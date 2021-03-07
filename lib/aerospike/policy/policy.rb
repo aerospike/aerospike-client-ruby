@@ -93,7 +93,7 @@ module Aerospike
       # A retry is attempted when there is a network error other than timeout.
       # If max_retries is exceeded, the abort will occur even if the timeout
       # has not yet been exceeded.
-      @max_retries = opt[:max_retries] || 2
+      @max_retries = opt[:max_retries] || 3
 
       # Determines how record TTL (time to live) is affected on reads. When enabled, the server can
       # efficiently operate as a read-based LRU cache where the least recently used records are expired.
