@@ -31,12 +31,26 @@ module Aerospike
 
       def retryable?
         case @result_code
-        when ResultCode::ENTERPRISE_ONLY
-          false
-        when ResultCode::FILTERED_OUT
-          false
-        else
+        when ResultCode::COMMAND_REJECTED
           true
+        when ResultCode::INVALID_NODE_ERROR
+          true
+        when ResultCode::SERVER_ERROR
+          true
+        when ResultCode::SERVER_MEM_ERROR
+          true
+        when ResultCode::TIMEOUT
+          true
+        when ResultCode::KEY_BUSY
+          true
+        when ResultCode::SERVER_NOT_AVAILABLE
+          true
+        when ResultCode::DEVICE_OVERLOAD
+          true
+        when ResultCode::QUERY_NET_IO
+          true
+        else
+          false
         end
       end
     end
@@ -51,6 +65,10 @@ module Aerospike
         @failed_connections = failed_connections
 
         super(ResultCode::TIMEOUT, "Timeout after #{iterations} attempts!")
+      end
+
+      def retryable?
+        true
       end
     end
 
@@ -76,6 +94,10 @@ module Aerospike
       def initialize(msg=nil)
         super(ResultCode::SERVER_NOT_AVAILABLE, msg)
       end
+
+      def retryable?
+        true
+      end
     end
 
     class InvalidNode < Aerospike
@@ -88,19 +110,11 @@ module Aerospike
       def initialize(msg=nil)
         super(ResultCode::SCAN_TERMINATED, msg)
       end
-
-      def retryable?
-        false
-      end
     end
 
     class QueryTerminated < Aerospike
       def initialize(msg=nil)
         super(ResultCode::QUERY_TERMINATED, msg)
-      end
-
-      def retryable?
-        false
       end
     end
 
@@ -113,10 +127,6 @@ module Aerospike
     class InvalidNamespace < Aerospike
       def initialize(msg=nil)
         super(ResultCode::INVALID_NAMESPACE, msg)
-      end
-
-      def retryable?
-        false
       end
     end
   end
