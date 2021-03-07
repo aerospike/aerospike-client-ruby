@@ -688,17 +688,20 @@ module Aerospike
 
       # set timeout outside the loop
       limit = Time.now + @policy.timeout
+      retries = @policy.max_retries
 
-      # Execute command until successful, timed out or maximum iterations have been reached.
-      while true
-        # too many retries
+      # Execute command until successful, timed out or maximum iterations have been reached:
+      while iterations <= retries
+        # Sleep before trying again, after the first iteration:
+        if iterations > 0 && @policy.sleep_between_retries > 0
+          # Use a back-off according to the number of iterations:
+          sleep(@policy.sleep_between_retries * iterations)
+        end
+
+        # Next iteration:
         iterations += 1
-        break if (@policy.max_retries > 0) && (iterations > @policy.max_retries + 1)
 
-        # Sleep before trying again, after the first iteration
-        sleep(@policy.sleep_between_retries) if iterations > 1 && @policy.sleep_between_retries > 0
-
-        # check for command timeout
+        # Check for command timeout:
         break if @policy.timeout > 0 && Time.now > limit
 
         begin
@@ -716,7 +719,7 @@ module Aerospike
           next
         end
 
-        # Draw a buffer from buffer pool, and make sure it will be put back
+        # Draw a buffer from buffer pool, and make sure it will be put back:
         begin
           @data_buffer = Buffer.get
 
@@ -752,19 +755,11 @@ module Aerospike
           # Parse results.
           begin
             parse_result
-          rescue Aerospike::Exceptions::Aerospike => e
-            case e
-              # do not log the following exceptions
-            when Aerospike::Exceptions::ScanTerminated
-            when Aerospike::Exceptions::QueryTerminated
-            else
-              Aerospike.logger.error(e)
-            end
-
             # close the connection
             # cancelling/closing the batch/multi commands will return an error, which will
             # close the connection to throw away its data and signal the server about the
             # situation. We will not put back the connection in the buffer.
+          rescue Aerospike::Exceptions::ScanTerminated, Aerospike::Exceptions::QueryTerminated
             @conn.close if @conn
             raise e
           rescue
@@ -782,6 +777,7 @@ module Aerospike
           return
         ensure
           Buffer.put(@data_buffer)
+          @data_buffer = nil
         end
       end # while
 
