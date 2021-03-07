@@ -755,13 +755,19 @@ module Aerospike
           # Parse results.
           begin
             parse_result
+          rescue Aerospike::Exceptions::Aerospike => exception
             # close the connection
             # cancelling/closing the batch/multi commands will return an error, which will
             # close the connection to throw away its data and signal the server about the
             # situation. We will not put back the connection in the buffer.
-          rescue Aerospike::Exceptions::ScanTerminated, Aerospike::Exceptions::QueryTerminated
             @conn.close if @conn
-            raise e
+
+            # Some exceptions are non-fatal and retrying may succeed:
+            if exception.retryable?
+              next
+            else
+              raise
+            end
           rescue
             @conn.close if @conn
             next
