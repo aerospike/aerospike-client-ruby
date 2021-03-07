@@ -39,7 +39,7 @@ module Aerospike
         @iterations = iterations
         @failed_connections = failed_connections
 
-        super(ResultCode::TIMEOUT, nil, failed_nodes)
+        super(ResultCode::TIMEOUT, "Timeout after #{iterations} attempts!", failed_nodes)
       end
     end
 
