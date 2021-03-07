@@ -28,6 +28,17 @@ module Aerospike
         message ||= ResultCode.message(result_code)
         super(message)
       end
+
+      def retryable?
+        case @result_code
+        when ResultCode::ENTERPRISE_ONLY
+          false
+        when ResultCode::FILTERED_OUT
+          false
+        else
+          true
+        end
+      end
     end
 
     class Timeout < Aerospike
@@ -77,11 +88,19 @@ module Aerospike
       def initialize(msg=nil)
         super(ResultCode::SCAN_TERMINATED, msg)
       end
+
+      def retryable?
+        false
+      end
     end
 
     class QueryTerminated < Aerospike
       def initialize(msg=nil)
         super(ResultCode::QUERY_TERMINATED, msg)
+      end
+
+      def retryable?
+        false
       end
     end
 
@@ -94,6 +113,10 @@ module Aerospike
     class InvalidNamespace < Aerospike
       def initialize(msg=nil)
         super(ResultCode::INVALID_NAMESPACE, msg)
+      end
+
+      def retryable?
+        false
       end
     end
   end
