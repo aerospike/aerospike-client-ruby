@@ -759,14 +759,21 @@ module Aerospike
           # Parse results.
           begin
             parse_result
+          rescue Aerospike::Exceptions::Aerospike => exception
+            failed_nodes << @node if @node
             # close the connection
             # cancelling/closing the batch/multi commands will return an error, which will
             # close the connection to throw away its data and signal the server about the
             # situation. We will not put back the connection in the buffer.
-          rescue Aerospike::Exceptions::ScanTerminated, Aerospike::Exceptions::QueryTerminated => e
-            failed_nodes << @node if @node
             @conn.close if @conn
-            raise e
+
+            # Some exceptions are non-fatal and retrying may succeed:
+            if exception.retryable?
+              Aerospike.logger.error(exception)
+              next
+            else
+              raise
+            end
           rescue => e
             failed_nodes << @node if @node
             Aerospike.logger.error(e)
