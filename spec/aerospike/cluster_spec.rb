@@ -22,6 +22,10 @@ RSpec.describe Aerospike::Cluster do
   let(:policy) { spy }
   let(:hosts) { [] }
 
+  after do
+    instance.close
+  end
+
   describe '#refresh_nodes' do
     subject(:refresh_nodes) { instance.refresh_nodes }
     let!(:peers) { ::Aerospike::Peers.new }
