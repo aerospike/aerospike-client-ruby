@@ -109,7 +109,7 @@ module Aerospike
       # A retry is attempted when there is a network error other than timeout.
       # If max_retries is exceeded, the abort will occur even if the timeout
       # has not yet been exceeded.
-      @max_retries = opt[:max_retries] || 2
+      @max_retries = opt[:max_retries] || 3
 
       # Duration to sleep between retries if a transaction fails and the
       # timeout was not exceeded. Enter zero to skip sleep.

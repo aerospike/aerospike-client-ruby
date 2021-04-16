@@ -98,7 +98,7 @@ module Aerospike
     # Bin not found on update-only operation.
     BIN_NOT_FOUND = 17
 
-    # Specified bin name does not exist in record.
+    # Device not keeping up with writes.
     DEVICE_OVERLOAD = 18
 
     # Key type mismatch.
