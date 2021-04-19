@@ -686,8 +686,6 @@ module Aerospike
     def execute
       iterations = 0
 
-      # set timeout outside the loop
-      limit = Time.now + @policy.timeout
       retries = @policy.max_retries
 
       # Execute command until successful, timed out or maximum iterations have been reached:
@@ -700,9 +698,6 @@ module Aerospike
 
         # Next iteration:
         iterations += 1
-
-        # Check for command timeout:
-        break if @policy.timeout > 0 && Time.now > limit
 
         begin
           @node = get_node
@@ -788,7 +783,7 @@ module Aerospike
       end # while
 
       # execution timeout
-      raise Aerospike::Exceptions::Timeout.new(limit, iterations)
+      raise Aerospike::Exceptions::Timeout.new(@policy.timeout, iterations)
     end
 
     protected
