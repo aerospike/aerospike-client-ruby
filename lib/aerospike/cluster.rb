@@ -256,7 +256,6 @@ module Aerospike
       node_array = replica_array.get[0]
       raise Aerospike::Exceptions::InvalidNamespace.new("namespace not found in the partition map") unless node_array
 
-
       pid = 0
       for tnode in node_array.get
         res << pid if node == tnode
@@ -450,7 +449,6 @@ module Aerospike
         add_nodes(peers.nodes.values)
         cluster_config_changed = true
       end
-
 
       cluster_config_changed
     end
