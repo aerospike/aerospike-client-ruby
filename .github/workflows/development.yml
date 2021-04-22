@@ -32,6 +32,9 @@ jobs:
         ruby-version: ${{matrix.ruby}}
         bundler-cache: true
     
+    - name: Install packages (ubuntu)
+      run: sudo apt-get install libssl-dev
+    
     - name: Start server
       timeout-minutes: 5
       env:
