@@ -606,6 +606,9 @@ module Aerospike
     when Aerospike::ParticleType::DOUBLE
       buf.read_double(offset)
 
+    when Aerospike::ParticleType::BOOL
+      buf.read_bool(offset, length)
+
     when Aerospike::ParticleType::BLOB
       buf.read(offset,length)
 
@@ -658,7 +661,7 @@ module Aerospike
   #######################################
 
   # Boolean value.
-  # This is private, and only used internally for bitwise CDTs
+  # Supported by Aerospike server 5.6+ only.
   class BoolValue < Value #:nodoc:
 
     def initialize(val)
@@ -671,7 +674,9 @@ module Aerospike
     end
 
     def write(buffer, offset)
-      raise Exception.new("Unreachable")
+      val = @value ? 1 : 0
+      buffer.write_byte(val.ord, offset)
+      1
     end
 
     def pack(packer)
@@ -679,7 +684,7 @@ module Aerospike
     end
 
     def type
-      raise Exception.new("Unreachable")
+      Aerospike::ParticleType::BOOL
     end
 
     def get
@@ -687,7 +692,7 @@ module Aerospike
     end
 
     def to_bytes
-      raise Exception.new("Unreachable")
+      @value.ord
     end
 
     def to_s

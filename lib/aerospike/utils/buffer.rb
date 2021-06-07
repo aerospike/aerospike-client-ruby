@@ -156,6 +156,10 @@ module Aerospike
       vals.unpack(DOUBLE)[0]
     end
 
+    def read_bool(offset, length)
+      length <= 0 ? false : @buf[offset].ord != 0
+    end
+
     def to_s
       @buf[0..@slice_end-1]
     end

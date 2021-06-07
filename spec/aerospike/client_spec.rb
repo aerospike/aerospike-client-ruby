@@ -346,6 +346,16 @@ describe Aerospike::Client do
         expect(record.bins['bin']).to eq bin.value
       end
 
+      it "should put a BOOL and get it successfully" do
+        key = Support.gen_random_key
+        bin1 = Aerospike::Bin.new('bin1', true)
+        bin2 = Aerospike::Bin.new('bin2', false)
+        client.put(key, [bin1, bin2])
+        record = client.get(key)
+        expect(record.bins['bin1']).to eq bin1.value
+        expect(record.bins['bin2']).to eq bin2.value
+      end
+
       it "should put a GeoJSON value and get it successfully", skip: !Support.feature?(Aerospike::Features::GEO) do
         key = Support.gen_random_key
         bin = Aerospike::Bin.new('bin', Aerospike::GeoJSON.new({type: "Point", coordinates: [103.9114, 1.3083]}))
