@@ -150,6 +150,23 @@ module Aerospike
       Aerospike::Key.new(namespace, set_name, user_key, digest)
     end
 
+    def skip_key(field_count)
+      # in Stream queries, there are no keys
+      return unless field_count > 0
+
+      i = 0
+      while i < field_count
+        read_bytes(4)
+
+        fieldlen = @data_buffer.read_int32(0)
+        read_bytes(fieldlen)
+
+        i = i.succ
+      end
+
+      nil
+    end
+
     # Parses the given byte buffer and populate the result object.
     # Returns the number of bytes that were parsed from the given buffer.
     def parse_record(key, op_count, generation, expiration)

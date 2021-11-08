@@ -110,16 +110,12 @@ module Aerospike
       field_count = @data_buffer.read_int16(18)
       op_count = @data_buffer.read_int16(20)
 
-      key = parse_key(field_count)
+      skip_key(field_count)
       req_key = batch.key_for_index(batch_index)
 
-      if key.digest == req_key.digest
-        if result_code == 0
-          record = parse_record(req_key, op_count, generation, expiration)
-          results[batch_index] = record
-        end
-      else
-        Aerospike.logger.warn("Unexpected batch key returned: #{key}")
+      if result_code == 0
+        record = parse_record(req_key, op_count, generation, expiration)
+        results[batch_index] = record
       end
     end
 

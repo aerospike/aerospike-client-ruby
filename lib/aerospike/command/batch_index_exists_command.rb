@@ -36,7 +36,7 @@ module Aerospike
         raise Aerospike::Exceptions::Parse.new('Received bins that were not requested!')
       end
 
-      parse_key(field_count)
+      skip_key(field_count)
       results[batch_index] = (result_code == 0)
     end
 
