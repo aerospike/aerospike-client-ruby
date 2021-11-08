@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.20.0] - 2020-11-08
+
+* **New Features**
+  * [CLIENT-1467] Support native Boolean type for server v5.6+
+
+* **Improvements**
+  * Add basic support for server v5.6+ scan/queries.
+  * Don't check for key equality in Batch command results
+
 ## [2.19.0] - 2020-02-09
 
 * **Improvements**
