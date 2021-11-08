@@ -4,12 +4,14 @@ All notable changes to this project will be documented in this file.
 
 ## [2.20.0] - 2020-11-08
 
+Notice: This version of the client only supports Aerospike Server v4.9 and later. Some features will work for the older server versions, but they are not tested, nor officially supported.
+
 * **New Features**
-  * [CLIENT-1467] Support native Boolean type for server v5.6+
+  * [CLIENT-1467] Support native Boolean type for server v5.6+.
 
 * **Improvements**
-  * Add basic support for server v5.6+ scan/queries.
-  * Don't check for key equality in Batch command results
+  * Add basic support for server v4.9+ scan/queries.
+  * Don't check for key equality in Batch command results.
 
 ## [2.19.0] - 2020-02-09
 
