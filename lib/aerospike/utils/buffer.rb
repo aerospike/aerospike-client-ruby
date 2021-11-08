@@ -33,6 +33,7 @@ module Aerospike
 
     INT16 = 's>'
     UINT16 = 'n'
+    UINT16LE = 'v'
     INT32 = 'l>'
     UINT32 = 'N'
     INT64 = 'q>'
@@ -89,6 +90,11 @@ module Aerospike
 
     def write_uint16(i, offset)
       @buf[offset, 2] = [i].pack(UINT16)
+      2
+    end
+
+    def write_uint16_little_endian(i, offset)
+      @buf[offset, 2] = [i].pack(UINT16LE)
       2
     end
 

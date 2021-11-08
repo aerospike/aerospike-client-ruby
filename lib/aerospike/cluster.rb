@@ -230,6 +230,27 @@ module Aerospike
       batch_read_node(partition, replica_policy)
     end
 
+    # Returns partitions pertaining to a node
+    def node_partitions(node, namespace)
+      res = []
+
+      partition_map = partitions
+      replica_array = partition_map[namespace]
+      raise Aerospike::Exceptions::InvalidNamespace("namespace not found in the partition map") if !replica_array
+
+      node_array = (replica_array.get)[0]
+      raise Aerospike::Exceptions::InvalidNamespace("namespace not found in the partition map") if !node_array
+
+
+      pid = 0
+      for tnode in node_array.get
+        res << pid if node == tnode
+        pid+=1
+      end
+
+      res
+    end
+
     # Returns a random node on the cluster
     def random_node
       # Must copy array reference for copy on write semantics to work.

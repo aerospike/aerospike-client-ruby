@@ -32,6 +32,7 @@ module Aerospike
     SCAN_OPTIONS = 8
     SCAN_TIMEOUT = 9
     RECORDS_PER_SECOND = 10
+    PID_ARRAY = 11
     INDEX_NAME = 21
     INDEX_RANGE = 22
     INDEX_FILTER = 23

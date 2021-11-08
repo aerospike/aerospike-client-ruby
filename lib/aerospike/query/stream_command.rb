@@ -58,6 +58,9 @@ module Aerospike
         op_count = @data_buffer.read_int16(20)
         key = parse_key(field_count)
 
+        # If cmd is the end marker of the response, do not proceed further
+        return true if (info3 & INFO3_PARTITION_DONE) != 0
+
         if result_code == 0
           if @recordset.active?
             @recordset.records.enq(parse_record(key, op_count, generation, expiration))

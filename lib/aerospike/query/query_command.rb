@@ -23,12 +23,13 @@ module Aerospike
 
   class QueryCommand < StreamCommand #:nodoc:
 
-    def initialize(node, policy, statement, recordset)
+    def initialize(node, policy, statement, recordset, partitions)
       super(node)
 
       @policy = policy
       @statement = statement
       @recordset = recordset
+      @partitions = partitions
     end
 
     def write_buffer
@@ -81,7 +82,10 @@ module Aerospike
           @data_offset += binNameSize
           fieldCount+=1
         end
-      else
+      else    
+        @data_offset += @partitions.length * 2 + FIELD_HEADER_SIZE
+        fieldCount += 1
+
         if @policy.records_per_second > 0
           @data_offset += 4 + FIELD_HEADER_SIZE
           fieldCount += 1
@@ -89,8 +93,8 @@ module Aerospike
 
         # Calling query with no filters is more efficiently handled by a primary index scan.
         # Estimate scan options size.
-        @data_offset += (2 + FIELD_HEADER_SIZE)
-        fieldCount+=1
+        # @data_offset += (2 + FIELD_HEADER_SIZE)
+        # fieldCount+=1
       end
 
       @statement.set_task_id
@@ -177,18 +181,24 @@ module Aerospike
           end
         end
       else
+        write_field_header(@partitions.length * 2, Aerospike::FieldType::PID_ARRAY)
+        for pid in @partitions
+          @data_buffer.write_uint16_little_endian(pid, @data_offset)
+          @data_offset += 2
+        end
+
         if @policy.records_per_second > 0
           write_field_int(@policy.records_per_second, Aerospike::FieldType::RECORDS_PER_SECOND)
         end
 
         # Calling query with no filters is more efficiently handled by a primary index scan.
-        write_field_header(2, Aerospike::FieldType::SCAN_OPTIONS)
-        priority = @policy.priority.ord
-        priority = priority << 4
-        @data_buffer.write_byte(priority, @data_offset)
-        @data_offset+=1
-        @data_buffer.write_byte(100.ord, @data_offset)
-        @data_offset+=1
+        # write_field_header(2, Aerospike::FieldType::SCAN_OPTIONS)
+        # priority = @policy.priority.ord
+        # priority = priority << 4
+        # @data_buffer.write_byte(priority, @data_offset)
+        # @data_offset+=1
+        # @data_buffer.write_byte(100.ord, @data_offset)
+        # @data_offset+=1
       end
 
       write_field_header(8, Aerospike::FieldType::TRAN_ID)

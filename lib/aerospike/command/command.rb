@@ -66,6 +66,8 @@ module Aerospike
   INFO3_LAST = Integer(1 << 0)
   # Commit to master only before declaring success.
   INFO3_COMMIT_MASTER = Integer(1 << 1)
+  # Partition is complete response in scan.
+  INFO3_PARTITION_DONE = Integer(1 << 2)
   # Update only. Merge bins.
   INFO3_UPDATE_ONLY = Integer(1 << 3)
 
@@ -333,7 +335,7 @@ module Aerospike
       mark_compressed(policy)
     end
 
-    def set_scan(policy, namespace, set_name, bin_names)
+    def set_scan(policy, namespace, set_name, bin_names, partitions)
       # Estimate buffer size
       begin_cmd
       field_count = 0
@@ -357,7 +359,10 @@ module Aerospike
       field_count += 1 if predexp_size > 0
 
       # Estimate scan options size.
-      @data_offset += 2 + FIELD_HEADER_SIZE
+      # @data_offset += 2 + FIELD_HEADER_SIZE
+      # field_count += 1
+
+      @data_offset += partitions.length * 2 + FIELD_HEADER_SIZE
       field_count += 1
 
       # Estimate scan timeout size.
@@ -392,24 +397,30 @@ module Aerospike
         write_field_string(set_name, Aerospike::FieldType::TABLE)
       end
 
+      write_field_header(partitions.length * 2, Aerospike::FieldType::PID_ARRAY)
+      for pid in partitions
+          @data_buffer.write_uint16_little_endian(pid, @data_offset)
+          @data_offset += 2
+      end
+
       if policy.records_per_second > 0
         write_field_int(policy.records_per_second, Aerospike::FieldType::RECORDS_PER_SECOND)
       end
 
       write_predexp(policy.predexp, predexp_size)
 
-      write_field_header(2, Aerospike::FieldType::SCAN_OPTIONS)
+      # write_field_header(2, Aerospike::FieldType::SCAN_OPTIONS)
 
-      priority = policy.priority & 0xFF
-      priority <<= 4
-      if policy.fail_on_cluster_change
-        priority |= 0x08
-      end
+      # priority = policy.priority & 0xFF
+      # priority <<= 4
+      # if policy.fail_on_cluster_change
+      #   priority |= 0x08
+      # end
 
-      @data_buffer.write_byte(priority, @data_offset)
-      @data_offset += 1
-      @data_buffer.write_byte(policy.scan_percent.to_i.ord, @data_offset)
-      @data_offset += 1
+      # @data_buffer.write_byte(priority, @data_offset)
+      # @data_offset += 1
+      # @data_buffer.write_byte(policy.scan_percent.to_i.ord, @data_offset)
+      # @data_offset += 1
 
       write_field_header(4, Aerospike::FieldType::SCAN_TIMEOUT)
       @data_buffer.write_uint32(policy.socket_timeout.to_i, @data_offset)
@@ -784,6 +795,12 @@ module Aerospike
       len = @data_buffer.write_binary(str, @data_offset+FIELD_HEADER_SIZE)
       write_field_header(len, ftype)
       @data_offset += len
+    end
+
+    def write_u16_little_endian(i, ftype)
+      @data_buffer.write_uint16_little_endian(i, @data_offset+FIELD_HEADER_SIZE)
+      write_field_header(2, ftype)
+      @data_offset += 2
     end
 
     def write_field_int(i, ftype)

@@ -23,7 +23,7 @@ module Aerospike
 
   class ScanCommand < StreamCommand #:nodoc:
 
-    def initialize(node, policy, namespace, set_name, bin_names, recordset)
+    def initialize(node, policy, namespace, set_name, bin_names, recordset, partitions)
       super(node)
 
       @policy = policy
@@ -31,10 +31,11 @@ module Aerospike
       @set_name = set_name
       @bin_names = bin_names
       @recordset = recordset
+      @partitions = partitions
     end
 
     def write_buffer
-      set_scan(@policy, @namespace, @set_name, @bin_names)
+      set_scan(@policy, @namespace, @set_name, @bin_names, @partitions)
     end
 
   end # class

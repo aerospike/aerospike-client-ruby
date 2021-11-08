@@ -543,10 +543,11 @@ module Aerospike
 
       # Use a thread per node
       nodes.each do |node|
+        partitions = node.cluster.node_partitions(node, statement.namespace)
         Thread.new do
           Thread.current.abort_on_exception = true
           begin
-            command = QueryCommand.new(node, policy, statement, nil)
+            command = QueryCommand.new(node, policy, statement, nil, partitions)
             execute_command(command)
           rescue => e
             Aerospike.logger.error(e)
@@ -644,9 +645,10 @@ module Aerospike
       if policy.concurrent_nodes
         # Use a thread per node
         nodes.each do |node|
+          partitions = node.cluster.node_partitions(node, namespace)
           Thread.new do
             Thread.current.abort_on_exception = true
-            command = ScanCommand.new(node, new_policy, namespace, set_name, bin_names, recordset)
+            command = ScanCommand.new(node, new_policy, namespace, set_name, bin_names, recordset, partitions)
             begin
               execute_command(command)
             rescue => e
@@ -661,7 +663,8 @@ module Aerospike
         Thread.new do
           Thread.current.abort_on_exception = true
           nodes.each do |node|
-            command = ScanCommand.new(node, new_policy, namespace, set_name, bin_names, recordset)
+            partitions = node.cluster.node_partitions(node, namespace)
+            command = ScanCommand.new(node, new_policy, namespace, set_name, bin_names, recordset, partitions)
             begin
               execute_command(command)
             rescue => e
@@ -694,9 +697,10 @@ module Aerospike
 
       recordset = Recordset.new(policy.record_queue_size, 1, :scan)
 
+      partitions = node.cluster.node_partitions(node, namespace)
       Thread.new do
         Thread.current.abort_on_exception = true
-        command = ScanCommand.new(node, new_policy, namespace, set_name, bin_names, recordset)
+        command = ScanCommand.new(node, new_policy, namespace, set_name, bin_names, recordset, partitions)
         begin
           execute_command(command)
         rescue => e
@@ -734,9 +738,10 @@ module Aerospike
 
       # Use a thread per node
       nodes.each do |node|
+        partitions = node.cluster.node_partitions(node, statement.namespace)
         Thread.new do
           Thread.current.abort_on_exception = true
-          command = QueryCommand.new(node, new_policy, statement, recordset)
+          command = QueryCommand.new(node, new_policy, statement, recordset, partitions)
           begin
             execute_command(command)
           rescue => e
