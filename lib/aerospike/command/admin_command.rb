@@ -28,13 +28,15 @@ module Aerospike
   #CREATE_ROLE = 8
   QUERY_USERS = 9
   #QUERY_ROLES =  10
+  LOGIN = 20
 
   # Field IDs
-  USER         = 0
-  PASSWORD     = 1
-  OLD_PASSWORD = 2
-  CREDENTIAL   = 3
-  ROLES        = 10
+  USER           = 0
+  PASSWORD       = 1
+  OLD_PASSWORD   = 2
+  CREDENTIAL     = 3
+  CLEAR_PASSWORD = 4
+  ROLES          = 10
   #PRIVILEGES =  11
 
   # Misc
@@ -60,6 +62,12 @@ module Aerospike
         conn.read(@data_buffer, HEADER_SIZE)
 
         result = @data_buffer.read(RESULT_CODE)
+
+        # read the rest of the buffer
+        size = @data_buffer.read_int64(0)
+        length = (size & 0xFFFFFFFFFFFF) - HEADER_REMAINING
+        conn.read(@data_buffer, length)
+
         raise Exceptions::Aerospike.new(result, "Authentication failed") if result != 0
       ensure
         Buffer.put(@data_buffer)
@@ -67,7 +75,7 @@ module Aerospike
     end
 
     def set_authenticate(user, password)
-      write_header(AUTHENTICATE, 2)
+      write_header(LOGIN, 2)
       write_field_str(USER, user)
       write_field_bytes(CREDENTIAL, password)
       write_size

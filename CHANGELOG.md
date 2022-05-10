@@ -2,7 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
-## [2.20.0] - 2020-11-08
+## [2.20.1] - 2022-05-11
+
+* **Improvements**
+  * Add basic support for the new authentication protocol.
+
+## [2.20.0] - 2021-11-08
 
 Notice: This version of the client only supports Aerospike Server v4.9 and later. Some features will work for the older server versions, but they are not tested, nor officially supported.
 
