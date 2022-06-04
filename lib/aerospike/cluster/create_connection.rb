@@ -32,7 +32,7 @@ module Aerospike
           ).tap do |conn|
             if cluster.credentials_given?
               # Authenticate will raise and close connection if invalid credentials
-              Connection::Authenticate.(conn, cluster.user, cluster.password)
+              Connection::AuthenticateNew.(conn, cluster)
             end
           end
         end

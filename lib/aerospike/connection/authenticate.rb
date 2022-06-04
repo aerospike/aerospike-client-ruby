@@ -21,9 +21,41 @@ module Aerospike
   module Connection # :nodoc:
     module Authenticate
       class << self
-        def call(conn, user, password)
-          command = AdminCommand.new
-          command.authenticate(conn, user, password)
+        def call(conn, user, hashed_pass)
+          command = LoginCommand.new
+          command.authenticate(conn, user, hashed_pass)
+          true
+        rescue ::Aerospike::Exceptions::Aerospike
+          conn.close if conn
+          raise ::Aerospike::Exceptions::InvalidCredentials
+        end
+      end
+    end
+    module AuthenticateNew
+      class << self
+        INVALID_SESSION_ERR = [ResultCode::INVALID_CREDENTIAL, 
+          ResultCode::EXPIRED_SESSION]
+
+        def call(conn, cluster)
+          command = LoginCommand.new
+          if !cluster.session_valid?
+            command.authenticate_new(conn, cluster)
+          else
+            begin
+              command.authenticate_via_token(conn, cluster)
+            rescue => ae
+              # always reset session info on errors to be on the safe side
+              cluster.reset_session_info
+              if ae.is_a?(Exceptions::Aerospike)
+                if INVALID_SESSION_ERR.include?(ae.result_code)
+                  command.authenticate(conn, cluster)
+                  return
+                end
+              end
+              raise ae
+            end
+          end
+
           true
         rescue ::Aerospike::Exceptions::Aerospike
           conn.close if conn

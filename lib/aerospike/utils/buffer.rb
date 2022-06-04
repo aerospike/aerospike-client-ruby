@@ -136,14 +136,29 @@ module Aerospike
       vals.unpack(INT16)[0]
     end
 
+    def read_uint16(offset)
+      vals = @buf[offset..offset+1]
+      vals.unpack(UINT16)[0]
+    end
+
     def read_int32(offset)
       vals = @buf[offset..offset+3]
       vals.unpack(INT32)[0]
     end
 
+    def read_uint32(offset)
+      vals = @buf[offset..offset+3]
+      vals.unpack(UINT32)[0]
+    end
+
     def read_int64(offset)
       vals = @buf[offset..offset+7]
       vals.unpack(INT64)[0]
+    end
+
+    def read_uint64(offset)
+      vals = @buf[offset..offset+7]
+      vals.unpack(UINT64)[0]
     end
 
     def read_var_int64(offset, len)

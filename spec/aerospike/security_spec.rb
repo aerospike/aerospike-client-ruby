@@ -54,6 +54,53 @@ describe Aerospike::Client do
           expect(admin.roles).to match_array(["user-admin", "read-write", "read"])
         end
 
+        it "Must Query all roles" do
+          begin
+            client.drop_role("role-read-test-test")
+            client.drop_role("role-write-test")
+            client.drop_role("dummy-role")
+          rescue
+          end
+
+          client.create_role("role-read-test-test", [Aerospike::Privilege.new(code: Aerospike::Role::READ, namespace: "test", set_name: "test")], ["192.0.0.1"], 0, 0)
+          client.create_role("role-write-test", [Aerospike::Privilege.new(code: Aerospike::Role::READ_WRITE, namespace: "test", set_name: "test")], ["192.1.0.1"], 0, 0)
+
+          client.grant_privileges("role-read-test-test", [Aerospike::Privilege.new(code: Aerospike::Role::READ_WRITE, namespace: "test", set_name: "bar"), Aerospike::Privilege.new(code: Aerospike::Role::READ_WRITE_UDF, namespace: "test", set_name: "test")])
+          client.revoke_privileges("role-read-test-test", [Aerospike::Privilege.new(code: Aerospike::Role::READ_WRITE_UDF, namespace: "test", set_name: "test")])
+
+          client.create_role("dummy-role", [Aerospike::Privilege.new(code: Aerospike::Role::READ)], ["198.1.1.1"], 100, 1000)
+
+          # should have the password changed in the cluster, so that a new connection
+          # will be established and used
+          roles = client.query_roles
+          expect(roles.length).to be > 0
+
+          role = client.query_role("role-read-test-test")
+          expect(role.name).to eq "role-read-test-test"
+          expect(role.privileges.length).to eq 2
+          expect(role.allowlist).to contain_exactly "192.0.0.1"
+          expect(role.read_quota).to be_nil
+          expect(role.write_quota).to be_nil
+
+          role = client.query_role("role-write-test")
+          expect(role.name).to eq "role-write-test"
+          expect(role.privileges.length).to eq 1
+          expect(role.allowlist).to contain_exactly "192.1.0.1"
+          expect(role.read_quota).to be_nil
+          expect(role.write_quota).to be_nil
+
+          role = client.query_role("dummy-role")
+          expect(role.name).to eq "dummy-role"
+          expect(role.privileges.length).to eq 1
+          expect(role.allowlist).to contain_exactly "198.1.1.1"
+          expect(role.read_quota).to eq 100
+          expect(role.write_quota).to eq 1000
+
+          client.drop_role("role-read-test-test")
+          client.drop_role("role-write-test")
+          client.drop_role("dummy-role")
+        end
+
       end # context
 
       context "Users" do
@@ -99,6 +146,7 @@ describe Aerospike::Client do
 
           expect(admin.user).to eq "test_user"
           expect(admin.roles).to match_array(["user-admin", "read"])
+          expect(admin.conns_in_use).to be > 0
           new_client.close
         end
 

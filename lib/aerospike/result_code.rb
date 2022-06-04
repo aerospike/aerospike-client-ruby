@@ -182,7 +182,7 @@ module Aerospike
     # Privilege is invalid.
     INVALID_PRIVILEGE = 72
 
-    # Specified IP whitelist is invalid.
+    # Specified IP allowlist is invalid.
     INVALID_WHITELIST = 73
 
     # User must be authentication before performing database operations.
@@ -191,7 +191,7 @@ module Aerospike
     # User does not posses the required role to perform the database operation.
     ROLE_VIOLATION = 81
 
-    # Client IP address is not on the IP whitelist.
+    # Client IP address is not on the IP allowlist.
     NOT_WHITELISTED = 82
 
     # LDAP feature not enabled on server.
@@ -422,7 +422,7 @@ module Aerospike
         "Invalid privilege"
 
       when INVALID_WHITELIST
-        "Specified IP whitelist is invalid"
+        "Specified IP allowlist is invalid"
 
       when NOT_AUTHENTICATED
         "Not authenticated"
@@ -431,7 +431,7 @@ module Aerospike
         "Role violation"
 
       when NOT_WHITELISTED
-        "Client IP address is not on the IP whitelist"
+        "Client IP address is not on the IP allowlist"
 
       when LDAP_NOT_ENABLED
         "LDAP feature not enabled on server"

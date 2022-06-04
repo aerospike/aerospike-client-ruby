@@ -764,7 +764,7 @@ module Aerospike
     # before sending to server.
     def create_user(user, password, roles, options = nil)
       policy = create_policy(options, AdminPolicy, default_admin_policy)
-      hash = AdminCommand.hash_password(password)
+      hash = LoginCommand.hash_password(password)
       command = AdminCommand.new
       command.create_user(@cluster, policy, user, hash, roles)
     end
@@ -781,7 +781,7 @@ module Aerospike
       raise Aerospike::Exceptions::Aerospike.new(INVALID_USER) unless @cluster.user && @cluster.user != ""
       policy = create_policy(options, AdminPolicy, default_admin_policy)
 
-      hash = AdminCommand.hash_password(password)
+      hash = LoginCommand.hash_password(password)
       command = AdminCommand.new
 
       if user == @cluster.user
@@ -821,6 +821,50 @@ module Aerospike
       policy = create_policy(options, AdminPolicy, default_admin_policy)
       command = AdminCommand.new
       command.query_users(@cluster, policy)
+    end
+
+    # Retrieve privileges for a given role.
+    def query_role(role, options = nil)
+      policy = create_policy(options, AdminPolicy, default_admin_policy)
+      command = AdminCommand.new
+      command.query_role(@cluster, policy, role)
+    end
+
+    # Retrieve all roles and their privileges.
+    def query_roles(options = nil)
+      policy = create_policy(options, AdminPolicy, default_admin_policy)
+      command = AdminCommand.new
+      command.query_roles(@cluster, policy)
+    end
+
+    # Create a user-defined role.
+    # Quotas require server security configuration "enable-quotas" to be set to true.
+    # Pass 0 for quota values for no limit.
+    def create_role(role_name, privileges = [], allowlist = [], read_quota = 0, write_quota = 0, options = nil)
+      policy = create_policy(options, AdminPolicy, default_admin_policy)
+      command = AdminCommand.new
+      command.create_role(@cluster, policy, role_name, privileges, allowlist, read_quota, write_quota)
+    end
+
+    # Remove a user-defined role.
+    def drop_role(role_name, options = nil)
+      policy = create_policy(options, AdminPolicy, default_admin_policy)
+      command = AdminCommand.new
+      command.drop_role(@cluster, policy, role_name)
+    end
+
+    # Grant privileges to a user-defined role.
+    def grant_privileges(role_name, privileges, options = nil)
+      policy = create_policy(options, AdminPolicy, default_admin_policy)
+      command = AdminCommand.new
+      command.grant_privileges(@cluster, policy, role_name, privileges)
+    end
+
+    # Revoke privileges from a user-defined role.
+    def revoke_privileges(role_name, privileges, options = nil)
+      policy = create_policy(options, AdminPolicy, default_admin_policy)
+      command = AdminCommand.new
+      command.revoke_privileges(@cluster, policy, role_name, privileges)
     end
 
     private

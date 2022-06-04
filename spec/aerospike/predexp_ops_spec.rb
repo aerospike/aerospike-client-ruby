@@ -20,7 +20,7 @@ require 'benchmark'
 
 describe Aerospike::Client do
 
-  describe "Predicates" do
+  describe "Predicates", skip: !Support.min_version?("6") do
 
     let(:key) { Aerospike::Key.new(Support.namespace, 'predexp_ops_spec', 0) }
     let(:client) { Support.client }

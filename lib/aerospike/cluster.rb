@@ -27,9 +27,12 @@ module Aerospike
     attr_reader :features, :tls_options
     attr_reader :cluster_id, :aliases
     attr_reader :cluster_name
+    attr_reader :client_policy
     attr_accessor :rack_aware, :rack_id
+    attr_accessor :session_token, :session_expiration
 
     def initialize(policy, hosts)
+      @client_policy = policy
       @cluster_seeds = hosts
       @fail_if_not_connected = policy.fail_if_not_connected
       @connection_queue_size = policy.connection_queue_size
@@ -56,7 +59,7 @@ module Aerospike
       # setup auth info for cluster
       if policy.requires_authentication
         @user = policy.user
-        @password = AdminCommand.hash_password(policy.password)
+        @password = LoginCommand.hash_password(policy.password)
       end
 
       initialize_tls_host_names(hosts) if tls_enabled?
@@ -76,6 +79,15 @@ module Aerospike
 
     def credentials_given?
       !(@user.nil? || @user.empty?)
+    end
+
+    def session_valid?
+      @session_token && @session_expiration && @session_expiration.to_i < Time.now.to_i
+    end
+
+    def reset_session_info
+      @session_token = nil
+      @session_expiration = nil
     end
 
     def tls_enabled?
@@ -435,6 +447,7 @@ module Aerospike
         add_nodes(peers.nodes.values)
         cluster_config_changed = true
       end
+
 
       cluster_config_changed
     end

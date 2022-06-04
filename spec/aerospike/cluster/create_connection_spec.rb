@@ -26,24 +26,24 @@ RSpec.describe Aerospike::Cluster::CreateConnection do
 
     before do
       allow(::Aerospike::Connection::Create).to receive(:call)
-      allow(::Aerospike::Connection::Authenticate).to receive(:call)
-      allow(cluster).to receive(:credentials_given?).and_return(authenticate)
+      allow(::Aerospike::Connection::AuthenticateNew).to receive(:call)
+      allow(cluster).to receive(:credentials_given?).and_return(authenticate_new)
     end
 
     context 'when user and password is given' do
-      let(:authenticate) { true }
+      let(:authenticate_new) { true }
 
       before { create_connection }
 
-      it { expect(::Aerospike::Connection::Authenticate).to have_received(:call) }
+      it { expect(::Aerospike::Connection::AuthenticateNew).to have_received(:call) }
     end
 
     context 'when user and password is given' do
-      let(:authenticate) { false }
+      let(:authenticate_new) { false }
 
       before { create_connection }
 
-      it { expect(::Aerospike::Connection::Authenticate).not_to have_received(:call) }
+      it { expect(::Aerospike::Connection::AuthenticateNew).not_to have_received(:call) }
     end
   end
 end

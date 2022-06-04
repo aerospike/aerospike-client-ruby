@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-describe Aerospike::PredExp do
+describe Aerospike::PredExp, skip: !Support.min_version?("6") do
   let(:client) { Support.client }
 
   before :all do

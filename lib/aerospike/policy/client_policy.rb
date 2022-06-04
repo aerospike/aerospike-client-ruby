@@ -22,7 +22,7 @@ module Aerospike
   # Container object for client policy command.
   class ClientPolicy
 
-    attr_accessor :user, :password
+    attr_accessor :user, :password, :auth_mode
     attr_accessor :timeout, :connection_queue_size, :fail_if_not_connected, :tend_interval
     attr_accessor :cluster_name
     attr_accessor :tls
@@ -43,6 +43,9 @@ module Aerospike
       # Tend interval in milliseconds; determines the interval at
       # which the client checks for cluster state changes. Minimum interval is 10ms.
       self.tend_interval = opt[:tend_interval] || 1000 # 1 second
+
+      # Authentication mode
+      @auth_mode = opt[:auth_mode] || AuthMode::INTERNAL
 
       # user name
       @user = opt[:user]
