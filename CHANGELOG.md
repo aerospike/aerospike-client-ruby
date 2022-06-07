@@ -7,6 +7,9 @@ All notable changes to this project will be documented in this file.
 * **New Features**
   * Add support for new user management features. Adds `Client#query_role`, `Client#query_roles`, `Client#create_role`, `Client#drop_role`, `Client#grant_privileges`, `Client#revoke_privileges`. Adds the 'Role' class. Adds `UserRoles#read_info`, `UserRoles#write_info`, `UserRoles#conns_in_use` to the `UserRoles` class.
 
+* **Improvements**
+  * Do not run PredExp tests for server v6+.
+
 ## [2.20.1] - 2022-05-11
 
 * **Improvements**
