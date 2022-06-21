@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.21.1] - 2022-06-21
+  
+This s hotfix release. It is recommended to upgrade your client if you use authentication.
+
+* **Bug Fixes**
+  * Fix called function name in Authenticate.
+
 ## [2.21.0] - 2022-06-07
 
 * **New Features**

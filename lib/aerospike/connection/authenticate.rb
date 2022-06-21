@@ -33,7 +33,7 @@ module Aerospike
     end
     module AuthenticateNew
       class << self
-        INVALID_SESSION_ERR = [ResultCode::INVALID_CREDENTIAL, 
+        INVALID_SESSION_ERR = [ResultCode::INVALID_CREDENTIAL,
           ResultCode::EXPIRED_SESSION]
 
         def call(conn, cluster)
@@ -48,7 +48,7 @@ module Aerospike
               cluster.reset_session_info
               if ae.is_a?(Exceptions::Aerospike)
                 if INVALID_SESSION_ERR.include?(ae.result_code)
-                  command.authenticate(conn, cluster)
+                  command.authenticate_new(conn, cluster)
                   return
                 end
               end
@@ -65,3 +65,4 @@ module Aerospike
     end
   end
 end
+
