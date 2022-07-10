@@ -381,7 +381,7 @@ module Aerospike
         raise e
       end
 
-      raise Exceptions::Aerospike.new(result) if status > 0
+      raise Exceptions::Aerospike.new(status) if status > 0
 
       return list
     end
