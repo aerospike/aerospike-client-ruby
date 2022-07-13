@@ -40,6 +40,7 @@ module Aerospike
 
     def get_hosts(address)
       aliases = [get_alias(address, host.port)]
+      res = []
 
       begin
         conn = Cluster::CreateConnection.(@cluster, Host.new(address, host.port, host.tls_name))
@@ -61,11 +62,15 @@ module Aerospike
         unless is_loopback?(address)
           aliases = info_map[address_command].split(',').map { |addr| get_alias(*addr.split(':')) }
         end
+
+        res = aliases.map { |al| Host.new(al[:address], al[:port], host.tls_name) }
+      rescue
+        # we don't care about the actual connection error; Just need to continue
       ensure
         conn.close if conn
       end
 
-      aliases.map { |al| Host.new(al[:address], al[:port], host.tls_name) }
+      res
     end
 
     def get_alias(address, port)

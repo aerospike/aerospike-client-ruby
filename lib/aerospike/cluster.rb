@@ -463,7 +463,7 @@ module Aerospike
       count = -1
       done = false
 
-      # will run until the cluster is stablized
+      # will run until the cluster is stabilized
       thr = Thread.new do
         loop do
           tend
@@ -475,14 +475,17 @@ module Aerospike
           # Break if timed out
           break if done
 
-          sleep(0.001) # sleep for a milisecond
+          sleep(0.001) # sleep for a millisecond
 
           count = nodes.length
         end
       end
 
       # wait for the thread to finish or timeout
-      thr.join(@connection_timeout)
+      # This will give the client up to 10 times the timeout duration to find
+      # a host and connect successfully eventually, in case the DNS
+      # returns multiple IPs and some of them are not reachable.
+      thr.join(@connection_timeout * 10)
       done = true
       sleep(0.001)
       thr.kill if thr.alive?
