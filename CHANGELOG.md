@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.22.0] 2022-07-14
+
+* **Fixes**
+  * [CLIENT-1785] Fix Client#read_users to avoid error. PR #112 Thanks to [Dotan Mor](https://github.com/dotan-mor)
+  * [CLIENT-1787] Support multiple DNS IPs during connection.
+  * [CLIENT-1789] Authentication Retry fails in certain conditions.
+
 ## [2.21.1] - 2022-06-21
   
 This s hotfix release. It is recommended to upgrade your client if you use authentication.
