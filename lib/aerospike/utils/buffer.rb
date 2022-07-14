@@ -67,6 +67,12 @@ module Aerospike
     end
 
     def resize(length)
+      # Corrupted data streams can result in a hug.length.
+      # Do a sanity check here.
+      if length > MAX_BUFFER_SIZE
+        raise Aerospike::Exceptions::Parse.new("Invalid size for buffer: #{length}")
+      end
+
       if @buf.bytesize < length
         @buf.concat("%0#{length - @buf.bytesize}d" % 0)
       end

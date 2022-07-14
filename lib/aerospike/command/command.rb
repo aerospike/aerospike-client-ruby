@@ -840,12 +840,6 @@ module Aerospike
     end
 
     def size_buffer_sz(size)
-      # Corrupted data streams can result in a hug.length.
-      # Do a sanity check here.
-      if size > Buffer::MAX_BUFFER_SIZE
-        raise Aerospike::Exceptions::Parse.new("Invalid size for buffer: #{size}")
-      end
-
       @data_buffer.resize(size)
     end
 

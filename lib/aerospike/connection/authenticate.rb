@@ -49,7 +49,7 @@ module Aerospike
               if ae.is_a?(Exceptions::Aerospike)
                 if INVALID_SESSION_ERR.include?(ae.result_code)
                   command.authenticate_new(conn, cluster)
-                  return
+                  return true
                 end
               end
               raise ae

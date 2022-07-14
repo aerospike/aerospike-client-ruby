@@ -38,6 +38,7 @@ module Aerospike
     end
 
     def authenticate_new(conn, cluster)
+      @data_offset = 8
       policy = cluster.client_policy
       case policy.auth_mode
       when Aerospike::AuthMode::EXTERNAL
@@ -125,6 +126,7 @@ module Aerospike
     end
 
     def authenticate_via_token(conn, cluster)
+      @data_offset = 8
       policy = cluster.client_policy
       if policy.auth_mode != Aerospike::AuthMode::PKI
         write_header(AUTHENTICATE, 2)
@@ -144,7 +146,7 @@ module Aerospike
       receive_size = (size & 0xFFFFFFFFFFFF) - HEADER_REMAINING
       conn.read(@data_buffer, receive_size)
 
-      if result != 0 
+      if result != 0
         return if result == Aerospike::ResultCode::SECURITY_NOT_ENABLED
         raise Exceptions::Aerospike.new(result, "Authentication failed")
       end
