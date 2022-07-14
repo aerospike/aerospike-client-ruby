@@ -49,7 +49,7 @@ function start_server {
   port=$((2900 + 100 * $instance))
   echo "## Starting Aerospike instance ${instance}/${nodes} on port ${port}"
   mkdir ${dir}
-  ./bin/aerospike init --home ${dir} --instance ${instance} --service-port ${port}
+  ./bin/aerospike init --home ${dir} --group `id -gn` --instance ${instance} --service-port ${port}
   cd ${dir}
   ./bin/aerospike start
   wait_for_node "var/log/aerospike.log"
@@ -59,7 +59,7 @@ function start_server {
 function install_server {
   wget -nv -O aerospike-server.tgz https://www.aerospike.com/download/server/latest/artifact/tgz
   tar xzf aerospike-server.tgz
-  cp -f .travis/aerospike.conf ./aerospike-server/share/etc
+  cp -f .github/workflows/aerospike.conf ./aerospike-server/share/etc
   cd aerospike-server
   sed -i -e 's/\${me}/"root"/' share/libexec/aerospike-start
   sed -i -e 's/set_shmmax$/#set_shmmax/' share/libexec/aerospike-start
