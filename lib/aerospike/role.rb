@@ -49,7 +49,7 @@ module Aerospike
     def to_s
       "Role [name=#{@name}, privileges=#{@privileges}, allowlist=#{@allowlist}, readQuota=#{@read_quota}, writeQuota=#{@write_quota}]";
     end
- 
+
   end # class
 
 end # module

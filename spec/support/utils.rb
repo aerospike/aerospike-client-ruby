@@ -20,7 +20,7 @@ require 'aerospike/key'
 module Support
 
   RAND_CHARS = ('a'..'z').to_a.concat(('A'..'Z').to_a).concat(('0'..'9').to_a)
-  VERSION_REGEX = /\d+(?:.\d+)+(:?-\d+)?(?:-[a-z0-9]{8})?/
+  VERSION_REGEX = /\d+(?:.\d+)+(:?-\d+)?(?:-[a-z0-9]{8})?/.freeze
 
   def self.rand_string(len)
     RAND_CHARS.shuffle[0,len].join
@@ -63,8 +63,8 @@ EOF
 
   def self.client_policy(opt={})
     envs = {
-      user: ENV['AEROSPIKE_USER'],
-      password: ENV['AEROSPIKE_PASSWORD'],
+      user: ENV.fetch('AEROSPIKE_USER', nil),
+      password: ENV.fetch('AEROSPIKE_PASSWORD', nil),
     }.merge!(opt)
 
     Aerospike::ClientPolicy.new(envs)
@@ -91,7 +91,7 @@ EOF
   def self.version
     @cluster_version ||=
       begin
-        version = ENV['AEROSPIKE_VERSION_OVERRIDE']
+        version = ENV.fetch('AEROSPIKE_VERSION_OVERRIDE', nil)
         version ||= self.client.request_info("version")["version"]
         version = version[VERSION_REGEX]
         Gem::Version.new(version).release

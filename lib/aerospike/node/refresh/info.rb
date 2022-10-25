@@ -30,7 +30,7 @@ module Aerospike
           def call(node, peers)
             conn = node.tend_connection
             if peers.use_peers?
-              cmds = node.cluster.rack_aware ? CMDS_REBALANCE : CMDS_PEERS 
+              cmds = node.cluster.rack_aware ? CMDS_REBALANCE : CMDS_PEERS
               info_map = ::Aerospike::Info.request(conn, *cmds)
               Verify::PeersGeneration.(node, info_map, peers)
               Verify::PartitionGeneration.(node, info_map)

@@ -38,9 +38,7 @@ module Aerospike
 
         def call(conn, cluster)
           command = LoginCommand.new
-          if !cluster.session_valid?
-            command.authenticate_new(conn, cluster)
-          else
+          if cluster.session_valid?
             begin
               command.authenticate_via_token(conn, cluster)
             rescue => ae
@@ -54,6 +52,8 @@ module Aerospike
               end
               raise ae
             end
+          else
+            command.authenticate_new(conn, cluster)
           end
 
           true

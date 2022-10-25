@@ -41,7 +41,7 @@ describe Aerospike::Key do
         expect(digest(0)).to eq("93d943aae37b017ad7e011b0c1d2e2143c2fb37d")
         expect(digest(-1)).to eq("22116d253745e29fc63fdf760b6e26f7e197e01d")
         expect(digest(-2**63)).to eq("7185c2a47fb02c996daed26b4e01b83240aee9d4")
-        expect(digest(2**63-1)).to eq("1698328974afa62c8e069860c1516f780d63dbb8")
+        expect(digest((2**63)-1)).to eq("1698328974afa62c8e069860c1516f780d63dbb8")
       end
 
       context 'v1.0.x compatibility' do

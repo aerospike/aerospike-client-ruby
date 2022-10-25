@@ -53,7 +53,7 @@ module Aerospike
     end
 
     def empty?
-      @pool.length == 0
+      @pool.empty?
     end
 
     def length

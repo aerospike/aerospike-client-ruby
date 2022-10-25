@@ -7,11 +7,14 @@ end
 
 group :development do
   gem 'rubocop', require: false
+  gem 'rubocop-performance', require: false
+  gem 'rubocop-rake', require: false
+  gem 'rubocop-rspec', require: false
 end
 
-gem 'rake'
 gem 'bcrypt'
 gem 'msgpack', '~> 1.2'
+gem 'rake'
 
 platforms :mri, :rbx do
   gem 'openssl'

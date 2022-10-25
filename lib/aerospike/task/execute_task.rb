@@ -70,7 +70,7 @@ module Aerospike
 
         case status
         when 'ABORTED'
-          raise raise Aerospike::Exceptions::QueryTerminated
+          raise Aerospike::Exceptions::QueryTerminated
         when 'IN PROGRESS'
           return false
         when 'DONE'

@@ -48,7 +48,7 @@ module Aerospike
         @value = value
       end
     end
-    alias_method 'value='.to_sym, :set
+    alias_method :value=, :set
 
   end # class
 

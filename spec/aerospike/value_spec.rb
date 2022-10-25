@@ -25,7 +25,7 @@ RSpec.describe Aerospike::Value do
     end
 
     context 'when value is 2**63 - 1' do
-      let(:value) { 2**63 - 1 }
+      let(:value) { (2**63) - 1 }
 
       it_behaves_like 'an IntegerValue'
     end

@@ -20,11 +20,11 @@ require 'benchmark'
 
 describe Aerospike::Client do
 
-  describe "Predicates", skip: !Support.min_version?("6") do
+  describe "Predicates", skip: Support.min_version?("6") do
 
     let(:key) { Aerospike::Key.new(Support.namespace, 'predexp_ops_spec', 0) }
     let(:client) { Support.client }
-    let(:valid_predicate) { 
+    let(:valid_predicate) {
       [
         Aerospike::PredExp.integer_bin('bin2'),
         Aerospike::PredExp.integer_value(9),
@@ -32,7 +32,7 @@ describe Aerospike::Client do
       ]
      }
 
-    let(:invalid_predicate) { 
+    let(:invalid_predicate) {
       [
         Aerospike::PredExp.string_bin('bin1'),
         Aerospike::PredExp.string_value('value'),
@@ -64,7 +64,7 @@ describe Aerospike::Client do
       end
 
       it "should raise exception if the predicate is invalid" do
-        expect { 
+        expect {
           client.put(key, {'bin3' => 1.1}, predexp: invalid_predicate, fail_on_filtered_out: true)
         }.to raise_error (Aerospike::Exceptions::Aerospike){ |error|
           error.result_code == Aerospike::ResultCode::FILTERED_OUT
@@ -87,7 +87,7 @@ describe Aerospike::Client do
       end
 
       it "should raise exception if the predicate is invalid" do
-        expect { 
+        expect {
           client.get(key, [], predexp: invalid_predicate, fail_on_filtered_out: true)
         }.to raise_error (Aerospike::Exceptions::Aerospike){ |error|
           error.result_code == Aerospike::ResultCode::FILTERED_OUT
@@ -109,7 +109,7 @@ describe Aerospike::Client do
       end
 
       it "should raise exception if the predicate is invalid" do
-        expect { 
+        expect {
           client.get_header(key, predexp: invalid_predicate, fail_on_filtered_out: true)
         }.to raise_error (Aerospike::Exceptions::Aerospike){ |error|
           error.result_code == Aerospike::ResultCode::FILTERED_OUT
@@ -134,7 +134,7 @@ describe Aerospike::Client do
       end
 
       it "should raise exception if the predicate is invalid" do
-        expect { 
+        expect {
           client.delete(key, predexp: invalid_predicate, fail_on_filtered_out: true)
         }.to raise_error (Aerospike::Exceptions::Aerospike){ |error|
           error.result_code == Aerospike::ResultCode::FILTERED_OUT
@@ -158,7 +158,7 @@ describe Aerospike::Client do
       end
 
       it "should raise exception if the predicate is invalid" do
-        expect { 
+        expect {
           client.touch(key, predexp: invalid_predicate, fail_on_filtered_out: true)
         }.to raise_error (Aerospike::Exceptions::Aerospike){ |error|
           error.result_code == Aerospike::ResultCode::FILTERED_OUT
@@ -180,7 +180,7 @@ describe Aerospike::Client do
       end
 
       it "should raise exception if the predicate is invalid" do
-        expect { 
+        expect {
           client.exists(key, predexp: invalid_predicate, fail_on_filtered_out: true)
         }.to raise_error (Aerospike::Exceptions::Aerospike){ |error|
           error.result_code == Aerospike::ResultCode::FILTERED_OUT
@@ -214,7 +214,7 @@ describe Aerospike::Client do
       end
 
       it "should raise exception if the predicate is invalid" do
-        expect { 
+        expect {
         client.operate(key, [
                          Aerospike::Operation.add(bin_int),
         ], predexp: invalid_predicate, fail_on_filtered_out: true)

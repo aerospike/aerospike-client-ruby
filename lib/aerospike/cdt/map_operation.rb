@@ -138,9 +138,7 @@ module Aerospike
       # The map policy dictates the type of map to create when it does not exist.
       # The map policy also specifies the flags used when writing items to the map.
       def self.put(bin_name, key, value, ctx: nil, policy: MapPolicy::DEFAULT)
-        if policy.flags != MapWriteFlags::DEFAULT
-          MapOperation.new(Operation::CDT_MODIFY, PUT, bin_name, key, value, policy.order[:attr], policy.flags, ctx: ctx)
-        else
+        if policy.flags == MapWriteFlags::DEFAULT
           case policy.write_mode
           when MapWriteMode::UPDATE_ONLY
             # Replace doesn't allow map order because it does not create on non-existing key.
@@ -150,6 +148,8 @@ module Aerospike
           else
             MapOperation.new(Operation::CDT_MODIFY, PUT, bin_name, key, value, policy.order[:attr], ctx: ctx)
           end
+        else
+          MapOperation.new(Operation::CDT_MODIFY, PUT, bin_name, key, value, policy.order[:attr], policy.flags, ctx: ctx)
         end
       end
 
@@ -160,9 +160,7 @@ module Aerospike
       # The map policy dictates the type of map to create when it does not exist.
       # The map policy also specifies the flags used when writing items to the map.
       def self.put_items(bin_name, values, ctx: nil, policy: MapPolicy::DEFAULT)
-        if policy.flags != MapWriteFlags::DEFAULT
-          MapOperation.new(Operation::CDT_MODIFY, PUT_ITEMS, bin_name, values, policy.order[:attr], policy.flags, ctx: ctx)
-        else
+        if policy.flags == MapWriteFlags::DEFAULT
           case policy.write_mode
           when MapWriteMode::UPDATE_ONLY
             # Replace doesn't allow map order because it does not create on non-existing key.
@@ -172,6 +170,8 @@ module Aerospike
           else
             MapOperation.new(Operation::CDT_MODIFY, PUT_ITEMS, bin_name, values, policy.order[:attr], ctx: ctx)
           end
+        else
+          MapOperation.new(Operation::CDT_MODIFY, PUT_ITEMS, bin_name, values, policy.order[:attr], policy.flags, ctx: ctx)
         end
       end
 

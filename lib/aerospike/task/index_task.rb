@@ -25,7 +25,7 @@ module Aerospike
 
   class IndexTask < Task
 
-    MATCHER = /.*load_pct=(?<load_pct>\d+(\.\d+)?).*/
+    MATCHER = /.*load_pct=(?<load_pct>\d+(\.\d+)?).*/.freeze
 
     def initialize(cluster, namespace, index_name, done=false)
       super(cluster, done)

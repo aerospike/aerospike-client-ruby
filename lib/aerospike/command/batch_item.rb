@@ -28,7 +28,7 @@ module Aerospike
         .map { |key, keys_with_idx|
           [key.digest, BatchItem.new(key, keys_with_idx.map(&:last))]
         }
-      Hash[map]
+      map.to_h
     end
 
     def initialize(key, indexes)

@@ -30,7 +30,7 @@ module Aerospike
 
     def initialize(node, keys_with_idx)
       @node = node
-      @keys_by_idx = Hash[keys_with_idx.map(&:reverse)]
+      @keys_by_idx = keys_with_idx.map(&:reverse).to_h
     end
 
     def keys

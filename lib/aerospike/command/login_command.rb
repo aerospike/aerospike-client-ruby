@@ -69,7 +69,7 @@ module Aerospike
 
         result = @data_buffer.read(RESULT_CODE)
 
-        if result != 0 
+        if result != 0
           return if result == Aerospike::ResultCode::SECURITY_NOT_ENABLED
           raise Exceptions::Aerospike.new(result, "Authentication failed")
         end
@@ -128,11 +128,11 @@ module Aerospike
     def authenticate_via_token(conn, cluster)
       @data_offset = 8
       policy = cluster.client_policy
-      if policy.auth_mode != Aerospike::AuthMode::PKI
+      if policy.auth_mode == Aerospike::AuthMode::PKI
+        write_header(AUTHENTICATE, 1)
+      else
         write_header(AUTHENTICATE, 2)
         write_field_str(USER, policy.user)
-      else
-        write_header(AUTHENTICATE, 1)
       end
 
       write_field_bytes(SESSION_TOKEN, cluster.session_token) if cluster.session_token

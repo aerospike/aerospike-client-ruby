@@ -97,8 +97,9 @@ module Aerospike
 
         # The only valid server return codes are "ok", "not found" and "filtered out".
         # If other return codes are received, then abort the batch.
-        if result_code != 0 
+        if result_code != 0
             if result_code == Aerospike::ResultCode::KEY_NOT_FOUND_ERROR || result_code == Aerospike::ResultCode::FILTERED_OUT
+              # NOOP
             else
               raise Aerospike::Exceptions::Aerospike.new(result_code)
             end

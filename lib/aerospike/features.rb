@@ -23,10 +23,10 @@ module Aerospike
   module Features
 
     # Server supports List Complex Data Type (CDT)
-    CDT_LIST = :"cdt-list"
+    CDT_LIST = :'cdt-list'
 
     # Server supports Map Complex Data Type (CDT)
-    CDT_MAP = :"cdt-map"
+    CDT_MAP = :'cdt-map'
 
     # Server supports Float data type
     FLOAT = :float
@@ -34,16 +34,16 @@ module Aerospike
     # Server supports geo-spatial data type and indexing
     GEO = :geo
 
-    # Server requires "lut=now" in truncate command (AER-5955)
-    LUT_NOW = :"lut-now"
+    # Server requires 'lut=now' in truncate command (AER-5955)
+    LUT_NOW = :'lut-now'
 
-    # Server supports the new "peers" protocol for automatic node discovery
+    # Server supports the new 'peers' protocol for automatic node discovery
     PEERS = :peers
 
-    # Server supports the "truncate-namespace" command
-    TRUNCATE_NAMESPACE = :"truncate-namespace"
+    # Server supports the 'truncate-namespace' command
+    TRUNCATE_NAMESPACE = :'truncate-namespace'
 
-    # Server supports the "blob-bits" command
-    BLOB_BITS = :"blob-bits"
+    # Server supports the 'blob-bits' command
+    BLOB_BITS = :'blob-bits'
   end
 end

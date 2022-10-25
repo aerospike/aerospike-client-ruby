@@ -653,7 +653,7 @@ module Aerospike
         list << s
       end
 
-      list      
+      list
     end
 
   end

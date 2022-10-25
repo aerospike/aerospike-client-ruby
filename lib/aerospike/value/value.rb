@@ -26,19 +26,19 @@ module Aerospike
     def self.of(value, allow_64bits = false)
       case value
       when Integer
-        if !allow_64bits
-          if value.bit_length < 64
-            res = IntegerValue.new(value)
-          else
-            # big nums > 2**63 are not supported
-            raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::TYPE_NOT_SUPPORTED, "Value type #{value.class} not supported with more than 64 bits.")
-          end
-        else
+        if allow_64bits
           # used in bitwise operations
           if value.bit_length <= 64
             res = IntegerValue.new(value)
           else
             # nums with more than 64 bits are not supported
+            raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::TYPE_NOT_SUPPORTED, "Value type #{value.class} not supported with more than 64 bits.")
+          end
+        else
+          if value.bit_length < 64
+            res = IntegerValue.new(value)
+          else
+            # big nums > 2**63 are not supported
             raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::TYPE_NOT_SUPPORTED, "Value type #{value.class} not supported with more than 64 bits.")
           end
         end

@@ -85,7 +85,7 @@ module Aerospike
 
 
       # Send read commands to the node containing the key's partition replica type.
-      # Write commands are not affected by this setting, because all writes are directed 
+      # Write commands are not affected by this setting, because all writes are directed
       # to the node containing the key's master partition.
       #
       # Default to sending read commands to the node containing the key's master partition.

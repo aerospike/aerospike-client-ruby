@@ -52,7 +52,7 @@ module Aerospike
 	  def self.list_index(index)
 	  	Context.new(0x10, index)
 	  end
-	  
+
 	  ##
 	  # Lookup list by rank.
 	  # 0 = smallest value
@@ -61,13 +61,13 @@ module Aerospike
 	  def self.list_rank(rank)
 	  	Context.new(0x11, rank)
 	  end
-	  
+
 	  ##
 	  # Lookup list by value.
 	  def self.list_value(key)
 	  	Context.new(0x13, key)
 	  end
-	  
+
 	  ##
 	  # Lookup map by index offset.
 	  # If the index is negative, the resolved index starts backwards from end of list.
@@ -80,7 +80,7 @@ module Aerospike
 	  def self.map_index(index)
 	  	Context.new(0x20, index)
 	  end
-	  
+
 	  ##
 	  # Lookup map by rank.
 	  # 0 = smallest value
@@ -89,13 +89,13 @@ module Aerospike
 	  def self.map_rank(rank)
 	  	Context.new(0x21, rank)
 	  end
-	  
+
 	  ##
 	  # Lookup map by key.
 	  def self.map_key(key)
 	  	Context.new(0x22, key)
 	  end
-	  
+
       ##
       # Create map with given type at map key.
       def self.map_key_create(key, order)
@@ -106,7 +106,7 @@ module Aerospike
 	  # Lookup map by value.
 	  def self.map_value(key)
 	  	Context.new(0x23, key)
-	  end      
+	  end
 
     end
   end

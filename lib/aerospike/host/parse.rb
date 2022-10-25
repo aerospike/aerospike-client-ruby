@@ -20,7 +20,7 @@
 module Aerospike
   class Host
     module Parse
-      INTEGER_REGEX = /\A\d+\z/
+      INTEGER_REGEX = /\A\d+\z/.freeze
 
       class << self
         ##

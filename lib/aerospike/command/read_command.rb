@@ -98,7 +98,7 @@ module Aerospike
       receive_size = (sz & 0xFFFFFFFFFFFF) - header_length
 
       # Read remaining message bytes.
-      if compressed_sz 
+      if compressed_sz
         @data_buffer.eat!(MSG_TOTAL_HEADER_SIZE)
       elsif receive_size > 0
         size_buffer_sz(receive_size)
@@ -117,7 +117,7 @@ module Aerospike
           @record = Record.new(@node, @key, nil, generation, expiration)
           return
         end
-  
+
         @record = parse_record(op_count, field_count, generation, expiration)
         return
       end

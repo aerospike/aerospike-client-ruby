@@ -112,7 +112,7 @@ module Aerospike
     def set_write(policy, operation, key, bins)
       begin_cmd
       field_count = estimate_key_size(key, policy)
-      
+
       predexp_size = estimate_predexp(policy.predexp)
       field_count += 1 if predexp_size > 0
 
@@ -138,7 +138,7 @@ module Aerospike
     def set_delete(policy, key)
       begin_cmd
       field_count = estimate_key_size(key)
-      
+
       predexp_size = estimate_predexp(policy.predexp)
       field_count += 1 if predexp_size > 0
 
@@ -153,7 +153,7 @@ module Aerospike
     def set_touch(policy, key)
       begin_cmd
       field_count = estimate_key_size(key)
-      
+
       predexp_size = estimate_predexp(policy.predexp)
       field_count += 1 if predexp_size > 0
 
@@ -170,7 +170,7 @@ module Aerospike
     def set_exists(policy, key)
       begin_cmd
       field_count = estimate_key_size(key)
-      
+
       predexp_size = estimate_predexp(policy.predexp)
       field_count += 1 if predexp_size > 0
 
@@ -185,7 +185,7 @@ module Aerospike
     def set_read_for_key_only(policy, key)
       begin_cmd
       field_count = estimate_key_size(key)
-      
+
       predexp_size = estimate_predexp(policy.predexp)
       field_count += 1 if predexp_size > 0
 
@@ -201,7 +201,7 @@ module Aerospike
       if bin_names && bin_names.length > 0
         begin_cmd
         field_count = estimate_key_size(key)
-        
+
         predexp_size = estimate_predexp(policy.predexp)
         field_count += 1 if predexp_size > 0
 
@@ -229,7 +229,7 @@ module Aerospike
     def set_read_header(policy, key)
       begin_cmd
       field_count = estimate_key_size(key)
-      
+
       predexp_size = estimate_predexp(policy.predexp)
       field_count += 1 if predexp_size > 0
 
@@ -252,7 +252,7 @@ module Aerospike
     def set_operate(policy, key, operations)
       begin_cmd
       field_count = estimate_key_size(key, policy)
-      
+
       predexp_size = estimate_predexp(policy.predexp)
       field_count += 1 if predexp_size > 0
 
@@ -263,7 +263,7 @@ module Aerospike
 
       operations.each do |operation|
         case operation.op_type
-        when Aerospike::Operation::READ, Aerospike::Operation::CDT_READ, 
+        when Aerospike::Operation::READ, Aerospike::Operation::CDT_READ,
               Aerospike::Operation::HLL_READ, Aerospike::Operation::BIT_READ
           read_attr |= INFO1_READ
 
@@ -282,7 +282,7 @@ module Aerospike
           write_attr = INFO2_WRITE
         end
 
-        if [Aerospike::Operation::HLL_MODIFY, Aerospike::Operation::HLL_READ, 
+        if [Aerospike::Operation::HLL_MODIFY, Aerospike::Operation::HLL_READ,
               Aerospike::Operation::BIT_MODIFY, Aerospike::Operation::BIT_READ].include?(operation.op_type)
           record_bin_multiplicity = true
         end
@@ -294,10 +294,10 @@ module Aerospike
 
       write_attr |= INFO2_RESPOND_ALL_OPS if write_attr != 0 && record_bin_multiplicity
 
-      if write_attr != 0
-        write_header_with_policy(policy, read_attr, write_attr, field_count, operations.length)
-      else
+      if write_attr == 0
         write_header(policy, read_attr, write_attr, field_count, operations.length)
+      else
+        write_header_with_policy(policy, read_attr, write_attr, field_count, operations.length)
       end
       write_key(key, policy)
       write_predexp(policy.predexp, predexp_size)
@@ -315,7 +315,7 @@ module Aerospike
     def set_udf(policy, key, package_name, function_name, args)
       begin_cmd
       field_count = estimate_key_size(key, policy)
-      
+
       predexp_size = estimate_predexp(policy.predexp)
       field_count += 1 if predexp_size > 0
 

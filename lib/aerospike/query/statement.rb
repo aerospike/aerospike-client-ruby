@@ -49,7 +49,7 @@ module Aerospike
       # This method is redundant because PredExp can now be set in the base Policy for
       # any transaction (including queries).
       #
-      # NOTE : Policy.predexp takes precedence to this value. This value will be 
+      # NOTE : Policy.predexp takes precedence to this value. This value will be
       # deprecated in the future.
       @predexp = nil
 

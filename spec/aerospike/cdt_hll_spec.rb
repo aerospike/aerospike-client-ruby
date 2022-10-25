@@ -71,10 +71,10 @@ describe "client.operate() - HLL Operations", skip: !Support.min_version?("4.9")
 
       legal_min << index_bits
       legal_min << min_minhash_bits
-      
+
       legal_mid << index_bits
       legal_mid << mid_minhash_bits
-      
+
       legal_max << index_bits
       legal_max << max_allowed_minhash_bits
 
@@ -94,7 +94,7 @@ describe "client.operate() - HLL Operations", skip: !Support.min_version?("4.9")
         illegal_max << index_bits
 
         illegal_zero << 0
-        illegal_min << min_minhash_bits-1
+        illegal_min << (min_minhash_bits-1)
         illegal_max << max_minhash_bits
 
         illegal_descriptions << illegal_zero
@@ -104,15 +104,15 @@ describe "client.operate() - HLL Operations", skip: !Support.min_version?("4.9")
         illegal_min << index_bits
         illegal_max << index_bits
 
-        illegal_min << min_minhash_bits-1
-        illegal_max << max_minhash_bits+1
+        illegal_min << (min_minhash_bits-1)
+        illegal_max << (max_minhash_bits+1)
 
         illegal_descriptions << illegal_min
         illegal_descriptions << illegal_max
 
         if index_bits+max_minhash_bits > 64
           illegal_max1 << index_bits
-          illegal_max1 << 1+max_minhash_bits-(64-(index_bits+max_minhash_bits))
+          illegal_max1 << (1+max_minhash_bits-(64-(index_bits+max_minhash_bits)))
           illegal_descriptions << illegal_max1
         end
       end
@@ -442,7 +442,7 @@ describe "client.operate() - HLL Operations", skip: !Support.min_version?("4.9")
       minhash_bits = desc[1]
 
       expect_success(key,
-        [Aerospike::Operation::delete, 
+        [Aerospike::Operation::delete,
                   HLLOperation::init(hll_bin, index_bits, minhash_bits)])
 
       record = client.get(key)
@@ -834,12 +834,12 @@ describe "client.operate() - HLL Operations", skip: !Support.min_version?("4.9")
 
   def absolute_similarity_error(index_bits, minhash_bits, expected_similarity)
     min_err_index = 1 / Math.sqrt(1<<index_bits)
-    min_err_minhash = 6 * (Math::E ** minhash_bits*-1) / expected_similarity
+    min_err_minhash = 6 * ((Math::E ** minhash_bits)*-1) / expected_similarity
 
     [min_err_index, min_err_minhash].max
   end
 
-  def expect_hmh_similarity(index_bits, minhash_bits, similarity, 
+  def expect_hmh_similarity(index_bits, minhash_bits, similarity,
       expected_similarity, intersect_count, expected_intersect_count)
     sim_err_6sigma = 0.0
 
