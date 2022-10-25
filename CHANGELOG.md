@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.23.0] 2022-10-25
+
+* **New Features**
+  * [CLIENT-1752] Add 'EXISTS' return type for CDT read operations.
+  * [CLIENT-1195] Support partition scans.
+  * [CLIENT-1238] Support max_records on partition scans.
+  * [CLIENT-1940] Lint and Clean up using Rubocop.
+
 ## [2.22.0] 2022-07-14
 
 * **Fixes**
@@ -10,7 +18,7 @@ All notable changes to this project will be documented in this file.
   * [CLIENT-1789] Authentication Retry fails in certain conditions.
 
 ## [2.21.1] - 2022-06-21
-  
+
 This s hotfix release. It is recommended to upgrade your client if you use authentication.
 
 * **Bug Fixes**
