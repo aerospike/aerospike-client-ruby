@@ -66,6 +66,10 @@ module Aerospike
       KEY_VALUE = 8
 
       ##
+      # Return true if count > 0.
+      EXISTS = 13
+
+      ##
       # Default return type: NONE
       DEFAULT_RETURN_TYPE = NONE
 

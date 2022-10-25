@@ -61,6 +61,10 @@ module Aerospike
       VALUE = 7
 
       ##
+      # Return true if count > 0.
+      EXISTS = 13
+
+      ##
       # :private
       #
       # See ListOperation#invert_selection
