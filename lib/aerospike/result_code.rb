@@ -20,6 +20,42 @@ module Aerospike
 
     attr_reader :code
 
+    # One or more keys failed in a batch.
+    BATCH_FAILED = -20
+
+    # No response was received from the server.
+    NO_RESPONSE = -19
+
+    # A network error. Checked the wrapped error for detail.
+    NETWORK_ERROR = -18
+
+    # A common, none-aerospike error. Checked the wrapped error for detail.
+    COMMON_ERROR = -17
+
+    # Max retries limit reached.
+    MAX_RETRIES_EXCEEDED = -16
+
+    # Max errors limit reached.
+    MAX_ERROR_RATE = -15
+
+    # Requested Rack for node/namespace was not defined in the cluster.
+    RACK_NOT_DEFINED = -13
+
+    # Cluster has an invalid partition map, usually due to bad configuration.
+    INVALID_CLUSTER_PARTITION_MAP = -12
+
+    # Server is not accepting requests.
+    SERVER_NOT_AVAILABLE = -11
+
+    # Cluster Name does not match the ClientPolicy.ClusterName value.
+    CLUSTER_NAME_MISMATCH_ERROR = -10
+
+    # Recordset has already been closed or cancelled
+    RECORDSET_CLOSED = -9
+
+    # There were no connections available to the node in the pool, and the pool was limited
+    NO_AVAILABLE_CONNECTIONS_TO_NODE = -8
+
     # Value type not supported by Aerospike server
     TYPE_NOT_SUPPORTED = -7
 
@@ -76,8 +112,8 @@ module Aerospike
     # XDS product is not available.
     NO_XDS = 10
 
-    # Server is not accepting requests.
-    SERVER_NOT_AVAILABLE = 11
+    # Partition is unavailable.
+    PARTITION_UNAVAILABLE = 11
 
     # Operation is not supported with configured bin type (single-bin or
     # multi-bin).
@@ -265,6 +301,45 @@ module Aerospike
 
     def self.message(code)
       case code
+      when BATCH_FAILED
+          "one or more keys failed in a batch"
+
+      when NO_RESPONSE
+          "no response was received from the server"
+
+      when NETWORK_ERROR
+          "network error. Checked the wrapped error for detail"
+
+      when COMMON_ERROR
+          "common, none-aerospike error. Checked the wrapped error for detail"
+
+      when MAX_RETRIES_EXCEEDED
+          "Max retries exceeded"
+
+      when MAX_ERROR_RATE
+          "Max errors limit reached for node"
+
+      when RACK_NOT_DEFINED
+          "Requested Rack for node/namespace was not defined in the cluster."
+
+      when INVALID_CLUSTER_PARTITION_MAP
+          "Cluster has an invalid partition map, usually due to bad configuration."
+
+      when SERVER_NOT_AVAILABLE
+          "Server is not accepting requests."
+
+      when CLUSTER_NAME_MISMATCH_ERROR
+          "Cluster Name does not match the ClientPolicy.ClusterName value"
+
+      when RECORDSET_CLOSED
+          "Recordset has already been closed or cancelled."
+
+      when NO_AVAILABLE_CONNECTIONS_TO_NODE
+          "No available connections to the node. Connection Pool was empty, and limited to certain number of connections."
+
+      when TYPE_NOT_SUPPORTED
+          "Type cannot be converted to Value Type."
+
       when COMMAND_REJECTED
         "Command rejected"
 
@@ -316,8 +391,8 @@ module Aerospike
       when NO_XDS
         "XDS not available"
 
-      when SERVER_NOT_AVAILABLE
-        "Server not available"
+      when PARTITION_UNAVAILABLE
+          "Partition not available"
 
       when BIN_TYPE_ERROR
         "Bin type error"

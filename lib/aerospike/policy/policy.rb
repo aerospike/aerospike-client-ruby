@@ -26,6 +26,9 @@ module Aerospike
     attr_accessor :priority, :timeout, :max_retries, :sleep_between_retries, :consistency_level,
                   :predexp, :fail_on_filtered_out, :replica, :use_compression
 
+    alias total_timeout timeout
+    alias total_timeout= timeout=
+
     def initialize(opt={})
       # Container object for transaction policy attributes used in all database
       # operation calls.

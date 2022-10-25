@@ -53,14 +53,19 @@ module Aerospike
 
     attr_reader :namespace, :set_name, :digest
 
-    def initialize(ns, set, val, digest=nil, v1_compatible: self.class.v1_compatible?)
+    def initialize(ns, set, val, digest=nil, bval: nil, v1_compatible: self.class.v1_compatible?)
       @namespace = ns
       @set_name = set
       @user_key = Value.of(val)
       check_key!(@namespace, @set_name, @user_key, !digest.nil?)
       @digest = digest || compute_digest(v1_compatible)
+      @bval = bval
     end
 
+
+    def bval
+      @bval
+    end
 
     def to_s
       "#{@namespace}:#{@set_name}:#{@user_key}:#{@digest.nil? ? '' : @digest.bytes}"
@@ -83,6 +88,10 @@ module Aerospike
 
     def hash
       @digest.hash
+    end
+
+    def partition_id
+      (@digest[0..3].unpack(Partition::UNPACK_FORMAT)[0] & 0xFFFF) % Node::PARTITIONS
     end
 
     private

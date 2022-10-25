@@ -32,6 +32,9 @@ module Aerospike
       @compressed_data_buffer = nil
       @compressed_data_offset = nil
 
+      @node_partitions = nil
+      @tracker = nil
+
       self
     end
 
@@ -143,12 +146,14 @@ module Aerospike
           set_name = @data_buffer.read(1, size).force_encoding('utf-8')
         when Aerospike::FieldType::KEY
           user_key = Aerospike::bytes_to_key_value(@data_buffer.read(1).ord, @data_buffer, 2, size-1)
+        when Aerospike::FieldType::BVAL_ARRAY
+          bval = @data_buffer.read_uint64_little_endian(1)
         end
 
         i = i.succ
       end
 
-      Aerospike::Key.new(namespace, set_name, user_key, digest)
+      Aerospike::Key.new(namespace, set_name, user_key, digest, bval: bval)
     end
 
     def skip_key(field_count)

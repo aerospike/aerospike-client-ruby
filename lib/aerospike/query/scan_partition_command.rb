@@ -21,10 +21,10 @@ module Aerospike
 
   private
 
-  class ScanCommand < StreamCommand #:nodoc:
+  class ScanPartitionCommand < StreamCommand #:nodoc:
 
-    def initialize(node, policy, namespace, set_name, bin_names, recordset, node_partitions)
-      super(node)
+    def initialize(policy, tracker, node_partitions, namespace, set_name, bin_names, recordset)
+      super(node_partitions.node)
 
       @policy = policy
       @namespace = namespace
@@ -32,10 +32,16 @@ module Aerospike
       @bin_names = bin_names
       @recordset = recordset
       @node_partitions = node_partitions
+      @tracker = tracker
     end
 
     def write_buffer
       set_scan(@policy, @namespace, @set_name, @bin_names, @node_partitions)
+    end
+
+    def should_retry(e)
+      # !! converts nil to false
+      !!@tracker&.should_retry(@node_partitions, e)
     end
 
   end # class

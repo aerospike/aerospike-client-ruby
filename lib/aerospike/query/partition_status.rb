@@ -1,4 +1,5 @@
-# encoding: utf-8
+# frozen_string_literal: true
+
 # Copyright 2014-2020 Aerospike, Inc.
 #
 # Portions may be licensed to Aerospike, Inc. under one or more contributor
@@ -14,30 +15,22 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-require 'aerospike/query/stream_command'
-require 'aerospike/query/recordset'
-
 module Aerospike
 
-  private
+  class PartitionStatus #:nodoc:
+    attr_accessor :bval, :id, :digest, :retry
 
-  class ScanCommand < StreamCommand #:nodoc:
-
-    def initialize(node, policy, namespace, set_name, bin_names, recordset, node_partitions)
-      super(node)
-
-      @policy = policy
-      @namespace = namespace
-      @set_name = set_name
-      @bin_names = bin_names
-      @recordset = recordset
-      @node_partitions = node_partitions
+    def initialize(id)
+      @id = id
+      @retry = true
     end
 
-    def write_buffer
-      set_scan(@policy, @namespace, @set_name, @bin_names, @node_partitions)
+    #
+    # Show the PartitionStatus as String.
+    #
+    def to_s
+      "PartitionStatus<bval: #{@bval}, id: #{@id}, retry: #{@retry}, digest: #{@digest}>"
     end
 
-  end # class
-
-end # module
+  end
+end

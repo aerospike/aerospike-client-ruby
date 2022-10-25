@@ -335,10 +335,14 @@ module Aerospike
       mark_compressed(policy)
     end
 
-    def set_scan(policy, namespace, set_name, bin_names, partitions)
+    def set_scan(policy, namespace, set_name, bin_names, node_partitions)
       # Estimate buffer size
       begin_cmd
       field_count = 0
+
+      parts_full_size = node_partitions.parts_full.length * 2
+      parts_partial_size = node_partitions.parts_partial.length * 20
+      max_records = node_partitions.record_max
 
       if namespace
         @data_offset += namespace.bytesize + FIELD_HEADER_SIZE
@@ -349,7 +353,22 @@ module Aerospike
         @data_offset += set_name.bytesize + FIELD_HEADER_SIZE
         field_count += 1
       end
-      
+
+      if parts_full_size > 0
+        @data_offset += parts_full_size + FIELD_HEADER_SIZE
+        field_count += 1
+      end
+
+      if parts_partial_size > 0
+        @data_offset += parts_partial_size + FIELD_HEADER_SIZE
+        field_count += 1
+      end
+
+      if max_records > 0
+        @data_offset += 8 + FIELD_HEADER_SIZE
+        field_count += 1
+      end
+
       if policy.records_per_second > 0
         @data_offset += 4 + FIELD_HEADER_SIZE
         field_count += 1
@@ -361,9 +380,6 @@ module Aerospike
       # Estimate scan options size.
       # @data_offset += 2 + FIELD_HEADER_SIZE
       # field_count += 1
-
-      @data_offset += partitions.length * 2 + FIELD_HEADER_SIZE
-      field_count += 1
 
       # Estimate scan timeout size.
       @data_offset += 4 + FIELD_HEADER_SIZE
@@ -378,7 +394,7 @@ module Aerospike
       size_buffer
       read_attr = INFO1_READ
 
-      if !policy.include_bin_data
+      unless policy.include_bin_data
         read_attr |= INFO1_NOBINDATA
       end
 
@@ -397,10 +413,26 @@ module Aerospike
         write_field_string(set_name, Aerospike::FieldType::TABLE)
       end
 
-      write_field_header(partitions.length * 2, Aerospike::FieldType::PID_ARRAY)
-      for pid in partitions
-          @data_buffer.write_uint16_little_endian(pid, @data_offset)
-          @data_offset += 2
+      if parts_full_size > 0
+        write_field_header(parts_full_size, Aerospike::FieldType::PID_ARRAY)
+
+        node_partitions.parts_full.each do |part|
+          @data_buffer.write_uint16_little_endian(part.id, @data_offset)
+          @data_offset+=2
+        end
+      end
+
+      if parts_partial_size > 0
+        write_field_header(parts_partial_size, Aerospike::FieldType::DIGEST_ARRAY)
+
+        node_partitions.parts_partial.each do |part|
+          @data_buffer.write_binary(part.digest, @data_offset)
+          @data_offset+=part.digest.length
+        end
+      end
+
+      if max_records > 0
+        write_field_int64(max_records, Aerospike::FieldType::MAX_RECORDS)
       end
 
       if policy.records_per_second > 0
@@ -807,6 +839,12 @@ module Aerospike
       @data_buffer.write_int32(i, @data_offset+FIELD_HEADER_SIZE)
       write_field_header(4, ftype)
       @data_offset += 4
+    end
+
+    def write_field_int64(i, ftype)
+      @data_buffer.write_int64(i, @data_offset+FIELD_HEADER_SIZE)
+      write_field_header(8, ftype)
+      @data_offset += 8
     end
 
     def write_field_bytes(bytes, ftype)

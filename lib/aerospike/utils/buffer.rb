@@ -38,6 +38,7 @@ module Aerospike
     UINT32 = 'N'
     INT64 = 'q>'
     UINT64 = 'Q>'
+    UINT64LE = 'Q'
     DOUBLE = 'G'
 
     DEFAULT_BUFFER_SIZE = 16 * 1024
@@ -160,6 +161,11 @@ module Aerospike
     def read_int64(offset)
       vals = @buf[offset..offset+7]
       vals.unpack(INT64)[0]
+    end
+
+    def read_uint64_little_endian(offset)
+      vals = @buf[offset..offset+7]
+      vals.unpack(UINT64LE)[0]
     end
 
     def read_uint64(offset)

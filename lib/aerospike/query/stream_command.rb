@@ -39,6 +39,8 @@ module Aerospike
         case result_code
         when Aerospike::ResultCode::OK
           # noop
+        when Aerospike::ResultCode::PARTITION_UNAVAILABLE
+          # noop
         when Aerospike::ResultCode::KEY_NOT_FOUND_ERROR
           # consume the rest of the input buffer from the socket
           read_bytes(receive_size - @data_offset) if @data_offset < receive_size
@@ -59,7 +61,16 @@ module Aerospike
         key = parse_key(field_count)
 
         # If cmd is the end marker of the response, do not proceed further
-        return true if (info3 & INFO3_PARTITION_DONE) != 0
+        if (info3 & INFO3_PARTITION_DONE) != 0
+          # When an error code is received, mark partition as unavailable
+          # for the current round. Unavailable partitions will be retried
+          # in the next round. Generation is overloaded as partitionId.
+          if result_code != 0
+            @tracker&.partition_unavailable(@node_partitions, generation)
+          end
+
+          next
+        end
 
         if result_code == 0
           if @recordset.active?
@@ -68,6 +79,8 @@ module Aerospike
             expn = @recordset.is_scan? ? SCAN_TERMINATED_EXCEPTION : QUERY_TERMINATED_EXCEPTION
             raise expn
           end
+
+          @tracker&.set_last(@node_partitions, key, key.bval)
         end
       end # while
 

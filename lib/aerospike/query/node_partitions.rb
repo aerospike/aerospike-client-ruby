@@ -1,4 +1,5 @@
-# encoding: utf-8
+# frozen_string_literal: true
+
 # Copyright 2014-2020 Aerospike, Inc.
 #
 # Portions may be licensed to Aerospike, Inc. under one or more contributor
@@ -14,30 +15,25 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-require 'aerospike/query/stream_command'
-require 'aerospike/query/recordset'
-
 module Aerospike
+  class NodePartitions
+    attr_accessor :node, :parts_full, :parts_partial, :record_count, :record_max, :parts_unavailable
 
-  private
-
-  class ScanCommand < StreamCommand #:nodoc:
-
-    def initialize(node, policy, namespace, set_name, bin_names, recordset, node_partitions)
-      super(node)
-
-      @policy = policy
-      @namespace = namespace
-      @set_name = set_name
-      @bin_names = bin_names
-      @recordset = recordset
-      @node_partitions = node_partitions
+    def initialize(node)
+        @node= node
+        @parts_full=    []
+        @parts_partial= []
+        @record_count= 0
+        @parts_unavailable= 0
+        @record_max= 0
     end
 
-    def write_buffer
-      set_scan(@policy, @namespace, @set_name, @bin_names, @node_partitions)
+    def to_s
+      "Node #{@node.inspect}: full: #{@parts_full.length}, partial: #{@parts_partial.length}"
     end
 
-  end # class
-
-end # module
+    def add_partition(partition_status)
+      partition_status.digest.nil? ? @parts_full << partition_status : @parts_partial << partition_status
+    end
+  end
+end
