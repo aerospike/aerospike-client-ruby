@@ -125,6 +125,11 @@ module Aerospike
       8
     end
 
+    def write_uint64_little_endian(i, offset)
+      @buf[offset, 8] = [i].pack(UINT64LE)
+      8
+    end
+
     def write_double(f, offset)
       @buf[offset, 8] = [f].pack(DOUBLE)
       8
@@ -203,14 +208,28 @@ module Aerospike
       end
     end
 
-    def dump(from=nil, to=nil)
-      from ||= 0
-      to ||= @slice_end - 1
+    def dump(start=0, finish=nil)
+      finish ||= @slice_end - 1
+      width = 16
 
-      @buf.bytes[from...to].each do |c|
-        print c.ord.to_s(16)
-        putc ' '
+      ascii = '|'
+      counter = 0
+
+      print '%06x  ' % start
+      @buf.bytes[start...finish].each do |c|
+        if counter >= start
+          print '%02x ' % c
+          ascii << (c.between?(32, 126) ? c : ?.)
+          if ascii.length >= width
+            ascii << '|'
+            puts ascii
+            ascii = '|'
+            print '%06x  ' % (counter + 1)
+          end
+        end
+        counter += 1
       end
+      puts
     end
 
   end # buffer

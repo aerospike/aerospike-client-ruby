@@ -82,7 +82,7 @@ module Aerospike
           @data_offset += binNameSize
           fieldCount+=1
         end
-      else    
+      else
         @data_offset += @partitions.length * 2 + FIELD_HEADER_SIZE
         fieldCount += 1
 

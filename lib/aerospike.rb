@@ -166,6 +166,8 @@ require 'aerospike/query/partition_filter'
 require 'aerospike/query/node_partitions'
 require 'aerospike/query/scan_executor'
 require 'aerospike/query/scan_partition_command'
+require 'aerospike/query/query_executor'
+require 'aerospike/query/query_partition_command'
 
 require 'aerospike/query/pred_exp/and_or'
 require 'aerospike/query/pred_exp/geo_json_value'

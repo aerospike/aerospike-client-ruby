@@ -34,6 +34,8 @@ module Aerospike
   INFO1_READ = Integer(1 << 0)
   # Get all bins.
   INFO1_GET_ALL = Integer(1 << 1)
+	# Short query
+	INFO1_SHORT_QUERY = Integer(1 << 2)
 
 
   INFO1_BATCH = Integer(1 << 3)
@@ -454,7 +456,7 @@ module Aerospike
       # @data_buffer.write_byte(policy.scan_percent.to_i.ord, @data_offset)
       # @data_offset += 1
 
-      write_field_header(4, Aerospike::FieldType::SCAN_TIMEOUT)
+      write_field_header(4, Aerospike::FieldType::SOCKET_TIMEOUT)
       @data_buffer.write_uint32(policy.socket_timeout.to_i, @data_offset)
       @data_offset += 4
 

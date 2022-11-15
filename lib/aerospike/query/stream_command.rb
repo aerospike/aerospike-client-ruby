@@ -80,7 +80,8 @@ module Aerospike
             raise expn
           end
 
-          @tracker&.set_last(@node_partitions, key, key.bval)
+          # UDF results do not return a key
+          @tracker&.set_last(@node_partitions, key, key.bval) if key
         end
       end # while
 

@@ -34,8 +34,6 @@ module Aerospike
     def initialize(opt={})
       super(opt)
 
-      @max_retries = 0
-
       # Approximates the number of records to return to the client. This number is divided by the
       # number of nodes involved in the query. The actual number of records returned
       # may be less than MaxRecords if node record counts are small and unbalanced across

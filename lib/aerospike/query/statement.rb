@@ -81,6 +81,13 @@ module Aerospike
     end
   end
 
+  def reset_task_id
+    @task_id = rand(RAND_MAX)
+    while @task_id == 0
+      @task_id = rand(RAND_MAX)
+    end
+  end
+
   private
 
   RAND_MAX = 2**63

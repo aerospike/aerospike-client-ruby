@@ -21,34 +21,31 @@ module Aerospike
 
   module FieldType
 
-    NAMESPACE = 0
-    TABLE = 1
-    KEY = 2
-    #BIN = 3
-    DIGEST_RIPE = 4
-    #GU_TID = 5
-    DIGEST_RIPE_ARRAY = 6
-    TRAN_ID = 7    # user supplied transaction id, which is simply passed back
-    SCAN_OPTIONS = 8
-    SCAN_TIMEOUT = 9
-    RECORDS_PER_SECOND = 10
-    PID_ARRAY = 11
-    DIGEST_ARRAY = 12
-    MAX_RECORDS = 13
-    BVAL_ARRAY = 15
-    INDEX_NAME = 21
-    INDEX_RANGE = 22
-    INDEX_FILTER = 23
-    INDEX_LIMIT = 24
-    INDEX_ORDER_BY = 25
-    INDEX_TYPE = 26
-    UDF_PACKAGE_NAME = 30
-    UDF_FUNCTION = 31
-    UDF_ARGLIST = 32
-    UDF_OP = 33
-    QUERY_BINLIST = 40
-    BATCH_INDEX = 41
-    PREDEXP = 43
+    NAMESPACE  = 0
+    TABLE      = 1
+    KEY        = 2
+    DIGEST_RIPE  = 4
+    DIGEST_RIPE_ARRAY     = 6
+    TRAN_ID               = 7 # user supplied transaction id, which is simply passed back
+    SCAN_OPTIONS          = 8
+    SOCKET_TIMEOUT        = 9
+    RECORDS_PER_SECOND    = 10
+    PID_ARRAY             = 11
+    DIGEST_ARRAY          = 12
+    MAX_RECORDS           = 13
+    BVAL_ARRAY            = 15
+    INDEX_NAME            = 21
+    INDEX_RANGE           = 22
+    INDEX_CONTEXT         = 23
+    INDEX_TYPE            = 26
+    UDF_PACKAGE_NAME      = 30
+    UDF_FUNCTION          = 31
+    UDF_ARGLIST           = 32
+    UDF_OP                = 33
+    QUERY_BINLIST         = 40
+    BATCH_INDEX           = 41
+    BATCH_INDEX_WITH_SET  = 42
+    FILTER_EXP            = 43
 
   end # module
 

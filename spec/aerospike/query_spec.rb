@@ -63,6 +63,12 @@ describe Aerospike::Client do
         Support.client.put(key, bin_map)
       end
 
+      Support.client.drop_index(@namespace, @set, "index_str_bin1")
+      Support.client.drop_index(@namespace, @set, "index_int_bin2")
+      Support.client.drop_index(@namespace, @set, "index_lst_bin3")
+      Support.client.drop_index(@namespace, @set, "index_mapkey_bin4")
+      Support.client.drop_index(@namespace, @set, "index_mapval_bin4")
+
       tasks = []
       tasks << Support.client.create_index(@namespace, @set, "index_str_bin1", "bin1", :string)
       tasks << Support.client.create_index(@namespace, @set, "index_int_bin2", "bin2", :numeric)
