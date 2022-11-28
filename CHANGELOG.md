@@ -6,6 +6,8 @@ All notable changes to this project will be documented in this file.
 
 - **New Features**
 
+  - [CLIENT-1984] Support scan-show and query-show info commands.
+
   - [CLIENT-1362] Adds support Aerospike Expression filters. Expression filters are now supported on all commands, including `Client#get`, `Client#put`, `Client#delete`, `Client#operate`, `Client#scan`, `Client#query`, `Client#execute_udf`, etc.
 
     - Adds `Policy#filter_exp` and `Policy#fail_on_filtered_out`
