@@ -22,7 +22,6 @@ module Aerospike
   # so the production and the consumptoin are decoupled
   # there can be an unlimited count of producer threads and consumer threads
   class Recordset
-
     attr_reader :records
 
     def initialize(queue_size = 5000, thread_count = 1, type)
@@ -66,18 +65,21 @@ module Aerospike
 
     # this is called by working threads to signal their job is finished
     # it decreases the count of active threads and puts an EOF on queue when all threads are finished
-    def thread_finished
+    # e is an exception that has happened in the exceutor, and outside of the threads themselves
+    def thread_finished(expn = nil)
       @active_threads.update do |v|
         v -= 1
         @records.enq(nil) if v == 0
         v
       end
+
+      raise expn unless expn.nil?
     end
 
     # this is called by a thread who faced an exception to singnal to terminate the whole operation
     # it also may be called by the user to terminate the command in the middle of fetching records from server nodes
     # it clears the queue so that if any threads are waiting for the queue get unblocked and find out about the cancellation
-    def cancel(expn=nil)
+    def cancel(expn = nil)
       set_exception(expn)
       @cancelled.set(true)
       @records.clear
@@ -104,18 +106,16 @@ module Aerospike
       @filters.nil? || @filters.empty?
     end
 
-  private
+    private
 
-    def set_exception(expn=nil)
+    def set_exception(expn = nil)
       expn ||= (@type == :scan ? SCAN_TERMINATED_EXCEPTION : QUERY_TERMINATED_EXCEPTION)
       @thread_exception.set(expn)
     end
-
   end
 
   private
 
-    SCAN_TERMINATED_EXCEPTION = Aerospike::Exceptions::ScanTerminated.new()
-    QUERY_TERMINATED_EXCEPTION = Aerospike::Exceptions::QueryTerminated.new()
-
+  SCAN_TERMINATED_EXCEPTION = Aerospike::Exceptions::ScanTerminated.new()
+  QUERY_TERMINATED_EXCEPTION = Aerospike::Exceptions::QueryTerminated.new()
 end

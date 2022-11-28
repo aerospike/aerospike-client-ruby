@@ -17,12 +17,11 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-require 'aerospike/aerospike_exception'
+require "aerospike/aerospike_exception"
 
 module Aerospike
   # Polymorphic value classes used to efficiently serialize objects into the wire protocol.
   class Value #:nodoc:
-
     def self.of(value, allow_64bits = false)
       case value
       when Integer
@@ -83,12 +82,10 @@ module Aerospike
         raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::TYPE_NOT_SUPPORTED, "Value type #{value.class} not supported as hash key.")
       end
     end
-
   end # Value
 
   # Empty value.
   class NullValue < Value #:nodoc:
-
     def initialize
       self
     end
@@ -102,7 +99,7 @@ module Aerospike
     end
 
     def to_s
-      ''
+      ""
     end
 
     def estimate_size
@@ -118,12 +115,11 @@ module Aerospike
     end
 
     def to_bytes
-      ''
+      ""
     end
   end
 
   NULL = NullValue.new.freeze
-
 
   # Infinity value.
   class InfinityValue < Value #:nodoc:
@@ -156,7 +152,7 @@ module Aerospike
     end
 
     def to_bytes
-      ''
+      ""
     end
 
     def to_msgpack_ext
@@ -197,7 +193,7 @@ module Aerospike
     end
 
     def to_bytes
-      ''
+      ""
     end
 
     def to_msgpack_ext
@@ -209,10 +205,9 @@ module Aerospike
 
   # Byte array value.
   class BytesValue < Value #:nodoc:
-
     def initialize(value)
       @bytes = value
-      @bytes.force_encoding('binary')
+      @bytes.force_encoding("binary")
 
       self
     end
@@ -244,16 +239,14 @@ module Aerospike
     def pack(packer)
       packer.write(Aerospike::ParticleType::BLOB.chr + @bytes)
     end
-
   end # BytesValue
 
   #######################################
 
   # value string.
   class StringValue < Value #:nodoc:
-
     def initialize(val)
-      @value = val || ''
+      @value = val || ""
       self
     end
 
@@ -289,14 +282,12 @@ module Aerospike
     def to_sym
       @value.to_sym
     end
-
   end # StringValue
 
   #######################################
 
   # Integer value.
   class IntegerValue < Value #:nodoc:
-
     def initialize(val)
       @value = val || 0
       self
@@ -326,20 +317,18 @@ module Aerospike
     def to_bytes
       # Convert integer to big endian unsigned 64 bits.
       # @see http://ruby-doc.org/core-2.3.0/Array.html#method-i-pack
-      [@value].pack('Q>')
+      [@value].pack("Q>")
     end
 
     def to_s
       @value.to_s
     end
-
   end # IntegerValue
 
   #######################################
 
   # Float value.
   class FloatValue < Value #:nodoc:
-
     def initialize(val)
       @value = val || 0.0
       self
@@ -367,13 +356,12 @@ module Aerospike
     end
 
     def to_bytes
-      [@value].pack('G')
+      [@value].pack("G")
     end
 
     def to_s
       @value.to_s
     end
-
   end # FloatValue
 
   #######################################
@@ -381,7 +369,6 @@ module Aerospike
   # List value.
   # Supported by Aerospike 3 servers only.
   class ListValue < Value #:nodoc:
-
     def initialize(list)
       @list = list || []
     end
@@ -415,7 +402,7 @@ module Aerospike
     end
 
     def to_s
-      @list.map{|v| v.to_s}.to_s
+      @list.map { |v| v.to_s }.to_s
     end
 
     private
@@ -430,15 +417,13 @@ module Aerospike
 
       @bytes
     end
-
   end
 
   # #######################################/
 
   # Map value.
-  # Supported by Aerospike 3 servers only.
+  # Supported by Aerospike 3+ servers only.
   class MapValue < Value #:nodoc:
-
     def initialize(vmap)
       @vmap = vmap || {}
     end
@@ -475,7 +460,7 @@ module Aerospike
     end
 
     def to_s
-      @vmap.map{|k, v| "#{k.to_s} => #{v.to_s}" }.to_s
+      @vmap.map { |k, v| "#{k.to_s} => #{v.to_s}" }.to_s
     end
 
     private
@@ -490,7 +475,6 @@ module Aerospike
 
       @bytes
     end
-
   end
 
   # #######################################/
@@ -498,7 +482,6 @@ module Aerospike
   # GeoJSON value.
   # Supported by Aerospike server version 3.7 and later.
   class GeoJSONValue < Value #:nodoc:
-
     def initialize(json)
       @json = json
       @bytes = json.to_json
@@ -535,7 +518,6 @@ module Aerospike
     def to_s
       @json
     end
-
   end
 
   # #######################################/
@@ -543,12 +525,17 @@ module Aerospike
   # HLLValue value. Encapsulates a HyperLogLog value.
   # Supported by Aerospike server version 4.9 and later.
   class HLLValue < Value #:nodoc:
+    attr_reader :bytes
 
     def initialize(value)
       @bytes = value
-      @bytes.force_encoding('binary')
+      @bytes.force_encoding("binary")
 
       self
+    end
+
+    def ==(other)
+      @bytes.to_s == other.to_s
     end
 
     def type
@@ -578,7 +565,6 @@ module Aerospike
     def pack(packer)
       packer.write(Aerospike::ParticleType::BLOB.chr + @bytes)
     end
-
   end
 
   #######################################
@@ -594,63 +580,49 @@ module Aerospike
   protected
 
   def self.bytes_to_particle(type, buf, offset, length) # :nodoc:
-
     case type
     when Aerospike::ParticleType::STRING
       bytes = buf.read(offset, length)
       bytes.force_encoding(Aerospike.encoding)
-
     when Aerospike::ParticleType::INTEGER
       buf.read_int64(offset)
-
     when Aerospike::ParticleType::DOUBLE
       buf.read_double(offset)
-
     when Aerospike::ParticleType::BOOL
       buf.read_bool(offset, length)
-
     when Aerospike::ParticleType::BLOB
-      buf.read(offset,length)
-
+      buf.read(offset, length)
     when Aerospike::ParticleType::LIST
       Unpacker.use do |unpacker|
         data = buf.read(offset, length)
         unpacker.unpack(data)
       end
-
     when Aerospike::ParticleType::MAP
       Unpacker.use do |unpacker|
         data = buf.read(offset, length)
         unpacker.unpack(data)
       end
-
     when Aerospike::ParticleType::GEOJSON
       # ignore the flags for now
       ncells = buf.read_int16(offset + 1)
       hdrsz = 1 + 2 + (ncells * 8)
       Aerospike::GeoJSON.new(buf.read(offset + hdrsz, length - hdrsz))
-
     when Aerospike::ParticleType::HLL
-      bytes = buf.read(offset,length)
+      bytes = buf.read(offset, length)
       Aerospike::HLLValue.new(bytes)
-
     else
       nil
     end
   end
 
   def self.bytes_to_key_value(type, buf, offset, len) # :nodoc:
-
     case type
     when Aerospike::ParticleType::STRING
       StringValue.new(buf.read(offset, len))
-
     when Aerospike::ParticleType::INTEGER
       IntegerValue.new(buf.read_var_int64(offset, len))
-
     when Aerospike::ParticleType::BLOB
-      BytesValue.new(buf.read(offset,len))
-
+      BytesValue.new(buf.read(offset, len))
     else
       nil
     end
@@ -663,7 +635,6 @@ module Aerospike
   # Boolean value.
   # Supported by Aerospike server 5.6+ only.
   class BoolValue < Value #:nodoc:
-
     def initialize(val)
       @value = val || false
       self
@@ -698,6 +669,5 @@ module Aerospike
     def to_s
       @value.to_s
     end
-
   end # BoolValue
 end # module

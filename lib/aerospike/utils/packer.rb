@@ -14,13 +14,11 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-require 'msgpack'
-require 'aerospike/utils/pool'
+require "msgpack"
+require "aerospike/utils/pool"
 
 module Aerospike
-
   class Packer < MessagePack::Packer #:nodoc:
-
     AS_EXT_TYPE = -1
 
     @@pool = Pool.new
@@ -44,9 +42,12 @@ module Aerospike
       buffer << [val].pack("S>")
     end
 
+    def write_raw(buf)
+      buffer.write(buf)
+    end
+
     def bytes
-      self.to_s.force_encoding('binary')
+      self.to_s.force_encoding("binary")
     end
   end
-
 end

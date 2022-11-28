@@ -18,7 +18,6 @@ include Aerospike::CDT
 include Aerospike::ResultCode
 
 describe "client.operate() - HLL Operations", skip: !Support.min_version?("4.9") do
-
   let(:client) { Support.client }
   let(:key) { Support.gen_random_key(0, key_val: "ophkey") }
   let(:key0) { Support.gen_random_key(0, key_val: "ophkey0") }
@@ -43,7 +42,6 @@ describe "client.operate() - HLL Operations", skip: !Support.min_version?("4.9")
   illegal_descriptions = []
 
   before(:each) do
-
     legal_zero = []
     legal_min = []
     legal_mid = []
@@ -94,7 +92,7 @@ describe "client.operate() - HLL Operations", skip: !Support.min_version?("4.9")
         illegal_max << index_bits
 
         illegal_zero << 0
-        illegal_min << (min_minhash_bits-1)
+        illegal_min << (min_minhash_bits - 1)
         illegal_max << max_minhash_bits
 
         illegal_descriptions << illegal_zero
@@ -104,20 +102,20 @@ describe "client.operate() - HLL Operations", skip: !Support.min_version?("4.9")
         illegal_min << index_bits
         illegal_max << index_bits
 
-        illegal_min << (min_minhash_bits-1)
-        illegal_max << (max_minhash_bits+1)
+        illegal_min << (min_minhash_bits - 1)
+        illegal_max << (max_minhash_bits + 1)
 
         illegal_descriptions << illegal_min
         illegal_descriptions << illegal_max
 
-        if index_bits+max_minhash_bits > 64
+        if index_bits + max_minhash_bits > 64
           illegal_max1 << index_bits
-          illegal_max1 << (1+max_minhash_bits-(64-(index_bits+max_minhash_bits)))
+          illegal_max1 << (1 + max_minhash_bits - (64 - (index_bits + max_minhash_bits)))
           illegal_descriptions << illegal_max1
         end
       end
       index_bits += 4
-    end while index_bits <= max_index_bits+5
+    end while index_bits <= max_index_bits + 5
   end
 
   it "Init should work" do
@@ -137,15 +135,15 @@ describe "client.operate() - HLL Operations", skip: !Support.min_version?("4.9")
 
     # Keep record around win hll_bin is removed.
     expect_success(key,
-      [Aerospike::Operation::delete,
-      HLLOperation::init("#{hll_bin}other", index_bits, -1)])
+                   [Aerospike::Operation::delete,
+                    HLLOperation::init("#{hll_bin}other", index_bits, -1)])
 
     # create_only
     c = HLLPolicy.new(write_flags: HLLWriteFlags::CREATE_ONLY)
 
     expect_success(key, [HLLOperation::init(hll_bin, index_bits, -1, c)])
     expect_errors(key, Aerospike::ResultCode::BIN_EXISTS_ERROR,
-      [HLLOperation::init(hll_bin, index_bits, -1, c)])
+                  [HLLOperation::init(hll_bin, index_bits, -1, c)])
 
     # update_only
     u = HLLPolicy.new(write_flags: HLLWriteFlags::UPDATE_ONLY)
@@ -153,7 +151,7 @@ describe "client.operate() - HLL Operations", skip: !Support.min_version?("4.9")
     expect_success(key, [HLLOperation::init(hll_bin, index_bits, -1, u)])
     expect_success(key, [Aerospike::Operation::put(Aerospike::Bin.new(hll_bin, nil))])
     expect_errors(key, Aerospike::ResultCode::BIN_NOT_FOUND,
-      [HLLOperation::init(hll_bin, index_bits, -1, u)])
+                  [HLLOperation::init(hll_bin, index_bits, -1, u)])
 
     # create_only no_fail
     cn = HLLPolicy.new(write_flags: HLLWriteFlags::CREATE_ONLY | HLLWriteFlags::NO_FAIL)
@@ -174,13 +172,13 @@ describe "client.operate() - HLL Operations", skip: !Support.min_version?("4.9")
     f = HLLPolicy.new(write_flags: HLLWriteFlags::ALLOW_FOLD)
 
     expect_errors(key, Aerospike::ResultCode::PARAMETER_ERROR,
-      [HLLOperation::init(hll_bin, index_bits, -1, f)])
+                  [HLLOperation::init(hll_bin, index_bits, -1, f)])
   end
 
   it "Bad Init should NOT work" do
     expect_success(key, [Aerospike::Operation::delete, HLLOperation::init(hll_bin, max_index_bits, 0)])
     expect_errors(key, Aerospike::ResultCode::OP_NOT_APPLICABLE,
-      [HLLOperation::init(hll_bin, -1, max_minhash_bits)])
+                  [HLLOperation::init(hll_bin, -1, max_minhash_bits)])
   end
 
   it "Add Init should work" do
@@ -194,21 +192,21 @@ describe "client.operate() - HLL Operations", skip: !Support.min_version?("4.9")
 
     # Keep record around win hll_bin is removed.
     expect_success(key,
-      [Aerospike::Operation::delete,
-      HLLOperation::init("#{hll_bin}other", index_bits, -1)])
+                   [Aerospike::Operation::delete,
+                    HLLOperation::init("#{hll_bin}other", index_bits, -1)])
 
     # create_only
     c = HLLPolicy.new(write_flags: HLLWriteFlags::CREATE_ONLY)
 
     expect_success(key, [HLLOperation::add(hll_bin, *entries, index_bit_count: index_bits, policy: c)])
     expect_errors(key, Aerospike::ResultCode::BIN_EXISTS_ERROR,
-      [HLLOperation::add( hll_bin, entries, index_bits, -1, c)])
+                  [HLLOperation::add(hll_bin, entries, index_bits, -1, c)])
 
     # update_only
     u = HLLPolicy.new(write_flags: HLLWriteFlags::UPDATE_ONLY)
 
     expect_errors(key, Aerospike::ResultCode::PARAMETER_ERROR,
-      [HLLOperation::add(hll_bin, entries, index_bit_count: index_bits, policy: u)])
+                  [HLLOperation::add(hll_bin, entries, index_bit_count: index_bits, policy: u)])
 
     # create_only no_fail
     cn = HLLPolicy.new(write_flags: HLLWriteFlags::CREATE_ONLY | HLLWriteFlags::NO_FAIL)
@@ -222,14 +220,14 @@ describe "client.operate() - HLL Operations", skip: !Support.min_version?("4.9")
     f = HLLPolicy.new(write_flags: HLLWriteFlags::ALLOW_FOLD)
 
     expect_errors(key, Aerospike::ResultCode::PARAMETER_ERROR,
-      [HLLOperation::add(hll_bin, entries, index_bit_count: index_bits, policy: f)])
+                  [HLLOperation::add(hll_bin, entries, index_bit_count: index_bits, policy: f)])
   end
 
   it "Fold should work" do
     vals0 = []
     vals1 = []
 
-    (0...(n_entries/2)).each do |i|
+    (0...(n_entries / 2)).each do |i|
       vals0 << "key #{i}"
     end
 
@@ -249,29 +247,29 @@ describe "client.operate() - HLL Operations", skip: !Support.min_version?("4.9")
 
     # Keep record around win hll_bin is removed.
     expect_success(key,
-      [Aerospike::Operation::delete,
-      HLLOperation::init("#{hll_bin}other", index_bits, -1),
-      HLLOperation::init(hll_bin, index_bits, -1)])
+                   [Aerospike::Operation::delete,
+                    HLLOperation::init("#{hll_bin}other", index_bits, -1),
+                    HLLOperation::init(hll_bin, index_bits, -1)])
 
     # Exists.
     expect_success(key, [HLLOperation::fold(hll_bin, fold_down)])
     expect_errors(key, Aerospike::ResultCode::OP_NOT_APPLICABLE,
-      [HLLOperation::fold(hll_bin, fold_up)])
+                  [HLLOperation::fold(hll_bin, fold_up)])
 
     # Does not exist.
     expect_success(key, [Aerospike::Operation::put(Aerospike::Bin.new(hll_bin, nil))])
 
     expect_errors(key, Aerospike::ResultCode::BIN_NOT_FOUND,
-      [HLLOperation::fold(hll_bin, fold_down)])
+                  [HLLOperation::fold(hll_bin, fold_down)])
   end
 
   it "Set Union should work" do
     vals = []
 
-   (0...keys.length).each do |i|
+    (0...keys.length).each do |i|
       sub_vals = []
 
-      (0...n_entries/3).each do |j|
+      (0...n_entries / 3).each do |j|
         sub_vals << "key#{i} #{j}"
       end
 
@@ -295,9 +293,9 @@ describe "client.operate() - HLL Operations", skip: !Support.min_version?("4.9")
     # Keep record around win hll_bin is removed.
     hlls = []
     record = expect_success(key,
-      [Aerospike::Operation::delete,
-      HLLOperation::add(other_name, *entries, index_bit_count: index_bits),
-      Aerospike::Operation::get(other_name)])
+                            [Aerospike::Operation::delete,
+                             HLLOperation::add(other_name, *entries, index_bit_count: index_bits),
+                             Aerospike::Operation::get(other_name)])
     result_list = record.bins[other_name]
     hll = result_list[1]
 
@@ -308,7 +306,7 @@ describe "client.operate() - HLL Operations", skip: !Support.min_version?("4.9")
 
     expect_success(key, [HLLOperation::set_union(hll_bin, *hlls, policy: c)])
     expect_errors(key, Aerospike::ResultCode::BIN_EXISTS_ERROR,
-      [HLLOperation::set_union(hll_bin, *hlls, c)])
+                  [HLLOperation::set_union(hll_bin, *hlls, c)])
 
     # update_only
     u = HLLPolicy.new(write_flags: HLLWriteFlags::UPDATE_ONLY)
@@ -316,7 +314,7 @@ describe "client.operate() - HLL Operations", skip: !Support.min_version?("4.9")
     expect_success(key, [HLLOperation::set_union(hll_bin, *hlls, policy: u)])
     expect_success(key, [Aerospike::Operation::put(Aerospike::Bin.new(hll_bin, nil))])
     expect_errors(key, Aerospike::ResultCode::BIN_NOT_FOUND,
-      [HLLOperation::set_union(hll_bin, *hlls, u)])
+                  [HLLOperation::set_union(hll_bin, *hlls, u)])
 
     # create_only no_fail
     cn = HLLPolicy.new(write_flags: HLLWriteFlags::CREATE_ONLY | HLLWriteFlags::NO_FAIL)
@@ -348,21 +346,21 @@ describe "client.operate() - HLL Operations", skip: !Support.min_version?("4.9")
 
     # Keep record around win hll_bin is removed.
     expect_success(key,
-      [Aerospike::Operation::delete,
-      HLLOperation::init("#{hll_bin}other", index_bits, -1),
-      HLLOperation::init(hll_bin, index_bits, -1)])
+                   [Aerospike::Operation::delete,
+                    HLLOperation::init("#{hll_bin}other", index_bits, -1),
+                    HLLOperation::init(hll_bin, index_bits, -1)])
 
     # Exists.
     expect_success(key, [HLLOperation::refresh_count(hll_bin),
-            HLLOperation::refresh_count(hll_bin)])
+                         HLLOperation::refresh_count(hll_bin)])
     expect_success(key, [HLLOperation::add(hll_bin, *entries)])
     expect_success(key, [HLLOperation::refresh_count(hll_bin),
-            HLLOperation::refresh_count(hll_bin)])
+                         HLLOperation::refresh_count(hll_bin)])
 
     # Does not exist.
     expect_success(key, [Aerospike::Operation::put(Aerospike::Bin.new(hll_bin, nil))])
     expect_errors(key, Aerospike::ResultCode::BIN_NOT_FOUND,
-      [HLLOperation::refresh_count(hll_bin)])
+                  [HLLOperation::refresh_count(hll_bin)])
   end
 
   it "Get Count should work" do
@@ -370,9 +368,9 @@ describe "client.operate() - HLL Operations", skip: !Support.min_version?("4.9")
 
     # Keep record around win hll_bin is removed.
     expect_success(key,
-      [Aerospike::Operation::delete,
-      HLLOperation::init("#{hll_bin}other", index_bits, -1),
-      HLLOperation::add(hll_bin, *entries, index_bit_count: index_bits)])
+                   [Aerospike::Operation::delete,
+                    HLLOperation::init("#{hll_bin}other", index_bits, -1),
+                    HLLOperation::add(hll_bin, *entries, index_bit_count: index_bits)])
 
     # Exists.
     record = expect_success(key, [HLLOperation::get_count(hll_bin)])
@@ -382,7 +380,8 @@ describe "client.operate() - HLL Operations", skip: !Support.min_version?("4.9")
     # Does not exist.
     expect_success(key, [Aerospike::Operation::put(Aerospike::Bin.new(hll_bin, nil))])
     record = expect_success(key, [HLLOperation::get_count(hll_bin)])
-    expect(record.bins).to be nil
+    expected = { "ophbin" => nil }
+    expect(record.bins).to eq expected
   end
 
   it "Get Union should work" do
@@ -394,14 +393,14 @@ describe "client.operate() - HLL Operations", skip: !Support.min_version?("4.9")
     (0...keys.length).each do |i|
       sub_vals = []
 
-      (0...(n_entries/3)).each do |j|
+      (0...(n_entries / 3)).each do |j|
         sub_vals << "key#{i} #{j}"
       end
 
       record = expect_success(keys[i],
-        [Aerospike::Operation::delete,
-        HLLOperation::add(hll_bin, *sub_vals, index_bit_count: index_bits),
-        Aerospike::Operation::get(hll_bin)])
+                              [Aerospike::Operation::delete,
+                               HLLOperation::add(hll_bin, *sub_vals, index_bit_count: index_bits),
+                               Aerospike::Operation::get(hll_bin)])
 
       result_list = record.bins[hll_bin]
       hlls << result_list[1]
@@ -411,13 +410,13 @@ describe "client.operate() - HLL Operations", skip: !Support.min_version?("4.9")
 
     # Keep record around win hll_bin is removed.
     expect_success(key,
-      [Aerospike::Operation::delete,
-      HLLOperation::init("#{hll_bin}other", index_bits, -1),
-      HLLOperation::add(hll_bin, *vals[0], index_bit_count: index_bits)])
+                   [Aerospike::Operation::delete,
+                    HLLOperation::init("#{hll_bin}other", index_bits, -1),
+                    HLLOperation::add(hll_bin, *vals[0], index_bit_count: index_bits)])
 
     record = expect_success(key,
-      [HLLOperation::get_union(hll_bin, *hlls),
-      HLLOperation::get_union_count(hll_bin, *hlls)])
+                            [HLLOperation::get_union(hll_bin, *hlls),
+                             HLLOperation::get_union_count(hll_bin, *hlls)])
     result_list = record.bins[hll_bin]
     union_count = result_list[1]
 
@@ -428,8 +427,8 @@ describe "client.operate() - HLL Operations", skip: !Support.min_version?("4.9")
     bin = Aerospike::Bin.new(hll_bin, union_hll)
 
     record = expect_success(key,
-      [Aerospike::Operation::put(bin),
-      HLLOperation::get_count(hll_bin)])
+                            [Aerospike::Operation::put(bin),
+                             HLLOperation::get_count(hll_bin)])
     result_list = record.bins[hll_bin]
     union_count_2 = result_list[1]
 
@@ -442,8 +441,8 @@ describe "client.operate() - HLL Operations", skip: !Support.min_version?("4.9")
       minhash_bits = desc[1]
 
       expect_success(key,
-        [Aerospike::Operation::delete,
-                  HLLOperation::init(hll_bin, index_bits, minhash_bits)])
+                     [Aerospike::Operation::delete,
+                      HLLOperation::init(hll_bin, index_bits, minhash_bits)])
 
       record = client.get(key)
       hll = record.bins[hll_bin]
@@ -452,8 +451,8 @@ describe "client.operate() - HLL Operations", skip: !Support.min_version?("4.9")
       client.put(key, Aerospike::Bin.new(hll_bin, hll))
 
       record = expect_success(key,
-        [HLLOperation::get_count(hll_bin),
-                  HLLOperation::describe(hll_bin)])
+                              [HLLOperation::get_count(hll_bin),
+                               HLLOperation::describe(hll_bin)])
 
       result_list = record.bins[hll_bin]
       count = result_list[0]
@@ -468,7 +467,7 @@ describe "client.operate() - HLL Operations", skip: !Support.min_version?("4.9")
     overlaps = [0.0001, 0.001, 0.01, 0.1, 0.5]
 
     overlaps.each do |overlap|
-      expected_intersect_count =(n_entries * overlap).floor
+      expected_intersect_count = (n_entries * overlap).floor
       common = []
 
       (0...expected_intersect_count).each do |i|
@@ -505,9 +504,9 @@ describe "client.operate() - HLL Operations", skip: !Support.min_version?("4.9")
       n_minhash_bits = desc[1]
 
       record = expect_success(key,
-        [Aerospike::Operation::delete,
-        HLLOperation::init(hll_bin, n_index_bits, n_minhash_bits),
-        Aerospike::Operation::get(hll_bin)])
+                              [Aerospike::Operation::delete,
+                               HLLOperation::init(hll_bin, n_index_bits, n_minhash_bits),
+                               Aerospike::Operation::get(hll_bin)])
 
       result_list = record.bins[hll_bin]
       hlls = []
@@ -515,8 +514,8 @@ describe "client.operate() - HLL Operations", skip: !Support.min_version?("4.9")
       hlls << result_list[1]
 
       record = expect_success(key,
-        [HLLOperation::get_similarity(hll_bin, *hlls),
-        HLLOperation::get_intersect_count(hll_bin, *hlls)])
+                              [HLLOperation::get_similarity(hll_bin, *hlls),
+                               HLLOperation::get_intersect_count(hll_bin, *hlls)])
 
       result_list = record.bins[hll_bin]
 
@@ -538,11 +537,11 @@ describe "client.operate() - HLL Operations", skip: !Support.min_version?("4.9")
       break if minhash_bits != 0
 
       record = expect_success(key,
-        [Aerospike::Operation::delete,
-        HLLOperation::add(hll_bin, *entries, index_bit_count: index_bits, minhash_bit_count: minhash_bits),
-        Aerospike::Operation::get(hll_bin),
-        HLLOperation::add(other_bin_name, *entries, index_bit_count: index_bits, minhash_bit_count: 4),
-        Aerospike::Operation::get(other_bin_name)])
+                              [Aerospike::Operation::delete,
+                               HLLOperation::add(hll_bin, *entries, index_bit_count: index_bits, minhash_bit_count: minhash_bits),
+                               Aerospike::Operation::get(hll_bin),
+                               HLLOperation::add(other_bin_name, *entries, index_bit_count: index_bits, minhash_bit_count: 4),
+                               Aerospike::Operation::get(other_bin_name)])
 
       hlls = []
       hmhs = []
@@ -556,35 +555,35 @@ describe "client.operate() - HLL Operations", skip: !Support.min_version?("4.9")
       hmhs << hmhs[0]
 
       record = expect_success(key,
-        [HLLOperation::get_intersect_count(hll_bin, *hlls),
-                  HLLOperation::get_similarity(hll_bin, *hlls)])
+                              [HLLOperation::get_intersect_count(hll_bin, *hlls),
+                               HLLOperation::get_similarity(hll_bin, *hlls)])
       result_list = record.bins[hll_bin]
 
       intersect_count = result_list[0]
 
-      expect(intersect_count < 1.8*entries.length).to be true
+      expect(intersect_count < 1.8 * entries.length).to be true
 
       hlls << hlls[0]
 
       expect_errors(key, Aerospike::ResultCode::PARAMETER_ERROR,
-        [HLLOperation::get_intersect_count(hll_bin, *hlls)])
+                    [HLLOperation::get_intersect_count(hll_bin, *hlls)])
       expect_errors(key, Aerospike::ResultCode::PARAMETER_ERROR,
-        [HLLOperation::get_similarity(hll_bin, *hlls)])
+                    [HLLOperation::get_similarity(hll_bin, *hlls)])
 
       record = expect_success(key,
-        [HLLOperation::get_intersect_count(hll_bin, *hmhs),
-                  HLLOperation::get_similarity(hll_bin, *hmhs)])
+                              [HLLOperation::get_intersect_count(hll_bin, *hmhs),
+                               HLLOperation::get_similarity(hll_bin, *hmhs)])
       result_list = record.bins[hll_bin]
       intersect_count = result_list[0]
 
-      expect(intersect_count < 1.8*entries.length).to be true
+      expect(intersect_count < 1.8 * entries.length).to be true
 
       hmhs << hmhs[0]
 
       expect_errors(key, Aerospike::ResultCode::OP_NOT_APPLICABLE,
-        [HLLOperation::get_intersect_count(hll_bin, *hmhs)])
+                    [HLLOperation::get_intersect_count(hll_bin, *hmhs)])
       expect_errors(key, Aerospike::ResultCode::OP_NOT_APPLICABLE,
-        [HLLOperation::get_similarity(hll_bin, *hmhs)])
+                    [HLLOperation::get_similarity(hll_bin, *hmhs)])
     end
   end
 
@@ -601,41 +600,40 @@ describe "client.operate() - HLL Operations", skip: !Support.min_version?("4.9")
   def expect_errors(key, err_code, ops)
     expect {
       client.operate(key, ops, operate_policy)
-    }.to raise_error (Aerospike::Exceptions::Aerospike){ |error|
+    }.to raise_error (Aerospike::Exceptions::Aerospike) { |error|
       error.result_code == err_code
     }
   end
 
   def expect_success(key, ops)
-      client.operate(key, ops, operate_policy)
+    client.operate(key, ops, operate_policy)
   end
 
   def expect_init(index_bits, minhash_bits, should_pass)
-      hll_policy = HLLPolicy::DEFAULT
-      ops = [
-        HLLOperation::init(hll_bin, index_bits, minhash_bits, hll_policy),
-        HLLOperation::get_count(hll_bin),
-        HLLOperation::refresh_count(hll_bin),
-        HLLOperation::describe(hll_bin),
-      ]
+    hll_policy = HLLPolicy::DEFAULT
+    ops = [
+      HLLOperation::init(hll_bin, index_bits, minhash_bits, hll_policy),
+      HLLOperation::get_count(hll_bin),
+      HLLOperation::refresh_count(hll_bin),
+      HLLOperation::describe(hll_bin),
+    ]
 
-      if !should_pass
-        expect_errors(key, Aerospike::ResultCode::PARAMETER_ERROR, ops)
-        return
-      end
-
-      record = expect_success(key, ops)
-      result_list = record.bins[hll_bin]
-
-      count = result_list[1]
-      count1 = result_list[2]
-      description = result_list[3]
-
-      # expect_description(description, index_bits, minhash_bits)
-      expect(count).to eq 0
-      expect(count1).to eq 0
+    if !should_pass
+      expect_errors(key, Aerospike::ResultCode::PARAMETER_ERROR, ops)
+      return
     end
 
+    record = expect_success(key, ops)
+    result_list = record.bins[hll_bin]
+
+    count = result_list[1]
+    count1 = result_list[2]
+    description = result_list[3]
+
+    # expect_description(description, index_bits, minhash_bits)
+    expect(count).to eq 0
+    expect(count1).to eq 0
+  end
 
   def expect_description(description, index_bits, minhash_bits)
     expect(index_bits).to eq description[0]
@@ -644,8 +642,8 @@ describe "client.operate() - HLL Operations", skip: !Support.min_version?("4.9")
 
   def check_bits(index_bits, minhash_bits)
     return !(index_bits < min_index_bits || index_bits > max_index_bits ||
-      (minhash_bits != 0 && minhash_bits < min_minhash_bits) ||
-      minhash_bits > max_minhash_bits || index_bits+minhash_bits > 64)
+             (minhash_bits != 0 && minhash_bits < min_minhash_bits) ||
+             minhash_bits > max_minhash_bits || index_bits + minhash_bits > 64)
   end
 
   def relative_count_error(n_index_bits)
@@ -657,9 +655,8 @@ describe "client.operate() - HLL Operations", skip: !Support.min_version?("4.9")
     expect(minhash_bits).to eq description[1]
   end
 
-
   def is_within_relative_error(expected, estimate, relative_error)
-    return expected*(1-relative_error) <= estimate || estimate <= expected*(1+relative_error)
+    return expected * (1 - relative_error) <= estimate || estimate <= expected * (1 + relative_error)
   end
 
   def expect_hll_count(index_bits, hll_count, expected)
@@ -698,7 +695,6 @@ describe "client.operate() - HLL Operations", skip: !Support.min_version?("4.9")
   end
 
   def expect_fold(vals0, vals1, index_bits)
-
     (min_index_bits..index_bits).each do |ix|
       if !check_bits(index_bits, 0) || !check_bits(ix, 0)
         # Expected valid inputs
@@ -706,11 +702,11 @@ describe "client.operate() - HLL Operations", skip: !Support.min_version?("4.9")
       end
 
       recorda = expect_success(key,
-        [Aerospike::Operation::delete,
-        HLLOperation::add(hll_bin, *vals0, index_bit_count: index_bits),
-        HLLOperation::get_count(hll_bin),
-        HLLOperation::refresh_count(hll_bin),
-        HLLOperation::describe(hll_bin)])
+                               [Aerospike::Operation::delete,
+                                HLLOperation::add(hll_bin, *vals0, index_bit_count: index_bits),
+                                HLLOperation::get_count(hll_bin),
+                                HLLOperation::refresh_count(hll_bin),
+                                HLLOperation::describe(hll_bin)])
 
       resulta_list = recorda.bins[hll_bin]
       counta = resulta_list[1]
@@ -722,12 +718,12 @@ describe "client.operate() - HLL Operations", skip: !Support.min_version?("4.9")
       expect(counta).to eq counta1
 
       recordb = expect_success(key,
-        [HLLOperation::fold(hll_bin, ix),
-        HLLOperation::get_count(hll_bin),
-        HLLOperation::add(hll_bin, *vals0),
-        HLLOperation::add(hll_bin, *vals1),
-        HLLOperation::get_count(hll_bin),
-        HLLOperation::describe(hll_bin)])
+                               [HLLOperation::fold(hll_bin, ix),
+                                HLLOperation::get_count(hll_bin),
+                                HLLOperation::add(hll_bin, *vals0),
+                                HLLOperation::add(hll_bin, *vals1),
+                                HLLOperation::get_count(hll_bin),
+                                HLLOperation::describe(hll_bin)])
 
       resultb_list = recordb.bins[hll_bin]
       countb = resultb_list[1]
@@ -738,7 +734,7 @@ describe "client.operate() - HLL Operations", skip: !Support.min_version?("4.9")
       expect(0).to eq n_added0
       expect_description(descriptionb, ix, 0)
       expect_hll_count(ix, countb, vals0.length)
-      expect_hll_count(ix, countb1, vals0.length+vals1.length)
+      expect_hll_count(ix, countb1, vals0.length + vals1.length)
     end
   end
 
@@ -772,10 +768,10 @@ describe "client.operate() - HLL Operations", skip: !Support.min_version?("4.9")
 
       union_expected += sub_vals.length
 
-      record = expect_success(keys[i],
-        [Aerospike::Operation::delete,
+      record = expect_success(keys[i], [
+        Aerospike::Operation::delete,
         HLLOperation::add(hll_bin, *sub_vals, index_bit_count: ix),
-        HLLOperation::get_count(hll_bin)
+        HLLOperation::get_count(hll_bin),
       ])
       result_list = record.bins[hll_bin]
       count = result_list[1]
@@ -820,8 +816,8 @@ describe "client.operate() - HLL Operations", skip: !Support.min_version?("4.9")
     (0...keys.length).each do |i|
       sub_vals = vals[i]
       record = expect_success(key,
-        [HLLOperation::add(hll_bin, *sub_vals, index_bit_count: index_bits),
-        HLLOperation::get_count(hll_bin)])
+                              [HLLOperation::add(hll_bin, *sub_vals, index_bit_count: index_bits),
+                               HLLOperation::get_count(hll_bin)])
       result_list = record.bins[hll_bin]
       n_added = result_list[0]
       count = result_list[1]
@@ -833,14 +829,14 @@ describe "client.operate() - HLL Operations", skip: !Support.min_version?("4.9")
   end
 
   def absolute_similarity_error(index_bits, minhash_bits, expected_similarity)
-    min_err_index = 1 / Math.sqrt(1<<index_bits)
-    min_err_minhash = 6 * ((Math::E ** minhash_bits)*-1) / expected_similarity
+    min_err_index = 1 / Math.sqrt(1 << index_bits)
+    min_err_minhash = 6 * ((Math::E ** minhash_bits) * -1) / expected_similarity
 
     [min_err_index, min_err_minhash].max
   end
 
   def expect_hmh_similarity(index_bits, minhash_bits, similarity,
-      expected_similarity, intersect_count, expected_intersect_count)
+                            expected_similarity, intersect_count, expected_intersect_count)
     sim_err_6sigma = 0.0
 
     if minhash_bits != 0
@@ -851,7 +847,7 @@ describe "client.operate() - HLL Operations", skip: !Support.min_version?("4.9")
       return
     end
 
-    expect(sim_err_6sigma > (expected_similarity-similarity).abs).to be true
+    expect(sim_err_6sigma > (expected_similarity - similarity).abs).to be true
     expect(is_within_relative_error(expected_intersect_count, intersect_count, sim_err_6sigma)).to be true
   end
 
@@ -860,10 +856,10 @@ describe "client.operate() - HLL Operations", skip: !Support.min_version?("4.9")
 
     (0...keys.length).each do |i|
       record = expect_success(keys[i],
-        [Aerospike::Operation::delete,
-        HLLOperation::add(hll_bin, *vals[i], index_bit_count: index_bits, minhash_bit_count: minhash_bits),
-        HLLOperation::add(hll_bin, *common, index_bit_count: index_bits, minhash_bit_count: minhash_bits),
-        Aerospike::Operation::get(hll_bin)])
+                              [Aerospike::Operation::delete,
+                               HLLOperation::add(hll_bin, *vals[i], index_bit_count: index_bits, minhash_bit_count: minhash_bits),
+                               HLLOperation::add(hll_bin, *common, index_bit_count: index_bits, minhash_bit_count: minhash_bits),
+                               Aerospike::Operation::get(hll_bin)])
 
       result_list = record.bins[hll_bin]
       hlls << result_list[2]
@@ -871,18 +867,18 @@ describe "client.operate() - HLL Operations", skip: !Support.min_version?("4.9")
 
     # Keep record around win hll_bin is removed.
     record = expect_success(key,
-      [Aerospike::Operation::delete,
-            HLLOperation::init("#{hll_bin}other", index_bits, minhash_bits),
-            HLLOperation::set_union(hll_bin, *hlls),
-            HLLOperation::describe(hll_bin)])
+                            [Aerospike::Operation::delete,
+                             HLLOperation::init("#{hll_bin}other", index_bits, minhash_bits),
+                             HLLOperation::set_union(hll_bin, *hlls),
+                             HLLOperation::describe(hll_bin)])
     result_list = record.bins[hll_bin]
     description = result_list[1]
 
     expect_description(description, index_bits, minhash_bits)
 
     record = expect_success(key,
-      [HLLOperation::get_similarity(hll_bin, *hlls),
-            HLLOperation::get_intersect_count(hll_bin, *hlls)])
+                            [HLLOperation::get_similarity(hll_bin, *hlls),
+                             HLLOperation::get_intersect_count(hll_bin, *hlls)])
     result_list = record.bins[hll_bin]
     sim = result_list[0]
     intersect_count = result_list[1]
@@ -890,7 +886,6 @@ describe "client.operate() - HLL Operations", skip: !Support.min_version?("4.9")
     expected_intersect_count = common.length
 
     expect_hmh_similarity(index_bits, minhash_bits, sim, expected_similarity, intersect_count,
-      expected_intersect_count)
+                          expected_intersect_count)
   end
-
 end

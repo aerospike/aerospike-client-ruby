@@ -15,8 +15,8 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-require 'digest'
-require 'base64'
+require "digest"
+require "base64"
 
 module Aerospike
 
@@ -36,7 +36,6 @@ module Aerospike
   # +:fail_if_not_connected+ set to true
 
   class Client
-
     attr_accessor :default_admin_policy
     attr_accessor :default_batch_policy
     attr_accessor :default_info_policy
@@ -48,8 +47,7 @@ module Aerospike
     attr_accessor :cluster
 
     def initialize(hosts = nil, policy: ClientPolicy.new, connect: true)
-
-      hosts = ::Aerospike::Host::Parse.(hosts || ENV['AEROSPIKE_HOSTS'] || 'localhost')
+      hosts = ::Aerospike::Host::Parse.(hosts || ENV["AEROSPIKE_HOSTS"] || "localhost")
       policy = create_policy(policy, ClientPolicy)
       set_default_policies(policy.policies)
       @cluster = Cluster.new(policy, hosts)
@@ -249,7 +247,7 @@ module Aerospike
       end
 
       response = send_info_command(policy, str_cmd, node).upcase
-      return if response == 'OK'
+      return if response == "OK"
       raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::SERVER_ERROR, "Truncate failed: #{response}")
     end
 
@@ -386,7 +384,8 @@ module Aerospike
     def operate(key, operations, options = nil)
       policy = create_policy(options, OperatePolicy, default_operate_policy)
 
-      command = OperateCommand.new(@cluster, policy, key, operations)
+      args = OperateArgs.new(cluster, policy, default_write_policy, default_operate_policy, key, operations)
+      command = OperateCommand.new(@cluster, key, args)
       execute_command(command)
       command.record
     end
@@ -415,7 +414,7 @@ module Aerospike
     def register_udf(udf_body, server_path, language, options = nil)
       policy = create_policy(options, Policy, default_info_policy)
 
-      content = Base64.strict_encode64(udf_body).force_encoding('binary')
+      content = Base64.strict_encode64(udf_body).force_encoding("binary")
       str_cmd = "udf-put:filename=#{server_path};content=#{content};"
       str_cmd << "content-len=#{content.length};udf-type=#{language};"
 
@@ -424,15 +423,15 @@ module Aerospike
 
       res = {}
       response_map.each do |k, response|
-        vals = response.to_s.split(';')
+        vals = response.to_s.split(";")
         vals.each do |pair|
           k, v = pair.split("=", 2)
           res[k] = v
         end
       end
 
-      if res['error']
-        raise Aerospike::Exceptions::CommandRejected.new("Registration failed: #{res['error']}\nFile: #{res['file']}\nLine: #{res['line']}\nMessage: #{res['message']}")
+      if res["error"]
+        raise Aerospike::Exceptions::CommandRejected.new("Registration failed: #{res["error"]}\nFile: #{res["file"]}\nLine: #{res["line"]}\nMessage: #{res["message"]}")
       end
 
       UdfRegisterTask.new(@cluster, server_path)
@@ -454,7 +453,7 @@ module Aerospike
       response_map = @cluster.request_info(policy, str_cmd)
       _, response = response_map.first
 
-      if response == 'ok'
+      if response == "ok"
         UdfRemoveTask.new(@cluster, udf_name)
       else
         raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::SERVER_ERROR, response)
@@ -466,27 +465,27 @@ module Aerospike
     def list_udf(options = nil)
       policy = create_policy(options, Policy, default_info_policy)
 
-      str_cmd = 'udf-list'
+      str_cmd = "udf-list"
 
       # Send command to one node. That node will distribute it to other nodes.
       response_map = @cluster.request_info(policy, str_cmd)
       _, response = response_map.first
 
-      vals = response.split(';')
+      vals = response.split(";")
 
       vals.map do |udf_info|
-        next if udf_info.strip! == ''
+        next if udf_info.strip! == ""
 
-        udf_parts = udf_info.split(',')
+        udf_parts = udf_info.split(",")
         udf = UDF.new
         udf_parts.each do |values|
-          k, v = values.split('=', 2)
+          k, v = values.split("=", 2)
           case k
-          when 'filename'
+          when "filename"
             udf.filename = v
-          when 'hash'
+          when "hash"
             udf.hash = v
-          when 'type'
+          when "type"
             udf.language = v
           end
         end
@@ -501,7 +500,7 @@ module Aerospike
     #  udf file = <server udf dir>/<package name>.lua
     #
     #  This method is only supported by Aerospike 3 servers.
-    def execute_udf(key, package_name, function_name, args=[], options = nil)
+    def execute_udf(key, package_name, function_name, args = [], options = nil)
       policy = create_policy(options, WritePolicy, default_write_policy)
 
       command = ExecuteCommand.new(@cluster, policy, key, package_name, function_name, args)
@@ -514,10 +513,10 @@ module Aerospike
       result_map = record.bins
 
       # User defined functions don't have to return a value.
-      key, obj = result_map.detect{ |k, _| k.include?('SUCCESS') }
+      key, obj = result_map.detect { |k, _| k.include?("SUCCESS") }
       return obj if key
 
-      key, obj = result_map.detect{ |k, _| k.include?('FAILURE') }
+      key, obj = result_map.detect { |k, _| k.include?("FAILURE") }
       message = key ? obj.to_s : "Invalid UDF return value"
       raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::UDF_BAD_RESPONSE, message)
     end
@@ -530,7 +529,7 @@ module Aerospike
     #
     # This method is only supported by Aerospike 3 servers.
     # If the policy is nil, the default relevant policy will be used.
-    def execute_udf_on_query(statement, package_name, function_name, function_args=[], options = nil)
+    def execute_udf_on_query(statement, package_name, function_name, function_args = [], options = nil)
       policy = create_policy(options, QueryPolicy, default_query_policy)
 
       nodes = @cluster.nodes
@@ -559,7 +558,6 @@ module Aerospike
       ExecuteTask.new(@cluster, statement)
     end
 
-
     #  Create secondary index.
     #  This asynchronous server call will return before command is complete.
     #  The user can optionally wait for command completion by using the returned
@@ -583,12 +581,12 @@ module Aerospike
 
       # Send index command to one node. That node will distribute the command to other nodes.
       response = send_info_command(policy, str_cmd).upcase
-      if response == 'OK'
+      if response == "OK"
         # Return task that could optionally be polled for completion.
         return IndexTask.new(@cluster, namespace, index_name)
       end
 
-      if response.start_with?('FAIL:200')
+      if response.start_with?("FAIL:200")
         # Index has already been created.  Do not need to poll for completion.
         return IndexTask.new(@cluster, namespace, index_name, true)
       end
@@ -607,10 +605,10 @@ module Aerospike
 
       # Send index command to one node. That node will distribute the command to other nodes.
       response = send_info_command(policy, str_cmd).upcase
-      return if response == 'OK'
+      return if response == "OK"
 
       # Index did not previously exist. Return without error.
-      return if response.start_with?('FAIL:201')
+      return if response.start_with?("FAIL:201")
 
       raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::INDEX_GENERIC, "Drop index failed: #{response}")
     end
@@ -966,7 +964,5 @@ module Aerospike
 
       threads.each(&:join)
     end
-
   end # class
-
 end # module

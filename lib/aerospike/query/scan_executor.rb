@@ -17,26 +17,28 @@
 
 module Aerospike
   class ScanExecutor # :nodoc:
-
     def self.scan_partitions(policy, cluster, tracker, namespace, set_name, recordset, bin_names = nil)
       interval = policy.sleep_between_retries
 
       should_retry = false
 
       loop do
+        # reset last_expn
+        @last_expn = nil
+
         list = tracker.assign_partitions_to_nodes(cluster, namespace)
 
         if policy.concurrent_nodes
           threads = []
           # Use a thread per node
           list.each do |node_partition|
-
             threads << Thread.new do
               Thread.current.abort_on_exception = true
               command = ScanPartitionCommand.new(policy, tracker, node_partition, namespace, set_name, bin_names, recordset)
               begin
                 command.execute
               rescue => e
+                @last_expn = e unless e == SCAN_TERMINATED_EXCEPTION
                 should_retry ||= command.should_retry(e)
                 Aerospike.logger.error(e.backtrace.join("\n")) unless e == SCAN_TERMINATED_EXCEPTION
               end
@@ -50,6 +52,7 @@ module Aerospike
             begin
               command.execute
             rescue => e
+              @last_expn = e unless e == SCAN_TERMINATED_EXCEPTION
               should_retry ||= command.should_retry(e)
               Aerospike.logger.error(e.backtrace.join("\n")) unless e == SCAN_TERMINATED_EXCEPTION
             end
@@ -57,13 +60,12 @@ module Aerospike
         end
 
         if tracker.complete?(@cluster, policy) || !should_retry
-          recordset.thread_finished
+          recordset.thread_finished(@last_expn)
           return
         end
         sleep(interval) if policy.sleep_between_retries > 0
+        statement.reset_task_id
       end
     end
-
   end
-
 end

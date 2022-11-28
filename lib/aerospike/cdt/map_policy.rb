@@ -17,8 +17,8 @@
 module Aerospike
   module CDT
     class MapPolicy
-
       attr_accessor :order, :write_mode, :flags
+      attr_accessor :item_command, :items_command, :attributes
 
       def initialize(order: nil, write_mode: nil, flags: nil)
         if write_mode && flags
@@ -28,10 +28,24 @@ module Aerospike
         @order = order || MapOrder::DEFAULT
         @write_mode = write_mode || MapWriteMode::DEFAULT
         @flags = flags || MapWriteFlags::DEFAULT
+        @attributes = order ? order[:attr] : 0
+
+        case @write_mode
+        when CDT::MapWriteMode::DEFAULT
+          @item_command = CDT::MapOperation::PUT
+          @items_command = CDT::MapOperation::PUT_ITEMS
+        when CDT::MapWriteMode::UPDATE_ONLY
+          @item_command = CDT::MapOperation::REPLACE
+          @items_command = CDT::MapOperation::REPLACE_ITEMS
+        when CDT::MapWriteMode::CREATE_ONLY
+          @item_command = CDT::MapOperation::ADD
+          @items_command = CDT::MapOperation::ADD_ITEMS
+        else
+          raise Exceptions.new(ResultCode::PARAMETER_ERROR, "invalid value for MapWriteMode #{write_mode}")
+        end
       end
 
       DEFAULT = MapPolicy.new
-
     end
   end
 end

@@ -14,15 +14,13 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-require 'aerospike/query/stream_command'
-require 'aerospike/query/recordset'
+require "aerospike/query/stream_command"
+require "aerospike/query/recordset"
 
 module Aerospike
-
   private
 
   class QueryPartitionCommand < QueryCommand #:nodoc:
-
     def initialize(node, tracker, policy, statement, recordset, node_partitions)
       super(node, policy, statement, recordset, @node_partitions)
       @node_partitions = node_partitions
@@ -39,29 +37,29 @@ module Aerospike
 
       if @statement.namespace
         @data_offset += @statement.namespace.bytesize + FIELD_HEADER_SIZE
-        field_count+=1
+        field_count += 1
       end
 
       if @statement.set_name
         @data_offset += @statement.set_name.bytesize + FIELD_HEADER_SIZE
-        field_count+=1
+        field_count += 1
       end
 
       # Estimate recordsPerSecond field size. This field is used in new servers and not used
       # (but harmless to add) in old servers.
       if @policy.records_per_second > 0
         @data_offset += 4 + FIELD_HEADER_SIZE
-        field_count+=1
+        field_count += 1
       end
 
       # Estimate socket timeout field size. This field is used in new servers and not used
       # (but harmless to add) in old servers.
       @data_offset += 4 + FIELD_HEADER_SIZE
-      field_count+=1
+      field_count += 1
 
       # Estimate task_id field.
       @data_offset += 8 + FIELD_HEADER_SIZE
-      field_count+=1
+      field_count += 1
 
       filter = @statement.filters[0]
       bin_names = @statement.bin_names
@@ -73,16 +71,16 @@ module Aerospike
         # Estimate INDEX_TYPE field.
         if col_type > 0
           @data_offset += FIELD_HEADER_SIZE + 1
-          field_count+=1
+          field_count += 1
         end
 
         # Estimate INDEX_RANGE field.
         @data_offset += FIELD_HEADER_SIZE
-        filter_size+=1  # num filters
+        filter_size += 1  # num filters
         filter_size += filter.estimate_size
 
         @data_offset += filter_size
-        field_count+=1
+        field_count += 1
 
         # TODO: Implement
         # packed_ctx = filter.packed_ctx
@@ -102,13 +100,18 @@ module Aerospike
         field_count += 1
       end
 
+      unless @policy.filter_exp.nil?
+        exp_size = estimate_expression_size(@policy.filter_exp)
+        field_count += 1 if exp_size > 0
+      end
+
       # Estimate aggregation/background function size.
       if @statement.function_name
         @data_offset += FIELD_HEADER_SIZE + 1 # udf type
         @data_offset += @statement.package_name.bytesize + FIELD_HEADER_SIZE
         @data_offset += @statement.function_name.bytesize + FIELD_HEADER_SIZE
 
-        function_arg_buffer=''
+        function_arg_buffer = ""
         if @statement.function_args && @statement.function_args.length > 0
           function_arg_buffer = Value.of(@statement.function_args).to_bytes
         end
@@ -133,24 +136,24 @@ module Aerospike
 
       if parts_full_size > 0
         @data_offset += parts_full_size + FIELD_HEADER_SIZE
-        field_count+=1
+        field_count += 1
       end
 
       if parts_partial_digest_size > 0
         @data_offset += parts_partial_digest_size + FIELD_HEADER_SIZE
-        field_count+=1
+        field_count += 1
       end
 
       if parts_partial_bval_size > 0
         @data_offset += parts_partial_bval_size + FIELD_HEADER_SIZE
-        field_count+=1
+        field_count += 1
       end
 
       # Estimate max records field size. This field is used in new servers and not used
       # (but harmless to add) in old servers.
       if max_records > 0
         @data_offset += 8 + FIELD_HEADER_SIZE
-        field_count+=1
+        field_count += 1
       end
 
       operation_count = 0
@@ -179,6 +182,8 @@ module Aerospike
 
       # Write records per second.
       write_field_int(@policy.records_per_second, FieldType::RECORDS_PER_SECOND) if @policy.records_per_second > 0
+
+      write_filter_exp(@policy.filter_exp, exp_size)
 
       # Write socket idle timeout.
       write_field_int(@policy.socket_timeout, FieldType::SOCKET_TIMEOUT)
@@ -260,7 +265,5 @@ module Aerospike
       # !! converts nil to false
       !!@tracker&.should_retry(@node_partitions, e)
     end
-
   end # class
-
 end # module

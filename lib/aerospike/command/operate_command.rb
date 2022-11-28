@@ -14,33 +14,28 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-require 'aerospike/command/read_command'
+require "aerospike/command/read_command"
 
 module Aerospike
-
   private
 
   class OperateCommand < ReadCommand #:nodoc:
+    def initialize(cluster, key, args)
+      super(cluster, args.write_policy, key, nil)
 
-    def initialize(cluster, policy, key, operations)
-      super(cluster, policy, key, nil)
-
-      @operations = operations
+      @args = args
     end
 
     def get_node
       @cluster.master_node(@partition)
     end
 
-
     def write_bins
-      @operations.select{|op| op.op_type == Aerospike::Operation::WRITE}.map(&:bin).compact
+      @operations.select { |op| op.op_type == Aerospike::Operation::WRITE }.map(&:bin).compact
     end
 
     def write_buffer
-      set_operate(@policy, @key, @operations)
+      set_operate(@args.write_policy, @key, @args)
     end
-
   end # class
-
 end # module

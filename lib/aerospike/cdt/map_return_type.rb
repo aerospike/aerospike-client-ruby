@@ -70,9 +70,17 @@ module Aerospike
       EXISTS = 13
 
       ##
+      #  :private
+      #
+      # TODO: Should be like ListOperation and Implement InvertibleMapOperation
+      # Inverts meaning of map command and return values. For example:
+      # map_remove_by_key_range(bin_name, key_begin, key_end, MapReturnType::KEY | MapReturnType::INVERTED)
+      # With the INVERTED flag enabled, the keys outside of the specified key range will be removed and returned.
+      INVERTED = 0x10000
+
+      ##
       # Default return type: NONE
       DEFAULT_RETURN_TYPE = NONE
-
     end
   end
 end

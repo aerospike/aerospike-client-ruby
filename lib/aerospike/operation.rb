@@ -14,30 +14,30 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
-require 'aerospike/value/value'
+require "aerospike/value/value"
 
 module Aerospike
-
   class Operation
-
     attr_reader :op_type, :bin_name, :bin_value, :ctx
 
-    READ        = 1
+    READ = 1
     READ_HEADER = 1
-    WRITE       = 2
-    CDT_READ    = 3
-    CDT_MODIFY  = 4
-    ADD         = 5
-    APPEND      = 9
-    PREPEND     = 10
-    TOUCH       = 11
-    BIT_READ    = 12
-    BIT_MODIFY  = 13
-    DELETE      = 14
-    HLL_READ    = 15
-    HLL_MODIFY  = 16
+    WRITE = 2
+    CDT_READ = 3
+    CDT_MODIFY = 4
+    ADD = 5
+    EXP_READ = 7
+    EXP_MODIFY = 8
+    APPEND = 9
+    PREPEND = 10
+    TOUCH = 11
+    BIT_READ = 12
+    BIT_MODIFY = 13
+    DELETE = 14
+    HLL_READ = 15
+    HLL_MODIFY = 16
 
-    def initialize(op_type, bin_name=nil, bin_value=NullValue.new, ctx = nil)
+    def initialize(op_type, bin_name = nil, bin_value = NullValue.new, ctx = nil)
       @op_type = op_type
       @bin_name = bin_name
       @bin_value = Value.of(bin_value)
@@ -49,11 +49,11 @@ module Aerospike
       Aerospike::Bin.new(bin_name, bin_value) if bin_name && bin_value
     end
 
-    def self.get(bin_name=nil)
+    def self.get(bin_name = nil)
       Operation.new(READ, bin_name)
     end
 
-    def self.get_header(bin_name=nil)
+    def self.get_header(bin_name = nil)
       Operation.new(READ_HEADER, bin_name)
     end
 
@@ -80,7 +80,5 @@ module Aerospike
     def self.delete
       Operation.new(DELETE)
     end
-
   end
-
 end # module

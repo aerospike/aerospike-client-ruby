@@ -17,28 +17,29 @@
 
 module Aerospike
   class QueryExecutor # :nodoc:
-
     def self.query_partitions(cluster, policy, tracker, statement, recordset)
       interval = policy.sleep_between_retries
 
       should_retry = false
 
       loop do
+        # reset last_expn
+        @last_expn = nil
+
         list = tracker.assign_partitions_to_nodes(cluster, statement.namespace)
 
         if policy.concurrent_nodes
           threads = []
           # Use a thread per node
           list.each do |node_partition|
-
             threads << Thread.new do
               Thread.current.abort_on_exception = true
               command = QueryPartitionCommand.new(node_partition.node, tracker, policy, statement, recordset, node_partition)
               begin
                 command.execute
               rescue => e
+                @last_expn = e unless e == QUERY_TERMINATED_EXCEPTION
                 should_retry ||= command.should_retry(e)
-                # puts "should retry: #{should_retry}"
                 Aerospike.logger.error(e.backtrace.join("\n")) unless e == QUERY_TERMINATED_EXCEPTION
               end
             end
@@ -51,23 +52,20 @@ module Aerospike
             begin
               command.execute
             rescue => e
+              @last_expn = e unless e == QUERY_TERMINATED_EXCEPTION
               should_retry ||= command.should_retry(e)
               Aerospike.logger.error(e.backtrace.join("\n")) unless e == QUERY_TERMINATED_EXCEPTION
             end
           end
         end
 
-        complete = tracker.complete?(@cluster, policy)
-
-        if complete || !should_retry
-          recordset.thread_finished
+        if tracker.complete?(@cluster, policy) || !should_retry
+          recordset.thread_finished(@last_expn)
           return
         end
         sleep(interval) if policy.sleep_between_retries > 0
         statement.reset_task_id
       end
     end
-
   end
-
 end

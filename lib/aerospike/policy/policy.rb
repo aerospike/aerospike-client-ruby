@@ -13,25 +13,43 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-require 'aerospike/policy/priority'
-require 'aerospike/policy/consistency_level'
-require 'aerospike/policy/replica'
-
+require "aerospike/policy/priority"
+require "aerospike/policy/consistency_level"
+require "aerospike/policy/replica"
 
 module Aerospike
 
   # Container object for client policy command.
   class Policy
-
-    attr_accessor :priority, :timeout, :max_retries, :sleep_between_retries, :consistency_level,
+    attr_accessor :filter_exp, :priority, :timeout, :max_retries, :sleep_between_retries, :consistency_level,
                   :predexp, :fail_on_filtered_out, :replica, :use_compression
 
     alias total_timeout timeout
     alias total_timeout= timeout=
 
-    def initialize(opt={})
+    def initialize(opt = {})
       # Container object for transaction policy attributes used in all database
       # operation calls.
+
+      # Optional expression filter. If filterExp exists and evaluates to false, the
+      # transaction is ignored.
+      #
+      # Default: nil
+      #
+      # ==== Examples:
+      #
+      # p = Policy.new
+      # p.filter_exp = Exp.build(Exp.eq(Exp.int_bin("a"), Exp.int_val(11)));
+      @filter_exp = opt[:filter_exp]
+
+      #  Throw exception if {#filter_exp} is defined and that filter evaluates
+      #  to false (transaction ignored).  The {AerospikeException}
+      #  will contain result code {ResultCode::FILTERED_OUT}.
+      #
+      #  This field is not applicable to batch, scan or query commands.
+      #
+      #  Default: false
+      @fail_on_filtered_out = opt[:fail_on_filtered_out] || false
 
       # Priority of request relative to other transactions.
       # Currently, only used for scans.
@@ -74,7 +92,6 @@ module Aerospike
       # ]
       @predexp = opt[:predexp] || nil
 
-
       # Throw exception if @predexp is defined and that filter evaluates
       # to false (transaction ignored). The Aerospike::Exceptions::Aerospike
       # will contain result code Aerospike::ResultCode::FILTERED_OUT.
@@ -85,7 +102,6 @@ module Aerospike
       # consistency guarantee. Default to allowing one replica to be used in the
       # read operation.
       @consistency_level = opt[:consistency_level] || Aerospike::ConsistencyLevel::CONSISTENCY_ONE
-
 
       # Send read commands to the node containing the key's partition replica type.
       # Write commands are not affected by this setting, because all writes are directed
@@ -118,8 +134,5 @@ module Aerospike
       # timeout was not exceeded. Enter zero to skip sleep.
       @sleep_between_retries = opt[:sleep_between_retries] || 0.5
     end
-
-
   end # class
-
 end # module

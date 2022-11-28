@@ -18,7 +18,6 @@ include Aerospike::CDT
 include Aerospike::ResultCode
 
 describe "client.operate() - CDT List Operations", skip: !Support.feature?(Aerospike::Features::CDT_LIST) do
-
   let(:client) { Support.client }
   let(:key) { Support.gen_random_key }
   let(:list_bin) { "list" }
@@ -198,7 +197,8 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?(Aeros
       operation = ListOperation.set(list_bin, 2, 99)
       result = client.operate(key, [operation])
 
-      expect(result.bins).to be nil
+      expected = { list_bin => nil }
+      expect(result.bins).to eq expected
       expect(list_post_op).to eql([1, 2, 99, 4, 5])
     end
   end
@@ -210,7 +210,8 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?(Aeros
       operation = ListOperation.clear(list_bin)
       result = client.operate(key, [operation])
 
-      expect(result.bins).to be nil
+      expected = { list_bin => nil }
+      expect(result.bins).to eq expected
       expect(list_post_op).to eql([])
     end
   end
@@ -268,7 +269,8 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?(Aeros
       operation = ListOperation.get_by_index(list_bin, 2)
       result = client.operate(key, [operation])
 
-      expect(result.bins).to be nil
+      expected = { list_bin => nil }
+      expect(result.bins).to eq expected
     end
 
     it "returns the value at the specified index" do
@@ -562,7 +564,8 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?(Aeros
         .and_return(ListReturnType::DEFAULT)
       result = client.operate(key, [operation])
 
-      expect(result.bins).to be nil
+      expected = { list_bin => nil }
+      expect(result.bins).to eq expected
     end
 
     it "returns the list index" do
@@ -629,15 +632,14 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?(Aeros
   end
 
   describe "Context", skip: !Support.min_version?("4.6") do
-
     it "appends a single item to the list and returns the list size" do
       client.delete(key)
 
       list = [
-          [7, 9, 5],
-          [1, 2, 3],
-          [6, 5, 4, 1],
-        ]
+        [7, 9, 5],
+        [1, 2, 3],
+        [6, 5, 4, 1],
+      ]
 
       client.put(key, Aerospike::Bin.new(list_bin, list))
 
@@ -649,17 +651,17 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?(Aeros
       record = client.operate(key, operation)
 
       results = record.bins[list_bin]
-      expect(record.bins[list_bin]).to eq [ [7, 9, 5], [1, 2, 3], [6, 5, 4,1], [2] ]
+      expect(record.bins[list_bin]).to eq [[7, 9, 5], [1, 2, 3], [6, 5, 4, 1], [2]]
     end
 
     it "is used to change nested list" do
       client.delete(key)
 
       list = [
-          [7, 9, 5],
-          [1, 2, 3],
-          [6, 5, 4, 1],
-        ]
+        [7, 9, 5],
+        [1, 2, 3],
+        [6, 5, 4, 1],
+      ]
 
       client.put(key, Aerospike::Bin.new(list_bin, list))
 
@@ -706,13 +708,12 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?(Aeros
             [2, 4, 11],
             [6, 1, 9],
           ],
-      })
+        }
+      )
     end
   end
 
-
   describe "ListPolicy", skip: !Support.min_version?("3.16") do
-
     context "ordered list" do
       let(:list_value) { [5, 4, 3, 2, 1] }
       let(:order) { ListOrder::ORDERED }
@@ -797,7 +798,7 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?(Aeros
   end
 
   context "Wildcard value", skip: !Support.min_version?("4.3.1") do
-    let(:list_value) { [ ["John", 55], ["Jim", 95], ["Joe", 80], ["Jim", 46] ] }
+    let(:list_value) { [["John", 55], ["Jim", 95], ["Joe", 80], ["Jim", 46]] }
 
     it "returns all list elements that match a wildcard" do
       operation = ListOperation.get_by_value(list_bin, ["Jim", Aerospike::Value::WILDCARD])
