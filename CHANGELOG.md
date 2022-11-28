@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.25.0] 2022-11-28
+
+- **New Features**
+
+  - [CLIENT-1362] Adds support Aerospike Expression filters. Expression filters are now supported on all commands, including `Client#get`, `Client#put`, `Client#delete`, `Client#operate`, `Client#scan`, `Client#query`, `Client#execute_udf`, etc.
+
+    - Adds `Policy#filter_exp` and `Policy#fail_on_filtered_out`
+
+    - Bit expressions: `Exp::Bit::` `#resize`, `#insert`, `#remove`, `#set`, `#or`, `#xor`, `#and`, `#not`, `#lshift`, `#rshift`, `#add`, `#subtract`, `#set_int`, `#get`, `#count`, `#lscan`, `#rscan`, `#get_int`, `#pack_math`, `#pack_get_int`, `#add_write`, `#add_read`
+
+    - HLL Expressions: `Exp::HLL::` `#init`, `#add`, `#get_count`, `#get_union`, `#get_union_count`, `#get_intersect_count`, `#get_similarity`, `#describe`, `#may_contain`, `#add_write`, `#add_read`
+
+    - Map Expressions: `Exp::Map::` `#put`, `#put_items`, `#increment`, `#clear`, `#remove_by_key`, `#remove_by_key_list`, `#remove_by_key_range`, `#remove_by_key_relative_index_range`, `#remove_by_value`, `#remove_by_value_list`, `#remove_by_value_range`, `#remove_by_value_relative_rank_range`, `#remove_by_value_relative_rank_range`, `#remove_by_index`, `#remove_by_index_range`, `#remove_by_rank`, `#remove_by_rank_range`, `#size`, `#get_by_key`, `#get_by_key_range`, `#get_by_key_list`, `#get_by_key_relative_index_range`, `#get_by_key_relative_index_range`, `#get_by_value`, `#get_by_value_range`, `#get_by_value_list`, `#get_by_value_relative_rank_range`, `#get_by_index`, `#get_by_index_range`, `#get_by_rank`, `#get_by_rank_range`, `#add_write`, `#add_read`, `#get_value_type`
+
+    - List Expressions: `Exp::List::` `#append`, `#append_items`, `#insert`, `#insert_items`, `#increment`, `#set`, `#clear`, `#sort`, `#remove_by_value`, `#remove_by_value_list`, `#remove_by_value_range`, `#remove_by_value_relative_rank_range`, `#remove_by_index`, `#remove_by_index_range`, `#remove_by_rank`, `#remove_by_rank_range`, `#size`, `#get_by_value`, `#get_by_value_range`, `#get_by_value_list`, `#get_by_value_relative_rank_range`, `#get_by_index`, `#get_by_index_range`, `#get_by_index_range`, `#get_by_rank`, `#get_by_rank_range`, `#get_by_rank_range`, `#add_write`, `#add_read`, `#get_value_type`, `#pack_range_operation`
+
+    - Read and Write operations: `Exp::Operation::` `#write`, `#read`
+
 ## [2.24.0] 2022-11-15
 
 - **New Features**
