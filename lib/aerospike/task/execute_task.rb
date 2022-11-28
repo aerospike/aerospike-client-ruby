@@ -13,7 +13,6 @@
 # limitations under the License.
 
 module Aerospike
-
   private
 
   # ExecuteTask is used to poll for long running server execute job completion.
@@ -29,19 +28,24 @@ module Aerospike
       self
     end
 
-    # IsDone queries all nodes for task completion status.
+    # queries all nodes for task completion status.
     def all_nodes_done?
-
-      if @scan
-        command = 'scan-list'
-      else
-        command = 'query-list'
-      end
+      modul = @scan ? "scan" : "query"
+      cmd1 = "query-show:trid=#{@task_id}"
+      cmd2 = modul + "-show:trid=#{@task_id}"
+      cmd3 = "jobs:module=" + modul + ";cmd=get-job;trid=#{@task_id}"
 
       nodes = @cluster.nodes
       done = false
 
       nodes.each do |node|
+        command = cmd3
+        if node.supports_feature?(Aerospike::Features::PARTITION_QUERY)
+          command = cmd1
+        elsif node.supports_feature?(Aerospike::Features::QUERY_SHOW)
+          command = cmd2
+        end
+
         conn = node.get_connection(0)
         responseMap, _ = Info.request(conn, command)
         node.put_connection(conn)
@@ -58,28 +62,27 @@ module Aerospike
 
         b = index + find.length
         response = response[b, response.length]
-        find = 'job_status='
+        find = "job_status="
         index = response.index(find)
 
         next unless index
 
         b = index + find.length
         response = response[b, response.length]
-        e = response.index(':')
+        e = response.index(":")
         status = response[0, e]
 
         case status
-        when 'ABORTED'
+        when "ABORTED"
           raise Aerospike::Exceptions::QueryTerminated
-        when 'IN PROGRESS'
+        when "IN PROGRESS"
           return false
-        when 'DONE'
+        when "DONE"
           done = true
         end
       end
 
       done
     end
-
   end
 end

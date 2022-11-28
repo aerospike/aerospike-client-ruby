@@ -45,5 +45,18 @@ module Aerospike
 
     # Server supports the 'blob-bits' command
     BLOB_BITS = :'blob-bits'
+
+    # Server supports resumable partition scans
+    PARTITION_SCAN = :'pscans'
+
+    # Server supports the 'query-show' command to check for the
+    # progress of the scans and queries
+    QUERY_SHOW = :'query-show'
+
+    # Server supports the batch command for all types of operations, including wrties
+    BATCH_ANY = :'batch-any'
+
+    # Server supports resumable partition queries
+    PARTITION_QUERY = :'pquery'
   end
 end
