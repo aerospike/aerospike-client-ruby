@@ -82,12 +82,11 @@ module Aerospike
         @data_offset += filter_size
         field_count += 1
 
-        # TODO: Implement
-        # packed_ctx = filter.packed_ctx
-        # if packed_ctx
-        #   @data_offset += FIELD_HEADER_SIZE + packed_ctx.length
-        #   field_count+=1
-        # end
+        packed_ctx = filter.packed_ctx
+        if packed_ctx
+          @data_offset += FIELD_HEADER_SIZE + packed_ctx.length
+          field_count += 1
+        end
       end
 
       @statement.set_task_id
@@ -210,11 +209,10 @@ module Aerospike
         @data_offset += @data_buffer.write_byte(1, @data_offset)
         @data_offset = filter.write(@data_buffer, @data_offset)
 
-        # TODO: Implement
-        # if packed_ctx
-        #   write_field_header(packed_ctx.length, FieldType::INDEX_CONTEXT)
-        #   @data_buffer.write_binary(packed_ctx, @data_offset)
-        # end
+        if packed_ctx
+          write_field_header(packed_ctx.length, FieldType::INDEX_CONTEXT)
+          @data_offset += @data_buffer.write_binary(packed_ctx, @data_offset)
+        end
       end
 
       if @statement.function_name

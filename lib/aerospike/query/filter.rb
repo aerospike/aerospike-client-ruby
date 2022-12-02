@@ -15,39 +15,51 @@
 # the License.
 
 module Aerospike
-
   class Filter
+    attr_reader :packed_ctx
 
-    def self.Equal(bin_name, value)
-      Filter.new(bin_name, value, value)
-    end
+    # open up the class to alias the class methods for naming consistency
+    class << self
+      def equal(bin_name, value, ctx: nil)
+        Filter.new(bin_name, value, value, nil, nil, ctx)
+      end
 
-    def self.Contains(bin_name, value, col_type)
-      Filter.new(bin_name, value, value, nil, col_type)
-    end
+      def contains(bin_name, value, col_type, ctx: nil)
+        Filter.new(bin_name, value, value, nil, col_type, ctx)
+      end
 
-    def self.Range(bin_name, from, to, col_type = nil)
-      Filter.new(bin_name, from, to, nil, col_type)
-    end
+      def range(bin_name, from, to, col_type = nil, ctx: nil)
+        Filter.new(bin_name, from, to, nil, col_type, ctx)
+      end
 
-    def self.geoWithinGeoJSONRegion(bin_name, region, col_type = nil)
-      region = region.to_json
-      Filter.new(bin_name, region, region, ParticleType::GEOJSON, col_type)
-    end
+      def geo_within_geo_region(bin_name, region, col_type = nil, ctx: nil)
+        region = region.to_json
+        Filter.new(bin_name, region, region, ParticleType::GEOJSON, col_type, ctx)
+      end
 
-    def self.geoWithinRadius(bin_name, lon, lat, radius_meter, col_type = nil)
-      region = GeoJSON.new({type: "AeroCircle", coordinates: [[lon, lat], radius_meter]})
-      geoWithinGeoJSONRegion(bin_name, region, col_type)
-    end
+      def geo_within_radius(bin_name, lon, lat, radius_meter, col_type = nil, ctx: nil)
+        region = GeoJSON.new({ type: "AeroCircle", coordinates: [[lon, lat], radius_meter] })
+        geo_within_geo_region(bin_name, region, col_type, ctx: ctx)
+      end
 
-    def self.geoContainsGeoJSONPoint(bin_name, point, col_type = nil)
-      point = point.to_json
-      Filter.new(bin_name, point, point, ParticleType::GEOJSON, col_type)
-    end
+      def geo_contains_geo_point(bin_name, point, col_type = nil, ctx: nil)
+        point = point.to_json
+        Filter.new(bin_name, point, point, ParticleType::GEOJSON, col_type, ctx)
+      end
 
-    def self.geoContainsPoint(bin_name, lon, lat, col_type = nil)
-      point = GeoJSON.new({type: "Point", coordinates: [lon, lat]})
-      geoContainsGeoJSONPoint(bin_name, point, col_type)
+      def geo_contains_point(bin_name, lon, lat, col_type = nil, ctx: nil)
+        point = GeoJSON.new({ type: "Point", coordinates: [lon, lat] })
+        geo_contains_geo_point(bin_name, point, col_type, ctx: ctx)
+      end
+
+      # alias the old names for compatibility
+      alias :Equal :equal
+      alias :Contains :contains
+      alias :Range :range
+      alias :geoWithinGeoJSONRegion :geo_within_geo_region
+      alias :geoWithinRadius :geo_within_radius
+      alias :geoContainsGeoJSONPoint :geo_contains_geo_point
+      alias :geoContainsPoint :geo_contains_point
     end
 
     def estimate_size
@@ -56,21 +68,21 @@ module Aerospike
 
     def write(buf, offset)
       # Write name.
-      len = buf.write_binary(@name, offset+1)
+      len = buf.write_binary(@name, offset + 1)
       buf.write_byte(len, offset)
       offset += len + 1
 
       # Write particle type.
       buf.write_byte(@val_type, offset)
-      offset+=1
+      offset += 1
 
       # Write filter begin.
-      len = @begin.write(buf, offset+4)
+      len = @begin.write(buf, offset + 4)
       buf.write_int32(len, offset)
       offset += len + 4
 
       # Write filter end.
-      len = @end.write(buf, offset+4)
+      len = @end.write(buf, offset + 4)
       buf.write_int32(len, offset)
       offset += len + 4
 
@@ -98,7 +110,7 @@ module Aerospike
 
     private
 
-    def initialize(bin_name, begin_value, end_value, val_type = nil, col_type = nil)
+    def initialize(bin_name, begin_value, end_value, val_type = nil, col_type = nil, ctx = nil)
       @name = bin_name
       @begin = Aerospike::Value.of(begin_value)
       @end = Aerospike::Value.of(end_value)
@@ -107,8 +119,8 @@ module Aerospike
       # but in certain cases caller can override the type.
       @val_type = val_type || @begin.type
       @col_type = col_type
+
+      @packed_ctx = CDT::Context.bytes(ctx)
     end
-
   end # class
-
 end
