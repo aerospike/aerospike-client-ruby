@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.26.0] 2022-12-02
+
+- **New Features**
+  - [CLIENT-1808] Support creating a secondary index on elements within a CDT using `Context`.
+  - [CLIENT-1991] Add base64 encoding methods to `Context`.
+  - [CLIENT-2007] Support using `Context` in query filters.
+
 ## [2.25.0] 2022-11-28
 
 - **New Features**
