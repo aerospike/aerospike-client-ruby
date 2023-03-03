@@ -30,8 +30,7 @@ jobs:
       with:
         ruby-version: ${{matrix.ruby}}
         bundler-cache: true
-    - name: Set up Aerospike Database
-      uses: reugn/github-action-aerospike@v1
+
     - name: Start server
       timeout-minutes: 5
       env:
