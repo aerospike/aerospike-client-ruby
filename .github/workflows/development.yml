@@ -6,19 +6,19 @@ jobs:
   test:
     runs-on: ${{matrix.os}}-latest
     continue-on-error: ${{matrix.experimental}}
-    
+
     strategy:
       matrix:
         os:
           - ubuntu
-        
+
         ruby:
           - 2.6
           - 2.7
-        
+
         experimental: [false]
         env: [""]
-        
+
         include:
           - os: ubuntu
             ruby: head
@@ -30,14 +30,17 @@ jobs:
       with:
         ruby-version: ${{matrix.ruby}}
         bundler-cache: true
-    
-    - name: Start server
-      timeout-minutes: 5
-      env:
-        TERM: dumb
-      run:
-        .github/workflows/start_cluster.sh 2
-    
+
+    - name: Set up Aerospike Database
+      uses: reugn/github-action-aerospike@v1
+
+#    - name: Start server
+#      timeout-minutes: 5
+#      env:
+#        TERM: dumb
+#      run:
+#        .github/workflows/start_cluster.sh 2
+
     - name: Run tests
       timeout-minutes: 30
       env:
