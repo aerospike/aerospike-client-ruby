@@ -225,7 +225,6 @@ module Aerospike
       policy = create_policy(options, Policy, default_info_policy)
 
       node = @cluster.random_node
-      conn = node.get_connection(policy.timeout)
 
       if set_name && !set_name.to_s.strip.empty?
         str_cmd = "truncate:namespace=#{namespace}"

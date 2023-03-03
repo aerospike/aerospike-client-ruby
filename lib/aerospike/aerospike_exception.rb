@@ -96,5 +96,11 @@ module Aerospike
         super(ResultCode::INVALID_NAMESPACE, msg)
       end
     end
+
+    class MaxConnectionsExceeded < Aerospike
+      def initialize(msg = nil)
+        super(ResultCode::MAX_CONNECTION_EXCEEDED, msg)
+      end
+    end
   end
 end

@@ -345,9 +345,8 @@ module Aerospike
       timeout = 1
       timeout = policy.timeout if policy && policy.timeout > 0
 
-      conn = node.get_connection(timeout)
-
       begin
+        conn = node.get_connection(timeout)
         conn.write(@data_buffer, @data_offset)
         conn.read(@data_buffer, HEADER_SIZE)
         node.put_connection(conn)

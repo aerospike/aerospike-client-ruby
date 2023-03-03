@@ -45,8 +45,11 @@ module Aerospike
         elsif node.supports_feature?(Aerospike::Features::QUERY_SHOW)
           command = cmd2
         end
-
-        conn = node.get_connection(0)
+        begin
+          conn = node.get_connection(0)
+        rescue => e
+          Aerospike.logger.error("Get connection failed with exception: #{e}")
+        end
         responseMap, _ = Info.request(conn, command)
         node.put_connection(conn)
 

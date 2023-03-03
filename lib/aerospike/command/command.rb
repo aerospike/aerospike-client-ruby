@@ -487,6 +487,9 @@ module Aerospike
           @node = get_node
           @conn = @node.get_connection(@policy.timeout)
         rescue => e
+          if e.is_a?(Aerospike::Exceptions::MaxConnectionsExceeded)
+            Aerospike.logger.error("Maximum connections established. No new connection can be created. #{e}")
+          end
           if @node
             # Socket connection error has occurred. Decrease health and retry.
             @node.decrease_health

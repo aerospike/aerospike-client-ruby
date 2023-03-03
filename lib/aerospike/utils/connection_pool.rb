@@ -17,19 +17,27 @@
 module Aerospike
   class ConnectionPool < Pool
 
-    attr_accessor :cluster, :host
+    attr_accessor :cluster, :host, :number_of_creations
 
     def initialize(cluster, host)
       self.cluster = cluster
       self.host = host
+      @number_of_creations = 0
+      @mutex = Mutex.new
       super(cluster.connection_queue_size)
     end
 
     def create
       conn = nil
-      loop do
-        conn = cluster.create_connection(host)
-        break if conn.connected?
+      @mutex.synchronize do
+        if @number_of_creations >= @max_size
+          raise Aerospike::Exceptions::MaxConnectionsExceeded
+        else
+          conn = cluster.create_connection(host)
+          if conn.connected?
+            @number_of_creations += 1
+          end
+        end
       end
       conn
     end

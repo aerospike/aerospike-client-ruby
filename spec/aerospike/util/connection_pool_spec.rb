@@ -16,13 +16,16 @@
 # WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
 # License for the specific language governing permissions and limitations under
 # the License.
-
+require 'rspec'
+require 'aerospike'
 RSpec.describe Aerospike::ConnectionPool do
   let(:pool_size) { 5 }
   let(:cluster) { double(connection_queue_size: pool_size) }
   let(:host) { double() }
   let(:instance) { described_class.new(cluster, host) }
   let(:good_connection) { double(:connected? => true, :alive? => true) }
+  let(:connection) { double('connection') }
+
 
   describe ".poll" do
     context "when pool is empty" do
@@ -31,8 +34,7 @@ RSpec.describe Aerospike::ConnectionPool do
       end
 
       it "creates a new connection" do
-        connection = instance.poll()
-
+        connection = instance.poll
         expect(connection).to be(good_connection)
       end
     end
@@ -46,6 +48,17 @@ RSpec.describe Aerospike::ConnectionPool do
         connection = instance.poll()
 
         expect(connection).to be(good_connection)
+      end
+    end
+
+    context "enforce max connections as a hard limit" do
+      before do
+        allow(cluster).to receive(:create_connection).with(host).and_return(good_connection)
+        pool_size.times { instance.poll }
+      end
+
+      it "raise an max connection exceeded exception" do
+        expect { instance.poll }.to raise_aerospike_error(-21)
       end
     end
 

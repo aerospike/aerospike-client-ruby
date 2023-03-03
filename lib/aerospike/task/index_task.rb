@@ -42,7 +42,11 @@ module Aerospike
       nodes = @cluster.nodes
 
       nodes.each do |node|
-        conn = node.get_connection(1)
+        begin
+          conn = node.get_connection(1)
+        rescue => e
+          Aerospike.logger.error("Get connection failed with exception: #{e}")
+        end
         response_map = Info.request(conn, command)
         _, response = response_map.first
         match = response.to_s.match(MATCHER)
