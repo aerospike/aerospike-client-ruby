@@ -84,14 +84,14 @@ module Aerospike
     # Put back a connection to the cache. If cache is full, the connection will be
     # closed and discarded
     def put_connection(conn)
-      conn.close if !active?
+      @connections.cleanup(conn) unless active?
       @connections.offer(conn)
     end
 
     # Separate connection for refreshing
     def tend_connection
       if @tend_connection.nil? || @tend_connection.closed?
-        @tend_connection = Cluster::CreateConnection.(cluster, host)
+        @tend_connection = @connections.create
       end
       @tend_connection
     end
@@ -177,7 +177,7 @@ module Aerospike
       @aliases.value
     end
 
-    # Marks node as inactice and closes all cached connections
+    # Marks node as inactive and closes all cached connections
     def close
       inactive!
       close_connections
@@ -224,14 +224,18 @@ module Aerospike
       Node::Refresh::Reset.(self)
     end
 
+    def close_connection(conn)
+      @connections.cleanup(conn)
+    end
+
     private
 
     def close_connections
-      @tend_connection.close if @tend_connection
+      @connections.cleanup(@tend_connection) if @tend_connection
       # drain connections and close all of them
       # non-blocking, does not call create_block when passed false
-      while conn = @connections.poll(false)
-        conn.close if conn
+      while (conn = @connections.poll(create_new: false))
+        @connections.cleanup(conn)
       end
     end
   end # class Node

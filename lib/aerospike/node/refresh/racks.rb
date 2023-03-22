@@ -30,7 +30,7 @@ module Aerospike
             parser = RackParser.new(node, conn)
             node.update_racks(parser)
           rescue ::Aerospike::Exceptions::Aerospike => e
-            conn.close
+            node.close_connection(conn)
             Refresh::Failed.(node, e)
           end
 

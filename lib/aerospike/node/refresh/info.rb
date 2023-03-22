@@ -51,7 +51,7 @@ module Aerospike
             peers.refresh_count += 1
             node.reset_failures!
           rescue ::Aerospike::Exceptions::Aerospike => e
-            conn.close if conn
+            node.close_connection(conn) if conn
             node.decrease_health
             peers.generation_changed = true if peers.use_peers?
             Refresh::Failed.(node, e)

@@ -49,6 +49,7 @@ module Aerospike
           conn = node.get_connection(0)
         rescue => e
           Aerospike.logger.error("Get connection failed with exception: #{e}")
+          raise e
         end
         responseMap, _ = Info.request(conn, command)
         node.put_connection(conn)
