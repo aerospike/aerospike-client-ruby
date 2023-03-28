@@ -70,5 +70,22 @@ module Aerospike
         @total_connections -= 1
       end
     end
+
+    def connections
+      @pool.keys.map { |id| @pool[id].object }
+    end
+
+    # Closes all the connections in the pool.
+    def close_all
+      connections.each do |conn|
+        conn.close if conn.connected?
+      end
+      @total_connections = 0
+    end
+
+    # Destroys the connection pool and closes all the connections.
+    def self.finalize(id)
+      ObjectSpace._id2ref(id).close_all
+    end
   end
 end
