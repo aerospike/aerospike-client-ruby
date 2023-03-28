@@ -38,11 +38,11 @@ module Aerospike
     end
     alias_method :<<, :offer
 
-    def poll(create_new=true)
+    def poll(create_new: true)
       non_block = true
       begin
         obj = @pool.pop(non_block)
-        if !check(obj)
+        unless check(obj)
           cleanup(obj)
           obj = nil
         end

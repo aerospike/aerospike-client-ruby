@@ -30,7 +30,7 @@ module Aerospike
             parser = PartitionParser.new(node, conn)
             node.cluster.update_partitions(parser)
           rescue ::Aerospike::Exceptions::Aerospike => e
-            conn.close
+            node.close_connection(conn)
             Refresh::Failed.(node, e)
           end
 

@@ -321,14 +321,24 @@ module Aerospike
 
     def request_info(policy, *commands)
       node = random_node
-      conn = node.get_connection(policy.timeout)
+      begin
+        conn = node.get_connection(policy.timeout)
+      rescue => e
+        Aerospike.logger.error("Get connection failed with exception: #{e}")
+        raise e
+      end
       Info.request(conn, *commands).tap do
         node.put_connection(conn)
       end
     end
 
     def request_node_info(node, policy, *commands)
-      conn = node.get_connection(policy.timeout)
+      begin
+        conn = node.get_connection(policy.timeout)
+      rescue => e
+        Aerospike.logger.error("Get connection failed with exception: #{e}")
+        raise e
+      end
       Info.request(conn, *commands).tap do
         node.put_connection(conn)
       end

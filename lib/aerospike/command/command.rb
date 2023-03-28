@@ -487,6 +487,9 @@ module Aerospike
           @node = get_node
           @conn = @node.get_connection(@policy.timeout)
         rescue => e
+          if e.is_a?(Aerospike::Exceptions::MaxConnectionsExceeded)
+            Aerospike.logger.error("Maximum connections established. No new connection can be created. #{e}")
+          end
           if @node
             # Socket connection error has occurred. Decrease health and retry.
             @node.decrease_health
@@ -510,7 +513,7 @@ module Aerospike
 
             # All runtime exceptions are considered fatal. Do not retry.
             # Close socket to flush out possible garbage. Do not put back in pool.
-            @conn.close if @conn
+            @node.close_connection(@conn) if @conn
             raise e
           end
 
@@ -523,7 +526,7 @@ module Aerospike
           rescue => e
             # IO errors are considered temporary anomalies. Retry.
             # Close socket to flush out possible garbage. Do not put back in pool.
-            @conn.close if @conn
+            @node.close_connection(@conn) if @conn
 
             Aerospike.logger.error("Node #{@node.to_s}: #{e}")
             # IO error means connection to server @node is unhealthy.
@@ -548,7 +551,7 @@ module Aerospike
             # cancelling/closing the batch/multi commands will return an error, which will
             # close the connection to throw away its data and signal the server about the
             # situation. We will not put back the connection in the buffer.
-            @conn.close if @conn
+            @node.close_connection(@conn) if @conn
             raise e
           end
 

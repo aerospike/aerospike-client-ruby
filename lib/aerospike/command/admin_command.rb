@@ -345,14 +345,13 @@ module Aerospike
       timeout = 1
       timeout = policy.timeout if policy && policy.timeout > 0
 
-      conn = node.get_connection(timeout)
-
       begin
+        conn = node.get_connection(timeout)
         conn.write(@data_buffer, @data_offset)
         conn.read(@data_buffer, HEADER_SIZE)
         node.put_connection(conn)
       rescue => e
-        conn.close if conn
+        node.close_connection(conn) if conn
         raise e
       end
 
@@ -377,13 +376,11 @@ module Aerospike
         status, list = read_user_blocks(conn)
         node.put_connection(conn)
       rescue => e
-        conn.close if conn
+        node.close_connection(conn) if conn
         raise e
       end
-
       raise Exceptions::Aerospike.new(status) if status > 0
-
-      return list
+      list
     end
 
     def read_user_blocks(conn)
@@ -512,13 +509,13 @@ module Aerospike
         status, list = read_role_blocks(conn)
         node.put_connection(conn)
       rescue => e
-        conn.close if conn
+        node.close_connection(conn) if conn
         raise e
       end
 
       raise Exceptions::Aerospike.new(status) if status > 0
 
-      return list
+      list
     end
 
     def read_role_blocks(conn)

@@ -53,7 +53,7 @@ describe "client.operate() - CDT Bitwise Operations", skip: !Support.feature?(Ae
     int_sz = set_sz if set_sz < int_sz
 
     bin_bit_sz = bin_sz * 8
-    bin_bit_sz += set_sz if is_insert 
+    bin_bit_sz += set_sz if is_insert
 
     full_ops = ops.dup
     full_ops << BitOperation.lscan(bin_name, offset, set_sz, true)
@@ -121,9 +121,9 @@ describe "client.operate() - CDT Bitwise Operations", skip: !Support.feature?(Ae
   end
 
   def assert_throws(code, *ops)
-    expect {
+    expect do
       client.operate(key, ops)
-    }.to raise_error (Aerospike::Exceptions::Aerospike){ |error|
+    end.to raise_error(Aerospike::Exceptions::Aerospike) { |error|
       error.result_code == code
     }
   end
@@ -521,7 +521,7 @@ describe "client.operate() - CDT Bitwise Operations", skip: !Support.feature?(Ae
       [0x55, 0x54],
     ]
 
-    results = record.bins[bin_name].map{ |elem| elem.bytes}
+    results = record.bins[bin_name].map { |elem| elem.bytes}
     expect(results).to eq expected
   end
 
@@ -665,7 +665,7 @@ describe "client.operate() - CDT Bitwise Operations", skip: !Support.feature?(Ae
 
       (0..(bin_bit_sz - set_sz)).each do |offset|
         limit = 16
-        limit = set_sz + 1 if set_sz < 16 
+        limit = set_sz + 1 if set_sz < 16
 
         (0..limit).each do |n_bits|
           assert_bit_modify_region_not_insert(bin_sz, offset, set_sz, set_data,
@@ -695,7 +695,7 @@ describe "client.operate() - CDT Bitwise Operations", skip: !Support.feature?(Ae
       (0..(bin_bit_sz - set_sz)).each do |offset|
         limit = 16
         limit = set_sz + 1 if set_sz < 16
-          
+
         (0..limit).each do |n_bits|
           assert_bit_modify_region_not_insert(bin_sz, offset, set_sz, set_data,
             BitOperation.set(bin_name, offset, set_sz,

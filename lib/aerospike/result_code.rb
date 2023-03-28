@@ -20,6 +20,9 @@ module Aerospike
 
     attr_reader :code
 
+    #Maximum connections established. New connections cannot be created.
+    MAX_CONNECTION_EXCEEDED = -21
+
     # One or more keys failed in a batch.
     BATCH_FAILED = -20
 
@@ -299,6 +302,7 @@ module Aerospike
     # Internal error.
     QUERY_DUPLICATE = 215
 
+
     def self.message(code)
       case code
       when BATCH_FAILED
@@ -576,6 +580,9 @@ module Aerospike
 
       when QUERY_DUPLICATE
         "Internal query error"
+
+      when MAX_CONNECTION_EXCEEDED
+        "Maximum new connections exceeded."
 
       else
         "ResultCode #{code} unknown in the client. Please file a github issue."

@@ -8,7 +8,7 @@ Gem::Specification.new do |s|
   s.name        = "aerospike"
   s.version     = Aerospike::VERSION
   s.platform    = Gem::Platform::RUBY
-  s.authors     = [ "Khosrow Afroozeh", "Jan Hecking" ]
+  s.authors     = ["Khosrow Afroozeh", "Jan Hecking", "Sachin Venkatesha Murthy"]
   s.email       = [ "khosrow@aerospike.com", "jhecking@aerospike.com" ]
   s.homepage    = "http://www.github.com/aerospike/aerospike-client-ruby"
   s.summary     = "An Aerospike driver for Ruby."

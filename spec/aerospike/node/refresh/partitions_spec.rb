@@ -20,7 +20,7 @@
 RSpec.describe Aerospike::Node::Refresh::Partitions do
   let(:node) { double }
   let(:cluster) { double }
-  let(:conn) { double}
+  let(:conn) { double }
   let(:peers) { double }
   let(:refresh_count) { 10 }
   let(:healthy) { true }
@@ -29,9 +29,10 @@ RSpec.describe Aerospike::Node::Refresh::Partitions do
     allow(node).to receive(:name).and_return('dummy')
     allow(node).to receive(:tend_connection).and_return(conn)
     allow(node).to receive(:cluster).and_return(cluster)
+    allow(node).to receive(:close_connection)
     allow(cluster).to receive(:update_partitions)
     allow(conn).to receive(:close)
-    allow(::Aerospike::Node::Refresh::Failed).to receive(:call)
+    allow(Aerospike::Node::Refresh::Failed).to receive(:call)
   end
 
   describe '::call' do
@@ -41,7 +42,7 @@ RSpec.describe Aerospike::Node::Refresh::Partitions do
       allow(described_class).to receive(:should_refresh?).and_return(healthy)
     end
 
-    context 'with healty node' do
+    context 'with healthy node' do
       before { refresh }
 
       it { expect(cluster).to have_received(:update_partitions) }
@@ -57,13 +58,13 @@ RSpec.describe Aerospike::Node::Refresh::Partitions do
 
     context 'when cluster.update_partitions fails' do
       before do
-        allow(cluster).to receive(:update_partitions).and_raise(::Aerospike::Exceptions::Aerospike.new(0))
+        allow(cluster).to receive(:update_partitions).and_raise(Aerospike::Exceptions::Aerospike.new(0))
 
         refresh
       end
 
-      it { expect(conn).to have_received(:close) }
-      it { expect(::Aerospike::Node::Refresh::Failed).to have_received(:call) }
+      it { expect(node).to have_received(:close_connection) }
+      it { expect(Aerospike::Node::Refresh::Failed).to have_received(:call) }
     end
   end
 end

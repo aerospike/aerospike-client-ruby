@@ -17,29 +17,75 @@
 module Aerospike
   class ConnectionPool < Pool
 
-    attr_accessor :cluster, :host
+    attr_accessor :cluster, :host, :total_connections
 
+    # Creates a new connection pool.
+    # @param cluster [Aerospike::Cluster] The Aerospike cluster that this connection pool belongs to.
+    # @param host [Aerospike::Host] The host that this connection pool connects to.
     def initialize(cluster, host)
       self.cluster = cluster
       self.host = host
+      @total_connections = 0
+      @mutex = Mutex.new
       super(cluster.connection_queue_size)
     end
 
+    # Creates a new connection to the Aerospike server node.
+    # @return [Aerospike::Connection] A new connection to the Aerospike server node.
+    # @raise [Aerospike::Exceptions::MaxConnectionsExceeded] if the maximum number of connections has been reached.
     def create
       conn = nil
-      loop do
-        conn = cluster.create_connection(host)
-        break if conn.connected?
+      @mutex.synchronize do
+        if @total_connections >= @max_size
+          raise Aerospike::Exceptions::MaxConnectionsExceeded
+        else
+          conn = cluster.create_connection(host)
+          if conn.connected?
+            @total_connections += 1
+          end
+        end
       end
       conn
     end
 
+    # Checks if the given connection is alive.
+    # @param conn [Aerospike::Connection] The connection to check.
+    # @return [Boolean] `true` if the connection is alive, `false` otherwise.
     def check(conn)
       conn.alive?
     end
 
+    # Cleans up the given connection by closing it and decrementing the connection count.
+    # @param conn [Aerospike::Connection] The connection to clean up.
     def cleanup(conn)
-      conn.close if conn
+      @mutex.synchronize do
+        begin
+          if conn&.connected?
+            conn.close
+          end
+        rescue => e
+          Aerospike.logger.error("Error occurred while closing a connection")
+          raise e
+        end
+        @total_connections -= 1
+      end
+    end
+
+    def connections
+      @pool.keys.map { |id| @pool[id].object }
+    end
+
+    # Closes all the connections in the pool.
+    def close_all
+      connections.each do |conn|
+        conn.close if conn.connected?
+      end
+      @total_connections = 0
+    end
+
+    # Destroys the connection pool and closes all the connections.
+    def self.finalize(id)
+      ObjectSpace._id2ref(id).close_all
     end
   end
 end
