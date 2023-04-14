@@ -1,4 +1,4 @@
-# Copyright 2014-2020 Aerospike, Inc.
+# Copyright 2014-2023 Aerospike, Inc.
 #
 # Portions may be licensed to Aerospike, Inc. under one or more contributor
 # license agreements.
@@ -31,6 +31,18 @@ module Aerospike
       @generation = rec_gen
       @ttl = expiration_to_ttl(rec_exp)
       @node = node
+    end
+
+    # Arguments:
+    #   value: the key to retrieve the value for
+    #
+    # Returns:
+    #   the value of the specified key, or `nil` if `@bins` is `nil`
+    def get_value(value)
+      unless @bins.nil?
+        return @bins[value]
+      end
+      nil
     end
 
     def to_s

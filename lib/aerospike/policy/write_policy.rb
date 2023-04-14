@@ -1,5 +1,5 @@
 # encoding: utf-8
-# Copyright 2014-2020 Aerospike, Inc.
+# Copyright 2014-2023 Aerospike, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -24,8 +24,8 @@ module Aerospike
   class WritePolicy < Policy
 
     attr_accessor :record_exists_action, :generation_policy,
-      :generation, :ttl, :send_key, :commit_level,
-      :durable_delete
+                  :generation, :ttl, :send_key, :commit_level,
+                  :durable_delete, :records_per_second, :socket_timeout
 
     alias expiration ttl
     alias expiration= ttl=
@@ -74,6 +74,20 @@ module Aerospike
       # Valid for Aerospike Server Enterprise Edition 3.10+ only.
       @durable_delete = opt.fetch(:durable_delete, false)
 
+      @records_per_second = opt[:records_per_second] || 0
+
+      # Determines network timeout for each attempt.
+      #
+      # If socket_timeout is not zero and socket_timeout is reached before an attempt completes,
+      # the Timeout above is checked. If Timeout is not exceeded, the transaction
+      # is retried. If both socket_timeout and Timeout are non-zero, socket_timeout must be less
+      # than or equal to Timeout, otherwise Timeout will also be used for socket_timeout.
+      #
+      # Default: 30s
+      @socket_timeout = opt[:socket_timeout] || 30000
+
+
+      @timeout = opt[:timeout] || 1
       self
     end
 

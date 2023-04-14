@@ -87,7 +87,7 @@ describe Aerospike::Client do
         count = 0
         rs.each do |rec|
           count += 1
-          expect(rec.bins.keys).to contain_exactly("bin1", "bin2", "bin3", "bin4")
+          expect(rec.bins.keys).to contain_exactly("bin1", "bin2", "bin3", "bin4", "bin5")
         end
         expect(count).to be > 0
       end
@@ -511,6 +511,20 @@ describe Aerospike::Client do
       end # it
 
     end # context
+
+    context "Run queries in the background" do
+      it "executes a put operation asynchronously" do
+        stmt = Aerospike::Statement.new(@namespace, @set)
+        bin5 = Aerospike::Bin.new("bin5", "string_value")
+        ops = [
+          Aerospike::Operation.put(bin5)
+        ]
+        async_task = client.query_execute(stmt, ops)
+        async_task.wait_till_completed
+
+        expect(async_task.completed?).to be true
+      end
+    end
 
   end # describe
 
