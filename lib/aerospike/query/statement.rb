@@ -23,7 +23,7 @@ module Aerospike
 
     attr_accessor :namespace, :set_name, :index_name, :bin_names, :task_id
     attr_accessor :filters, :package_name, :function_name, :function_args, :operations
-    attr_accessor :predexp, :return_data
+    attr_accessor :predexp, :return_data, :records_per_second
 
     def initialize(namespace, set_name, bin_names=[])
       # Namespace determines query Namespace
@@ -60,6 +60,13 @@ module Aerospike
       @function_name = nil
       @function_args = nil
       @operations = nil
+
+
+      # Limit returned records per second (rps) rate for each server.
+      # Will not apply rps limit if records_per_second is zero.
+      # Currently only applicable to a query without a defined filter (scan).
+      # Default is 0
+      @records_per_second = 0
 
       # TaskId determines query task id. (Optional)
       @task_id = rand(RAND_MAX)

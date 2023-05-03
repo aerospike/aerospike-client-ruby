@@ -484,7 +484,7 @@ module Aerospike
 
       # Estimate recordsPerSecond field size. This field is used in new servers and not used
       # (but harmless to add) in old servers.
-      if policy.records_per_second > 0
+      if statement.records_per_second > 0
         @data_offset += 4 + FIELD_HEADER_SIZE
         field_count += 1
       end
@@ -628,7 +628,7 @@ module Aerospike
       write_field_string(statement.set_name, FieldType::TABLE) if statement.set_name
 
       # Write records per second.
-      write_field_int(policy.records_per_second, FieldType::RECORDS_PER_SECOND) if policy.records_per_second > 0
+      write_field_int(statement.records_per_second, FieldType::RECORDS_PER_SECOND) if statement.records_per_second > 0
 
       write_filter_exp(policy.filter_exp, exp_size)
 
