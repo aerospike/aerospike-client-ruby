@@ -33,6 +33,16 @@ module Aerospike
       @node = node
     end
 
+
+
+    def to_s
+      "key: `#{key}` bins: `#{bins}` generation: `#{generation}`, ttl: `#{ttl}`"
+    end
+
+    private
+
+    CITRUSLEAF_EPOCH = 1262304000
+
     # Arguments:
     #   value: the key to retrieve the value for
     #
@@ -44,14 +54,6 @@ module Aerospike
       end
       nil
     end
-
-    def to_s
-      "key: `#{key}` bins: `#{bins}` generation: `#{generation}`, ttl: `#{ttl}`"
-    end
-
-    private
-
-    CITRUSLEAF_EPOCH = 1262304000
 
     # Converts an absolute expiration time (in seconds from citrusleaf epoch)
     # to relative time-to-live (TTL) in seconds

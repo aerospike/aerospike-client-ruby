@@ -513,17 +513,26 @@ describe Aerospike::Client do
     end # context
 
     context "Run queries in the background" do
-      it "executes a put operation asynchronously" do
+      it "executes a put operation in the background" do
+        @set = "ds_set"
+        key = Aerospike::Key.new(@namespace, @set, 'ds_key')
+        bin1 = Aerospike::Bin.new("bin1", "integer_value")
+        client.put(key, bin1)
+
         stmt = Aerospike::Statement.new(@namespace, @set)
-        @set = "test_set_1"
-        bin = Aerospike::Bin.new("bin5", "string_value")
+        bin2 = Aerospike::Bin.new("bin2", "string_value")
         ops = [
-          Aerospike::Operation.put(bin)
+          Aerospike::Operation.put(bin2)
         ]
         execute_task = client.query_execute(stmt, ops)
         execute_task.wait_till_completed
 
         expect(execute_task.completed?).to be true
+        rec_set = client.scan_all(@namespace, @set)
+        rec_set.each do |rec|
+          expect(rec.bins['bin2']).to eq 'string_value'
+        end
+
       end
     end
 
