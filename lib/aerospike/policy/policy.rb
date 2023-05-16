@@ -22,7 +22,7 @@ module Aerospike
   # Container object for client policy command.
   class Policy
     attr_accessor :filter_exp, :priority, :timeout, :max_retries, :sleep_between_retries, :consistency_level,
-                  :predexp, :fail_on_filtered_out, :replica, :use_compression
+                  :predexp, :fail_on_filtered_out, :replica, :use_compression, :socket_timeout
 
     alias total_timeout timeout
     alias total_timeout= timeout=
@@ -133,6 +133,16 @@ module Aerospike
       # Duration to sleep between retries if a transaction fails and the
       # timeout was not exceeded. Enter zero to skip sleep.
       @sleep_between_retries = opt[:sleep_between_retries] || 0.5
+
+      # Determines network timeout for each attempt.
+      #
+      # If socket_timeout is not zero and socket_timeout is reached before an attempt completes,
+      # the Timeout above is checked. If Timeout is not exceeded, the transaction
+      # is retried. If both socket_timeout and Timeout are non-zero, socket_timeout must be less
+      # than or equal to Timeout, otherwise Timeout will also be used for socket_timeout.
+      #
+      # Default: 30s
+      @socket_timeout = opt[:socket_timeout] || 30000
     end
   end # class
 end # module

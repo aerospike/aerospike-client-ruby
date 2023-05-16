@@ -169,6 +169,7 @@ require "aerospike/query/scan_executor"
 require "aerospike/query/scan_partition_command"
 require "aerospike/query/query_executor"
 require "aerospike/query/query_partition_command"
+require "aerospike/query/server_command"
 
 require "aerospike/exp/exp"
 require "aerospike/exp/exp_map"

@@ -1,4 +1,4 @@
-# Copyright 2014-2020 Aerospike, Inc.
+# Copyright 2014-2023 Aerospike, Inc.
 #
 # Portions may be licensed to Aerospike, Inc. under one or more contributor
 # license agreements.
@@ -33,6 +33,8 @@ module Aerospike
       @node = node
     end
 
+
+
     def to_s
       "key: `#{key}` bins: `#{bins}` generation: `#{generation}`, ttl: `#{ttl}`"
     end
@@ -40,6 +42,18 @@ module Aerospike
     private
 
     CITRUSLEAF_EPOCH = 1262304000
+
+    # Arguments:
+    #   value: the key to retrieve the value for
+    #
+    # Returns:
+    #   the value of the specified key, or `nil` if `@bins` is `nil`
+    def get_value(value)
+      unless @bins.nil?
+        return @bins[value]
+      end
+      nil
+    end
 
     # Converts an absolute expiration time (in seconds from citrusleaf epoch)
     # to relative time-to-live (TTL) in seconds

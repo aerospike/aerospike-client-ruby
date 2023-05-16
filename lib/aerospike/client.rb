@@ -1,4 +1,4 @@
-# Copyright 2014-2020 Aerospike, Inc.
+# Copyright 2014-2023 Aerospike, Inc.
 #
 # Portions may be licensed to Aerospike, Inc. under one or more contributor
 # license agreements.
@@ -225,7 +225,6 @@ module Aerospike
       policy = create_policy(options, Policy, default_info_policy)
 
       node = @cluster.random_node
-      conn = node.get_connection(policy.timeout)
 
       if set_name && !set_name.to_s.strip.empty?
         str_cmd = "truncate:namespace=#{namespace}"
@@ -729,6 +728,59 @@ module Aerospike
     # If the policy is nil, a default policy will be generated.
     def query(statement, options = nil)
       query_partitions(Aerospike::PartitionFilter.all, statement, options)
+    end
+
+    #----------------------------------------------------------
+    # Query/Execute (Supported by Aerospike 3+ servers only)
+    #----------------------------------------------------------
+
+    # QueryExecute applies operations on records that match the statement filter.
+    # Records are not returned to the client.
+    # This asynchronous server call will return before the command is complete.
+    # The user can optionally wait for command completion by using the returned
+    # ExecuteTask instance.
+    #
+    # This method is only supported by Aerospike 3+ servers.
+    # If the policy is nil, the default relevant policy will be used.
+    #
+    # @param statement [Aerospike::Statement] The query or batch read statement.
+    # @param operations [Array<Aerospike::Operation>] An optional list of operations.
+    # @param options [Hash] An optional hash of policy options.
+    # @return [Aerospike::ExecuteTask] An ExecuteTask instance that can be used to wait for command completion.
+    #
+    # @raise [Aerospike::Exceptions::Aerospike] if an error occurs during the operation.
+    def query_execute(statement, operations = [], options = nil)
+      policy = create_policy(options, WritePolicy, default_write_policy)
+
+      if statement.nil?
+        raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::INVALID_COMMAND, "Query failed of invalid statement.")
+      end
+
+      statement = statement.clone
+      unless operations.empty?
+        statement.operations = operations
+      end
+
+      task_id = statement.task_id
+      nodes = @cluster.nodes
+      if nodes.empty?
+        raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::SERVER_NOT_AVAILABLE, "Query failed because cluster is empty.")
+      end
+
+      # Use a thread per node
+      nodes.each do |node|
+        Thread.new do
+          Thread.current.abort_on_exception = true
+          begin
+            command = ServerCommand.new(@cluster, node, policy, statement, true, task_id)
+            execute_command(command)
+          rescue => e
+            Aerospike.logger.error(e)
+            raise e
+          end
+        end
+      end
+      ExecuteTask.new(@cluster, statement)
     end
 
     #-------------------------------------------------------

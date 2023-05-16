@@ -1,5 +1,5 @@
 # encoding: utf-8
-# Copyright 2014-2020 Aerospike, Inc.
+# Copyright 2014-2023 Aerospike, Inc.
 #
 # Portions may be licensed to Aerospike, Inc. under one or more contributor
 # license agreements.
@@ -16,11 +16,14 @@
 
 module Aerospike
 
+  # The Aerospike::Statement class represents a query or scan statement to be executed on the database.
+  # It provides a set of properties that define the query or scan, including namespace, set name, bin names,
+  # index name, filters, and operations.
   class Statement
 
     attr_accessor :namespace, :set_name, :index_name, :bin_names, :task_id
-    attr_accessor :filters, :package_name, :function_name, :function_args
-    attr_accessor :predexp, :return_data
+    attr_accessor :filters, :package_name, :function_name, :function_args, :operations
+    attr_accessor :predexp, :return_data, :records_per_second
 
     def initialize(namespace, set_name, bin_names=[])
       # Namespace determines query Namespace
@@ -56,6 +59,14 @@ module Aerospike
       @package_name  = nil
       @function_name = nil
       @function_args = nil
+      @operations = nil
+
+
+      # Limit returned records per second (rps) rate for each server.
+      # Will not apply rps limit if records_per_second is zero.
+      # Currently only applicable to a query without a defined filter (scan).
+      # Default is 0
+      @records_per_second = 0
 
       # TaskId determines query task id. (Optional)
       @task_id = rand(RAND_MAX)
@@ -64,33 +75,35 @@ module Aerospike
       @return_data = true
     end
 
-  def set_aggregate_function(package_name, function_name, function_args=[], return_data=true)
+    def set_aggregate_function(package_name, function_name, function_args=[], return_data=true)
       @package_name  = package_name
       @function_name = function_name
       @function_args = function_args
       @return_data = return_data
-  end
-
-  def is_scan?
-    return (filters.nil? || (filters.empty?))
-  end
-
-  def set_task_id
-    while @task_id == 0
-      @task_id = rand(RAND_MAX)
     end
-  end
 
-  def reset_task_id
-    @task_id = rand(RAND_MAX)
-    while @task_id == 0
-      @task_id = rand(RAND_MAX)
+    def is_scan?
+      return (filters.nil? || (filters.empty?))
     end
-  end
 
-  private
+    def set_task_id
+      while @task_id == 0
+        @task_id = rand(RAND_MAX)
+      end
+    end
 
-  RAND_MAX = 2**63
+    def reset_task_id
+      @task_id = rand(RAND_MAX)
+      while @task_id == 0
+        @task_id = rand(RAND_MAX)
+      end
+    end
+
+
+
+    private
+
+    RAND_MAX = 2**63 - 1
 
   end # class
 end
