@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.27.0] 2023-05-18
+- **New Features**
+  - [CLIENT-1176] Support write operations in background query
+
+
 ## [2.26.0] 2022-12-02
 
 - **New Features**
