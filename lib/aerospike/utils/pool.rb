@@ -18,7 +18,7 @@ module Aerospike
 
   class Pool #:nodoc:
 
-    attr_accessor :create_proc, :cleanup_proc, :check_proc
+    attr_accessor :create_proc, :cleanup_proc, :check_proc, :max_size
 
     def initialize(max_size = 256, &block)
       @create_proc = block

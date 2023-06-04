@@ -23,13 +23,8 @@ require 'aerospike/atomic/atomic'
 
 module Aerospike
   class Cluster
-    attr_reader :connection_timeout, :connection_queue_size, :user, :password
-    attr_reader :features, :tls_options
-    attr_reader :cluster_id, :aliases
-    attr_reader :cluster_name
-    attr_reader :client_policy
-    attr_accessor :rack_aware, :rack_id
-    attr_accessor :session_token, :session_expiration
+    attr_reader :connection_timeout, :connection_queue_size, :user, :password, :min_connections_per_node, :features, :tls_options, :cluster_id, :aliases, :cluster_name, :client_policy
+    attr_accessor :rack_aware, :rack_id, :session_token, :session_expiration
 
     def initialize(policy, hosts)
       @client_policy = policy
@@ -63,6 +58,13 @@ module Aerospike
       end
 
       initialize_tls_host_names(hosts) if tls_enabled?
+
+      @min_connections_per_node = policy.min_connections_per_node
+      @max_connections_per_node = policy.max_connections_per_node
+
+      if @min_connections_per_node > @max_connections_per_node
+        raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::PARAMETER_ERROR, "Invalid connection range")
+      end
     end
 
     def connect
@@ -584,7 +586,9 @@ module Aerospike
     end
 
     def create_node(nv)
-      ::Aerospike::Node.new(self, nv)
+      node = ::Aerospike::Node.new(self, nv)
+      node.create_min_connections
+      node
     end
 
     def create_connection(host)
