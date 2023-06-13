@@ -23,7 +23,7 @@ require 'aerospike/atomic/atomic'
 
 module Aerospike
   class Cluster
-    attr_reader :connection_timeout, :connection_queue_size, :user, :password, :min_connections_per_node, :features, :tls_options, :cluster_id, :aliases, :cluster_name, :client_policy
+    attr_reader :connection_timeout, :connection_queue_size, :user, :password, :features, :tls_options, :cluster_id, :aliases, :cluster_name, :client_policy
     attr_accessor :rack_aware, :rack_id, :session_token, :session_expiration
 
     def initialize(policy, hosts)
@@ -59,11 +59,8 @@ module Aerospike
 
       initialize_tls_host_names(hosts) if tls_enabled?
 
-      @min_connections_per_node = policy.min_connections_per_node
-      @max_connections_per_node = policy.max_connections_per_node
-
-      if @min_connections_per_node > @max_connections_per_node
-        raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::PARAMETER_ERROR, "Invalid connection range")
+      if policy.min_connections_per_node > policy.max_connections_per_node
+        raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::PARAMETER_ERROR, "Invalid policy configuration: Minimum connections per node cannot be greater than maximum connections per node.")
       end
     end
 
@@ -587,7 +584,7 @@ module Aerospike
 
     def create_node(nv)
       node = ::Aerospike::Node.new(self, nv)
-      node.create_min_connections
+      node.connection_pool_init(@client_policy.min_connections_per_node)
       node
     end
 

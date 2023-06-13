@@ -18,8 +18,8 @@
 # the License.
 
 RSpec.describe Aerospike::Cluster do
-  let(:instance) { described_class.new(policy, hosts) }
   let(:policy) { spy(min_connections_per_node: 10, max_connections_per_node: 20) }
+  let(:instance) { described_class.new(policy, hosts) }
   let(:hosts) { [] }
 
   describe '#create_node' do
@@ -28,12 +28,12 @@ RSpec.describe Aerospike::Cluster do
 
     before do
       allow(Aerospike::Node).to receive(:new).with(instance, nv).and_return(node)
-      allow(node).to receive(:create_min_connections)
+      allow(node).to receive(:connection_pool_init).with(policy)
     end
 
     it 'creates a new node and calls create_min_connections' do
       expect(Aerospike::Node).to receive(:new).with(instance, nv).and_return(node)
-      expect(node).to receive(:create_min_connections)
+      expect(node).to receive(:connection_pool_init)
       new_node = instance.create_node(nv)
       expect(new_node).to eq(node)
     end

@@ -37,7 +37,7 @@ RSpec.describe Aerospike::Node do
       let(:current_number_of_connections) { 5 }
 
       it 'creates the expected number of minimum connections' do
-        instance.create_min_connections
+        instance.connection_pool_init(10)
         expect(connections).to have_received(:create).exactly(5).times
         expect(connections).to have_received(:offer).exactly(5).times
       end

@@ -55,7 +55,6 @@ module Aerospike
       @replica_index = Atomic.new(0)
       @racks = Atomic.new(nil)
 
-      @min_connections = cluster.min_connections_per_node
       @connections = ::Aerospike::ConnectionPool.new(cluster, host)
     end
 
@@ -70,10 +69,10 @@ module Aerospike
       racks[ns] == rack_id
     end
 
-    def create_min_connections
+    def connection_pool_init(min_connection_size)
       current_number_of_connections = @connections.length
-      if @min_connections > 0
-        while current_number_of_connections < @min_connections
+      if min_connection_size > 0
+        while current_number_of_connections < min_connection_size
           conn = @connections.create
           @connections.offer(conn)
           current_number_of_connections += 1
