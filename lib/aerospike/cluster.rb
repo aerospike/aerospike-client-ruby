@@ -584,7 +584,7 @@ module Aerospike
 
     def create_node(nv)
       node = ::Aerospike::Node.new(self, nv)
-      node.connection_pool_init(@client_policy.min_connections_per_node)
+      node.fill_connection_pool_up_to(@client_policy.min_connections_per_node)
       node
     end
 

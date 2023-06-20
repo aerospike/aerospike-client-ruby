@@ -28,12 +28,12 @@ RSpec.describe Aerospike::Cluster do
 
     before do
       allow(Aerospike::Node).to receive(:new).with(instance, nv).and_return(node)
-      allow(node).to receive(:connection_pool_init).with(policy)
+      allow(node).to receive(:fill_connection_pool_up_to).with(policy)
     end
 
     it 'creates a new node and calls create_min_connections' do
       expect(Aerospike::Node).to receive(:new).with(instance, nv).and_return(node)
-      expect(node).to receive(:connection_pool_init)
+      expect(node).to receive(:fill_connection_pool_up_to)
       new_node = instance.create_node(nv)
       expect(new_node).to eq(node)
     end

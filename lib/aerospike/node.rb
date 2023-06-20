@@ -69,7 +69,7 @@ module Aerospike
       racks[ns] == rack_id
     end
 
-    def connection_pool_init(min_connection_size)
+    def fill_connection_pool_up_to(min_connection_size)
       current_number_of_connections = @connections.length
       if min_connection_size > 0
         while current_number_of_connections < min_connection_size
