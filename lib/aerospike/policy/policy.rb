@@ -21,7 +21,7 @@ module Aerospike
 
   # Container object for client policy command.
   class Policy
-    attr_accessor :filter_exp, :timeout, :max_retries, :sleep_between_retries, :consistency_level,
+    attr_accessor :filter_exp, :priority, :timeout, :max_retries, :sleep_between_retries, :consistency_level,
                   :predexp, :fail_on_filtered_out, :replica, :use_compression, :socket_timeout
 
     alias total_timeout timeout
@@ -50,6 +50,12 @@ module Aerospike
       #
       #  Default: false
       @fail_on_filtered_out = opt[:fail_on_filtered_out] || false
+
+      # [:nodoc:]
+      # DEPRECATED
+      # The Aerospike server does not support this policy anymore
+      # TODO: Remove for next major release
+      @priority = opt[:priority] || Priority::DEFAULT
 
       # Set optional predicate expression filters in postfix notation.
       # Predicate expression filters are applied on the query results on the server.

@@ -23,8 +23,10 @@ module Aerospike
   class ScanPolicy < Policy
 
     attr_accessor :max_records
+    attr_accessor :scan_percent
     attr_accessor :concurrent_nodes
     attr_accessor :include_bin_data
+    attr_accessor :fail_on_cluster_change
     attr_accessor :socket_timeout
     attr_accessor :record_queue_size
     attr_accessor :records_per_second
@@ -42,7 +44,14 @@ module Aerospike
       # Default: 0 (do not limit record count)
       @max_records = opt.fetch(:max_records) { 0 }
 
-      # Issue scan requests in parallel or serially.
+      # Percent of data to scan. Valid integer range is 1 to 100.
+      # Default is 100.
+      @scan_percent = opt[:scan_percent] || 100
+
+      # [:nodoc:]
+      # DEPRECATED
+      # The Aerospike server does not support this policy anymore
+      # TODO: Remove for next major release
       @concurrent_nodes = opt.fetch(:concurrent_nodes) { true }
 
       # Indicates if bin data is retrieved. If false, only record digests (and
@@ -50,6 +59,11 @@ module Aerospike
       # Default is true.
       @include_bin_data = opt.fetch(:include_bin_data) { true }
 
+      # [:nodoc:]
+      # DEPRECATED
+      # The Aerospike server does not support this policy anymore
+      # TODO: Remove for next major release
+      @fail_on_cluster_change = opt.fetch(:fail_on_cluster_change) { true }
 
       # Determines network timeout for each attempt.
       #
