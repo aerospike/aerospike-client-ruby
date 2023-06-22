@@ -18,13 +18,31 @@
 # the License.
 
 RSpec.describe Aerospike::Cluster do
+  let(:policy) { spy(min_connections_per_node: 10, max_connections_per_node: 20) }
   let(:instance) { described_class.new(policy, hosts) }
-  let(:policy) { spy }
   let(:hosts) { [] }
+
+  describe '#create_node' do
+    let(:nv) { double('nv') }
+    let(:node) { instance_double(Aerospike::Node) }
+
+    before do
+      allow(Aerospike::Node).to receive(:new).with(instance, nv).and_return(node)
+      allow(node).to receive(:fill_connection_pool_up_to).with(policy)
+    end
+
+    it 'creates a new node and calls create_min_connections' do
+      expect(Aerospike::Node).to receive(:new).with(instance, nv).and_return(node)
+      expect(node).to receive(:fill_connection_pool_up_to)
+      new_node = instance.create_node(nv)
+      expect(new_node).to eq(node)
+    end
+
+  end
 
   describe '#refresh_nodes' do
     subject(:refresh_nodes) { instance.refresh_nodes }
-    let!(:peers) { ::Aerospike::Peers.new }
+    let!(:peers) { Aerospike::Peers.new }
     let(:node) { spy }
     let(:node_generation_changed) { false }
     let(:generation_changed) { false }
@@ -32,7 +50,7 @@ RSpec.describe Aerospike::Cluster do
     let(:peer_nodes) { {} }
 
     before do
-      allow(::Aerospike::Peers).to receive(:new).and_return(peers)
+      allow(Aerospike::Peers).to receive(:new).and_return(peers)
       allow(instance).to receive(:nodes).and_return(nodes)
       allow(instance).to receive(:add_nodes)
       allow(instance).to receive(:remove_nodes)
@@ -42,6 +60,7 @@ RSpec.describe Aerospike::Cluster do
       allow(node).to receive(:refresh_reset)
       allow(node).to receive(:refresh_peers)
       allow(node).to receive(:refresh_partitions)
+      allow(node).to receive(:create_min_connection)
       allow(node.partition_generation).to receive(:changed?).and_return(node_generation_changed)
       allow(peers).to receive(:generation_changed?).and_return(generation_changed)
       allow(peers).to receive(:reset_refresh_count!)
@@ -76,7 +95,7 @@ RSpec.describe Aerospike::Cluster do
 
         it { expect(node).to have_received(:refresh_info).twice.with(peers) }
         it { expect(node).to have_received(:refresh_peers).twice.with(peers) }
-        it { expect(node).not_to have_received(:refresh_partitions)}
+        it { expect(node).not_to have_received(:refresh_partitions) }
         it { expect(instance).to have_received(:find_nodes_to_remove).with(peers.refresh_count) }
         it { expect(peers).to have_received(:reset_refresh_count!) }
       end

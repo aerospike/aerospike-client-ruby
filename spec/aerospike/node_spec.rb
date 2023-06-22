@@ -19,9 +19,40 @@
 
 RSpec.describe Aerospike::Node do
   let(:cluster) { spy }
-  let(:instance) { described_class.new(cluster, nv) }
   let(:nv) { spy }
+  let(:instance) { described_class.new(cluster, nv) }
   let(:peers) { double }
+
+  describe '#create_min_connections' do
+    subject(:connections) { instance.connections }
+    before do
+      allow(cluster).to receive(:min_connections_per_node).and_return(10)
+      allow(connections).to receive(:length).and_return(current_number_of_connections)
+      allow(connections).to receive(:create)
+      allow(connections).to receive(:offer)
+      allow(instance).to receive(:connections).and_return(connections)
+    end
+
+    context 'when current connections is less than minimum connections' do
+      let(:current_number_of_connections) { 5 }
+
+      it 'creates the expected number of minimum connections' do
+        instance.fill_connection_pool_up_to(10)
+        expect(connections).to have_received(:create).exactly(5).times
+        expect(connections).to have_received(:offer).exactly(5).times
+      end
+    end
+
+    context 'when current connections is equal to minimum connections' do
+      let(:current_number_of_connections) { 10 }
+
+      it 'does not create any additional connections' do
+        expect(connections).not_to have_received(:create)
+        expect(connections).not_to have_received(:offer)
+      end
+    end
+  end
+
 
   describe '#failed!' do
     subject(:failed!) { instance.failed! }

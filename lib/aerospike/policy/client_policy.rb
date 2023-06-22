@@ -23,7 +23,7 @@ module Aerospike
   class ClientPolicy
 
     attr_accessor :user, :password, :auth_mode
-    attr_accessor :timeout, :connection_queue_size, :fail_if_not_connected, :tend_interval
+    attr_accessor :timeout, :connection_queue_size, :fail_if_not_connected, :tend_interval, :max_connections_per_node, :min_connections_per_node
     attr_accessor :cluster_name
     attr_accessor :tls
     attr_accessor :policies
@@ -74,6 +74,26 @@ module Aerospike
       # ClientPolicy#rack_aware, Replica#PREFER_RACK and server rack
       # configuration must also be set to enable this functionality.
       @rack_id = opt[:rack_id] || 0
+
+      # Maximum number of synchronous connections allowed per server node.  Transactions will go
+      # through retry logic and potentially fail with "ResultCode.NO_MORE_CONNECTIONS" if the maximum
+      # number of connections would be exceeded.
+      # The number of connections used per node depends on concurrent commands in progress
+      # plus sub-commands used for parallel multi-node commands (batch, scan, and query).
+      # One connection will be used for each command.
+      # Default: 100
+      @max_connections_per_node = opt[:max_connections_per_node] || 100
+
+      # MinConnectionsPerNode specifies the minimum number of synchronous connections allowed per server node.
+      # Preallocate min connections on client node creation.
+      # The client will periodically allocate new connections if count falls below min connections.
+      #
+      # Server proto-fd-idle-ms may also need to be increased substantially if min connections are defined.
+      # The proto-fd-idle-ms default directs the server to close connections that are idle for 60 seconds
+      # which can defeat the purpose of keeping connections in reserve for a future burst of activity.
+      #
+      # Default: 0
+      @min_connections_per_node = opt[:min_connections_per_node] || 0
     end
 
     def requires_authentication

@@ -22,7 +22,7 @@ require 'aerospike/atomic/atomic'
 module Aerospike
   class Node
 
-    attr_reader :reference_count, :responded, :name, :features, :cluster_name, :partition_generation, :rebalance_generation, :peers_generation, :failures, :cluster, :peers_count, :host
+    attr_reader :reference_count, :responded, :name, :features, :cluster_name, :partition_generation, :rebalance_generation, :peers_generation, :failures, :cluster, :peers_count, :host, :connections
 
     PARTITIONS = 4096
     FULL_HEALTH = 100
@@ -67,6 +67,17 @@ module Aerospike
       racks = @racks.value
       return false if !racks
       racks[ns] == rack_id
+    end
+
+    def fill_connection_pool_up_to(min_connection_size)
+      current_number_of_connections = @connections.length
+      if min_connection_size > 0
+        while current_number_of_connections < min_connection_size
+          conn = @connections.create
+          @connections.offer(conn)
+          current_number_of_connections += 1
+        end
+      end
     end
 
     # Get a connection to the node. If no cached connection is not available,
