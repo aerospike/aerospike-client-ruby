@@ -44,7 +44,6 @@ def run_example(client)
   # the load on the server.
   policy = ScanPolicy.new
   policy.max_retries = 1
-  policy.priority = Priority::LOW
 
   node_list = client.nodes
   begin_time = Time.now

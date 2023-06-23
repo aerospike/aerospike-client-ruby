@@ -51,8 +51,10 @@ module Aerospike
       #  Default: false
       @fail_on_filtered_out = opt[:fail_on_filtered_out] || false
 
-      # Priority of request relative to other transactions.
-      # Currently, only used for scans.
+      # [:nodoc:]
+      # DEPRECATED
+      # The Aerospike server does not support this policy anymore
+      # TODO: Remove for next major release
       @priority = opt[:priority] || Priority::DEFAULT
 
       # Set optional predicate expression filters in postfix notation.

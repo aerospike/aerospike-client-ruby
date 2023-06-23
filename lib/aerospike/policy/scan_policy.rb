@@ -48,7 +48,10 @@ module Aerospike
       # Default is 100.
       @scan_percent = opt[:scan_percent] || 100
 
-      # Issue scan requests in parallel or serially.
+      # [:nodoc:]
+      # DEPRECATED
+      # The Aerospike server does not support this policy anymore
+      # TODO: Remove for next major release
       @concurrent_nodes = opt.fetch(:concurrent_nodes) { true }
 
       # Indicates if bin data is retrieved. If false, only record digests (and
@@ -56,8 +59,10 @@ module Aerospike
       # Default is true.
       @include_bin_data = opt.fetch(:include_bin_data) { true }
 
-      # Terminate scan if cluster in fluctuating state.
-      # Default is true.
+      # [:nodoc:]
+      # DEPRECATED
+      # The Aerospike server does not support this policy anymore
+      # TODO: Remove for next major release
       @fail_on_cluster_change = opt.fetch(:fail_on_cluster_change) { true }
 
       # Determines network timeout for each attempt.
