@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.28.0] 2023-06-23
+- **New Features**
+  - [CLIENT-1432] Support minimum connections in connection pools
+
+- **Updates**
+  - [CLIENT-1529] Removed Policy.priority, ScanPolicy.scanPercent and ScanPolicy.failOnClusterChange
+
 ## [2.27.0] 2023-05-18
 - **New Features**
   - [CLIENT-1176] Support write operations in background query
