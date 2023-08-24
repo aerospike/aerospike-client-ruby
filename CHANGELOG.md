@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.29.0] 2023-08-24
+- **Updates**
+  - [CLIENT-2526] Support for set quota for user defined roles
+
 ## [2.28.0] 2023-06-23
 - **New Features**
   - [CLIENT-1432] Support minimum connections in connection pools
