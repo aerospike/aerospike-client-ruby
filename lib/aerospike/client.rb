@@ -894,6 +894,13 @@ module Aerospike
       command.revoke_privileges(@cluster, policy, role_name, privileges)
     end
 
+    # Set or update quota for a role.
+    def set_quotas(role_name, read_quota, write_quota, options = nil)
+      policy = create_policy(options, AdminPolicy, default_admin_policy)
+      command = AdminCommand.new
+      command.set_quotas(@cluster, policy, role_name, read_quota, write_quota)
+    end
+
     private
 
     def set_default_policies(policies)

@@ -1,6 +1,9 @@
 # Changelog
 
 All notable changes to this project will be documented in this file.
+## [2.28.1] 2023-08-24
+- **Updates**
+  - [CLIENT-2526] Expose the set_quota API from the Admin Command
 
 ## [2.28.0] 2023-06-23
 - **New Features**
