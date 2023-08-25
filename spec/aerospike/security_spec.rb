@@ -64,6 +64,7 @@ describe Aerospike::Client do
 
           client.create_role("role-read-test-test", [Aerospike::Privilege.new(code: Aerospike::Role::READ, namespace: "test", set_name: "test")], ["192.0.0.1"], 0, 0)
           client.create_role("role-write-test", [Aerospike::Privilege.new(code: Aerospike::Role::READ_WRITE, namespace: "test", set_name: "test")], ["192.1.0.1"], 0, 0)
+          client.create_role("role-update-quota-test", [Aerospike::Privilege.new(code: Aerospike::Role::READ)], ["198.1.1.1"], 100, 10)
 
           client.grant_privileges("role-read-test-test", [Aerospike::Privilege.new(code: Aerospike::Role::READ_WRITE, namespace: "test", set_name: "bar"), Aerospike::Privilege.new(code: Aerospike::Role::READ_WRITE_UDF, namespace: "test", set_name: "test")])
           client.revoke_privileges("role-read-test-test", [Aerospike::Privilege.new(code: Aerospike::Role::READ_WRITE_UDF, namespace: "test", set_name: "test")])
@@ -96,8 +97,20 @@ describe Aerospike::Client do
           expect(role.read_quota).to eq 100
           expect(role.write_quota).to eq 1000
 
+
+          role = client.query_role("role-update-quota-test")
+          expect(role.name).to eq "role-update-quota-test"
+          expect(role.read_quota).to eq 100
+          expect(role.write_quota).to eq 10
+          client.set_quotas("role-update-quota-test", 100, 1000)
+          role = client.query_role("role-update-quota-test")
+          expect(role.name).to eq "role-update-quota-test"
+          expect(role.read_quota).to eq 100
+          expect(role.write_quota).to eq 1000
+
           client.drop_role("role-read-test-test")
-          client.drop_role("role-write-test")
+          client.drop_role("role-update-quota-test")
+          client.drop_role("dummy-role")
           client.drop_role("dummy-role")
         end
 
