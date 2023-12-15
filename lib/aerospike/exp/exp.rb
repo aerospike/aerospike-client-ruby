@@ -1,5 +1,5 @@
 # encoding: utf-8
-# Copyright 2014-2022 Aerospike, Inc.
+# Copyright 2014-2023 Aerospike, Inc.
 #
 # Portions may be licensed to Aerospike, Inc. under one or more contributor
 # license agreements.
@@ -210,7 +210,7 @@ module Aerospike
     #   # Bin "a" exists in record
     #   Exp.bin_exists("a")
     def self.bin_exists(name)
-      return Exp.ne(Exp.bin_type(name), Exp.int_val(0))
+      Exp.ne(Exp.bin_type(name), Exp.int_val(0))
     end
 
     # Create expression that returns bin's integer particle type::
@@ -222,6 +222,20 @@ module Aerospike
     def self.bin_type(name)
       CmdStr.new(BIN_TYPE, name)
     end
+
+    # Create expression that returns the record size. This expression usually evaluates
+    # quickly because record meta data is cached in memory.
+    # Requires server version 7.0+. This expression replaces {@link #deviceSize()} and
+    # {@link #memorySize()} since those older expressions are equivalent on server version 7.0+.
+    #
+    # {@code
+    # // Record size >= 100 KB
+    # Exp.ge(Exp.record_size(), Exp.val(100 * 1024))
+    # }
+    def self.record_size
+      Cmd.new(RECORD_SIZE)
+    end
+
 
     #--------------------------------------------------
     # Misc
@@ -1010,6 +1024,7 @@ module Aerospike
     KEY_EXISTS = 71
     IS_TOMBSTONE = 72
     MEMORY_SIZE = 73
+    RECORD_SIZE = 74
     KEY = 80
     BIN = 81
     BIN_TYPE = 82

@@ -116,7 +116,7 @@ module Aerospike
       def self.create(bin_name, order, ctx: nil)
         if !ctx || ctx.length == 0
           # If context not defined, the set order for top-level bin map.
-          self.set_policy(MapPolicy.new(order: order, flag: 0), bin_name)
+          self.set_policy(MapPolicy.new(order: order, flags: 0), bin_name)
         else
           MapOperation.new(Operation::CDT_MODIFY, SET_TYPE, bin_name, order[:attr], ctx: ctx, flag: order[:flag])
         end

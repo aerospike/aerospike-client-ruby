@@ -26,6 +26,11 @@ module Aerospike
 
     PARTITIONS = 4096
     FULL_HEALTH = 100
+    HAS_PARTITION_SCAN = 1 << 0
+    HAS_QUERY_SHOW = 1 << 1
+    HAS_BATCH_ANY = 1 << 2
+    HAS_PARTITION_QUERY = 1 << 3
+
 
     # Initialize server node with connection parameters.
     def initialize(cluster, nv)
@@ -56,6 +61,14 @@ module Aerospike
       @racks = Atomic.new(nil)
 
       @connections = ::Aerospike::ConnectionPool.new(cluster, host)
+    end
+
+    def partition_query?
+      (@features & HAS_PARTITION_QUERY) != 0
+    end
+
+    def query_show?
+      (@features & HAS_QUERY_SHOW) != 0
     end
 
     def update_racks(parser)

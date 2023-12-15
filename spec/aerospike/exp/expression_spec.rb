@@ -1,5 +1,5 @@
 # encoding: utf-8
-# Copyright 2014 Aerospike, Inc.
+# Copyright 2014-2023 Aerospike, Inc.
 #
 # Portions may be licensed to Aerospike, Inc. under one or more contributor
 # license agreements.
@@ -118,7 +118,7 @@ describe Aerospike::Exp do
       it "should return an error when expression is not boolean" do
         stmt = Aerospike::Statement.new(@namespace, @set)
         stmt.filters << Aerospike::Filter.Range("intval", 0, 400)
-        opts = { filter_exp: (Aerospike::Exp.int_val(100)) }
+        opts = { filter_exp: Aerospike::Exp.int_val(100) }
         expect {
           rs = client.query(stmt, opts)
           rs.each do end
@@ -132,7 +132,7 @@ describe Aerospike::Exp do
       it "should additionally filter indexed query results" do
         stmt = Aerospike::Statement.new(@namespace, @set)
         stmt.filters << Aerospike::Filter.Range("intval", 0, 400)
-        opts = { filter_exp: (Aerospike::Exp.ge(Aerospike::Exp.int_bin("modval"), Aerospike::Exp.int_val(8))) }
+        opts = { filter_exp: Aerospike::Exp.ge(Aerospike::Exp.int_bin("modval"), Aerospike::Exp.int_val(8)) }
 
         # The query clause selects [0, 1, ... 400, 401] The predexp
         # only takes mod 8 and 9, should be 2 pre decade or 80 total.
@@ -147,7 +147,7 @@ describe Aerospike::Exp do
 
       it "should work for implied scans" do
         stmt = Aerospike::Statement.new(@namespace, @set)
-        opts = { filter_exp: (Aerospike::Exp.eq(Aerospike::Exp.str_bin("strval"), Aerospike::Exp.str_val("0x0001"))) }
+        opts = { filter_exp: Aerospike::Exp.eq(Aerospike::Exp.str_bin("strval"), Aerospike::Exp.str_val("0x0001")) }
 
         rs = client.query(stmt, opts)
         count = 0
@@ -159,7 +159,7 @@ describe Aerospike::Exp do
 
       it "expression and or and not must all work" do
         stmt = Aerospike::Statement.new(@namespace, @set)
-        opts = { filter_exp: (Aerospike::Exp.or(
+        opts = { filter_exp: Aerospike::Exp.or(
           Aerospike::Exp.and(
             Aerospike::Exp.not(Aerospike::Exp.eq(Aerospike::Exp.str_bin("strval"), Aerospike::Exp.str_val("0x0001"))),
             Aerospike::Exp.ge(Aerospike::Exp.int_bin("modval"), Aerospike::Exp.int_val(8)),
@@ -167,7 +167,7 @@ describe Aerospike::Exp do
           Aerospike::Exp.eq(Aerospike::Exp.str_bin("strval"), Aerospike::Exp.str_val("0x0104")),
           Aerospike::Exp.eq(Aerospike::Exp.str_bin("strval"), Aerospike::Exp.str_val("0x0105")),
           Aerospike::Exp.eq(Aerospike::Exp.str_bin("strval"), Aerospike::Exp.str_val("0x0106")),
-        )) }
+        ) }
 
         rs = client.query(stmt, opts)
         count = 0
@@ -176,6 +176,20 @@ describe Aerospike::Exp do
         end
         expect(count).to eq 203
       end
+
+      it "should query record size" do
+        stmt = Aerospike::Statement.new(@namespace, @set)
+        stmt.filters << Aerospike::Filter.Range("intval", 1, 10)
+        # opts = { filter_exp: Aerospike::Exp.record_size }
+        rs = client.query(stmt)
+        count = 0
+        rs.each do |rec|
+          count += 1
+        end
+        expect(count).to eq 10
+
+      end
+
     end
 
     context "for" do
@@ -184,7 +198,7 @@ describe Aerospike::Exp do
 
       def query_method(exp, ops = {})
         stmt = Aerospike::Statement.new(@namespace, @set)
-        ops[:filter_exp] = (exp)
+        ops[:filter_exp] = exp
         rs = client.query(stmt, ops)
         count = 0
         rs.each do |rec|
@@ -265,10 +279,10 @@ describe Aerospike::Exp do
         key = Aerospike::Key.new(@namespace, @set, 15)
         opts = {
           fail_on_filtered_out: true,
-          filter_exp: (Exp.eq(
+          filter_exp: Exp.eq(
             Exp.int_bin("bin"),
             Exp.int_val(16),
-          )),
+          ),
         }
         expect {
           client.delete(key, opts)
@@ -276,10 +290,10 @@ describe Aerospike::Exp do
 
         opts = {
           fail_on_filtered_out: true,
-          filter_exp: (Exp.eq(
+          filter_exp: Exp.eq(
             Exp.int_bin("bin"),
             Exp.int_val(15),
-          )),
+          ),
         }
         client.delete(key, opts)
       end
@@ -288,10 +302,10 @@ describe Aerospike::Exp do
         key = Aerospike::Key.new(@namespace, @set, 25)
         opts = {
           fail_on_filtered_out: true,
-          filter_exp: (Exp.eq(
+          filter_exp: Exp.eq(
             Exp.int_bin("bin"),
             Exp.int_val(15),
-          )),
+          ),
         }
         expect {
           client.put(key, { "bin" => 26 }, opts)
@@ -299,10 +313,10 @@ describe Aerospike::Exp do
 
         opts = {
           fail_on_filtered_out: true,
-          filter_exp: (Exp.eq(
+          filter_exp: Exp.eq(
             Exp.int_bin("bin"),
             Exp.int_val(25),
-          )),
+          ),
         }
         client.put(key, { "bin" => 26 }, opts)
       end
@@ -311,10 +325,10 @@ describe Aerospike::Exp do
         key = Aerospike::Key.new(@namespace, @set, 35)
         opts = {
           fail_on_filtered_out: true,
-          filter_exp: (Exp.eq(
+          filter_exp: Exp.eq(
             Exp.int_bin("bin"),
             Exp.int_val(15),
-          )),
+          ),
         }
 
         expect {
@@ -323,10 +337,10 @@ describe Aerospike::Exp do
 
         opts = {
           fail_on_filtered_out: true,
-          filter_exp: (Exp.eq(
+          filter_exp: Exp.eq(
             Exp.int_bin("bin"),
             Exp.int_val(35),
-          )),
+          ),
         }
         client.get(key, ["bin"], opts)
       end
@@ -335,10 +349,10 @@ describe Aerospike::Exp do
         key = Aerospike::Key.new(@namespace, @set, 45)
         opts = {
           fail_on_filtered_out: true,
-          filter_exp: (Exp.eq(
+          filter_exp: Exp.eq(
             Exp.int_bin("bin"),
             Exp.int_val(15),
-          )),
+          ),
         }
         expect {
           client.exists(key, opts)
@@ -346,10 +360,10 @@ describe Aerospike::Exp do
 
         opts = {
           fail_on_filtered_out: true,
-          filter_exp: (Exp.eq(
+          filter_exp: Exp.eq(
             Exp.int_bin("bin"),
             Exp.int_val(45),
-          )),
+          ),
         }
         client.exists(key, opts)
       end
@@ -358,10 +372,10 @@ describe Aerospike::Exp do
         key = Aerospike::Key.new(@namespace, @set, 55)
         opts = {
           fail_on_filtered_out: true,
-          filter_exp: (Exp.eq(
+          filter_exp: Exp.eq(
             Exp.int_bin("bin"),
             Exp.int_val(15),
-          )),
+          ),
         }
         expect {
           client.add(key, { "test55" => "test" }, opts)
@@ -369,10 +383,10 @@ describe Aerospike::Exp do
 
         opts = {
           fail_on_filtered_out: true,
-          filter_exp: (Exp.eq(
+          filter_exp: Exp.eq(
             Exp.int_bin("bin"),
             Exp.int_val(55),
-          )),
+          ),
         }
         client.add(key, { "test55" => "test" }, opts)
       end
@@ -381,10 +395,10 @@ describe Aerospike::Exp do
         key = Aerospike::Key.new(@namespace, @set, 55)
         opts = {
           fail_on_filtered_out: true,
-          filter_exp: (Exp.eq(
+          filter_exp: Exp.eq(
             Exp.int_bin("bin"),
             Exp.int_val(15),
-          )),
+          ),
         }
         expect {
           client.prepend(key, { "test55" => "test" }, opts)
@@ -392,10 +406,10 @@ describe Aerospike::Exp do
 
         opts = {
           fail_on_filtered_out: true,
-          filter_exp: (Exp.eq(
+          filter_exp: Exp.eq(
             Exp.int_bin("bin"),
             Exp.int_val(55),
-          )),
+          ),
         }
         client.prepend(key, { "test55" => "test" }, opts)
       end
@@ -404,10 +418,10 @@ describe Aerospike::Exp do
         key = Aerospike::Key.new(@namespace, @set, 65)
         opts = {
           fail_on_filtered_out: true,
-          filter_exp: (Exp.eq(
+          filter_exp: Exp.eq(
             Exp.int_bin("bin"),
             Exp.int_val(15),
-          )),
+          ),
         }
         expect {
           client.touch(key, opts)
@@ -415,10 +429,10 @@ describe Aerospike::Exp do
 
         opts = {
           fail_on_filtered_out: true,
-          filter_exp: (Exp.eq(
+          filter_exp: Exp.eq(
             Exp.int_bin("bin"),
             Exp.int_val(65),
-          )),
+          ),
         }
         client.touch(key, opts)
       end
@@ -426,10 +440,10 @@ describe Aerospike::Exp do
       it "should Scan" do
         opts = {
           fail_on_filtered_out: true,
-          filter_exp: (Exp.eq(
+          filter_exp: Exp.eq(
             Exp.int_bin("bin"),
             Exp.int_val(75),
-          )),
+          ),
         }
 
         rs = client.scan_all(@namespace, @set, nil, opts)
@@ -606,7 +620,7 @@ describe Aerospike::Exp do
         it "#{title} should work" do
           opts = {
             fail_on_filtered_out: true,
-            filter_exp: (exp),
+            filter_exp: exp,
           }
 
           expect {
@@ -617,7 +631,7 @@ describe Aerospike::Exp do
 
           opts = {
             fail_on_filtered_out: true,
-            filter_exp: (Exp.not(exp)),
+            filter_exp: Exp.not(exp),
           } if reverse_exp
           r = client.get(exp_key, nil, opts)
           client.get(key)

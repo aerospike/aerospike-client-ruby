@@ -66,7 +66,7 @@ module Aerospike
         end
       end
       size_buffer
-      write_header(policy,read_attr | INFO1_BATCH, 0, field_count, 0)
+      write_header_read(policy, read_attr | INFO1_BATCH, 0, field_count, 0)
 
       write_predexp(@policy.predexp, predexp_size)
 

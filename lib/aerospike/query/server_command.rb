@@ -33,10 +33,10 @@ module Aerospike
     end
 
     def write_buffer
-      set_query(@policy, @statement, background, nil)
+      set_query(@cluster, @policy, @statement, true, nil)
     end
 
-    def parse_row
+    def parse_row(result_code)
       field_count = @data_buffer.read_int16(18)
       result_code = @data_buffer.read(5).ord & 0xFF
       skip_key(field_count)
