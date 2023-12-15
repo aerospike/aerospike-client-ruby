@@ -110,14 +110,23 @@ module Aerospike
         self
       end
 
-      ##
-      # Creates a map create operation.
-      # Server creates map at given context level.
-      def self.create(bin_name, order, ctx: nil)
-        if !ctx || ctx.length == 0
+      # Create map create operation.
+      # Server creates a map at the given context level.
+      #
+      # @param [String] bin_name The bin name.
+      # @param [Integer] order The map order.
+      # @param [Boolean] persist_index If true, persist map index. A map index improves lookup performance,
+      #   but requires more storage. A map index can be created for a top-level
+      #   ordered map only. Nested and unordered map indexes are not supported.
+      # @param [String] ctx Optional path to a nested map. If not defined, the top-level map is used.
+      def self.create(bin_name, order, persistent_index, ctx: nil)
+        if !ctx || ctx.empty?
           # If context not defined, the set order for top-level bin map.
-          self.set_policy(MapPolicy.new(order: order, flags: 0), bin_name)
+          attr = order[:attr]
+          attr += 0x10 if persistent_index
+          MapOperation.new(Operation::CDT_MODIFY, SET_TYPE, bin_name, attr, ctx: ctx, flag: order[:flag])
         else
+          # Create nested map. persistIndex does not apply here, so ignore it
           MapOperation.new(Operation::CDT_MODIFY, SET_TYPE, bin_name, order[:attr], ctx: ctx, flag: order[:flag])
         end
       end
@@ -128,7 +137,12 @@ module Aerospike
       #
       # The required map policy attributes can be changed after the map is created.
       def self.set_policy(bin_name, policy, ctx: nil)
-        MapOperation.new(Operation::CDT_MODIFY, SET_TYPE, bin_name, policy.order[:attr], ctx: ctx)
+        attr = policy.attributes
+        # Remove persistIndex flag for nested maps.
+        if !ctx.nil? && !ctx.empty? && (attr & 0x10) != 0
+          attr &= ~0x10
+        end
+        MapOperation.new(Operation::CDT_MODIFY, SET_TYPE, bin_name, attr, ctx: ctx)
       end
 
       ##
@@ -635,7 +649,7 @@ module Aerospike
         args.unshift(return_type) if return_type
 
         Packer.use do |packer|
-          if @ctx != nil && @ctx.length > 0
+          if @ctx != nil && !@ctx.empty?
             packer.write_array_header(3)
             Value.of(0xff).pack(packer)
 
@@ -645,12 +659,12 @@ module Aerospike
             Value.of(@map_op).pack(packer)
           else
             packer.write_raw_short(@map_op)
-            if args.length > 0
+            if !args.empty?
               packer.write_array_header(args.length)
             end
           end
 
-          if args.length > 0
+          if !args.empty?
             args.each do |value|
               Value.of(value).pack(packer)
             end

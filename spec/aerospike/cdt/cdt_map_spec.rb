@@ -148,7 +148,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?(Aerosp
     let(:map_value) { { "c" => 1, "b" => 2, "a" => 3 } }
 
     it "sets the map order" do
-      new_policy = MapPolicy.new(order: MapOrder::KEY_ORDERED)
+      new_policy = MapPolicy.new(order: MapOrder::KEY_ORDERED, persist_index: true)
       operation = MapOperation.set_policy(map_bin, new_policy)
 
       expect { client.operate(key, [operation]) }.not_to raise_error
