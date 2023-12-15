@@ -17,10 +17,9 @@
 module Aerospike
   module CDT
     class MapPolicy
-      attr_accessor :order, :write_mode, :flags
-      attr_accessor :item_command, :items_command, :attributes
+      attr_accessor :order, :write_mode, :flags, :item_command, :items_command, :attributes, :persist_index
 
-      def initialize(order: nil, write_mode: nil, flags: nil)
+      def initialize(order: nil, write_mode: nil, persist_index: false, flags: nil)
         if write_mode && flags
           raise ArgumentError, "Use write mode for server versions < 4.3; use write flags for server versions >= 4.3."
         end
@@ -29,6 +28,10 @@ module Aerospike
         @write_mode = write_mode || MapWriteMode::DEFAULT
         @flags = flags || MapWriteFlags::DEFAULT
         @attributes = order ? order[:attr] : 0
+
+        if @persist_index
+          @attributes |= 0x10
+        end
 
         case @write_mode
         when CDT::MapWriteMode::DEFAULT
