@@ -529,7 +529,7 @@ module Aerospike
     # This method is only supported by Aerospike 3 servers.
     # If the policy is nil, the default relevant policy will be used.
     def execute_udf_on_query(statement, package_name, function_name, function_args = [], options = nil)
-      policy = create_policy(options, QueryPolicy, default_query_policy)
+      policy = create_policy(options, WritePolicy, default_write_policy)
 
       nodes = @cluster.nodes
       if nodes.empty?
@@ -538,14 +538,12 @@ module Aerospike
 
       statement = statement.clone
       statement.set_aggregate_function(package_name, function_name, function_args, false)
-
       # Use a thread per node
       nodes.each do |node|
-        partitions = node.cluster.node_partitions(node, statement.namespace)
         Thread.new do
           Thread.current.abort_on_exception = true
           begin
-            command = QueryCommand.new(node, policy, statement, nil, partitions)
+            command = ServerCommand.new(@cluster, node, policy, statement, true, statement.task_id)
             execute_command(command)
           rescue => e
             Aerospike.logger.error(e)
@@ -701,7 +699,6 @@ module Aerospike
     # If the policy is nil, the default relevant policy will be used.
     def query_partitions(partition_filter, statement, options = nil)
       policy = create_policy(options, QueryPolicy, default_query_policy)
-      new_policy = policy.clone
 
       nodes = @cluster.nodes
       if nodes.empty?

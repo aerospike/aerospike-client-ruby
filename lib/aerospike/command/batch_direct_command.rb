@@ -60,7 +60,7 @@ module Aerospike
         operation_count = bin_names.length
       end
 
-      write_header(policy, read_attr, 0, 2, operation_count)
+      write_header_read(policy, read_attr, 0, 2, operation_count)
       write_field_string(batch.namespace, Aerospike::FieldType::NAMESPACE)
       write_field_header(byte_size, Aerospike::FieldType::DIGEST_RIPE_ARRAY)
 
