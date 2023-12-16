@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+## [2.29.0] 2023-12-15
+- **new_features**
+  - [CLIENT-2575] - Support Exp.recordSize().
+  - [CLIENT-2621] - Support persistent map indexes.
+
+- **improvements**
+  - [CLIENT-2590] - Required Updates Following Server-Side Changes: SINDEX Support for 'Blob' Type Elements.
+
 ## [2.29.0] 2023-08-24
 - **Updates**
   - [CLIENT-2526] Support for set quota for user defined roles
