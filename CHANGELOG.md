@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [2.29.0] 2023-12-15
+## [2.30.0] 2023-12-15
 - **new_features**
   - [CLIENT-2575] - Support Exp.recordSize().
   - [CLIENT-2621] - Support persistent map indexes.
