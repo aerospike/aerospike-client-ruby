@@ -627,7 +627,7 @@ module Aerospike
         operation_count = bin_names.length
         # Estimate size for selected bin names (query bin names already handled for old servers).
       end
-      @data_buffer.reset
+
       size_buffer
 
       if background
@@ -723,19 +723,6 @@ module Aerospike
         end
       end
       end_cmd
-    end
-
-    def hex_dump_from_string(data_buffer)
-      byte_array = data_buffer.to_s.unpack('C*')
-      hex_dump(byte_array)
-    end
-
-    def hex_dump(byte_array)
-      byte_array.each_slice(16) do |slice|
-        hex_line = slice.map { |b| format('%02X', b) }.join(' ')
-        char_line = slice.map { |b| (b >= 32 && b <= 126) ? b.chr : '.' }.join
-        puts "#{hex_line.ljust(48)} | #{char_line}"
-      end
     end
 
 

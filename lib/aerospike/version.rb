@@ -1,4 +1,4 @@
 # encoding: utf-8
 module Aerospike
-  VERSION = "2.30.0"
+  VERSION = "3.0.0"
 end

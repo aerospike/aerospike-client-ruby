@@ -2,7 +2,8 @@
 
 All notable changes to this project will be documented in this file.
 
-## [2.30.0] 2023-12-15
+## [3.0.0] 2023-12-15
+Notice: This version of the client only supports Aerospike Server v6.0 and later. Some features will work for the older server versions.
 - **new_features**
   - [CLIENT-2575] - Support Exp.recordSize().
   - [CLIENT-2621] - Support persistent map indexes.
