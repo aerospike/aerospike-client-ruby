@@ -34,7 +34,7 @@ module Aerospike
           list.each do |node_partition|
             threads << Thread.new do
               Thread.current.abort_on_exception = true
-              command = ScanPartitionCommand.new(policy, tracker, node_partition, namespace, set_name, bin_names, recordset)
+              command = ScanPartitionCommand.new(cluster, policy, tracker, node_partition, namespace, set_name, bin_names, recordset)
               begin
                 command.execute
               rescue => e
@@ -48,7 +48,7 @@ module Aerospike
         else
           # Use a single thread for all nodes for all node
           list.each do |node_partition|
-            command = ScanPartitionCommand.new(policy, tracker, node_partition, namespace, set_name, bin_names, recordset)
+            command = ScanPartitionCommand.new(cluster, policy, tracker, node_partition, namespace, set_name, bin_names, recordset)
             begin
               command.execute
             rescue => e

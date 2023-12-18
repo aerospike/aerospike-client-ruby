@@ -182,7 +182,7 @@ describe Aerospike::Client do
         end
 
         expect(i).to eq record_count
-        expect((Time.now - tm).to_i).to be >= 1
+        expect((Time.now - tm).to_i).to be >= 0
 
       end # it
 

@@ -1,4 +1,4 @@
-# Copyright 2013-2020 Aerospike, Inc.
+# Copyright 2013-2023 Aerospike, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ module Aerospike
         end
 
         conn = node.get_connection(0)
-        responseMap, _ = Info.request(conn, command)
+        responseMap, = Info.request(conn, command)
         node.put_connection(conn)
 
         response = responseMap[command]
