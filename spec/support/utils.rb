@@ -20,10 +20,10 @@ require 'aerospike/key'
 module Support
 
   RAND_CHARS = ('a'..'z').to_a.concat(('A'..'Z').to_a).concat(('0'..'9').to_a)
-  VERSION_REGEX = /\d+(?:.\d+)+(:?-\d+)?(?:-[a-z0-9]{8})?/.freeze
+  VERSION_REGEX = /\d+(?:.\d+)+(:?-\d+)?(?:-[a-z0-9]{8})?/
 
   def self.rand_string(len)
-    RAND_CHARS.shuffle[0,len].join
+    RAND_CHARS.shuffle[0, len].join
   end
 
   def self.namespace
@@ -37,7 +37,7 @@ module Support
   def self.gen_random_key(len=50, opts = {})
     key_val = opts[:key_val] || rand_string(len)
     set_name = opts[:set] || self.set_name
-    ns_name = opts[:ns] || self.namespace
+    ns_name = opts[:ns] || namespace
     Aerospike::Key.new(ns_name, set_name, key_val)
   end
 
@@ -47,52 +47,69 @@ module Support
     end
 
     package = "test_utils_delete_record.lua"
-    function = <<EOF
-function delete_record(record)
-  aerospike:remove(record)
-end
-EOF
+    function = <<~EOF
+      function delete_record(record)
+        aerospike:remove(record)
+      end
+    EOF
     register_task = client.register_udf(function, package, Aerospike::Language::LUA)
-    register_task.wait_till_completed or fail "Could not register delete_record UDF to delete set #{set_name}"
+    register_task.wait_till_completed or raise "Could not register delete_record UDF to delete set #{set_name}"
     statement = Aerospike::Statement.new(namespace, set_name)
     execute_task = client.execute_udf_on_query(statement, package, "delete_record")
     execute_task.wait_till_completed
     remove_task = client.remove_udf(package)
-    remove_task.wait_till_completed or fail "Could not un-register delete_record UDF to delete set #{set_name}"
+    remove_task.wait_till_completed or raise "Could not un-register delete_record UDF to delete set #{set_name}"
   end
 
   def self.client_policy(opt={})
     envs = {
       user: ENV.fetch('AEROSPIKE_USER', nil),
-      password: ENV.fetch('AEROSPIKE_PASSWORD', nil),
+      password: ENV.fetch('AEROSPIKE_PASSWORD', nil)
     }.merge!(opt)
 
     Aerospike::ClientPolicy.new(envs)
   end
 
   def self.client(opt={})
-    @client ||= begin
-      Aerospike::Client.new(policy: self.client_policy(opt))
-    end
+    @client ||= Aerospike::Client.new(policy: client_policy(opt))
   end
 
   def self.feature?(feature)
-    self.client.supports_feature?(feature.to_s)
+    client.supports_feature?(feature.to_s)
   end
 
   def self.enterprise?
     @enterprise_edition ||=
       begin
-        info = self.client.request_info("edition")
+        info = client.request_info("edition")
         info["edition"] =~ /Enterprise/
       end
+  end
+
+  def self.ttl_supported?
+    @ttl_supported ||=
+      begin
+        cmd = "namespace/#{namespace}"
+        info = client.request_info(cmd)
+        info = parse_info(info[cmd])
+        info["nsup-period"] != "0"
+      end
+  end
+
+  def self.parse_info(data)
+    res = {}
+    data.split(";").each do |vstr|
+      k, v = vstr.split("=")
+      res[k] = v
+    end
+    res
   end
 
   def self.version
     @cluster_version ||=
       begin
         version = ENV.fetch('AEROSPIKE_VERSION_OVERRIDE', nil)
-        version ||= self.client.request_info("version")["version"]
+        version ||= client.request_info("version")["version"]
         version = version[VERSION_REGEX]
         Gem::Version.new(version).release
       end
@@ -116,14 +133,14 @@ EOF
   end
 
   def self.time_in_nanoseconds(time)
-    ("%10.9f" % time.to_f).gsub('.', '').to_i
+    format("%10.9f", time.to_f).gsub('.', '').to_i
   end
 
   module Geo
     RAD_PER_DEG        = Math::PI / 180.to_f
     DEG_PER_RAD        = 180.to_f / Math::PI
     EARTH_RADIUS_IN_KM = 6371.to_f
-    EARTH_RADIUS_IN_M  = EARTH_RADIUS_IN_KM * 1000;
+    EARTH_RADIUS_IN_M  = EARTH_RADIUS_IN_KM * 1000
 
     #
     # Radians to degrees

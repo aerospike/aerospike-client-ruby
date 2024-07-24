@@ -22,7 +22,7 @@ module Aerospike
   # Container object for client policy command.
   class Policy
     attr_accessor :filter_exp, :priority, :timeout, :max_retries, :sleep_between_retries, :consistency_level,
-                  :predexp, :fail_on_filtered_out, :replica, :use_compression, :socket_timeout
+                  :fail_on_filtered_out, :replica, :use_compression, :socket_timeout
 
     alias total_timeout timeout
     alias total_timeout= timeout=
@@ -57,44 +57,7 @@ module Aerospike
       # TODO: Remove for next major release
       @priority = opt[:priority] || Priority::DEFAULT
 
-      # Set optional predicate expression filters in postfix notation.
-      # Predicate expression filters are applied on the query results on the server.
-      # Predicate expression filters may occur on any bin in the record.
-      # Requires Aerospike Server versions >= 3.12
-      #
-      # Postfix notation is described here: http://wiki.c2.com/?PostfixNotation
-      #
-      # Example:
-      #
-      # (c >= 11 and c <= 20) or (d > 3 and (d < 5)
-      # policy.predexp = [
-      #   PredExp.integer_bin("c"),
-      #   PredExp.integer_value(11),
-      #   PredExp.integer_greater_eq(),
-      #   PredExp.integer_bin("c"),
-      #   PredExp.integer_value(20),
-      #   PredExp.integer_less_eq(),
-      #   PredExp.and(2),
-      #   PredExp.integer_bin("d"),
-      #   PredExp.integer_value(3),
-      #   PredExp.integer_greater(),
-      #   PredExp.integer_bin("d"),
-      #   PredExp.integer_value(5),
-      #   PredExp.integer_less(),
-      #   PredExp.and(2),
-      #   PredExp.or(2)
-      # ]
-      #
-      # # Record last update time > 2017-01-15
-      # policy.predexp = [
-      #   PredExp.rec_last_update(),
-      #   PredExp.integer_value(Time.new(2017, 1, 15).to_i),
-      #   PredExp.integer_greater(),
-      #   PredExp.integer_greater()
-      # ]
-      @predexp = opt[:predexp] || nil
-
-      # Throw exception if @predexp is defined and that filter evaluates
+      # Throw exception if @filter_exp is defined and that filter evaluates
       # to false (transaction ignored). The Aerospike::Exceptions::Aerospike
       # will contain result code Aerospike::ResultCode::FILTERED_OUT.
       # This field is not applicable to batch, scan or query commands.

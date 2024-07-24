@@ -11,14 +11,18 @@ An Aerospike library for Ruby.
 
 This library is compatible with Ruby 2.3+ and supports Linux, Mac OS X and various other BSDs.
 
-- [Usage](#Usage)
-- [Prerequisites](#Prerequisites)
-- [Installation](#Installation)
-- [Benchmarks](#Benchmarks)
-- [API Documentaion](#API-Documentation)
-- [Tests](#Tests)
-- [Examples](#Examples)
-  - [Tools](#Tools)
+- [Aerospike Ruby Client   ](#aerospike-ruby-client---)
+  - [Usage:](#usage)
+  - [Prerequisites](#prerequisites)
+  - [Installation](#installation)
+    - [Installation from Ruby gems](#installation-from-ruby-gems)
+    - [Installation from source](#installation-from-source)
+  - [Tests](#tests)
+  - [Examples](#examples)
+    - [Tools](#tools)
+  - [Benchmarks](#benchmarks)
+  - [API Documentation](#api-documentation)
+  - [License](#license)
 
 
 ## Usage:
@@ -97,7 +101,7 @@ This library is packaged with a number of tests.
 
 To run all the test cases:
 
-    $ AEROSPIKE_HOSTS="<host:port>[,<hoist:port>]" AEROSPIKE_USER="<user>" AEROSPIKE_PASSWORD="<pass>" bundle exec rspec
+    $ AEROSPIKE_HOSTS="<host:port>[,<host:port>]" AEROSPIKE_USER="<user>" AEROSPIKE_PASSWORD="<pass>" bundle exec rspec
 
 <a name="Examples"></a>
 ## Examples

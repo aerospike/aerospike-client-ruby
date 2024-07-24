@@ -31,7 +31,7 @@ describe Aerospike::Exp do
           "bin1" => "value#{i}",
           "bin2" => i,
           "bin3" => [i, i + 1_000, i + 1_000_000],
-          "bin4" => { "key#{i}" => i },
+          "bin4" => { "key#{i}" => i }
         }
         Support.client.put(key, bin_map)
       end
@@ -39,7 +39,7 @@ describe Aerospike::Exp do
       Support.client.drop_index(@namespace, @set, "index_intval")
       Support.client.drop_index(@namespace, @set, "index_strval")
 
-      wpolicy = { generation: 0, expiration: 24 * 60 * 60 }
+      wpolicy = { generation: 0 }
 
       starbucks = [
         [-122.1708441, 37.4241193],
@@ -56,7 +56,7 @@ describe Aerospike::Exp do
         [-122.0303178, 37.3882739],
         [-122.0464861, 37.3786236],
         [-122.0582128, 37.3726980],
-        [-122.0365083, 37.3676930],
+        [-122.0365083, 37.3676930]
       ]
 
       @record_count.times do |ii|
@@ -74,12 +74,12 @@ describe Aerospike::Exp do
         lat = 37.5 + (0.01 * ii)
         point = Aerospike::GeoJSON.point(lat, lng)
 
-        if ii < starbucks.length
-          region = Aerospike::GeoJSON.circle(starbucks[ii][0], starbucks[ii][1], 3000.0)
-        else
+        region = if ii < starbucks.length
+          Aerospike::GeoJSON.circle(starbucks[ii][0], starbucks[ii][1], 3000.0)
+                 else
           # Somewhere off Africa ...
-          region = Aerospike::GeoJSON.circle(0.0, 0.0, 3000.0)
-        end
+          Aerospike::GeoJSON.circle(0.0, 0.0, 3000.0)
+                 end
 
         # Accumulate prime factors of the index into a list and map.
         listval = []
@@ -87,7 +87,7 @@ describe Aerospike::Exp do
         [2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31].each do |ff|
           if ii >= ff && ii % ff == 0
             listval << ff
-            mapval[ff] = sprintf("0x%04x", ff)
+            mapval[ff] = format("0x%04x", ff)
           end
         end
 
@@ -95,13 +95,13 @@ describe Aerospike::Exp do
 
         bins = {
           "intval" => ii,
-          "strval" => sprintf("0x%04x", ii),
+          "strval" => format("0x%04x", ii),
           "modval" => ii % 10,
           # "locval" => point,
           # "rgnval" => region,
           "lstval" => listval,
           "mapval" => mapval,
-          "ballast" => ballast,
+          "ballast" => ballast
         }
 
         Support.client.put(key, bins, wpolicy)
@@ -119,10 +119,12 @@ describe Aerospike::Exp do
         stmt = Aerospike::Statement.new(@namespace, @set)
         stmt.filters << Aerospike::Filter.Range("intval", 0, 400)
         opts = { filter_exp: Aerospike::Exp.int_val(100) }
-        expect {
+        expect do
           rs = client.query(stmt, opts)
-          rs.each do end
-        }.to raise_error (Aerospike::Exceptions::Aerospike) { |error|
+          rs.each do
+
+          end
+        end.to raise_error(Aerospike::Exceptions::Aerospike) { |error|
           error.result_code == Aerospike::ResultCode::PARAMETER_ERROR
         }
       end
@@ -134,7 +136,7 @@ describe Aerospike::Exp do
         stmt.filters << Aerospike::Filter.Range("intval", 0, 400)
         opts = { filter_exp: Aerospike::Exp.ge(Aerospike::Exp.int_bin("modval"), Aerospike::Exp.int_val(8)) }
 
-        # The query clause selects [0, 1, ... 400, 401] The predexp
+        # The query clause selects [0, 1, ... 400, 401] The filter_exp
         # only takes mod 8 and 9, should be 2 pre decade or 80 total.
 
         rs = client.query(stmt, opts)
@@ -162,11 +164,11 @@ describe Aerospike::Exp do
         opts = { filter_exp: Aerospike::Exp.or(
           Aerospike::Exp.and(
             Aerospike::Exp.not(Aerospike::Exp.eq(Aerospike::Exp.str_bin("strval"), Aerospike::Exp.str_val("0x0001"))),
-            Aerospike::Exp.ge(Aerospike::Exp.int_bin("modval"), Aerospike::Exp.int_val(8)),
+            Aerospike::Exp.ge(Aerospike::Exp.int_bin("modval"), Aerospike::Exp.int_val(8))
           ),
           Aerospike::Exp.eq(Aerospike::Exp.str_bin("strval"), Aerospike::Exp.str_val("0x0104")),
           Aerospike::Exp.eq(Aerospike::Exp.str_bin("strval"), Aerospike::Exp.str_val("0x0105")),
-          Aerospike::Exp.eq(Aerospike::Exp.str_bin("strval"), Aerospike::Exp.str_val("0x0106")),
+          Aerospike::Exp.eq(Aerospike::Exp.str_bin("strval"), Aerospike::Exp.str_val("0x0106"))
         ) }
 
         rs = client.query(stmt, opts)
@@ -219,7 +221,7 @@ describe Aerospike::Exp do
             "bin3" => ii.to_f / 3,
             "bin4" => BytesValue.new("blob#{ii}"),
             "bin5" => ["a", "b", ii],
-            "bin6" => { "a": "test", "b": ii },
+            "bin6" => { a: "test", b: ii }
           }
           Support.client.put(key, bins)
         end
@@ -255,7 +257,7 @@ describe Aerospike::Exp do
         ["key must work", 0, Exp.eq(Exp.key(Exp::Type::INT), Exp.int_val(50))],
         ["key_exists must work", 0, Exp.key_exists],
         ["nil must work", 100, Exp.eq(Exp.nil_val, Exp.nil_val)],
-        ["regex_compare must work", 75, Exp.regex_compare("[1-5]", Exp::RegexFlags::ICASE, Exp.str_bin("bin2"))],
+        ["regex_compare must work", 75, Exp.regex_compare("[1-5]", Exp::RegexFlags::ICASE, Exp.str_bin("bin2"))]
       ]
 
       matrix.each do |title, result, exp|
@@ -281,19 +283,19 @@ describe Aerospike::Exp do
           fail_on_filtered_out: true,
           filter_exp: Exp.eq(
             Exp.int_bin("bin"),
-            Exp.int_val(16),
-          ),
+            Exp.int_val(16)
+          )
         }
-        expect {
+        expect do
           client.delete(key, opts)
-        }.to raise_aerospike_error(Aerospike::ResultCode::FILTERED_OUT)
+        end.to raise_aerospike_error(Aerospike::ResultCode::FILTERED_OUT)
 
         opts = {
           fail_on_filtered_out: true,
           filter_exp: Exp.eq(
             Exp.int_bin("bin"),
-            Exp.int_val(15),
-          ),
+            Exp.int_val(15)
+          )
         }
         client.delete(key, opts)
       end
@@ -304,19 +306,19 @@ describe Aerospike::Exp do
           fail_on_filtered_out: true,
           filter_exp: Exp.eq(
             Exp.int_bin("bin"),
-            Exp.int_val(15),
-          ),
+            Exp.int_val(15)
+          )
         }
-        expect {
+        expect do
           client.put(key, { "bin" => 26 }, opts)
-        }.to raise_aerospike_error(Aerospike::ResultCode::FILTERED_OUT)
+        end.to raise_aerospike_error(Aerospike::ResultCode::FILTERED_OUT)
 
         opts = {
           fail_on_filtered_out: true,
           filter_exp: Exp.eq(
             Exp.int_bin("bin"),
-            Exp.int_val(25),
-          ),
+            Exp.int_val(25)
+          )
         }
         client.put(key, { "bin" => 26 }, opts)
       end
@@ -327,20 +329,20 @@ describe Aerospike::Exp do
           fail_on_filtered_out: true,
           filter_exp: Exp.eq(
             Exp.int_bin("bin"),
-            Exp.int_val(15),
-          ),
+            Exp.int_val(15)
+          )
         }
 
-        expect {
+        expect do
           client.get(key, nil, opts)
-        }.to raise_aerospike_error(Aerospike::ResultCode::FILTERED_OUT)
+        end.to raise_aerospike_error(Aerospike::ResultCode::FILTERED_OUT)
 
         opts = {
           fail_on_filtered_out: true,
           filter_exp: Exp.eq(
             Exp.int_bin("bin"),
-            Exp.int_val(35),
-          ),
+            Exp.int_val(35)
+          )
         }
         client.get(key, ["bin"], opts)
       end
@@ -351,19 +353,19 @@ describe Aerospike::Exp do
           fail_on_filtered_out: true,
           filter_exp: Exp.eq(
             Exp.int_bin("bin"),
-            Exp.int_val(15),
-          ),
+            Exp.int_val(15)
+          )
         }
-        expect {
+        expect do
           client.exists(key, opts)
-        }.to raise_aerospike_error(Aerospike::ResultCode::FILTERED_OUT)
+        end.to raise_aerospike_error(Aerospike::ResultCode::FILTERED_OUT)
 
         opts = {
           fail_on_filtered_out: true,
           filter_exp: Exp.eq(
             Exp.int_bin("bin"),
-            Exp.int_val(45),
-          ),
+            Exp.int_val(45)
+          )
         }
         client.exists(key, opts)
       end
@@ -374,19 +376,19 @@ describe Aerospike::Exp do
           fail_on_filtered_out: true,
           filter_exp: Exp.eq(
             Exp.int_bin("bin"),
-            Exp.int_val(15),
-          ),
+            Exp.int_val(15)
+          )
         }
-        expect {
+        expect do
           client.add(key, { "test55" => "test" }, opts)
-        }.to raise_aerospike_error(Aerospike::ResultCode::FILTERED_OUT)
+        end.to raise_aerospike_error(Aerospike::ResultCode::FILTERED_OUT)
 
         opts = {
           fail_on_filtered_out: true,
           filter_exp: Exp.eq(
             Exp.int_bin("bin"),
-            Exp.int_val(55),
-          ),
+            Exp.int_val(55)
+          )
         }
         client.add(key, { "test55" => "test" }, opts)
       end
@@ -397,19 +399,19 @@ describe Aerospike::Exp do
           fail_on_filtered_out: true,
           filter_exp: Exp.eq(
             Exp.int_bin("bin"),
-            Exp.int_val(15),
-          ),
+            Exp.int_val(15)
+          )
         }
-        expect {
+        expect do
           client.prepend(key, { "test55" => "test" }, opts)
-        }.to raise_aerospike_error(Aerospike::ResultCode::FILTERED_OUT)
+        end.to raise_aerospike_error(Aerospike::ResultCode::FILTERED_OUT)
 
         opts = {
           fail_on_filtered_out: true,
           filter_exp: Exp.eq(
             Exp.int_bin("bin"),
-            Exp.int_val(55),
-          ),
+            Exp.int_val(55)
+          )
         }
         client.prepend(key, { "test55" => "test" }, opts)
       end
@@ -420,19 +422,19 @@ describe Aerospike::Exp do
           fail_on_filtered_out: true,
           filter_exp: Exp.eq(
             Exp.int_bin("bin"),
-            Exp.int_val(15),
-          ),
+            Exp.int_val(15)
+          )
         }
-        expect {
+        expect do
           client.touch(key, opts)
-        }.to raise_aerospike_error(Aerospike::ResultCode::FILTERED_OUT)
+        end.to raise_aerospike_error(Aerospike::ResultCode::FILTERED_OUT)
 
         opts = {
           fail_on_filtered_out: true,
           filter_exp: Exp.eq(
             Exp.int_bin("bin"),
-            Exp.int_val(65),
-          ),
+            Exp.int_val(65)
+          )
         }
         client.touch(key, opts)
       end
@@ -442,8 +444,8 @@ describe Aerospike::Exp do
           fail_on_filtered_out: true,
           filter_exp: Exp.eq(
             Exp.int_bin("bin"),
-            Exp.int_val(75),
-          ),
+            Exp.int_val(75)
+          )
         }
 
         rs = client.scan_all(@namespace, @set, nil, opts)
@@ -498,7 +500,7 @@ describe Aerospike::Exp do
             ),
             Exp.eq(
               Exp.int_and(Exp.int_bin(bin_a), Exp.int_val(0xFFFF)),
-              Exp.int_val(1),
+              Exp.int_val(1)
             )
           )
         ), key_a, key_a, bin_a, 1, true],
@@ -510,7 +512,7 @@ describe Aerospike::Exp do
             ),
             Exp.eq(
               Exp.int_or(Exp.int_bin(bin_a), Exp.int_val(0xFF)),
-              Exp.int_val(0xFF),
+              Exp.int_val(0xFF)
             )
           )
         ), key_a, key_a, bin_a, 1, true],
@@ -522,7 +524,7 @@ describe Aerospike::Exp do
             ),
             Exp.eq(
               Exp.int_xor(Exp.int_bin(bin_a), Exp.int_val(0xFF)),
-              Exp.int_val(0xFE),
+              Exp.int_val(0xFE)
             )
           )
         ), key_a, key_a, bin_a, 1, true],
@@ -596,7 +598,7 @@ describe Aerospike::Exp do
           Exp.def("val", Exp.add(Exp.float_bin(bin_b), Exp.float_val(1.1))),
           Exp.and(
             Exp.ge(Exp.var("val"), Exp.float_val(3.2999)),
-            Exp.le(Exp.var("val"), Exp.float_val(3.3001)),
+            Exp.le(Exp.var("val"), Exp.float_val(3.3001))
           )
         ),
          key_a, key_b, bin_a, 2, false],
@@ -613,26 +615,28 @@ describe Aerospike::Exp do
             Exp.ge(Exp.var("val"), Exp.float_val(4.8399)),
             Exp.le(Exp.var("val"), Exp.float_val(4.8401))
           )
-        ), key_a, key_b, bin_a, 2, false],
+        ), key_a, key_b, bin_a, 2, false]
       ]
 
       matrix.each do |title, exp, key, exp_key, bin, expected, reverse_exp|
         it "#{title} should work" do
           opts = {
             fail_on_filtered_out: true,
-            filter_exp: exp,
+            filter_exp: exp
           }
 
-          expect {
+          expect do
             client.get(key, nil, opts)
-          }.to raise_error (Aerospike::Exceptions::Aerospike) { |error|
+          end.to raise_error(Aerospike::Exceptions::Aerospike) { |error|
             error.result_code == Aerospike::ResultCode::FILTERED_OUT
           }
 
-          opts = {
-            fail_on_filtered_out: true,
-            filter_exp: Exp.not(exp),
-          } if reverse_exp
+          if reverse_exp
+            opts = {
+              fail_on_filtered_out: true,
+              filter_exp: Exp.not(exp)
+            }
+          end
           r = client.get(exp_key, nil, opts)
           client.get(key)
           expect(r.bins[bin]).to eq expected

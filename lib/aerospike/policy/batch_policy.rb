@@ -22,11 +22,12 @@ module Aerospike
   # Container object for batch policy command.
   class BatchPolicy < Policy
 
-    attr_accessor :use_batch_direct
-
     def initialize(opt={})
       super(opt)
 
+      # [:nodoc:]
+      # DEPRECATED
+      # This setting does not have any effect anymore.
       # Use old batch direct protocol where batch reads are handled by direct
       # low-level batch server database routines. The batch direct protocol can
       # be faster when there is a single namespace. But there is one important
@@ -39,7 +40,7 @@ module Aerospike
       #
       # Default: false (use new batch index protocol if server supports it)
       @use_batch_direct = opt.fetch(:use_batch_direct) { false }
-
+    
       self
     end
 

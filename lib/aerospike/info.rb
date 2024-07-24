@@ -66,7 +66,6 @@ module Aerospike
     private
 
     def self.send_command(conn, offset, buffer)
-      begin
         # Write size field.
         size = (offset - 8) | (2 << 56) | (1 << 48)
 
@@ -82,12 +81,11 @@ module Aerospike
         buffer.resize(length)
 
         conn.read(buffer, length)
-        return length
-      rescue => e
+        length
+    rescue => e
         Aerospike.logger.error(e)
         conn.close if conn
         raise e
-      end
     end
 
   end

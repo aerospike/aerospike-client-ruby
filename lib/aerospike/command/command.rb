@@ -112,9 +112,6 @@ module Aerospike
       begin_cmd
       field_count = estimate_key_size(key, policy)
 
-      predexp_size = estimate_predexp(policy.predexp)
-      field_count += 1 if predexp_size > 0
-
       exp_size = estimate_expression_size(@policy.filter_exp)
       field_count += 1 if exp_size > 0
 
@@ -126,7 +123,6 @@ module Aerospike
 
       write_header_write(policy, INFO2_WRITE, field_count, bins.length)
       write_key(key, policy)
-      write_predexp(policy.predexp, predexp_size)
       write_filter_exp(@policy.filter_exp, exp_size)
 
       bins.each do |bin|
@@ -142,16 +138,12 @@ module Aerospike
       begin_cmd
       field_count = estimate_key_size(key)
 
-      predexp_size = estimate_predexp(policy.predexp)
-      field_count += 1 if predexp_size > 0
-
       exp_size = estimate_expression_size(@policy.filter_exp)
       field_count += 1 if exp_size > 0
 
       size_buffer
-      write_header_write(policy,  INFO2_WRITE | INFO2_DELETE, field_count, 0)
+      write_header_write(policy, INFO2_WRITE | INFO2_DELETE, field_count, 0)
       write_key(key)
-      write_predexp(policy.predexp, predexp_size)
       write_filter_exp(@policy.filter_exp, exp_size)
       end_cmd
     end
@@ -161,17 +153,13 @@ module Aerospike
       begin_cmd
       field_count = estimate_key_size(key)
 
-      predexp_size = estimate_predexp(policy.predexp)
-      field_count += 1 if predexp_size > 0
-
       exp_size = estimate_expression_size(@policy.filter_exp)
       field_count += 1 if exp_size > 0
 
       estimate_operation_size
       size_buffer
-      write_header_write(policy,  INFO2_WRITE, field_count, 1)
+      write_header_write(policy, INFO2_WRITE, field_count, 1)
       write_key(key)
-      write_predexp(policy.predexp, predexp_size)
       write_filter_exp(@policy.filter_exp, exp_size)
       write_operation_for_operation_type(Aerospike::Operation::TOUCH)
       end_cmd
@@ -182,16 +170,12 @@ module Aerospike
       begin_cmd
       field_count = estimate_key_size(key)
 
-      predexp_size = estimate_predexp(policy.predexp)
-      field_count += 1 if predexp_size > 0
-
       exp_size = estimate_expression_size(@policy.filter_exp)
       field_count += 1 if exp_size > 0
 
       size_buffer
       write_header_read_header(policy, INFO1_READ | INFO1_NOBINDATA, field_count, 0)
       write_key(key)
-      write_predexp(policy.predexp, predexp_size)
       write_filter_exp(@policy.filter_exp, exp_size)
       end_cmd
     end
@@ -201,16 +185,12 @@ module Aerospike
       begin_cmd
       field_count = estimate_key_size(key)
 
-      predexp_size = estimate_predexp(policy.predexp)
-      field_count += 1 if predexp_size > 0
-
       exp_size = estimate_expression_size(@policy.filter_exp)
       field_count += 1 if exp_size > 0
 
       size_buffer
       write_header_read(policy, INFO1_READ | INFO1_GET_ALL, 0, field_count, 0)
       write_key(key)
-      write_predexp(policy.predexp, predexp_size)
       write_filter_exp(@policy.filter_exp, exp_size)
       end_cmd
     end
@@ -220,9 +200,6 @@ module Aerospike
       if bin_names && !bin_names.empty?
         begin_cmd
         field_count = estimate_key_size(key)
-
-        predexp_size = estimate_predexp(policy.predexp)
-        field_count += 1 if predexp_size > 0
 
         exp_size = estimate_expression_size(@policy.filter_exp)
         field_count += 1 if exp_size > 0
@@ -239,7 +216,6 @@ module Aerospike
 
         write_header_read(policy, attr, 0, field_count, bin_names.length)
         write_key(key)
-        write_predexp(policy.predexp, predexp_size)
         write_filter_exp(@policy.filter_exp, exp_size)
 
         bin_names.each do |bin_name|
@@ -258,9 +234,6 @@ module Aerospike
       begin_cmd
       field_count = estimate_key_size(key)
 
-      predexp_size = estimate_predexp(policy.predexp)
-      field_count += 1 if predexp_size > 0
-
       exp_size = estimate_expression_size(@policy.filter_exp)
       field_count += 1 if exp_size > 0
 
@@ -273,7 +246,6 @@ module Aerospike
       write_header_read_header(policy, INFO1_READ|INFO1_NOBINDATA, field_count, 0)
 
       write_key(key)
-      write_predexp(policy.predexp, predexp_size)
       write_filter_exp(@policy.filter_exp, exp_size)
       end_cmd
       mark_compressed(policy)
@@ -284,9 +256,6 @@ module Aerospike
       begin_cmd
       field_count = estimate_key_size(key, policy)
 
-      predexp_size = estimate_predexp(policy.predexp)
-      field_count += 1 if predexp_size > 0
-
       exp_size = estimate_expression_size(policy.filter_exp)
       field_count += 1 if exp_size > 0
 
@@ -296,7 +265,6 @@ module Aerospike
 
       write_header_read_write(policy, args.read_attr, args.write_attr, field_count, args.operations.length)
       write_key(key, policy)
-      write_predexp(policy.predexp, predexp_size)
       write_filter_exp(policy.filter_exp, exp_size)
 
       args.operations.each do |operation|
@@ -311,9 +279,6 @@ module Aerospike
       begin_cmd
       field_count = estimate_key_size(key, policy)
 
-      predexp_size = estimate_predexp(policy.predexp)
-      field_count += 1 if predexp_size > 0
-
       exp_size = estimate_expression_size(@policy.filter_exp)
       field_count += 1 if exp_size > 0
 
@@ -324,7 +289,6 @@ module Aerospike
 
       write_header_write(policy, INFO2_WRITE, field_count, 0)
       write_key(key, policy)
-      write_predexp(policy.predexp, predexp_size)
       write_filter_exp(@policy.filter_exp, exp_size)
       write_field_string(package_name, Aerospike::FieldType::UDF_PACKAGE_NAME)
       write_field_string(function_name, Aerospike::FieldType::UDF_FUNCTION)
@@ -372,9 +336,6 @@ module Aerospike
         @data_offset += 4 + FIELD_HEADER_SIZE
         field_count += 1
       end
-
-      predexp_size = estimate_predexp(policy.predexp)
-      field_count += 1 if predexp_size > 0
 
       exp_size = estimate_expression_size(@policy.filter_exp)
       field_count += 1 if exp_size > 0
@@ -446,7 +407,6 @@ module Aerospike
         write_field_int(policy.records_per_second, Aerospike::FieldType::RECORDS_PER_SECOND)
       end
 
-      write_predexp(policy.predexp, predexp_size)
       write_filter_exp(@policy.filter_exp, exp_size)
 
       # write_field_header(2, Aerospike::FieldType::SCAN_OPTIONS)
@@ -474,7 +434,6 @@ module Aerospike
 
       end_cmd
     end
-
 
     def set_query(cluster, policy, statement, background, node_partitions)
       function_arg_buffer = nil
@@ -525,7 +484,7 @@ module Aerospike
 
         # Estimate INDEX_RANGE field.
         @data_offset += FIELD_HEADER_SIZE
-        filter_size += 1  # num filters
+        filter_size += 1 # num filters
         filter_size += filter.estimate_size
 
         @data_offset += filter_size
@@ -539,14 +498,6 @@ module Aerospike
       end
 
       statement.set_task_id
-      predexp = policy.predexp || statement.predexp
-
-      if predexp
-        @data_offset += FIELD_HEADER_SIZE
-        pred_size = Aerospike::PredExp.estimate_size(predexp)
-        @data_offset += pred_size
-        field_count += 1
-      end
 
       unless policy.filter_exp.nil?
         exp_size = estimate_expression_size(policy.filter_exp)
@@ -656,13 +607,6 @@ module Aerospike
       # Write task_id field
       write_field_int64(statement.task_id, FieldType::TRAN_ID)
 
-      unless predexp.nil?
-        write_field_header(pred_size, Aerospike::FieldType::PREDEXP)
-        @data_offset = Aerospike::PredExp.write(
-          predexp, @data_buffer, @data_offset
-        )
-      end
-
       if filter
         type = filter.collection_type
 
@@ -725,7 +669,6 @@ module Aerospike
       end_cmd
     end
 
-
     def execute
       iterations = 0
 
@@ -752,7 +695,7 @@ module Aerospike
             # Socket connection error has occurred. Decrease health and retry.
             @node.decrease_health
 
-            Aerospike.logger.error("Node #{@node.to_s}: #{e}")
+            Aerospike.logger.error("Node #{@node}: #{e}")
           else
             Aerospike.logger.error("No node available for transaction: #{e}")
           end
@@ -785,7 +728,7 @@ module Aerospike
             # Close socket to flush out possible garbage. Do not put back in pool.
             @conn.close if @conn
 
-            Aerospike.logger.error("Node #{@node.to_s}: #{e}")
+            Aerospike.logger.error("Node #{@node}: #{e}")
             # IO error means connection to server @node is unhealthy.
             # Reflect cmd status.
             @node.decrease_health
@@ -853,14 +796,14 @@ module Aerospike
         field_count += 1
       end
 
-      return field_count
+      field_count
     end
 
     def estimate_udf_size(package_name, function_name, bytes)
       @data_offset += package_name.bytesize + FIELD_HEADER_SIZE
       @data_offset += function_name.bytesize + FIELD_HEADER_SIZE
       @data_offset += bytes.bytesize + FIELD_HEADER_SIZE
-      return 3
+      3
     end
 
     def estimate_operation_size_for_bin(bin)
@@ -888,16 +831,6 @@ module Aerospike
 
     def estimate_operation_size
       @data_offset += OPERATION_HEADER_SIZE
-    end
-
-    def estimate_predexp(predexp)
-      if predexp && !predexp.empty?
-        @data_offset += FIELD_HEADER_SIZE
-        sz = Aerospike::PredExp.estimate_size(predexp)
-        @data_offset += sz
-        return sz
-      end
-      return 0
     end
 
     def estimate_expression_size(exp)
@@ -1199,15 +1132,6 @@ module Aerospike
       @data_offset += 1
     end
 
-    def write_predexp(predexp, predexp_size)
-      if predexp && !predexp.empty?
-        write_field_header(predexp_size, Aerospike::FieldType::FILTER_EXP)
-        @data_offset = Aerospike::PredExp.write(
-          predexp, @data_buffer, @data_offset
-        )
-      end
-    end
-
     def write_filter_exp(exp, exp_size)
       unless exp.nil?
         write_field_header(exp_size, Aerospike::FieldType::FILTER_EXP)
@@ -1238,7 +1162,7 @@ module Aerospike
 
     def compress_buffer
       if @data_offset > COMPRESS_THRESHOLD
-        compressed = Zlib::deflate(@data_buffer.buf, Zlib::DEFAULT_COMPRESSION)
+        compressed = Zlib.deflate(@data_buffer.buf, Zlib::DEFAULT_COMPRESSION)
 
         # write original size as header
         proto_s = format("%08d", 0)

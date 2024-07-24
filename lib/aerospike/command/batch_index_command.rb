@@ -21,11 +21,7 @@ module Aerospike
 
   class BatchIndexCommand < MultiCommand #:nodoc:
 
-    attr_accessor :batch
-    attr_accessor :policy
-    attr_accessor :bin_names
-    attr_accessor :results
-    attr_accessor :read_attr
+    attr_accessor :batch, :policy, :bin_names, :results, :read_attr
 
     def initialize(node, batch, policy, bin_names, results, read_attr)
       super(node)
@@ -42,8 +38,8 @@ module Aerospike
       field_count_row = 1
       field_count = 1
 
-      predexp_size = estimate_predexp(@policy.predexp)
-      field_count += 1 if predexp_size > 0
+      exp_size = estimate_expression_size(@policy.filter_exp)
+      field_count += 1 if exp_size > 0
 
       if bin_names
         bin_names.each do |bin_name|
@@ -58,7 +54,7 @@ module Aerospike
       batch.keys.each do |key|
         @data_offset += key.digest.length + 4 # 4 byte batch offset
 
-        if prev != nil && prev.namespace == key.namespace
+        if !prev.nil? && prev.namespace == key.namespace
           @data_offset += 1
         else
           @data_offset += key.namespace.bytesize + FIELD_HEADER_SIZE + 1 + 1 + 2 + 2 # repeat/no-repeat flag + read_attr flags + field_count + operation_count
@@ -68,7 +64,7 @@ module Aerospike
       size_buffer
       write_header_read(policy, read_attr | INFO1_BATCH, 0, field_count, 0)
 
-      write_predexp(@policy.predexp, predexp_size)
+      write_filter_exp(@policy.filter_exp, exp_size)
 
       write_field_header(0, Aerospike::FieldType::BATCH_INDEX)
       @data_offset += @data_buffer.write_int32(batch.keys.length, @data_offset)
@@ -80,7 +76,7 @@ module Aerospike
         @data_offset += @data_buffer.write_int32(index, @data_offset)
         @data_offset += @data_buffer.write_binary(key.digest, @data_offset)
 
-        if (prev != nil && prev.namespace == key.namespace)
+        if !prev.nil? && prev.namespace == key.namespace
           @data_offset += @data_buffer.write_byte(1, @data_offset)
         else
           @data_offset += @data_buffer.write_byte(0, @data_offset)

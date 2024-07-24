@@ -151,8 +151,8 @@ describe Aerospike::Client do
 
       number_of_records = 100
       number_of_records.times do |i|
-        key = Support.gen_random_key(50, {:set => set})
-        bin1 = Aerospike::Bin.new('bin1', i * div)
+        key = Support.gen_random_key(50, { :set => set })
+        bin1 = Aerospike::Bin.new('bin1', (i + 1) * div)
         bin2 = Aerospike::Bin.new('bin2', -1)
         client.put(key, [bin1, bin2])
       end
@@ -170,7 +170,7 @@ describe Aerospike::Client do
       recordset = client.scan_all(ns, set)
       cnt = 0
       recordset.each do |rec|
-        expect(rec.bins['bin2']).to eq (rec.bins['bin1'] / div)
+        expect(rec.bins['bin2']).to eq(rec.bins['bin1'] / div)
         cnt += 1
       end
       expect(cnt).to eq number_of_records
@@ -184,7 +184,7 @@ describe Aerospike::Client do
 
       number_of_records = 100
       number_of_records.times do |i|
-        key = Support.gen_random_key(50, {:set => set})
+        key = Support.gen_random_key(50, { :set => set })
         bin1 = Aerospike::Bin.new('bin1', i * div)
         bin2 = Aerospike::Bin.new('bin2', -1)
         client.put(key, [bin1, bin2])
@@ -212,7 +212,7 @@ describe Aerospike::Client do
       cnt = 0
       recordset.each do |rec|
         if rec.bins['bin1'] <= number_of_records / 2
-          expect(rec.bins['bin2']).to eq (rec.bins['bin1'] / div)
+          expect(rec.bins['bin2']).to eq(rec.bins['bin1'] / div)
         else
           expect(rec.bins['bin2']).to eq(-1)
         end
