@@ -22,11 +22,11 @@ module Aerospike
     attr_reader :key
 
     # Record result after batch command has completed.  Will be null if record was not found
-    # or an error occurred. See {@link BatchRecord#result_code}.
+    # or an error occurred. See {BatchRecord#result_code}.
     attr_reader :record
 
-    # Result code for this returned record. See {@link com.aerospike.client.ResultCode}.
-    # If not {@link com.aerospike.client.ResultCode#OK}, the record will be null.
+    # Result code for this returned record. See {ResultCode}.
+    # If not {ResultCode#OK}, the record will be null.
     attr_accessor :result_code
 
     # Is it possible that the write transaction may have completed even though an error
@@ -46,7 +46,7 @@ module Aerospike
       @has_write = has_write
     end
 
-    def self.create_policy(policy, policy_klass, default_policy = nil)
+    def self.create_policy(policy, policy_klass, default_policy = nil) # :nodoc:
       case policy
       when nil
         default_policy || policy_klass.new
@@ -61,20 +61,20 @@ module Aerospike
 
     # Prepare for upcoming batch call. Reset result fields because this instance might be
     # reused. For internal use only.
-    def prepare
+    def prepare # :nodoc:
       @record = nil
       @result_code = ResultCode::NO_RESPONSE
       @in_doubt = false
     end
 
     # Set record result. For internal use only.
-    def record=(record)
+    def record=(record) # :nodoc:
       @record = record
       @result_code = ResultCode::OK
     end
 
     # Set error result. For internal use only.
-    def set_error(result_code, in_doubt)
+    def set_error(result_code, in_doubt) # :nodoc:
       @result_code = result_code
       @in_doubt = in_doubt
     end

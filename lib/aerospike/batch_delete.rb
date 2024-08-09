@@ -27,14 +27,14 @@ module Aerospike
       @policy = BatchRecord.create_policy(opt, BatchDeletePolicy, DEFAULT_BATCH_DELETE_POLICY)
     end
 
-    def ==(other)
+    def ==(other) # :nodoc:
       other && other.instance_of?(self.class) && @policy == other.policy
     end
 
     DEFAULT_BATCH_DELETE_POLICY = BatchDeletePolicy.new
 
     # Return wire protocol size. For internal use only.
-    def size
+    def size # :nodoc:
       size = 6 # gen(2) + exp(4) = 6
 
       size += @policy&.filter_exp&.size if @policy&.filter_exp

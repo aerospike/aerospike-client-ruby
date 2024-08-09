@@ -81,6 +81,7 @@ module Aerospike
       Operation.new(DELETE)
     end
 
+    # :nodoc:
     def is_write?
       case @op_type
       when READ

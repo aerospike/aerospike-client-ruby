@@ -30,10 +30,10 @@ module Aerospike
     attr_accessor :ops
 
     # Initialize batch key and read/write operations.
-    # <p>
-    # {@link Operation#get()} is not allowed because it returns a variable number of bins and
+    #
+    # {Operation#get()} is not allowed because it returns a variable number of bins and
     # makes it difficult (sometimes impossible) to lineup operations with results. Instead,
-    # use {@link Operation#get(String)} for each bin name.
+    # use {Operation#get(bin_name)} for each bin name.
     def initialize(key, ops, opt = {})
       super(key, has_write: true)
       @policy = BatchRecord.create_policy(opt, BatchWritePolicy, DEFAULT_BATCH_WRITE_POLICY)
@@ -42,7 +42,7 @@ module Aerospike
 
     # Optimized reference equality check to determine batch wire protocol repeat flag.
     # For internal use only.
-    def ==(other)
+    def ==(other) # :nodoc:
       other && other.instance_of?(self.class) &&
         @ops == other.ops && @policy == other.policy && (@policy.nil? || !@policy.send_key)
     end
@@ -50,7 +50,7 @@ module Aerospike
     DEFAULT_BATCH_WRITE_POLICY = BatchWritePolicy.new
 
     # Return wire protocol size. For internal use only.
-    def size
+    def size # :nodoc:
       size = 6 # gen(2) + exp(4) = 6
 
       size += @policy&.filter_exp&.size if @policy&.filter_exp

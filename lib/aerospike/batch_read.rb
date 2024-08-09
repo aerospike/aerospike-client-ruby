@@ -25,12 +25,12 @@ module Aerospike
     attr_accessor :policy
 
     # Bins to retrieve for this key. bin_names are mutually exclusive with
-    # {@link com.aerospike.client.BatchRead#ops}.
+    # {BatchRead#ops}.
     attr_accessor :bin_names
 
     # Optional operations for this key. ops are mutually exclusive with
-    # {@link com.aerospike.client.BatchRead#bin_names}. A bin_name can be emulated with
-    # {@link com.aerospike.client.Operation#get(String)}
+    # {BatchRead#bin_names}. A bin_name can be emulated with
+    # {Operation#get(bin_name)}
     attr_accessor :ops
 
     # If true, ignore bin_names and read all bins.
@@ -66,7 +66,7 @@ module Aerospike
 
     # Optimized reference equality check to determine batch wire protocol repeat flag.
     # For internal use only.
-    def ==(other)
+    def ==(other) # :nodoc:
       other && other.instance_of?(self.class) &&
         @bin_names.sort == other.bin_names.sort && @ops.sort == other.ops.sort &&
         @policy == other.policy && @read_all_bins == other.read_all_bins
@@ -75,7 +75,7 @@ module Aerospike
     DEFAULT_BATCH_READ_POLICY = BatchReadPolicy.new
 
     # Return wire protocol size. For internal use only.
-    def size
+    def size # :nodoc:
       size = 0
       size += @policy&.filter_exp&.size if @policy&.filter_exp
 

@@ -63,8 +63,8 @@ module Aerospike
       # other nodes will continue to be processed.
       #
       # If false, the server will stop the batch to its node on most key specific errors.
-      # The exceptions are {@link com.aerospike.client.ResultCode#KEY_NOT_FOUND_ERROR} and
-      # {@link com.aerospike.client.ResultCode#FILTERED_OUT} which never stop the batch.
+      # The exceptions are {ResultCode#KEY_NOT_FOUND_ERROR} and
+      # {ResultCode#FILTERED_OUT} which never stop the batch.
       # The client will stop the entire batch on node specific errors. The client will
       # not stop the entire batch commands run in parallel.
       #

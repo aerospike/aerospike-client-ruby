@@ -26,11 +26,11 @@ module Aerospike
     alias expiration= ttl=
 
     def initialize(opt={})
-      # Optional expression filter. If filterExp exists and evaluates to false, the specific batch key
-      # request is not performed and {@link com.aerospike.client.BatchRecord#resultCode} is set to
-      # {@link com.aerospike.client.ResultCode#FILTERED_OUT}.
+      # Optional expression filter. If filter_exp exists and evaluates to false, the specific batch key
+      # request is not performed and {BatchRecord#resultCode} is set to
+      # {ResultCode#FILTERED_OUT}.
       #
-      # If exists, this filter overrides the batch parent filter {@link com.aerospike.client.policy.Policy#filterExp}
+      # If exists, this filter overrides the batch parent filter {Policy#filter_exp}
       # for the specific key in batch commands that allow a different policy per key.
       # Otherwise, this filter is ignored.
       #

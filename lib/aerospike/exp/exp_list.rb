@@ -16,7 +16,7 @@
 
 module Aerospike
 
-  # List expression generator. See {@link Exp}.
+  # List expression generator. See {Exp}.
   #
   # The bin expression argument in these methods can be a reference to a bin or the
   # result of another expression. Expressions that modify bin values are only used
@@ -50,74 +50,74 @@ module Aerospike
     # Create expression that appends value to end of list.
     def self.append(value, bin, ctx: nil, policy: CDT::ListPolicy::DEFAULT)
       bytes = Exp.pack(ctx, APPEND, value, policy.order, policy.flags)
-      self.add_write(bin, bytes, ctx)
+      add_write(bin, bytes, ctx)
     end
 
     # Create expression that appends list items to end of list.
     def self.append_items(list, bin, ctx: nil, policy: CDT::ListPolicy::DEFAULT)
       bytes = Exp.pack(ctx, APPEND_ITEMS, list, policy.order, policy.flags)
-      self.add_write(bin, bytes, ctx)
+      add_write(bin, bytes, ctx)
     end
 
     # Create expression that inserts value to specified index of list.
     def self.insert(index, value, bin, ctx: nil, policy: CDT::ListPolicy::DEFAULT)
       bytes = Exp.pack(ctx, INSERT, index, value, policy.flags)
-      self.add_write(bin, bytes, ctx)
+      add_write(bin, bytes, ctx)
     end
 
     # Create expression that inserts each input list item starting at specified index of list.
     def self.insert_items(index, list, bin, ctx: nil, policy: CDT::ListPolicy::DEFAULT)
       bytes = Exp.pack(ctx, INSERT_ITEMS, index, list, policy.flags)
-      self.add_write(bin, bytes, ctx)
+      add_write(bin, bytes, ctx)
     end
 
     # Create expression that increments list[index] by value.
     # Value expression should resolve to a number.
     def self.increment(index, value, bin, ctx: nil, policy: CDT::ListPolicy::DEFAULT)
       bytes = Exp.pack(ctx, INCREMENT, index, value, policy.order, policy.flags)
-      self.add_write(bin, bytes, ctx)
+      add_write(bin, bytes, ctx)
     end
 
     # Create expression that sets item value at specified index in list.
     def self.set(index, value, bin, ctx: nil, policy: CDT::ListPolicy::DEFAULT)
       bytes = Exp.pack(ctx, SET, index, value, policy.flags)
-      self.add_write(bin, bytes, ctx)
+      add_write(bin, bytes, ctx)
     end
 
     # Create expression that removes all items in list.
     def self.clear(bin, ctx: nil)
       bytes = Exp.pack(ctx, CLEAR)
-      self.add_write(bin, bytes, ctx)
+      add_write(bin, bytes, ctx)
     end
 
     # Create expression that sorts list according to sort_flags.
     #
-    # @param sort_flags 	sort flags. See {@link ListSortFlagsend.
+    # @param sort_flags 	sort flags. See {ListSortFlagsend.
     # @param bin			bin or list value expression
     # @param ctx			optional context path for nested CDT
     def self.sort(sort_flags, bin, ctx: nil)
       bytes = Exp.pack(ctx, SORT, sort_flags)
-      self.add_write(bin, bytes, ctx)
+      add_write(bin, bytes, ctx)
     end
 
     # Create expression that removes list items identified by value.
     def self.remove_by_value(value, bin, ctx: nil)
       bytes = Exp.pack(ctx, REMOVE_BY_VALUE, CDT::ListReturnType::NONE, value)
-      self.add_write(bin, bytes, ctx)
+      add_write(bin, bytes, ctx)
     end
 
     # Create expression that removes list items identified by values.
     def self.remove_by_value_list(values, bin, ctx: nil)
       bytes = Exp.pack(ctx, REMOVE_BY_VALUE_LIST, CDT::ListReturnType::NONE, values)
-      self.add_write(bin, bytes, ctx)
+      add_write(bin, bytes, ctx)
     end
 
     # Create expression that removes list items identified by value range (value_begin inclusive, value_end exclusive).
     # If value_begin is nil, the range is less than value_end. If value_end is nil, the range is
     # greater than equal to value_begin.
     def self.remove_by_value_range(value_begin, value_end, bin, ctx: nil)
-      bytes = self.pack_range_operation(REMOVE_BY_VALUE_INTERVAL, CDT::ListReturnType::NONE, value_begin, value_end, ctx)
-      self.add_write(bin, bytes, ctx)
+      bytes = pack_range_operation(REMOVE_BY_VALUE_INTERVAL, CDT::ListReturnType::NONE, value_begin, value_end, ctx)
+      add_write(bin, bytes, ctx)
     end
 
     # Create expression that removes list items nearest to value and greater by relative rank with a count limit if provided.
@@ -132,44 +132,44 @@ module Aerospike
     # (3,3,7) = [11,15]
     # (3,-3,2) = []
     def self.remove_by_value_relative_rank_range(value, rank, bin, ctx: nil, count: nil)
-      unless count.nil?
-        bytes = Exp.pack(ctx, REMOVE_BY_VALUE_REL_RANK_RANGE, CDT::ListReturnType::NONE, value, rank, count)
-      else
-        bytes = Exp.pack(ctx, REMOVE_BY_VALUE_REL_RANK_RANGE, CDT::ListReturnType::NONE, value, rank)
-      end
-      self.add_write(bin, bytes, ctx)
+      bytes = if count.nil?
+        Exp.pack(ctx, REMOVE_BY_VALUE_REL_RANK_RANGE, CDT::ListReturnType::NONE, value, rank)
+              else
+        Exp.pack(ctx, REMOVE_BY_VALUE_REL_RANK_RANGE, CDT::ListReturnType::NONE, value, rank, count)
+              end
+      add_write(bin, bytes, ctx)
     end
 
     # Create expression that removes list item identified by index.
     def self.remove_by_index(index, bin, ctx: nil)
       bytes = Exp.pack(ctx, REMOVE_BY_INDEX, CDT::ListReturnType::NONE, index)
-      self.add_write(bin, bytes, ctx)
+      add_write(bin, bytes, ctx)
     end
 
     # Create expression that removes "count" list items starting at specified index.
     def self.remove_by_index_range(index, bin, ctx: nil, count: nil)
-      unless count.nil?
-        bytes = Exp.pack(ctx, REMOVE_BY_INDEX_RANGE, CDT::ListReturnType::NONE, index, count)
-      else
-        bytes = Exp.pack(ctx, REMOVE_BY_INDEX_RANGE, CDT::ListReturnType::NONE, index)
-      end
-      self.add_write(bin, bytes, ctx)
+      bytes = if count.nil?
+        Exp.pack(ctx, REMOVE_BY_INDEX_RANGE, CDT::ListReturnType::NONE, index)
+              else
+        Exp.pack(ctx, REMOVE_BY_INDEX_RANGE, CDT::ListReturnType::NONE, index, count)
+              end
+      add_write(bin, bytes, ctx)
     end
 
     # Create expression that removes list item identified by rank.
     def self.remove_by_rank(rank, bin, ctx: nil)
       bytes = Exp.pack(ctx, REMOVE_BY_RANK, CDT::ListReturnType::NONE, rank)
-      self.add_write(bin, bytes, ctx)
+      add_write(bin, bytes, ctx)
     end
 
     # Create expression that removes "count" list items starting at specified rank.
     def self.remove_by_rank_range(rank, bin, ctx: nil, count: nil)
-      unless count.nil?
-        bytes = Exp.pack(ctx, REMOVE_BY_RANK_RANGE, CDT::ListReturnType::NONE, rank, count)
-      else
-        bytes = Exp.pack(ctx, REMOVE_BY_RANK_RANGE, CDT::ListReturnType::NONE, rank)
-      end
-      self.add_write(bin, bytes, ctx)
+      bytes = if count.nil?
+        Exp.pack(ctx, REMOVE_BY_RANK_RANGE, CDT::ListReturnType::NONE, rank)
+              else
+        Exp.pack(ctx, REMOVE_BY_RANK_RANGE, CDT::ListReturnType::NONE, rank, count)
+              end
+      add_write(bin, bytes, ctx)
     end
 
     # Create expression that returns list size.
@@ -180,7 +180,7 @@ module Aerospike
     # end</pre>
     def self.size(bin, ctx: nil)
       bytes = Exp.pack(ctx, SIZE)
-      self.add_read(bin, bytes, Exp::Type::INT)
+      add_read(bin, bytes, Exp::Type::INT)
     end
 
     # Create expression that selects list items identified by value and returns selected
@@ -193,13 +193,13 @@ module Aerospike
     #   Exp.val(0))
     # end</pre>
     #
-    # @param return_type	metadata attributes to return. See {@link CDT::ListReturnTypeend
+    # @param return_type	metadata attributes to return. See {CDT::ListReturnType}
     # @param value			search expression
     # @param bin			list bin or list value expression
     # @param ctx			optional context path for nested CDT
     def self.get_by_value(return_type, value, bin, ctx: nil)
       bytes = Exp.pack(ctx, GET_BY_VALUE, return_type, value)
-      self.add_read(bin, bytes, get_value_type(return_type))
+      add_read(bin, bytes, get_value_type(return_type))
     end
 
     # Create expression that selects list items identified by value range and returns selected data
@@ -210,25 +210,25 @@ module Aerospike
     # ListExp.getByValueRange(CDT::ListReturnType::VALUE, Exp.val(10), Exp.val(20), Exp.listBin("a"))
     # end</pre>
     #
-    # @param return_type	metadata attributes to return. See {@link CDT::ListReturnTypeend
+    # @param return_type	metadata attributes to return. See {CDT::ListReturnType}
     # @param value_begin	begin expression inclusive. If nil, range is less than value_end.
     # @param value_end		end expression exclusive. If nil, range is greater than equal to value_begin.
     # @param bin			bin or list value expression
     # @param ctx			optional context path for nested CDT
     def self.get_by_value_range(return_type, value_begin, value_end, bin, ctx: nil)
-      bytes = self.pack_range_operation(GET_BY_VALUE_INTERVAL, return_type, value_begin, value_end, ctx)
-      self.add_read(bin, bytes, get_value_type(return_type))
+      bytes = pack_range_operation(GET_BY_VALUE_INTERVAL, return_type, value_begin, value_end, ctx)
+      add_read(bin, bytes, get_value_type(return_type))
     end
 
     # Create expression that selects list items identified by values and returns selected data
     # specified by return_type.
     def self.get_by_value_list(return_type, values, bin, ctx: nil)
       bytes = Exp.pack(ctx, GET_BY_VALUE_LIST, return_type, values)
-      self.add_read(bin, bytes, get_value_type(return_type))
+      add_read(bin, bytes, get_value_type(return_type))
     end
 
     # Create expression that selects list items nearest to value and greater by relative rank with a count limit
-    # and returns selected data specified by return_type (See {@link CDT::ListReturnTypeend).
+    # and returns selected data specified by return_type (See {CDT::ListReturnType}).
     #
     # Examples for ordered list [0,4,5,9,11,15]:
     #
@@ -240,12 +240,12 @@ module Aerospike
     # (3,3,7) = [11,15]
     # (3,-3,2) = []
     def self.get_by_value_relative_rank_range(return_type, value, rank, bin, ctx: nil, count: nil)
-      unless count.nil?
-        bytes = Exp.pack(ctx, GET_BY_VALUE_REL_RANK_RANGE, return_type, value, rank, count)
-      else
-        bytes = Exp.pack(ctx, GET_BY_VALUE_REL_RANK_RANGE, return_type, value, rank)
-      end
-      self.add_read(bin, bytes, get_value_type(return_type))
+      bytes = if count.nil?
+        Exp.pack(ctx, GET_BY_VALUE_REL_RANK_RANGE, return_type, value, rank)
+              else
+        Exp.pack(ctx, GET_BY_VALUE_REL_RANK_RANGE, return_type, value, rank, count)
+              end
+      add_read(bin, bytes, get_value_type(return_type))
     end
 
     # Create expression that selects list item identified by index and returns
@@ -258,32 +258,32 @@ module Aerospike
     #   Exp.val(5))
     # end</pre>
     #
-    # @param return_type	metadata attributes to return. See {@link CDT::ListReturnTypeend
+    # @param return_type	metadata attributes to return. See {CDT::ListReturnType}
     # @param value_type		expected type of value
     # @param index			list index expression
     # @param bin			list bin or list value expression
     # @param ctx			optional context path for nested CDT
     def self.get_by_index(return_type, value_type, index, bin, ctx: nil)
       bytes = Exp.pack(ctx, GET_BY_INDEX, return_type, index)
-      self.add_read(bin, bytes, value_type)
+      add_read(bin, bytes, value_type)
     end
 
     # Create expression that selects list items starting at specified index to the end of list
-    # and returns selected data specified by return_type (See {@link CDT::ListReturnTypeend).
+    # and returns selected data specified by return_type (See {CDT::ListReturnType}).
     def self.get_by_index_range(return_type, index, bin, ctx: nil)
       bytes = Exp.pack(ctx, GET_BY_INDEX_RANGE, return_type, index)
-      self.add_read(bin, bytes, get_value_type(return_type))
+      add_read(bin, bytes, get_value_type(return_type))
     end
 
     # Create expression that selects "count" list items starting at specified index
-    # and returns selected data specified by return_type (See {@link CDT::ListReturnTypeend).
+    # and returns selected data specified by return_type (See {CDT::ListReturnType}).
     def self.get_by_index_range(return_type, index, bin, ctx: nil, count: nil)
-      unless count.nil?
-        bytes = Exp.pack(ctx, GET_BY_INDEX_RANGE, return_type, index, count)
-      else
-        bytes = Exp.pack(ctx, GET_BY_INDEX_RANGE, return_type, index)
-      end
-      self.add_read(bin, bytes, get_value_type(return_type))
+      bytes = if count.nil?
+        Exp.pack(ctx, GET_BY_INDEX_RANGE, return_type, index)
+              else
+        Exp.pack(ctx, GET_BY_INDEX_RANGE, return_type, index, count)
+              end
+      add_read(bin, bytes, get_value_type(return_type))
     end
 
     # Create expression that selects list item identified by rank and returns selected
@@ -294,32 +294,32 @@ module Aerospike
     # ListExp.getByRank(CDT::ListReturnType::VALUE, Type.STRING, Exp.val(0), Exp.listBin("a"))
     # end</pre>
     #
-    # @param return_type	metadata attributes to return. See {@link CDT::ListReturnTypeend
+    # @param return_type	metadata attributes to return. See {CDT::ListReturnType}
     # @param value_type		expected type of value
     # @param rank 			rank expression
     # @param bin			list bin or list value expression
     # @param ctx			optional context path for nested CDT
     def self.get_by_rank(return_type, value_type, rank, bin, ctx: nil)
       bytes = Exp.pack(ctx, GET_BY_RANK, return_type, rank)
-      self.add_read(bin, bytes, value_type)
+      add_read(bin, bytes, value_type)
     end
 
     # Create expression that selects list items starting at specified rank to the last ranked item
-    # and returns selected data specified by return_type (See {@link CDT::ListReturnTypeend).
+    # and returns selected data specified by return_type (See {CDT::ListReturnType}).
     def self.get_by_rank_range(return_type, rank, bin, ctx: nil)
       bytes = Exp.pack(ctx, GET_BY_RANK_RANGE, return_type, rank)
-      self.add_read(bin, bytes, get_value_type(return_type))
+      add_read(bin, bytes, get_value_type(return_type))
     end
 
     # Create expression that selects "count" list items starting at specified rank and returns
-    # selected data specified by return_type (See {@link CDT::ListReturnTypeend).
+    # selected data specified by return_type (See {CDT::ListReturnType}).
     def self.get_by_rank_range(return_type, rank, bin, ctx: nil, count: nil)
-      unless count.nil?
-        bytes = Exp.pack(ctx, GET_BY_RANK_RANGE, return_type, rank, count)
-      else
-        bytes = Exp.pack(ctx, GET_BY_RANK_RANGE, return_type, rank)
-      end
-      self.add_read(bin, bytes, get_value_type(return_type))
+      bytes = if count.nil?
+        Exp.pack(ctx, GET_BY_RANK_RANGE, return_type, rank)
+              else
+        Exp.pack(ctx, GET_BY_RANK_RANGE, return_type, rank, count)
+              end
+      add_read(bin, bytes, get_value_type(return_type))
     end
 
     private
@@ -336,7 +336,7 @@ module Aerospike
     SIZE = 16
     GET_BY_INDEX = 19
     GET_BY_RANK = 21
-    GET_BY_VALUE = 22  # GET_ALL_BY_VALUE on server
+    GET_BY_VALUE = 22 # GET_ALL_BY_VALUE on server
     GET_BY_VALUE_LIST = 23
     GET_BY_INDEX_RANGE = 24
     GET_BY_VALUE_INTERVAL = 25
@@ -352,11 +352,11 @@ module Aerospike
     REMOVE_BY_VALUE_REL_RANK_RANGE = 40
 
     def self.add_write(bin, bytes, ctx)
-      if ctx.to_a.empty?
-        ret_type = Exp::Type::LIST
-      else
-        ret_type = ((ctx[0].id & 0x10) == 0) ? Exp::Type::MAP : Exp::Type::LIST
-      end
+      ret_type = if ctx.to_a.empty?
+        Exp::Type::LIST
+                 else
+        (ctx[0].id & 0x10) == 0 ? Exp::Type::MAP : Exp::Type::LIST
+                 end
       Exp::Module.new(bin, bytes, ret_type, MODULE | Exp::MODIFY)
     end
 
@@ -379,14 +379,12 @@ module Aerospike
         packer.write(command)
         packer.write(return_type)
 
-        unless value_begin.nil?
-          if value_begin.is_a?(Exp)
-            value_begin.pack(packer)
-          else
-            Value.of(value_begin).pack(packer)
-          end
-        else
+        if value_begin.nil?
           packer.write(nil)
+        elsif value_begin.is_a?(Exp)
+          value_begin.pack(packer)
+        else
+            Value.of(value_begin).pack(packer)
         end
 
         unless value_end.nil?

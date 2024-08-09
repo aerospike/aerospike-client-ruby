@@ -31,7 +31,7 @@ module Aerospike
       # Container object for transaction policy attributes used in all database
       # operation calls.
 
-      # Optional expression filter. If filterExp exists and evaluates to false, the
+      # Optional expression filter. If filter_exp exists and evaluates to false, the
       # transaction is ignored.
       #
       # Default: nil

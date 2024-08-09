@@ -49,7 +49,7 @@ module Aerospike
 
     # Optimized reference equality check to determine batch wire protocol repeat flag.
     # For internal use only.
-    def equals(other)
+    def ==(other) # :nodoc:
         other && other.instance_of?(self.class) &&
           @function_name == other.function_name && @function_args == other.function_args &&
           @package_name == other.package_name && @policy == other.policy
@@ -58,7 +58,7 @@ module Aerospike
     DEFAULT_BATCH_UDF_POLICY = BatchUDFPolicy.new
 
     # Return wire protocol size. For internal use only.
-    def size
+    def size # :nodoc:
      size = 6 # gen(2) + exp(4) = 6
 
      size += @policy&.filter_exp&.size if @policy&.filter_exp
