@@ -76,6 +76,12 @@ module Aerospike
   # Completely replace existing record only.
   INFO3_REPLACE_ONLY = Integer(1 << 5)
 
+  BATCH_MSG_READ    = 0x0
+  BATCH_MSG_REPEAT  = 0x1
+  BATCH_MSG_INFO    = 0x2
+  BATCH_MSG_GEN     = 0x4
+  BATCH_MSG_TTL     = 0x8
+
   MSG_TOTAL_HEADER_SIZE = 30
   FIELD_HEADER_SIZE = 5
   OPERATION_HEADER_SIZE = 8
@@ -958,7 +964,7 @@ module Aerospike
       @data_buffer.write_byte(0, 10)
       @data_buffer.write_byte(info_attr, 11)
 
-      (12...22).each { |i| @data_buffer.write_byte(i, 0) }
+      (12...22).each { |i| @data_buffer.write_byte(0, i) }
 
       # Initialize timeout. It will be written later.
       @data_buffer.write_byte(0, 22)
@@ -981,7 +987,7 @@ module Aerospike
       @data_buffer.write_byte(0, 10)
       @data_buffer.write_byte(info_attr, 11)
 
-      (12...22).each { |i| @data_buffer.write_byte(i, 0) }
+      (12...22).each { |i| @data_buffer.write_byte(0, i) }
 
       # Initialize timeout. It will be written later.
       @data_buffer.write_byte(0, 22)
@@ -991,6 +997,89 @@ module Aerospike
 
       @data_buffer.write_int16(field_count, 26)
       @data_buffer.write_int16(operation_count, 28)
+
+      @data_offset = MSG_TOTAL_HEADER_SIZE
+    end
+
+    def write_batch_operations(key, ops, attr, filter_exp)
+      if attr.has_write
+        write_batch_write(key, attr, filter_exp, 0, ops.length)
+      else
+        write_batch_read(key, attr, filter_exp, ops.length)
+      end
+
+      ops.each do |op|
+        write_operation_for_operation(op)
+      end
+    end
+
+    def write_batch_fields(key, field_count, op_count)
+      field_count+=2
+      @data_offset += @data_buffer.write_uint16(field_count, @data_offset)
+      @data_offset += @data_buffer.write_uint16(op_count, @data_offset)
+      write_field_string(key.namespace, Aerospike::FieldType::NAMESPACE)
+      write_field_string(key.set_name, Aerospike::FieldType::TABLE)
+    end
+
+    def write_batch_fields_with_filter(key, filter_exp, field_count, op_count)
+      if filter_exp
+        field_count+=1
+        write_batch_fields(key, field_count, op_count)
+        write_filter_exp(filter_exp, filter_exp.size)
+      else
+        write_batch_fields(key, field_count, op_count)
+      end
+    end
+
+    def write_batch_read(key, attr, filter_exp, op_count)
+      @data_offset += @data_buffer.write_byte(BATCH_MSG_INFO | BATCH_MSG_TTL, @data_offset)
+      @data_offset += @data_buffer.write_byte(attr.read_attr, @data_offset)
+      @data_offset += @data_buffer.write_byte(attr.write_attr, @data_offset)
+      @data_offset += @data_buffer.write_byte(attr.info_attr, @data_offset)
+      @data_offset += @data_buffer.write_uint32(attr.expiration, @data_offset)
+      write_batch_fields_with_filter(key, filter_exp, 0, op_count)
+    end
+
+    def write_batch_write(key, attr, filter_exp, field_count, op_count)
+      @data_offset += @data_buffer.write_byte(BATCH_MSG_INFO | BATCH_MSG_GEN | BATCH_MSG_TTL, @data_offset)
+      @data_offset += @data_buffer.write_byte(attr.read_attr, @data_offset)
+      @data_offset += @data_buffer.write_byte(attr.write_attr, @data_offset)
+      @data_offset += @data_buffer.write_byte(attr.info_attr, @data_offset)
+      @data_offset += @data_buffer.write_uint16(attr.generation, @data_offset)
+      @data_offset += @data_buffer.write_uint32(attr.expiration, @data_offset)
+      if attr.send_key
+        field_count+=1
+        write_batch_fields_with_filter(key, filter_exp, field_count, op_count)
+        write_field_value(key.user_key, KEY)
+      else
+        write_batch_fields_with_filter(key, filter_exp, field_count, op_count)
+      end
+    end
+
+    def write_batch_bin_names(key, bin_names, attr, filter_exp)
+      write_batch_read(key, attr, filter_exp, bin_names.length)
+      bin_names.each do |bin_name|
+        write_operation_for_bin_name(bin_name, Aerospike::Operation::READ)
+      end
+    end
+
+    def write_batch_header(policy, field_count)
+      read_attr = INFO1_BATCH
+      read_attr |= INFO1_COMPRESS_RESPONSE if policy.use_compression
+      #TODO: Add SC Mode
+
+      @data_buffer.write_byte(MSG_REMAINING_HEADER_SIZE, 8) # Message header.length, @data_offset.
+      @data_buffer.write_byte(read_attr, 9)
+      @data_buffer.write_byte(0, 10)
+      @data_buffer.write_byte(0, 11)
+
+      (12...22).each { |i| @data_buffer.write_byte(0, i) }
+
+      # Initialize timeout. It will be written later.
+      @data_buffer.write_uint32(0, 22)
+
+      @data_buffer.write_uint16(field_count, 26)
+      @data_buffer.write_uint16(0, 28)
 
       @data_offset = MSG_TOTAL_HEADER_SIZE
     end

@@ -80,5 +80,42 @@ module Aerospike
     def self.delete
       Operation.new(DELETE)
     end
+
+    def is_write?
+      case @op_type
+      when READ
+        false
+      when READ_HEADER
+        false
+      when WRITE
+        true
+      when CDT_READ
+        false
+      when CDT_MODIFY
+        true
+      when ADD
+        true
+      when EXP_READ
+        false
+      when EXP_MODIFY
+        true
+      when APPEND
+        true
+      when PREPEND
+        true
+      when TOUCH
+        true
+      when BIT_READ
+        false
+      when BIT_MODIFY
+        true
+      when DELETE
+        true
+      when HLL_READ
+        false
+      when HLL_MODIFY
+        true
+      end
+    end
   end
 end # module

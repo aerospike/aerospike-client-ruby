@@ -25,7 +25,7 @@ module Aerospike
   # Buffer class to ease the work around
   class Buffer #:nodoc:
     @@buf_pool = Pool.new
-    @@buf_pool.create_proc = Proc.new { Buffer.new }
+    @@buf_pool.create_proc = proc { Buffer.new }
 
     attr_accessor :buf
 
@@ -43,7 +43,7 @@ module Aerospike
     MAX_BUFFER_SIZE = 10 * 1024 * 1024
 
     def initialize(size = DEFAULT_BUFFER_SIZE, buf = nil)
-      @buf = (buf ? buf : ("%0#{size}d" % 0))
+      @buf = buf || format("%0#{size}d", 0)
       @buf.force_encoding("binary")
       @slice_end = @buf.bytesize
     end
@@ -60,7 +60,7 @@ module Aerospike
       @buf.bytesize
     end
 
-    alias_method :length, :size
+    alias length size
 
     def eat!(n)
       @buf.replace(@buf[n..-1])
@@ -74,7 +74,7 @@ module Aerospike
       end
 
       if @buf.bytesize < length
-        @buf.concat("%0#{length - @buf.bytesize}d" % 0)
+        @buf.concat(format("%0#{length - @buf.bytesize}d", 0))
       end
       @slice_end = length
     end
@@ -144,37 +144,37 @@ module Aerospike
 
     def read_int16(offset)
       vals = @buf[offset..offset + 1]
-      vals.unpack(INT16)[0]
+      vals.unpack1(INT16)
     end
 
     def read_uint16(offset)
       vals = @buf[offset..offset + 1]
-      vals.unpack(UINT16)[0]
+      vals.unpack1(UINT16)
     end
 
     def read_int32(offset)
       vals = @buf[offset..offset + 3]
-      vals.unpack(INT32)[0]
+      vals.unpack1(INT32)
     end
 
     def read_uint32(offset)
       vals = @buf[offset..offset + 3]
-      vals.unpack(UINT32)[0]
+      vals.unpack1(UINT32)
     end
 
     def read_int64(offset)
       vals = @buf[offset..offset + 7]
-      vals.unpack(INT64)[0]
+      vals.unpack1(INT64)
     end
 
     def read_uint64_little_endian(offset)
       vals = @buf[offset..offset + 7]
-      vals.unpack(UINT64LE)[0]
+      vals.unpack1(UINT64LE)
     end
 
     def read_uint64(offset)
       vals = @buf[offset..offset + 7]
-      vals.unpack(UINT64)[0]
+      vals.unpack1(UINT64)
     end
 
     def read_var_int64(offset, len)
@@ -190,7 +190,7 @@ module Aerospike
 
     def read_double(offset)
       vals = @buf[offset..offset + 7]
-      vals.unpack(DOUBLE)[0]
+      vals.unpack1(DOUBLE)
     end
 
     def read_bool(offset, length)
@@ -219,13 +219,13 @@ module Aerospike
       @buf.bytes[start...finish].each do |c|
         if counter >= start
           print "%02x " % c
-          ascii << (c.between?(32, 126) ? c : ?.)
-          print " " if ascii.length == (width / 2 + 1)
+          ascii << (c.between?(32, 126) ? c : '.')
+          print " " if ascii.length == ((width / 2) + 1)
           if ascii.length > width
             ascii << "|"
             puts ascii
             ascii = "|"
-            print "%08x  " % (counter + 1)
+            print format("%08x  ", (counter + 1))
           end
         end
         counter += 1

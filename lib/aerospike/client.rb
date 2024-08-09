@@ -336,6 +336,21 @@ module Aerospike
       batch_get(keys, :none, options)
     end
 
+    # Operate on multiple records for specified batch keys in one batch call.
+    # This method allows different namespaces/bins for each key in the batch.
+    # The returned records are located in the same list.
+    #
+    # records can be BatchRead, BatchWrite, BatchDelete or BatchUDF.
+    #
+    # Requires server version 6.0+
+    def batch_operate(records, options = nil)
+      policy = create_policy(options, BatchPolicy, default_batch_policy)
+
+      execute_batch_operate_commands(policy, records) do |node, batch|
+        BatchOperateCommand.new(node, batch, policy, records)
+      end
+    end
+
     #  Check if multiple record keys exist in one batch call.
     #  The returned boolean array is in positional order with the original key array order.
     #  The policy can be used to specify timeouts and protocol type.
@@ -964,6 +979,24 @@ module Aerospike
       end
 
       batch_nodes = BatchIndexNode.generate_list(@cluster, policy.replica, keys)
+      threads = []
+
+      batch_nodes.each do |batch|
+        threads << Thread.new do
+          command = yield batch.node, batch
+          execute_command(command)
+        end
+      end
+
+      threads.each(&:join)
+    end
+
+    def execute_batch_operate_commands(policy, records)
+      if @cluster.nodes.empty?
+        raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::SERVER_NOT_AVAILABLE, "Executing Batch Index command failed because cluster is empty.")
+      end
+
+      batch_nodes = BatchOperateNode.generate_list(@cluster, policy.replica, records)
       threads = []
 
       batch_nodes.each do |batch|

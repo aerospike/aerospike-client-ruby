@@ -71,6 +71,10 @@ module Aerospike
       (@features & HAS_QUERY_SHOW) != 0
     end
 
+    def batch_any?
+      (@features & HAS_BATCH_ANY) != 0
+    end
+
     def update_racks(parser)
       new_racks = parser.update_racks
       @racks.value = new_racks if new_racks
@@ -78,7 +82,7 @@ module Aerospike
 
     def has_rack(ns, rack_id)
       racks = @racks.value
-      return false if !racks
+      return false unless racks
       racks[ns] == rack_id
     end
 
@@ -108,7 +112,7 @@ module Aerospike
     # Put back a connection to the cache. If cache is full, the connection will be
     # closed and discarded
     def put_connection(conn)
-      conn.close if !active?
+      conn.close unless active?
       @connections.offer(conn)
     end
 
@@ -236,7 +240,7 @@ module Aerospike
       Node::Refresh::Partitions.(self, peers)
     end
 
-    def refresh_racks()
+    def refresh_racks
       Node::Refresh::Racks.(self)
     end
 

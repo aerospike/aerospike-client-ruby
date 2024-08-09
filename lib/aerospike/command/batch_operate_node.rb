@@ -17,33 +17,33 @@
 
 module Aerospike
 
-  class BatchIndexNode #:nodoc:
+  class BatchOperateNode #:nodoc:
 
-    attr_accessor :node, :keys_by_idx
+    attr_accessor :node, :records_by_idx
 
-    def self.generate_list(cluster, replica_policy, keys)
-      keys.each_with_index
-          .group_by { |key, _| cluster.get_node_for_key(replica_policy, key) }
-          .map { |node, keys_with_idx| BatchIndexNode.new(node, keys_with_idx) }
+    def self.generate_list(cluster, replica_policy, records)
+      records.each_with_index
+             .group_by { |record, _| cluster.get_node_for_key(replica_policy, record.key, is_write: record.has_write) }
+             .map { |node, records_with_idx| BatchOperateNode.new(node, records_with_idx) }
     end
 
-    def initialize(node, keys_with_idx)
+    def initialize(node, records_with_idx)
       @node = node
-      @keys_by_idx = keys_with_idx.map(&:reverse).to_h
+      @records_by_idx = records_with_idx.map(&:reverse).to_h
     end
 
-    def keys
-      keys_by_idx.values
+    def records
+      records_by_idx.values
     end
 
-    def each_key_with_index
-      keys_by_idx.each do |idx, key|
-        yield key, idx
+    def each_record_with_index
+      records_by_idx.each do |idx, rec|
+        yield rec, idx
       end
     end
 
-    def key_for_index(idx)
-      keys_by_idx[idx]
+    def record_for_index(idx)
+      @records_by_idx[idx]
     end
 
   end
