@@ -633,7 +633,8 @@ module Aerospike
 
       if statement.function_name
         write_field_header(1, FieldType::UDF_OP)
-        @data_offset += @data_buffer.write_byte(1, @data_offset)
+        ret_marker = statement.return_data ? 1 : 2
+        @data_offset += @data_buffer.write_byte(ret_marker, @data_offset)
         write_field_string(statement.package_name, FieldType::UDF_PACKAGE_NAME)
         write_field_string(statement.function_name, FieldType::UDF_FUNCTION)
         write_field_string(function_arg_buffer, FieldType::UDF_ARGLIST)

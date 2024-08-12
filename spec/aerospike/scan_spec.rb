@@ -23,7 +23,7 @@ describe Aerospike::Client do
     let(:client) { Support.client }
 
     before :all do
-      @namespace = "test"
+      @namespace = Support.namespace
       @set = "scan1000"
       @record_count = 1000
       @record_count.times do |i|
@@ -31,8 +31,8 @@ describe Aerospike::Client do
         bin_map = {
           'bin1' => "value#{i}",
           'bin2' => i,
-          'bin4' => ['value4', {'map1' => 'map val'}],
-          'bin5' => {'value5' => [124, "string value"]},
+          'bin4' => ['value4', { 'map1' => 'map val' }],
+          'bin5' => { 'value5' => [124, "string value"] }
         }
         Support.client.put(key, bin_map, :send_key => true)
       end
@@ -53,7 +53,7 @@ describe Aerospike::Client do
     [true, false].each do |compressed|
     [:single_node, :multiple_nodes].each do |type|
 
-      context "#{type.to_s}" do
+      context "#{type}" do
 
         it "should return all records with all bins" do
           rs_list = scan_method(type, compressed, nil, :record_queue_size => 10)
@@ -94,7 +94,7 @@ describe Aerospike::Client do
         end # it
 
         it "should return only the selected bins" do
-          rs_list = scan_method(type, compressed, ['bin1', 'bin2'], :record_queue_size => 10)
+          rs_list = scan_method(type, compressed, %w[bin1 bin2], :record_queue_size => 10)
 
           count = 0
           rs_list.each do |rs|
@@ -127,14 +127,14 @@ describe Aerospike::Client do
           rs_list.each do |rs|
             sleep(1) # fill the queue to make sure deadlock doesn't happen
             rs.cancel
-            expect {rs.next_record}.to raise_exception(Aerospike::ResultCode.message(Aerospike::ResultCode::SCAN_TERMINATED))
+            expect { rs.next_record }.to raise_exception(Aerospike::ResultCode.message(Aerospike::ResultCode::SCAN_TERMINATED))
           end
 
           rs_list = scan_method(type, compressed)
           rs_list.each do |rs|
             rs = rs_list.first
             rs.cancel
-            expect {rs.next_record}.to raise_exception(Aerospike::ResultCode.message(Aerospike::ResultCode::SCAN_TERMINATED))
+            expect { rs.next_record }.to raise_exception(Aerospike::ResultCode.message(Aerospike::ResultCode::SCAN_TERMINATED))
           end
 
         end # it
@@ -146,12 +146,12 @@ describe Aerospike::Client do
             i = 0
             rs.each do |rec|
               i +=1
-              break if (i == 15)
+              break if i == 15
             end
             expect(i).to eq 15
 
             rs.cancel
-            expect {rs.next_record}.to raise_exception(Aerospike::ResultCode.message(Aerospike::ResultCode::SCAN_TERMINATED))
+            expect { rs.next_record }.to raise_exception(Aerospike::ResultCode.message(Aerospike::ResultCode::SCAN_TERMINATED))
           end
 
         end # it

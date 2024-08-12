@@ -145,14 +145,14 @@ describe Aerospike::Client do
     end
 
     it "should execute a UDF on all records" do
-      ns = 'test'
+      ns = Support.namespace
       set = Support.rand_string(10)
       div = 2
 
       number_of_records = 100
-      number_of_records.times do |i|
+      number_of_records.times do
         key = Support.gen_random_key(50, { :set => set })
-        bin1 = Aerospike::Bin.new('bin1', (i + 1) * div)
+        bin1 = Aerospike::Bin.new('bin1', div)
         bin2 = Aerospike::Bin.new('bin2', -1)
         client.put(key, [bin1, bin2])
       end
