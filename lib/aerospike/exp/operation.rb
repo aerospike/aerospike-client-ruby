@@ -24,7 +24,7 @@ module Aerospike
     #
     # @param bin_name	name of bin to store expression result
     # @param exp		expression to evaluate
-    # @param flags		expression write flags.  See {@link Exp::WriteFlags}
+    # @param flags		expression write flags.  See {Exp::WriteFlags}
     def self.write(bin_name, exp, flags = Aerospike::Exp::WriteFlags::DEFAULT)
       create_operation(Aerospike::Operation::EXP_MODIFY, bin_name, exp, flags)
     end
@@ -36,7 +36,7 @@ module Aerospike
     # @param name		variable name of read expression result. This name can be used as the
     # 					bin name when retrieving bin results from the record.
     # @param exp		expression to evaluate
-    # @param flags		expression read flags.  See {@link Exp::ExpReadFlags}
+    # @param flags		expression read flags.  See {Exp::ExpReadFlags}
     def self.read(name, exp, flags = Aerospike::Exp::ReadFlags::DEFAULT)
       create_operation(Aerospike::Operation::EXP_READ, name, exp, flags)
     end

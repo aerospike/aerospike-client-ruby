@@ -26,7 +26,7 @@ describe Aerospike::Exp::Map do
       @namespace = "test"
       @set = "query1000"
 
-      opts = { expiration: 24 * 60 * 60 }
+      opts = { }
       @key_count.times do |ii|
         key = Aerospike::Key.new(@namespace, @set, ii)
         ibin = { "bin" => { "test" => ii, "test2" => "a" } }

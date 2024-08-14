@@ -17,6 +17,7 @@ group :development do
   gem "rubocop-rspec", require: false
 end
 
+gem "base64"
 gem "bcrypt"
 gem "msgpack", "~> 1.2"
 gem "rake"

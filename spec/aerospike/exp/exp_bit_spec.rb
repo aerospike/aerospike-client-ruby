@@ -27,7 +27,7 @@ describe Aerospike::Exp::Bit do
       @set = "query1000"
       Support.client.truncate(@namespace, @set)
 
-      opts = { expiration: 24 * 60 * 60 }
+      opts = { }
       @key_count.times do |ii|
         key = Aerospike::Key.new(@namespace, @set, ii)
         bytes = bytes_to_str([0b00000001, 0b01000010])

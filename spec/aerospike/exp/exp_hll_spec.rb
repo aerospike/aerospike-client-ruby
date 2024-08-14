@@ -28,7 +28,7 @@ describe Aerospike::Exp::HLL do
 
       Support.client.truncate(@namespace, @set)
 
-      opts = { expiration: 24 * 60 * 60 }
+      opts = { }
       @key_count.times do |ii|
         key = Aerospike::Key.new(@namespace, @set, ii)
         bin = { "bin" => ii, "lbin" => [ii, "a"] }

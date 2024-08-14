@@ -96,7 +96,7 @@ module Aerospike
     end
 
     # Create expression that returns if the primary key is stored in the record meta data
-    # as a boolean expression. This would occur when {@link Policy#send_key}
+    # as a boolean expression. This would occur when {Policy#send_key}
     # is true on record write. This expression usually evaluates quickly because record
     # meta data is cached in memory.
     #
@@ -214,7 +214,7 @@ module Aerospike
     end
 
     # Create expression that returns bin's integer particle type::
-    # See {@link ParticleType}.
+    # See {ParticleType}.
     #
     # ==== Examples
     #   # Bin "a" particle type is a list
@@ -225,8 +225,8 @@ module Aerospike
 
     # Create expression that returns the record size. This expression usually evaluates
     # quickly because record meta data is cached in memory.
-    # Requires server version 7.0+. This expression replaces {@link #deviceSize()} and
-    # {@link #memorySize()} since those older expressions are equivalent on server version 7.0+.
+    # Requires server version 7.0+. This expression replaces {#deviceSize()} and
+    # {#memorySize()} since those older expressions are equivalent on server version 7.0+.
     #
     # {@code
     # // Record size >= 100 KB
@@ -347,7 +347,7 @@ module Aerospike
     # Exp.regex_compare("prefix.*suffix", RegexFlags.ICASE | RegexFlags.NEWLINE, Exp.str_bin("a"))
     #
     # @param regex		regular expression string
-    # @param flags		regular expression bit flags. See {@link Exp::RegexFlags}
+    # @param flags		regular expression bit flags. See {Exp::RegexFlags}
     # @param bin		string bin or string value expression
     def self.regex_compare(regex, flags, bin)
       Regex.new(bin, regex, flags)
@@ -422,6 +422,16 @@ module Aerospike
     # Create nil value.
     def self.nil_val
       Nil.new
+    end
+
+    # Create Infinity value.
+    def self.infinity_val
+      Infinity.new
+    end
+
+    # Create Wildcard value.
+    def self.wildcard_val
+      Wildcard.new
     end
 
     #--------------------------------------------------
@@ -873,7 +883,7 @@ module Aerospike
     #
     # ==== Examples
     # Args Format: <def1>, <def2>, ..., <exp>
-    # def: {@link Exp#def(String, Exp)}
+    # def: {Exp#def(String, Exp)}
     # exp: Scoped expression
     #
     # ==== Examples
@@ -887,7 +897,7 @@ module Aerospike
       Let.new(exps)
     end
 
-    # Assign variable to a {@link Exp#let(Exp...)} expression that can be accessed later.
+    # Assign variable to a {Exp#let(Exp...)} expression that can be accessed later.
     # Requires server version 5.6.0+.
     #
     # ==== Examples
@@ -920,8 +930,8 @@ module Aerospike
     #--------------------------------------------------
 
     # Create unknown value. Used to intentionally fail an expression.
-    # The failure can be ignored with {@link Exp::WriteFlags#EVAL_NO_FAIL}
-    # or {@link Exp::ReadFlags#EVAL_NO_FAIL}.
+    # The failure can be ignored with {Exp::WriteFlags#EVAL_NO_FAIL}
+    # or {Exp::ReadFlags#EVAL_NO_FAIL}.
     # Requires server version 5.6.0+.
     #
     # ==== Examples
@@ -1066,10 +1076,7 @@ module Aerospike
 
     # For internal use only.
     class Module < Exp
-      attr_reader :bin
-      attr_reader :bytes
-      attr_reader :ret_type
-      attr_reader :module
+      attr_reader :bin, :bytes, :ret_type, :module
 
       def initialize(bin, bytes, ret_type, modul)
         @bin = bin
@@ -1090,8 +1097,7 @@ module Aerospike
     end
 
     class Bin < Exp
-      attr_reader :name
-      attr_reader :type
+      attr_reader :name, :type
 
       def initialize(name, type)
         @name = name
@@ -1107,9 +1113,7 @@ module Aerospike
     end
 
     class Regex < Exp
-      attr_reader :bin
-      attr_reader :regex
-      attr_reader :flags
+      attr_reader :bin, :regex, :flags
 
       def initialize(bin, regex, flags)
         @bin = bin
@@ -1135,7 +1139,7 @@ module Aerospike
 
       def pack(packer)
         # Let wire format: LET <defname1>, <defexp1>, <defname2>, <defexp2>, ..., <scope exp>
-        count = (@exps.length - 1) * 2 + 2
+        count = ((@exps.length - 1) * 2) + 2
         packer.write_array_header(count)
         packer.write(LET)
 
@@ -1146,8 +1150,7 @@ module Aerospike
     end
 
     class Def < Exp
-      attr_reader :name
-      attr_reader :exp
+      attr_reader :name, :exp
 
       def initialize(name, exp)
         @name = name
@@ -1161,8 +1164,7 @@ module Aerospike
     end
 
     class CmdExp < Exp
-      attr_reader :exps
-      attr_reader :cmd
+      attr_reader :exps, :cmd
 
       def initialize(cmd, *exps)
         @exps = exps
@@ -1179,8 +1181,7 @@ module Aerospike
     end
 
     class CmdInt < Exp
-      attr_reader :cmd
-      attr_reader :val
+      attr_reader :cmd, :val
 
       def initialize(cmd, val)
         @cmd = cmd
@@ -1195,8 +1196,7 @@ module Aerospike
     end
 
     class CmdStr < Exp
-      attr_reader :str
-      attr_reader :cmd
+      attr_reader :str, :cmd
 
       def initialize(cmd, str)
         @str = str
@@ -1326,6 +1326,18 @@ module Aerospike
     class Nil < Exp
       def pack(packer)
         Value.of(nil).pack(packer)
+      end
+    end
+
+    class Infinity < Exp
+      def pack(packer)
+        InfinityValue.new.pack(packer)
+      end
+    end
+
+    class Wildcard < Exp
+      def pack(packer)
+        WildcardValue.new.pack(packer)
       end
     end
 

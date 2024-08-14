@@ -6,40 +6,31 @@ jobs:
   test:
     runs-on: ${{matrix.os}}-latest
     continue-on-error: ${{matrix.experimental}}
-    
+
     strategy:
       matrix:
         os:
           - ubuntu
-        
+          # - macos
+
         ruby:
-          - 2.6
-          - 2.7
-        
+          - "2.6"
+          - "3.3"
+
         experimental: [false]
         env: [""]
-        
-        include:
-          - os: ubuntu
-            ruby: head
-            experimental: true
 
     steps:
-    - uses: actions/checkout@v2
-    - uses: ruby/setup-ruby@v1
-      with:
-        ruby-version: ${{matrix.ruby}}
-        bundler-cache: true
-    
-    - name: Start server
-      timeout-minutes: 5
-      env:
-        TERM: dumb
-      run:
-        .github/workflows/start_cluster.sh 2
-    
-    - name: Run tests
-      timeout-minutes: 30
-      env:
-        AEROSPIKE_HOSTS: "127.0.0.1:3000,127.0.0.1:3100"
-      run: ${{matrix.env}} bundle exec rspec
+      - name: Set up Aerospike Database
+        uses: reugn/github-action-aerospike@v1
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: ${{matrix.ruby}}
+          bundler-cache: true
+      - name: Run tests
+        timeout-minutes: 30
+        env:
+          AEROSPIKE_HOSTS: "127.0.0.1:3000"
+          CODECOV_ENABLED: "false"
+        run: ${{matrix.env}} bundle exec rspec

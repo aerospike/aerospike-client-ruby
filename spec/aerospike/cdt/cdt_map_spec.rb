@@ -39,7 +39,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?(Aerosp
       client.delete(key)
 
       m = {
-        "key1" => [7, 9, 5],
+        "key1" => [7, 9, 5]
       }
 
       client.put(key, Aerospike::Bin.new(map_bin, m))
@@ -48,16 +48,16 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?(Aerosp
       ctx = [Context.map_key("key2")]
       record = client.operate(key,
                               [
-        ListOperation.create(map_bin, ListOrder::ORDERED, false, ctx: ctx),
-        ListOperation.append(map_bin, 2, ctx: ctx),
-        ListOperation.append(map_bin, 1, ctx: ctx),
-        Operation.get(map_bin),
-      ])
+                                ListOperation.create(map_bin, ListOrder::ORDERED, false, ctx: ctx),
+                                ListOperation.append(map_bin, 2, ctx: ctx),
+                                ListOperation.append(map_bin, 1, ctx: ctx),
+                                Operation.get(map_bin)
+                              ])
 
       expect(record.bins[map_bin]).to eq({
-        "key1" => [7, 9, 5],
-        "key2" => [1, 2],
-      })
+                                           "key1" => [7, 9, 5],
+                                           "key2" => [1, 2]
+                                         })
     end
 
     it "should support Nested Map ops with Lists" do
@@ -65,26 +65,26 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?(Aerosp
 
       m = {
         "key1" => {
-          "key11" => 9, "key12" => 4,
+          "key11" => 9, "key12" => 4
         },
         "key2" => {
-          "key21" => 3, "key22" => 5,
-        },
+          "key21" => 3, "key22" => 5
+        }
       }
 
       client.put(key, Aerospike::Bin.new(map_bin, m))
       record = client.operate(key, [Aerospike::Operation.get(map_bin)])
       expect(record.bins[map_bin]).to eq(m)
 
-      record = client.operate(key, [MapOperation.put(map_bin, "key21", 11, ctx: [Context::map_key("key2")]), Aerospike::Operation.get(map_bin)])
+      record = client.operate(key, [MapOperation.put(map_bin, "key21", 11, ctx: [Context.map_key("key2")]), Aerospike::Operation.get(map_bin)])
       expect(record.bins[map_bin]).to eq({
-        "key1" => {
-          "key11" => 9, "key12" => 4,
-        },
-        "key2" => {
-          "key21" => 11, "key22" => 5,
-        },
-      })
+                                           "key1" => {
+                                             "key11" => 9, "key12" => 4
+                                           },
+                                           "key2" => {
+                                             "key21" => 11, "key22" => 5
+                                           }
+                                         })
     end
 
     it "should support Nested Map ops" do
@@ -92,26 +92,26 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?(Aerosp
 
       m = {
         "key1" => {
-          "key11" => 9, "key12" => 4,
+          "key11" => 9, "key12" => 4
         },
         "key2" => {
-          "key21" => 3, "key22" => 5,
-        },
+          "key21" => 3, "key22" => 5
+        }
       }
 
       client.put(key, Aerospike::Bin.new(map_bin, m))
       record = client.operate(key, [Aerospike::Operation.get(map_bin)])
       expect(record.bins[map_bin]).to eq(m)
 
-      record = client.operate(key, [MapOperation.put(map_bin, "key21", 11, ctx: [Context::map_key("key2")]), Aerospike::Operation.get(map_bin)])
+      record = client.operate(key, [MapOperation.put(map_bin, "key21", 11, ctx: [Context.map_key("key2")]), Aerospike::Operation.get(map_bin)])
       expect(record.bins[map_bin]).to eq({
-        "key1" => {
-          "key11" => 9, "key12" => 4,
-        },
-        "key2" => {
-          "key21" => 11, "key22" => 5,
-        },
-      })
+                                           "key1" => {
+                                             "key11" => 9, "key12" => 4
+                                           },
+                                           "key2" => {
+                                             "key21" => 11, "key22" => 5
+                                           }
+                                         })
     end
 
     it "should support Double Nested Map ops" do
@@ -119,11 +119,11 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?(Aerosp
 
       m = {
         "key1" => {
-          "key11" => { "key111" => 1 }, "key12" => { "key121" => 5 },
+          "key11" => { "key111" => 1 }, "key12" => { "key121" => 5 }
         },
         "key2" => {
-          "key21" => { "key211" => 7 },
-        },
+          "key21" => { "key211" => 7 }
+        }
       }
 
       client.put(key, Aerospike::Bin.new(map_bin, m))
@@ -131,16 +131,16 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?(Aerosp
       record = client.operate(key, [Aerospike::Operation.get(map_bin)])
       expect(record.bins[map_bin]).to eq(m)
 
-      record = client.operate(key, [MapOperation.put(map_bin, "key121", 11, ctx: [Context::map_key("key1"), Context.map_rank(-1)]), Aerospike::Operation.get(map_bin)])
+      record = client.operate(key, [MapOperation.put(map_bin, "key121", 11, ctx: [Context.map_key("key1"), Context.map_rank(-1)]), Aerospike::Operation.get(map_bin)])
 
       expect(record.bins[map_bin]).to eq({
-        "key1" => {
-          "key11" => { "key111" => 1 }, "key12" => { "key121" => 11 },
-        },
-        "key2" => {
-          "key21" => { "key211" => 7 },
-        },
-      })
+                                           "key1" => {
+                                             "key11" => { "key111" => 1 }, "key12" => { "key121" => 11 }
+                                           },
+                                           "key2" => {
+                                             "key21" => { "key211" => 7 }
+                                           }
+                                         })
     end
   end
 
@@ -221,7 +221,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?(Aerosp
 
     it "removes a single key from the map" do
       operation = MapOperation.remove_by_key(map_bin, "b")
-        .and_return(MapReturnType::VALUE)
+                              .and_return(MapReturnType::VALUE)
       result = client.operate(key, [operation])
 
       expect(result.bins[map_bin]).to be(2)
@@ -233,8 +233,8 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?(Aerosp
     let(:map_value) { { "a" => 1, "b" => 2, "c" => 3 } }
 
     it "removes a list of keys from the map" do
-      operation = MapOperation.remove_by_key_list(map_bin, ["a", "b"])
-        .and_return(MapReturnType::VALUE)
+      operation = MapOperation.remove_by_key_list(map_bin, %w[a b])
+                              .and_return(MapReturnType::VALUE)
       result = client.operate(key, [operation])
 
       expect(result.bins[map_bin]).to contain_exactly(1, 2)
@@ -278,7 +278,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?(Aerosp
 
     it "removes specified number of elements" do
       operation = MapOperation.remove_by_key_rel_index_range(map_bin, "f", 1, 2)
-        .and_return(MapReturnType::KEY)
+                              .and_return(MapReturnType::KEY)
       result = client.operate(key, [operation])
 
       expect(result.bins[map_bin]).to contain_exactly("j")
@@ -287,7 +287,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?(Aerosp
 
     it "removes elements from specified key until the end" do
       operation = MapOperation.remove_by_key_rel_index_range(map_bin, "f", 1)
-        .and_return(MapReturnType::KEY)
+                              .and_return(MapReturnType::KEY)
       result = client.operate(key, [operation])
 
       expect(result.bins[map_bin]).to contain_exactly("j")
@@ -300,10 +300,10 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?(Aerosp
 
     it "removes the items identified by a single value" do
       operation = MapOperation.remove_by_value(map_bin, 2)
-        .and_return(MapReturnType::KEY)
+                              .and_return(MapReturnType::KEY)
       result = client.operate(key, [operation])
 
-      expect(result.bins[map_bin]).to eql(["b", "d"])
+      expect(result.bins[map_bin]).to eql(%w[b d])
       expect(map_post_op).to eql({ "a" => 1, "c" => 3 })
     end
   end
@@ -313,7 +313,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?(Aerosp
 
     it "removes the items identified by a list of values" do
       operation = MapOperation.remove_by_value_list(map_bin, [2, 3])
-        .and_return(MapReturnType::KEY)
+                              .and_return(MapReturnType::KEY)
       result = client.operate(key, [operation])
 
       expect(result.bins[map_bin]).to contain_exactly("b", "c", "d")
@@ -357,7 +357,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?(Aerosp
 
     it "removes specified number of elements" do
       operation = MapOperation.remove_by_value_rel_rank_range(map_bin, 11, -1, 1)
-        .and_return(MapReturnType::KEY_VALUE)
+                              .and_return(MapReturnType::KEY_VALUE)
       result = client.operate(key, [operation])
 
       expect(result.bins[map_bin]).to eql({ 9 => 10 })
@@ -366,7 +366,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?(Aerosp
 
     it "removes elements from specified key until the end" do
       operation = MapOperation.remove_by_value_rel_rank_range(map_bin, 11, -1)
-        .and_return(MapReturnType::KEY_VALUE)
+                              .and_return(MapReturnType::KEY_VALUE)
       result = client.operate(key, [operation])
 
       expect(result.bins[map_bin]).to eql({ 9 => 10, 5 => 15, 0 => 17 })
@@ -460,7 +460,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?(Aerosp
 
     it "gets a single key from the map" do
       operation = MapOperation.get_by_key(map_bin, "b")
-        .and_return(MapReturnType::KEY_VALUE)
+                              .and_return(MapReturnType::KEY_VALUE)
       result = client.operate(key, [operation])
 
       expect(result.bins[map_bin]).to eql({ "b" => 2 })
@@ -471,8 +471,8 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?(Aerosp
     let(:map_value) { { "a" => 1, "b" => 2, "c" => 3 } }
 
     it "gets a list of keys from the map" do
-      operation = MapOperation.get_by_key_list(map_bin, ["b", "c"])
-        .and_return(MapReturnType::VALUE)
+      operation = MapOperation.get_by_key_list(map_bin, %w[b c])
+                              .and_return(MapReturnType::VALUE)
       result = client.operate(key, [operation])
 
       expect(result.bins[map_bin]).to contain_exactly(2, 3)
@@ -484,7 +484,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?(Aerosp
 
     it "gets the specified key range from the map" do
       operation = MapOperation.get_by_key_range(map_bin, "b", "c")
-        .and_return(MapReturnType::KEY_VALUE)
+                              .and_return(MapReturnType::KEY_VALUE)
       result = client.operate(key, [operation])
 
       expect(result.bins[map_bin]).to eql({ "b" => 2 })
@@ -492,7 +492,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?(Aerosp
 
     it "gets all keys from the specified start key until the end" do
       operation = MapOperation.get_by_key_range(map_bin, "b")
-        .and_return(MapReturnType::KEY_VALUE)
+                              .and_return(MapReturnType::KEY_VALUE)
       result = client.operate(key, [operation])
 
       expect(result.bins[map_bin]).to eql({ "b" => 2, "c" => 3 })
@@ -500,31 +500,51 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?(Aerosp
 
     it "gets all keys from the start to the specified end key" do
       operation = MapOperation.get_by_key_range(map_bin, nil, "b")
-        .and_return(MapReturnType::KEY_VALUE)
+                              .and_return(MapReturnType::KEY_VALUE)
       result = client.operate(key, [operation])
 
       expect(result.bins[map_bin]).to eql({ "a" => 1 })
     end
   end
 
+  describe "MapOperation.get_by_key_range" do
+    let(:map_value) { { "b" => 2, "a" => 1, "c" => 3 } }
+
+    it "gets all keys from the start to the specified end key, return ordered map" do
+      operation = MapOperation.get_by_key_range(map_bin, nil, "c")
+                              .and_return(MapReturnType::ORDERED_MAP)
+      result = client.operate(key, [operation])
+
+      expect(result.bins[map_bin]).to eql({ "a" => 1, "b" => 2 })
+    end
+
+    it "gets all keys from the start to the specified end key, return unordered map" do
+      operation = MapOperation.get_by_key_range(map_bin, nil, "c")
+                              .and_return(MapReturnType::UNORDERED_MAP)
+      result = client.operate(key, [operation])
+
+      expect(result.bins[map_bin]).to eql({ "b" => 2, "a" => 1 })
+    end
+  end
+
   describe "MapOperation.get_by_key_rel_index_range", skip: !Support.min_version?("4.3") do
-    let(:map_value) { { "a" => 17, "e" => 2, "f" => 15, "j" => 10 } }
+  let(:map_value) { { "a" => 17, "e" => 2, "f" => 15, "j" => 10 } }
 
-    it "gets specified number of elements" do
-      operation = MapOperation.get_by_key_rel_index_range(map_bin, "f", 1, 2)
-        .and_return(MapReturnType::KEY)
-      result = client.operate(key, [operation])
+  it "gets specified number of elements" do
+    operation = MapOperation.get_by_key_rel_index_range(map_bin, "f", 1, 2)
+                            .and_return(MapReturnType::KEY)
+    result = client.operate(key, [operation])
 
-      expect(result.bins[map_bin]).to contain_exactly("j")
-    end
+    expect(result.bins[map_bin]).to contain_exactly("j")
+  end
 
-    it "get elements from specified key until the end" do
-      operation = MapOperation.get_by_key_rel_index_range(map_bin, "f", 1)
-        .and_return(MapReturnType::KEY)
-      result = client.operate(key, [operation])
+  it "get elements from specified key until the end" do
+    operation = MapOperation.get_by_key_rel_index_range(map_bin, "f", 1)
+                            .and_return(MapReturnType::KEY)
+    result = client.operate(key, [operation])
 
-      expect(result.bins[map_bin]).to contain_exactly("j")
-    end
+    expect(result.bins[map_bin]).to contain_exactly("j")
+  end
   end
 
   describe "MapOperation.get_by_value" do
@@ -532,7 +552,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?(Aerosp
 
     it "gets the item identified by a single value" do
       operation = MapOperation.get_by_value(map_bin, 2)
-        .and_return(MapReturnType::KEY_VALUE)
+                              .and_return(MapReturnType::KEY_VALUE)
       result = client.operate(key, [operation])
 
       expect(result.bins[map_bin]).to eql({ "b" => 2, "d" => 2 })
@@ -544,7 +564,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?(Aerosp
 
     it "gets the items identified by a list of values" do
       operation = MapOperation.get_by_value_list(map_bin, [2, 3])
-        .and_return(MapReturnType::KEY_VALUE)
+                              .and_return(MapReturnType::KEY_VALUE)
       result = client.operate(key, [operation])
 
       expect(result.bins[map_bin]).to eql({ "b" => 2, "c" => 3, "d" => 2 })
@@ -556,7 +576,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?(Aerosp
 
     it "gets the specified key range from the map" do
       operation = MapOperation.get_by_value_range(map_bin, 2, 3)
-        .and_return(MapReturnType::KEY_VALUE)
+                              .and_return(MapReturnType::KEY_VALUE)
       result = client.operate(key, [operation])
 
       expect(result.bins[map_bin]).to eql({ "b" => 2, "d" => 2 })
@@ -564,7 +584,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?(Aerosp
 
     it "gets all values from the specified start value until the end" do
       operation = MapOperation.get_by_value_range(map_bin, 2)
-        .and_return(MapReturnType::KEY_VALUE)
+                              .and_return(MapReturnType::KEY_VALUE)
       result = client.operate(key, [operation])
 
       expect(result.bins[map_bin]).to eql({ "b" => 2, "d" => 2, "c" => 3 })
@@ -572,7 +592,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?(Aerosp
 
     it "gets all values from the start of the map until the specified end value" do
       operation = MapOperation.get_by_value_range(map_bin, nil, 3)
-        .and_return(MapReturnType::KEY_VALUE)
+                              .and_return(MapReturnType::KEY_VALUE)
       result = client.operate(key, [operation])
 
       expect(result.bins[map_bin]).to eql({ "a" => 1, "b" => 2, "d" => 2 })
@@ -584,7 +604,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?(Aerosp
 
     it "gets specified number of elements" do
       operation = MapOperation.get_by_value_rel_rank_range(map_bin, 11, -1, 1)
-        .and_return(MapReturnType::KEY_VALUE)
+                              .and_return(MapReturnType::KEY_VALUE)
       result = client.operate(key, [operation])
 
       expect(result.bins[map_bin]).to eql({ 9 => 10 })
@@ -592,7 +612,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?(Aerosp
 
     it "gets elements from specified key until the end" do
       operation = MapOperation.get_by_value_rel_rank_range(map_bin, 11, -1)
-        .and_return(MapReturnType::KEY_VALUE)
+                              .and_return(MapReturnType::KEY_VALUE)
       result = client.operate(key, [operation])
 
       expect(result.bins[map_bin]).to eql({ 9 => 10, 5 => 15, 0 => 17 })
@@ -604,7 +624,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?(Aerosp
 
     it "gets a map item identified by index from the map" do
       operation = MapOperation.get_by_index(map_bin, 1)
-        .and_return(MapReturnType::KEY_VALUE)
+                              .and_return(MapReturnType::KEY_VALUE)
       result = client.operate(key, [operation])
 
       expect(result.bins[map_bin]).to eql({ "b" => 2 })
@@ -616,18 +636,18 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?(Aerosp
 
     it "gets 'count' map items starting at the specified index from the map" do
       operation = MapOperation.get_by_index_range(map_bin, 1, 2)
-        .and_return(MapReturnType::KEY)
+                              .and_return(MapReturnType::KEY)
       result = client.operate(key, [operation])
 
-      expect(result.bins[map_bin]).to eql(["b", "c"])
+      expect(result.bins[map_bin]).to eql(%w[b c])
     end
 
     it "gets all items starting at the specified index to the end of the map" do
       operation = MapOperation.get_by_index_range(map_bin, 1)
-        .and_return(MapReturnType::KEY)
+                              .and_return(MapReturnType::KEY)
       result = client.operate(key, [operation])
 
-      expect(result.bins[map_bin]).to eql(["b", "c"])
+      expect(result.bins[map_bin]).to eql(%w[b c])
     end
   end
 
@@ -636,7 +656,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?(Aerosp
 
     it "gets a map item identified by rank from the map" do
       operation = MapOperation.get_by_rank(map_bin, 1)
-        .and_return(MapReturnType::KEY_VALUE)
+                              .and_return(MapReturnType::KEY_VALUE)
       result = client.operate(key, [operation])
 
       expect(result.bins[map_bin]).to eql({ "b" => 2 })
@@ -648,18 +668,18 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?(Aerosp
 
     it "gets 'count' map items starting at the specified rank from the map" do
       operation = MapOperation.get_by_rank_range(map_bin, 1, 2)
-        .and_return(MapReturnType::KEY)
+                              .and_return(MapReturnType::KEY)
       result = client.operate(key, [operation])
 
-      expect(result.bins[map_bin]).to eql(["b", "a"])
+      expect(result.bins[map_bin]).to eql(%w[b a])
     end
 
     it "gets all items starting at the specified rank to the end of the map" do
       operation = MapOperation.get_by_rank_range(map_bin, 1)
-        .and_return(MapReturnType::KEY)
+                              .and_return(MapReturnType::KEY)
       result = client.operate(key, [operation])
 
-      expect(result.bins[map_bin]).to eql(["b", "a"])
+      expect(result.bins[map_bin]).to eql(%w[b a])
     end
   end
 
@@ -669,7 +689,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?(Aerosp
 
       it "removes a single key from the map" do
         operation = MapOperation.remove_keys(map_bin, "b")
-          .and_return(MapReturnType::VALUE)
+                                .and_return(MapReturnType::VALUE)
         result = client.operate(key, [operation])
 
         expect(result.bins[map_bin]).to be(2)
@@ -678,7 +698,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?(Aerosp
 
       it "removes multiple keys from the map" do
         operation = MapOperation.remove_keys(map_bin, "b", "c")
-          .and_return(MapReturnType::VALUE)
+                                .and_return(MapReturnType::VALUE)
         result = client.operate(key, [operation])
 
         expect(result.bins[map_bin]).to contain_exactly(2, 3)
@@ -691,7 +711,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?(Aerosp
 
       it "removes the items identified by a single value" do
         operation = MapOperation.remove_values(map_bin, 2)
-          .and_return(MapReturnType::KEY)
+                                .and_return(MapReturnType::KEY)
         result = client.operate(key, [operation])
 
         expect(result.bins[map_bin]).to contain_exactly("b", "d")
@@ -700,7 +720,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?(Aerosp
 
       it "removes the items identified by multiple values" do
         operation = MapOperation.remove_values(map_bin, 2, 3)
-          .and_return(MapReturnType::KEY)
+                                .and_return(MapReturnType::KEY)
         result = client.operate(key, [operation])
 
         expect(result.bins[map_bin]).to contain_exactly("b", "c", "d")
@@ -715,7 +735,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?(Aerosp
     context "NONE" do
       it "returns nothing" do
         operation = MapOperation.get_by_key(map_bin, "a")
-          .and_return(MapReturnType::NONE)
+                                .and_return(MapReturnType::NONE)
         result = client.operate(key, [operation])
 
         expected = { "map_bin" => nil }
@@ -726,7 +746,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?(Aerosp
     context "INDEX" do
       it "returns returns the elements index" do
         operation = MapOperation.get_by_key(map_bin, "a")
-          .and_return(MapReturnType::INDEX)
+                                .and_return(MapReturnType::INDEX)
         result = client.operate(key, [operation])
 
         expect(result.bins[map_bin]).to eql(0)
@@ -736,7 +756,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?(Aerosp
     context "REVERSE_INDEX" do
       it "returns the elements reverse index" do
         operation = MapOperation.get_by_key(map_bin, "a")
-          .and_return(MapReturnType::REVERSE_INDEX)
+                                .and_return(MapReturnType::REVERSE_INDEX)
         result = client.operate(key, [operation])
 
         expect(result.bins[map_bin]).to eql(2)
@@ -746,7 +766,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?(Aerosp
     context "RANK" do
       it "returns the elements rank" do
         operation = MapOperation.get_by_key(map_bin, "a")
-          .and_return(MapReturnType::RANK)
+                                .and_return(MapReturnType::RANK)
         result = client.operate(key, [operation])
 
         expect(result.bins[map_bin]).to eql(2)
@@ -756,7 +776,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?(Aerosp
     context "REVERSE_RANK" do
       it "returns the elements reverse rank" do
         operation = MapOperation.get_by_key(map_bin, "a")
-          .and_return(MapReturnType::REVERSE_RANK)
+                                .and_return(MapReturnType::REVERSE_RANK)
         result = client.operate(key, [operation])
 
         expect(result.bins[map_bin]).to eql(0)
@@ -766,7 +786,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?(Aerosp
     context "COUNT" do
       it "returns the count of items selected" do
         operation = MapOperation.get_by_key_range(map_bin, "a", "c")
-          .and_return(MapReturnType::COUNT)
+                                .and_return(MapReturnType::COUNT)
         result = client.operate(key, [operation])
 
         expect(result.bins[map_bin]).to eql(2)
@@ -776,7 +796,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?(Aerosp
     context "KEY" do
       it "returns the map key" do
         operation = MapOperation.get_by_index(map_bin, 0)
-          .and_return(MapReturnType::KEY)
+                                .and_return(MapReturnType::KEY)
         result = client.operate(key, [operation])
 
         expect(result.bins[map_bin]).to eql("a")
@@ -786,7 +806,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?(Aerosp
     context "VALUE" do
       it "returns the map value" do
         operation = MapOperation.get_by_index(map_bin, 0)
-          .and_return(MapReturnType::VALUE)
+                                .and_return(MapReturnType::VALUE)
         result = client.operate(key, [operation])
 
         expect(result.bins[map_bin]).to eql(3)
@@ -796,7 +816,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?(Aerosp
     context "KEY_VALUE" do
       it "returns the map key & value" do
         operation = MapOperation.get_by_index(map_bin, 0)
-          .and_return(MapReturnType::KEY_VALUE)
+                                .and_return(MapReturnType::KEY_VALUE)
         result = client.operate(key, [operation])
 
         expect(result.bins[map_bin]).to eql({ "a" => 3 })
@@ -1065,7 +1085,7 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?(Aerosp
 
     it "returns all keys from 5 to Infinity" do
       operation = MapOperation.get_by_key_range(map_bin, 5, Aerospike::Value::INFINITY)
-        .and_return(MapReturnType::KEY)
+                              .and_return(MapReturnType::KEY)
 
       result = client.operate(key, [operation])
 
@@ -1074,18 +1094,18 @@ describe "client.operate() - CDT Map Operations", skip: !Support.feature?(Aerosp
   end
 
   context "Wildcard value", skip: !Support.min_version?("4.3.1") do
-    let(:map_value) {
+    let(:map_value) do
       {
         4 => ["John", 55],
         5 => ["Jim", 95],
         9 => ["Joe", 80],
-        12 => ["Jim", 46],
+        12 => ["Jim", 46]
       }
-    }
+    end
 
     it "returns all values that match a wildcard" do
       operation = MapOperation.get_by_value(map_bin, ["Jim", Aerospike::Value::WILDCARD])
-        .and_return(MapReturnType::KEY)
+                              .and_return(MapReturnType::KEY)
 
       result = client.operate(key, [operation])
 

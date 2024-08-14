@@ -23,9 +23,9 @@ describe Aerospike::Client do
 
   describe "#batch_exists" do
     shared_examples_for 'a batch_exists request' do
-      let(:batch_policy) {
-        Aerospike::BatchPolicy.new(use_batch_direct: use_batch_direct)
-      }
+      let(:batch_policy) do
+        Aerospike::BatchPolicy.new
+      end
       let(:existing_keys) { Array.new(3) { Support.gen_random_key } }
       let(:no_such_key) { Support.gen_random_key }
       let(:keys) { existing_keys }
@@ -34,10 +34,10 @@ describe Aerospike::Client do
       before do
         existing_keys.each_with_index do |key, idx|
           client.put(key, {
-            'idx' => idx,
-            'key' => key.user_key,
-            'rnd' => rand
-          })
+                       'idx' => idx,
+                       'key' => key.user_key,
+                       'rnd' => rand
+                     })
         end
       end
 
@@ -65,23 +65,15 @@ describe Aerospike::Client do
     end
 
     context 'using batch index protocol' do
-      let(:use_batch_direct) { false }
-
-      it_behaves_like 'a batch_exists request'
-    end
-
-    context 'using batch direct protocol', skip: Support.min_version?('4.4.0') do
-      let(:use_batch_direct) { true }
-
       it_behaves_like 'a batch_exists request'
     end
   end
 
   describe "#batch_get" do
     shared_examples_for 'a batch_get request' do
-      let(:batch_policy) {
-        Aerospike::BatchPolicy.new(use_batch_direct: use_batch_direct)
-      }
+      let(:batch_policy) do
+        Aerospike::BatchPolicy.new
+      end
       let(:existing_keys) { Array.new(3) { Support.gen_random_key } }
       let(:no_such_key) { Support.gen_random_key }
       let(:keys) { existing_keys }
@@ -91,10 +83,10 @@ describe Aerospike::Client do
       before do
         existing_keys.each_with_index do |key, idx|
           client.put(key, {
-            'idx' => idx,
-            'key' => key.user_key,
-            'rnd' => rand
-          })
+                       'idx' => idx,
+                       'key' => key.user_key,
+                       'rnd' => rand
+                     })
         end
       end
 
@@ -133,7 +125,7 @@ describe Aerospike::Client do
       end
 
       context 'when given a list of bin names' do
-        let(:bins) { %w[ idx rnd ] }
+        let(:bins) { %w[idx rnd] }
 
         it 'returns only the specified bins' do
           expect(result.first.bins.keys).to eql %w[idx rnd]
@@ -158,23 +150,16 @@ describe Aerospike::Client do
     end
 
     context 'using batch index protocol' do
-      let(:use_batch_direct) { false }
-
       it_behaves_like 'a batch_get request'
     end
 
-    context 'using batch direct protocol', skip: Support.min_version?('4.4.0') do
-      let(:use_batch_direct) { true }
-
-      it_behaves_like 'a batch_get request'
-    end
   end
 
   describe "#batch_get_header" do
     shared_examples_for 'a batch_get_header request' do
-      let(:batch_policy) {
-        Aerospike::BatchPolicy.new(use_batch_direct: use_batch_direct)
-      }
+      let(:batch_policy) do
+        Aerospike::BatchPolicy.new
+      end
       let(:existing_keys) { Array.new(3) { Support.gen_random_key } }
       let(:no_such_key) { Support.gen_random_key }
       let(:keys) { existing_keys }
@@ -183,12 +168,10 @@ describe Aerospike::Client do
       before do
         existing_keys.each_with_index do |key, idx|
           client.put(key, {
-            'idx' => idx,
-            'key' => key.user_key,
-            'rnd' => rand
-          }, {
-            ttl: 1000
-          })
+                       'idx' => idx,
+                       'key' => key.user_key,
+                       'rnd' => rand
+                     }, {})
         end
       end
 
@@ -201,7 +184,7 @@ describe Aerospike::Client do
           expect(result.map(&:key)).to eql keys
         end
 
-        it 'returns the meta-data for each record' do
+        it 'returns the meta-data for each record', skip: !Support.ttl_supported? do
           expect(result.first.generation).to eq 1
           expect(result.first.ttl).to be_within(100).of(1000)
         end
@@ -225,15 +208,8 @@ describe Aerospike::Client do
     end
 
     context 'using batch index protocol' do
-      let(:use_batch_direct) { false }
-
       it_behaves_like 'a batch_get_header request'
     end
 
-    context 'using batch direct protocol', skip: Support.min_version?('4.4.0') do
-      let(:use_batch_direct) { true }
-
-      it_behaves_like 'a batch_get_header request'
-    end
   end
 end

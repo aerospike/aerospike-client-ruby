@@ -15,7 +15,7 @@
 # the License.
 
 module Aerospike
-  # HyperLogLog (HLL) expression generator. See {@link Exp}.
+  # HyperLogLog (HLL) expression generator. See {Exp}.
   #
   # The bin expression argument in these methods can be a reference to a bin or the
   # result of another expression. Expressions that modify bin values are only used
@@ -25,14 +25,14 @@ module Aerospike
 
     # Create expression that creates a new HLL or resets an existing HLL with minhash bits.
     #
-    # @param policy			write policy, use {@link HLLPolicy#Default} for default
+    # @param policy			write policy, use {HLLPolicy#Default} for default
     # @param index_bit_count		number of index bits. Must be between 4 and 16 inclusive.
     # @param min_hash_bit_count	number of min hash bits. Must be between 4 and 51 inclusive.
     # 							Also, index_bit_count + min_hash_bit_count must be <= 64. Optional.
     # @param bin				HLL bin or value expression
     def self.init(index_bit_count, bin, min_hash_bit_count: Exp.int_val(-1), policy: CDT::HLLPolicy::DEFAULT)
       bytes = Exp.pack(nil, INIT, index_bit_count, min_hash_bit_count, policy.flags)
-      self.add_write(bin, bytes)
+      add_write(bin, bytes)
     end
 
     # Create expression that adds values to a HLL set and returns HLL set. If HLL bin does not
@@ -45,7 +45,7 @@ module Aerospike
     #     HLLExp.add(HLLPolicy.Default, Exp.val(list), Exp.val(10), Exp.val(20), Exp.hllBin("a"))),
     #   Exp.val(7))
     #
-    # @param policy			write policy, use {@link HLLPolicy#Default} for default
+    # @param policy			write policy, use {HLLPolicy#Default} for default
     # @param list				list bin or value expression of values to be added
     # @param index_bit_count		number of index bits expression. Must be between 4 and 16 inclusive.
     # @param min_hash_bit_count   number of min hash bits expression. Must be between 4 and 51 inclusive.
@@ -53,7 +53,7 @@ module Aerospike
     # @param bin				HLL bin or value expression
     def self.add(list, bin, policy: CDT::HLLPolicy::DEFAULT, index_bit_count: Exp.val(-1), min_hash_bit_count: Exp.val(-1))
       bytes = Exp.pack(nil, ADD, list, index_bit_count, min_hash_bit_count, policy.flags)
-      self.add_write(bin, bytes)
+      add_write(bin, bytes)
     end
 
     # Create expression that returns estimated number of elements in the HLL bin.
@@ -63,7 +63,7 @@ module Aerospike
     # Exp.gt(HLLExp.getCount(Exp.hllBin("a")), Exp.val(7))
     def self.get_count(bin)
       bytes = Exp.pack(nil, COUNT)
-      self.add_read(bin, bytes, Exp::Type::INT)
+      add_read(bin, bytes, Exp::Type::INT)
     end
 
     # Create expression that returns a HLL object that is the union of all specified HLL objects
@@ -77,7 +77,7 @@ module Aerospike
     # HLLExp.getUnion(Exp.val(list), Exp.hllBin("b"))
     def self.get_union(list, bin)
       bytes = Exp.pack(nil, UNION, list)
-      self.add_read(bin, bytes, Exp::Type::HLL)
+      add_read(bin, bytes, Exp::Type::HLL)
     end
 
     # Create expression that returns estimated number of elements that would be contained by
@@ -91,7 +91,7 @@ module Aerospike
     # HLLExp.getUnionCount(Exp.val(list), Exp.hllBin("b"))
     def self.get_union_count(list, bin)
       bytes = Exp.pack(nil, UNION_COUNT, list)
-      self.add_read(bin, bytes, Exp::Type::INT)
+      add_read(bin, bytes, Exp::Type::INT)
     end
 
     # Create expression that returns estimated number of elements that would be contained by
@@ -105,7 +105,7 @@ module Aerospike
     # HLLExp.getIntersectCount(Exp.val(list), Exp.hllBin("b"))
     def self.get_intersect_count(list, bin)
       bytes = Exp.pack(nil, INTERSECT_COUNT, list)
-      self.add_read(bin, bytes, Exp::Type::INT)
+      add_read(bin, bytes, Exp::Type::INT)
     end
 
     # Create expression that returns estimated similarity of these HLL objects as a
@@ -116,7 +116,7 @@ module Aerospike
     # Exp.ge(HLLExp.getSimilarity(Exp.hllBin("a"), Exp.hllBin("b")), Exp.val(0.75))
     def self.get_similarity(list, bin)
       bytes = Exp.pack(nil, SIMILARITY, list)
-      self.add_read(bin, bytes, Exp::Type::FLOAT)
+      add_read(bin, bytes, Exp::Type::FLOAT)
     end
 
     # Create expression that returns index_bit_count and min_hash_bit_count used to create HLL bin
@@ -130,7 +130,7 @@ module Aerospike
     #   Exp.val(10))
     def self.describe(bin)
       bytes = Exp.pack(nil, DESCRIBE)
-      self.add_read(bin, bytes, Exp::Type::LIST)
+      add_read(bin, bytes, Exp::Type::LIST)
     end
 
     # Create expression that returns one if HLL bin may contain all items in the list.
@@ -142,7 +142,7 @@ module Aerospike
     # Exp.eq(HLLExp.mayContain(Exp.val(list), Exp.hllBin("a")), Exp.val(1))
     def self.may_contain(list, bin)
       bytes = Exp.pack(nil, MAY_CONTAIN, list)
-      self.add_read(bin, bytes, Exp::Type::INT)
+      add_read(bin, bytes, Exp::Type::INT)
     end
 
     private

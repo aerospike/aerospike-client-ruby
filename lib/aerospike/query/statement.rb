@@ -21,9 +21,7 @@ module Aerospike
   # index name, filters, and operations.
   class Statement
 
-    attr_accessor :namespace, :set_name, :index_name, :bin_names, :task_id
-    attr_accessor :filters, :package_name, :function_name, :function_args, :operations
-    attr_accessor :predexp, :return_data, :records_per_second
+    attr_accessor :namespace, :set_name, :index_name, :bin_names, :task_id, :filters, :package_name, :function_name, :function_args, :operations, :return_data, :records_per_second
 
     def initialize(namespace, set_name, bin_names=[])
       # Namespace determines query Namespace
@@ -45,16 +43,6 @@ module Aerospike
       # QueryFilter demonstrates how to add additional filters in an user-defined
       # aggregation function.
       @filters = []
-
-      # Predicate expressions in postfix notation. If the expression is evaluated to false,
-      # the record will be ommited in the results.
-      #
-      # This method is redundant because PredExp can now be set in the base Policy for
-      # any transaction (including queries).
-      #
-      # NOTE : Policy.predexp takes precedence to this value. This value will be
-      # deprecated in the future.
-      @predexp = nil
 
       @package_name  = nil
       @function_name = nil
@@ -83,27 +71,23 @@ module Aerospike
     end
 
     def is_scan?
-      return (filters.nil? || (filters.empty?))
+      filters.nil? || filters.empty?
     end
 
     def set_task_id
-      while @task_id == 0
-        @task_id = rand(RAND_MAX)
-      end
+      @task_id = rand(RAND_MAX) while @task_id == 0
     end
 
     def reset_task_id
       @task_id = rand(RAND_MAX)
-      while @task_id == 0
-        @task_id = rand(RAND_MAX)
-      end
+      @task_id = rand(RAND_MAX) while @task_id == 0
     end
 
 
 
     private
 
-    RAND_MAX = 2**63 - 1
+    RAND_MAX = (2**63) - 1
 
   end # class
 end

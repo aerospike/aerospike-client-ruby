@@ -275,7 +275,7 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?(Aeros
 
     it "returns the value at the specified index" do
       operation = ListOperation.get_by_index(list_bin, 2)
-        .and_return(return_type)
+                               .and_return(return_type)
       result = client.operate(key, [operation])
 
       expect(result.bins[list_bin]).to be 3
@@ -293,7 +293,7 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?(Aeros
 
     it "returns the value at the specified index range" do
       operation = ListOperation.get_by_index_range(list_bin, 1, 3)
-        .and_return(return_type)
+                               .and_return(return_type)
       result = client.operate(key, [operation])
 
       expect(result.bins[list_bin]).to eql([2, 3, 4])
@@ -301,7 +301,7 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?(Aeros
 
     it "returns all values starting at the specified index if count is not specified" do
       operation = ListOperation.get_by_index_range(list_bin, 1)
-        .and_return(return_type)
+                               .and_return(return_type)
       result = client.operate(key, [operation])
 
       expect(result.bins[list_bin]).to eql([2, 3, 4, 5])
@@ -313,7 +313,7 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?(Aeros
 
     it "returns the value at the specified rank" do
       operation = ListOperation.get_by_rank(list_bin, 0)
-        .and_return(return_type)
+                               .and_return(return_type)
       result = client.operate(key, [operation])
 
       expect(result.bins[list_bin]).to be 1
@@ -325,7 +325,7 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?(Aeros
 
     it "returns the value at the specified rank range" do
       operation = ListOperation.get_by_rank_range(list_bin, 1, 3)
-        .and_return(return_type)
+                               .and_return(return_type)
       result = client.operate(key, [operation])
 
       expect(result.bins[list_bin]).to contain_exactly(2, 3, 4)
@@ -333,7 +333,7 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?(Aeros
 
     it "returns all values starting at the specified index if count is not specified" do
       operation = ListOperation.get_by_rank_range(list_bin, 3)
-        .and_return(return_type)
+                               .and_return(return_type)
       result = client.operate(key, [operation])
 
       expect(result.bins[list_bin]).to contain_exactly(4, 5)
@@ -346,7 +346,7 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?(Aeros
 
     it "returns the index of the specified value" do
       operation = ListOperation.get_by_value(list_bin, 2)
-        .and_return(return_type)
+                               .and_return(return_type)
       result = client.operate(key, [operation])
 
       expect(result.bins[list_bin]).to contain_exactly(2, 6)
@@ -359,7 +359,7 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?(Aeros
 
     it "returns the indeces of the items in the specified value range" do
       operation = ListOperation.get_by_value_range(list_bin, 2, 4)
-        .and_return(return_type)
+                               .and_return(return_type)
       result = client.operate(key, [operation])
 
       expect(result.bins[list_bin]).to contain_exactly(2, 3, 6)
@@ -367,7 +367,7 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?(Aeros
 
     it "returns the indeces of the items starting with the specified value" do
       operation = ListOperation.get_by_value_range(list_bin, 2)
-        .and_return(return_type)
+                               .and_return(return_type)
       result = client.operate(key, [operation])
 
       expect(result.bins[list_bin]).to contain_exactly(1, 2, 3, 4, 6)
@@ -380,7 +380,7 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?(Aeros
 
     it "returns the indeces of the items in the specified list" do
       operation = ListOperation.get_by_value_list(list_bin, [2, 4])
-        .and_return(return_type)
+                               .and_return(return_type)
       result = client.operate(key, [operation])
 
       expect(result.bins[list_bin]).to contain_exactly(1, 2, 6)
@@ -392,7 +392,7 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?(Aeros
 
     it "returns the values of the items nearest to and greater than the specified value, by relative rank range" do
       operation = ListOperation.get_by_value_rel_rank_range(list_bin, 5, 0, 2)
-        .and_return(return_type)
+                               .and_return(return_type)
       result = client.operate(key, [operation])
 
       expect(result.bins[list_bin]).to contain_exactly(5, 9)
@@ -400,7 +400,7 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?(Aeros
 
     it "returns the values of the items nearest to and greater than the specified value, starting with the specified relative rank" do
       operation = ListOperation.get_by_value_rel_rank_range(list_bin, 5, 0)
-        .and_return(return_type)
+                               .and_return(return_type)
       result = client.operate(key, [operation])
 
       expect(result.bins[list_bin]).to contain_exactly(5, 9, 11, 15)
@@ -412,7 +412,7 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?(Aeros
 
     it "removes the value at the specified index" do
       operation = ListOperation.remove_by_index(list_bin, 2)
-        .and_return(return_type)
+                               .and_return(return_type)
       result = client.operate(key, [operation])
 
       expect(result.bins[list_bin]).to be 3
@@ -431,7 +431,7 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?(Aeros
 
     it "removes the values at the specified index range" do
       operation = ListOperation.remove_by_index_range(list_bin, 1, 3)
-        .and_return(return_type)
+                               .and_return(return_type)
       result = client.operate(key, [operation])
 
       expect(result.bins[list_bin]).to eql([2, 3, 4])
@@ -440,7 +440,7 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?(Aeros
 
     it "returns all values starting at the specified index if count is not specified" do
       operation = ListOperation.remove_by_index_range(list_bin, 1)
-        .and_return(return_type)
+                               .and_return(return_type)
       result = client.operate(key, [operation])
 
       expect(result.bins[list_bin]).to eql([2, 3, 4, 5])
@@ -453,7 +453,7 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?(Aeros
 
     it "removes the value at the specified rank" do
       operation = ListOperation.remove_by_rank(list_bin, 0)
-        .and_return(return_type)
+                               .and_return(return_type)
       result = client.operate(key, [operation])
 
       expect(result.bins[list_bin]).to be 1
@@ -466,7 +466,7 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?(Aeros
 
     it "removes the value at the specified rank range" do
       operation = ListOperation.remove_by_rank_range(list_bin, 1, 3)
-        .and_return(return_type)
+                               .and_return(return_type)
       result = client.operate(key, [operation])
 
       expect(result.bins[list_bin]).to contain_exactly(2, 3, 4)
@@ -475,7 +475,7 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?(Aeros
 
     it "returns all values starting at the specified index if count is not specified" do
       operation = ListOperation.remove_by_rank_range(list_bin, 3)
-        .and_return(return_type)
+                               .and_return(return_type)
       result = client.operate(key, [operation])
 
       expect(result.bins[list_bin]).to contain_exactly(4, 5)
@@ -489,7 +489,7 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?(Aeros
 
     it "removes the index of the specified value" do
       operation = ListOperation.remove_by_value(list_bin, 2)
-        .and_return(return_type)
+                               .and_return(return_type)
       result = client.operate(key, [operation])
 
       expect(result.bins[list_bin]).to contain_exactly(2, 6)
@@ -503,7 +503,7 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?(Aeros
 
     it "removes the indeces of the items in the specified value range" do
       operation = ListOperation.remove_by_value_range(list_bin, 2, 4)
-        .and_return(return_type)
+                               .and_return(return_type)
       result = client.operate(key, [operation])
 
       expect(result.bins[list_bin]).to contain_exactly(2, 3, 6)
@@ -512,7 +512,7 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?(Aeros
 
     it "removes the indeces of the items starting with the specified value" do
       operation = ListOperation.remove_by_value_range(list_bin, 2)
-        .and_return(return_type)
+                               .and_return(return_type)
       result = client.operate(key, [operation])
 
       expect(result.bins[list_bin]).to contain_exactly(1, 2, 3, 4, 6)
@@ -526,7 +526,7 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?(Aeros
 
     it "removes the indeces of the items in the specified list" do
       operation = ListOperation.remove_by_value_list(list_bin, [2, 4])
-        .and_return(return_type)
+                               .and_return(return_type)
       result = client.operate(key, [operation])
 
       expect(result.bins[list_bin]).to contain_exactly(1, 2, 6)
@@ -539,7 +539,7 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?(Aeros
 
     it "removes the values of the items nearest to and greater than the specified value, by relative rank range" do
       operation = ListOperation.remove_by_value_rel_rank_range(list_bin, 5, 0, 2)
-        .and_return(return_type)
+                               .and_return(return_type)
       result = client.operate(key, [operation])
 
       expect(result.bins[list_bin]).to contain_exactly(5, 9)
@@ -548,7 +548,7 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?(Aeros
 
     it "removes the values of the items nearest to and greater than the specified value, starting with the specified relative rank" do
       operation = ListOperation.remove_by_value_rel_rank_range(list_bin, 5, 0)
-        .and_return(return_type)
+                               .and_return(return_type)
       result = client.operate(key, [operation])
 
       expect(result.bins[list_bin]).to contain_exactly(5, 9, 11, 15)
@@ -561,7 +561,7 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?(Aeros
 
     it "returns nothing by default" do
       operation = ListOperation.remove_by_index_range(list_bin, 2, 4)
-        .and_return(ListReturnType::DEFAULT)
+                               .and_return(ListReturnType::DEFAULT)
       result = client.operate(key, [operation])
 
       expected = { list_bin => nil }
@@ -570,7 +570,7 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?(Aeros
 
     it "returns the list index" do
       operation = ListOperation.remove_by_index_range(list_bin, 2, 4)
-        .and_return(ListReturnType::INDEX)
+                               .and_return(ListReturnType::INDEX)
       result = client.operate(key, [operation])
 
       expect(result.bins[list_bin]).to eql([2, 3, 4, 5])
@@ -578,7 +578,7 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?(Aeros
 
     it "returns the reverse list index" do
       operation = ListOperation.remove_by_index_range(list_bin, 2, 4)
-        .and_return(ListReturnType::REVERSE_INDEX)
+                               .and_return(ListReturnType::REVERSE_INDEX)
       result = client.operate(key, [operation])
 
       expect(result.bins[list_bin]).to eql([1, 2, 3, 4])
@@ -586,7 +586,7 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?(Aeros
 
     it "returns the list rank" do
       operation = ListOperation.remove_by_index_range(list_bin, 2, 4)
-        .and_return(ListReturnType::RANK)
+                               .and_return(ListReturnType::RANK)
       result = client.operate(key, [operation])
 
       expect(result.bins[list_bin]).to eql([2, 4, 6, 0])
@@ -594,7 +594,7 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?(Aeros
 
     it "returns the reverse list rank" do
       operation = ListOperation.remove_by_index_range(list_bin, 2, 4)
-        .and_return(ListReturnType::REVERSE_RANK)
+                               .and_return(ListReturnType::REVERSE_RANK)
       result = client.operate(key, [operation])
 
       expect(result.bins[list_bin]).to eql([4, 2, 0, 6])
@@ -602,7 +602,7 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?(Aeros
 
     it "returns the number of items" do
       operation = ListOperation.remove_by_index_range(list_bin, 2, 4)
-        .and_return(ListReturnType::COUNT)
+                               .and_return(ListReturnType::COUNT)
       result = client.operate(key, [operation])
 
       expect(result.bins[list_bin]).to be 4
@@ -610,7 +610,7 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?(Aeros
 
     it "returns the value of the items" do
       operation = ListOperation.remove_by_index_range(list_bin, 2, 4)
-        .and_return(ListReturnType::VALUE)
+                               .and_return(ListReturnType::VALUE)
       result = client.operate(key, [operation])
 
       expect(result.bins[list_bin]).to eql([2, 3, 5, 1])
@@ -622,8 +622,8 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?(Aeros
 
     it "inverts the selection of items affected by the operation" do
       operation = ListOperation.remove_by_index_range(list_bin, 2, 4)
-        .and_return(return_type)
-        .invert_selection
+                               .and_return(return_type)
+                               .invert_selection
       result = client.operate(key, [operation])
 
       expect(result.bins[list_bin]).to eql([1, 4, 2])
@@ -638,7 +638,7 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?(Aeros
       list = [
         [7, 9, 5],
         [1, 2, 3],
-        [6, 5, 4, 1],
+        [6, 5, 4, 1]
       ]
 
       client.put(key, Aerospike::Bin.new(list_bin, list))
@@ -646,7 +646,7 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?(Aeros
       # Append value to new list created after the original 3 lists.
       operation = [
         ListOperation.append(list_bin, 2, ctx: [Context.list_index_create(3, ListOrder::ORDERED, false)], policy: ListPolicy.new(order: ListOrder::ORDERED)),
-        Aerospike::Operation.get(list_bin),
+        Aerospike::Operation.get(list_bin)
       ]
       record = client.operate(key, operation)
 
@@ -660,7 +660,7 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?(Aeros
       list = [
         [7, 9, 5],
         [1, 2, 3],
-        [6, 5, 4, 1],
+        [6, 5, 4, 1]
       ]
 
       client.put(key, Aerospike::Bin.new(list_bin, list))
@@ -670,10 +670,10 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?(Aeros
 
       record = client.operate(key, [ListOperation.append(list_bin, 11, ctx: [Context.list_index(-1)]), Aerospike::Operation.get(list_bin)])
       expect(record.bins[list_bin]).to eq([
-        [7, 9, 5],
-        [1, 2, 3],
-        [6, 5, 4, 1, 11],
-      ])
+                                            [7, 9, 5],
+                                            [1, 2, 3],
+                                            [6, 5, 4, 1, 11]
+                                          ])
     end
 
     it "is used to change a map in nested list" do
@@ -682,13 +682,13 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?(Aeros
       m = {
         "key1" => [
           [7, 9, 5],
-          [13],
+          [13]
         ],
         "key2" => [
           [9],
           [2, 4],
-          [6, 1, 9],
-        ],
+          [6, 1, 9]
+        ]
       }
 
       client.put(key, Aerospike::Bin.new(list_bin, m))
@@ -701,13 +701,13 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?(Aeros
         {
           "key1" => [
             [7, 9, 5],
-            [13],
+            [13]
           ],
           "key2" => [
             [9],
             [2, 4, 11],
-            [6, 1, 9],
-          ],
+            [6, 1, 9]
+          ]
         }
       )
     end
@@ -789,7 +789,7 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?(Aeros
 
     it "returns all list elements from 10 to Infinity" do
       operation = ListOperation.get_by_value_range(list_bin, 10, Aerospike::Value::INFINITY)
-        .and_return(return_type)
+                               .and_return(return_type)
 
       result = client.operate(key, [operation])
 
@@ -802,7 +802,7 @@ describe "client.operate() - CDT List Operations", skip: !Support.feature?(Aeros
 
     it "returns all list elements that match a wildcard" do
       operation = ListOperation.get_by_value(list_bin, ["Jim", Aerospike::Value::WILDCARD])
-        .and_return(return_type)
+                               .and_return(return_type)
 
       result = client.operate(key, [operation])
 

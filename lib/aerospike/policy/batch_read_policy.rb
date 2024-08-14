@@ -17,24 +17,22 @@
 
 module Aerospike
 
-  BatchNamespace = Struct.new :namespace, :keys
+  # Policy attributes used in batch read commands.
+  class BatchReadPolicy
 
-  class BatchDirectNode #:nodoc:
+    attr_accessor :filter_exp
 
-    attr_accessor :node
-    attr_accessor :batch_namespaces
-
-    def self.generate_list(cluster, replica_policy, keys)
-      keys.group_by { |key| cluster.get_node_for_key(replica_policy, key) }
-        .map { |node, keys_for_node| BatchDirectNode.new(node, keys_for_node) }
+    def initialize(opt={})
+      # Optional expression filter. If filter_exp exists and evaluates to false, the specific batch key
+      # request is not performed and {BatchRecord#result_code} is set to
+      # {ResultCode#FILTERED_OUT}.
+      #
+      # If exists, this filter overrides the batch parent filter {Policy#filter_exp}
+      # for the specific key in batch commands that allow a different policy per key.
+      # Otherwise, this filter is ignored.
+      #
+      # Default: nil
+      @filter_exp = opt[:filter_exp]
     end
-
-    def initialize(node, keys)
-      @node = node
-      @batch_namespaces = keys.group_by(&:namespace)
-        .map { |ns, keys_for_ns| BatchNamespace.new(ns, keys_for_ns) }
-    end
-
   end
-
 end

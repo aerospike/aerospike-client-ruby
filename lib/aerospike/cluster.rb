@@ -120,15 +120,15 @@ module Aerospike
     # Returns a node on the cluster for read operations
     def batch_read_node(partition, replica_policy)
       case replica_policy
-        when Aerospike::Replica::MASTER, Aerospike::Replica::SEQUENCE
-          return master_node(partition)
-        when Aerospike::Replica::MASTER_PROLES
-          return master_proles_node(partition)
-        when Aerospike::Replica::PREFER_RACK
-          return rack_node(partition, seq)
-        when Aerospike::Replica::RANDOM
-          return random_node
-        else
+      when Aerospike::Replica::MASTER, Aerospike::Replica::SEQUENCE
+          master_node(partition)
+      when Aerospike::Replica::MASTER_PROLES
+          master_proles_node(partition)
+      when Aerospike::Replica::PREFER_RACK
+          rack_node(partition, seq)
+      when Aerospike::Replica::RANDOM
+          random_node
+      else
           raise Aerospike::Exceptions::InvalidNode("invalid policy.replica value")
       end
     end
@@ -136,17 +136,17 @@ module Aerospike
     # Returns a node on the cluster for read operations
     def read_node(partition, replica_policy, seq)
       case replica_policy
-        when Aerospike::Replica::MASTER
-          return master_node(partition)
-        when Aerospike::Replica::MASTER_PROLES
-          return master_proles_node(partition)
-        when Aerospike::Replica::PREFER_RACK
-          return rack_node(partition, seq)
-        when Aerospike::Replica::SEQUENCE
-          return sequence_node(partition, seq)
-        when Aerospike::Replica::RANDOM
-          return random_node
-        else
+      when Aerospike::Replica::MASTER
+          master_node(partition)
+      when Aerospike::Replica::MASTER_PROLES
+          master_proles_node(partition)
+      when Aerospike::Replica::PREFER_RACK
+          rack_node(partition, seq)
+      when Aerospike::Replica::SEQUENCE
+          sequence_node(partition, seq)
+      when Aerospike::Replica::RANDOM
+          random_node
+      else
           raise Aerospike::Exceptions::InvalidNode("invalid policy.replica value")
       end
     end
@@ -155,12 +155,12 @@ module Aerospike
     def master_node(partition)
       partition_map = partitions
       replica_array = partition_map[partition.namespace]
-      raise Aerospike::Exceptions::InvalidNamespace("namespace not found in the partition map") if !replica_array
+      raise Aerospike::Exceptions::InvalidNamespace("namespace not found in the partition map") unless replica_array
 
-      node_array = (replica_array.get)[0]
-      raise Aerospike::Exceptions::InvalidNamespace("namespace not found in the partition map") if !node_array
+      node_array = replica_array.get[0]
+      raise Aerospike::Exceptions::InvalidNamespace("namespace not found in the partition map") unless node_array
 
-      node = (node_array.get)[partition.partition_id]
+      node = node_array.get[partition.partition_id]
       raise Aerospike::Exceptions::InvalidNode if !node || !node.active?
 
       node
@@ -170,7 +170,7 @@ module Aerospike
     def rack_node(partition, seq)
       partition_map = partitions
       replica_array = partition_map[partition.namespace]
-      raise Aerospike::Exceptions::InvalidNamespace("namespace not found in the partition map") if !replica_array
+      raise Aerospike::Exceptions::InvalidNamespace("namespace not found in the partition map") unless replica_array
 
       replica_array = replica_array.get
 
@@ -179,10 +179,10 @@ module Aerospike
       node = nil
       fallback = nil
       for i in 1..replica_array.length
-        idx = (seq.update{|v| v.succ} % replica_array.size).abs
-        node = (replica_array[idx].get)[partition.partition_id]
+        idx = (seq.update { |v| v.succ } % replica_array.size).abs
+        node = replica_array[idx].get[partition.partition_id]
 
-        next if !node
+        next unless node
 
         fallback = node
 
@@ -202,14 +202,14 @@ module Aerospike
     def master_proles_node(partition)
       partition_map = partitions
       replica_array = partition_map[partition.namespace]
-      raise Aerospike::Exceptions::InvalidNamespace("namespace not found in the partition map") if !replica_array
+      raise Aerospike::Exceptions::InvalidNamespace("namespace not found in the partition map") unless replica_array
 
       replica_array = replica_array.get
 
       node = nil
       for replica in replica_array
-        idx = (@replica_index.update{|v| v.succ} % replica_array.size).abs
-        node = (replica_array[idx].get)[partition.partition_id]
+        idx = (@replica_index.update { |v| v.succ } % replica_array.size).abs
+        node = replica_array[idx].get[partition.partition_id]
 
         return node if node && node.active?
       end
@@ -221,14 +221,14 @@ module Aerospike
     def sequence_node(partition, seq)
       partition_map = partitions
       replica_array = partition_map[partition.namespace]
-      raise Aerospike::Exceptions::InvalidNamespace("namespace not found in the partition map") if !replica_array
+      raise Aerospike::Exceptions::InvalidNamespace("namespace not found in the partition map") unless replica_array
 
       replica_array = replica_array.get
 
       node = nil
       for replica in replica_array
-        idx = (seq.update{|v| v.succ} % replica_array.size).abs
-        node = (replica_array[idx].get)[partition.partition_id]
+        idx = (seq.update { |v| v.succ } % replica_array.size).abs
+        node = replica_array[idx].get[partition.partition_id]
 
         return node if node && node.active?
       end
@@ -236,9 +236,13 @@ module Aerospike
       raise Aerospike::Exceptions::InvalidNode
     end
 
-    def get_node_for_key(replica_policy, key)
+    def get_node_for_key(replica_policy, key, is_write: false)
       partition = Partition.new_by_key(key)
-      batch_read_node(partition, replica_policy)
+      if is_write
+        master_node(partition)
+      else
+        batch_read_node(partition, replica_policy)
+      end
     end
 
     # Returns partitions pertaining to a node
@@ -247,10 +251,10 @@ module Aerospike
 
       partition_map = partitions
       replica_array = partition_map[namespace]
-      raise Aerospike::Exceptions::InvalidNamespace("namespace not found in the partition map") if !replica_array
+      raise Aerospike::Exceptions::InvalidNamespace("namespace not found in the partition map") unless replica_array
 
-      node_array = (replica_array.get)[0]
-      raise Aerospike::Exceptions::InvalidNamespace("namespace not found in the partition map") if !node_array
+      node_array = replica_array.get[0]
+      raise Aerospike::Exceptions::InvalidNamespace("namespace not found in the partition map") unless node_array
 
 
       pid = 0
@@ -270,7 +274,7 @@ module Aerospike
       i = 0
       while i < length
         # Must handle concurrency with other non-tending threads, so node_index is consistent.
-        idx = (@node_index.update{ |v| v.succ } % node_array.length).abs
+        idx = (@node_index.update { |v| v.succ } % node_array.length).abs
         node = node_array[idx]
 
         return node if node.active?
@@ -366,13 +370,13 @@ module Aerospike
       @tend_thread = Thread.new do
         Thread.current.abort_on_exception = false
         loop do
-          begin
+
             tend
             sleep(@tend_interval / 1000.0)
-          rescue => e
+        rescue => e
             Aerospike.logger.error("Exception occured during tend: #{e}")
             Aerospike.logger.debug { e.backtrace.join("\n") }
-          end
+
         end
       end
     end
@@ -453,7 +457,7 @@ module Aerospike
 
     def log_tend_stats(nodes)
       diff = nodes.size - @old_node_count
-      action = "#{diff.abs} #{diff.abs == 1 ? "node has" : "nodes have"} #{diff > 0 ? "joined" : "left"} the cluster."
+      action = "#{diff.abs} #{diff.abs == 1 ? 'node has' : 'nodes have'} #{diff > 0 ? 'joined' : 'left'} the cluster."
       Aerospike.logger.info("Tend finished. #{action} Old node count: #{@old_node_count}, New node count: #{nodes.size}")
       @old_node_count = nodes.size
     end
@@ -689,11 +693,11 @@ module Aerospike
     end
 
     def node_exists(search, node_list)
-      node_list.any? {|node| node == search }
+      node_list.any? { |node| node == search }
     end
 
     def find_node_by_name(node_name)
-      nodes.detect{|node| node.name == node_name }
+      nodes.detect { |node| node.name == node_name }
     end
   end
 end

@@ -76,6 +76,12 @@ module Aerospike
   # Completely replace existing record only.
   INFO3_REPLACE_ONLY = Integer(1 << 5)
 
+  BATCH_MSG_READ    = 0x0
+  BATCH_MSG_REPEAT  = 0x1
+  BATCH_MSG_INFO    = 0x2
+  BATCH_MSG_GEN     = 0x4
+  BATCH_MSG_TTL     = 0x8
+
   MSG_TOTAL_HEADER_SIZE = 30
   FIELD_HEADER_SIZE = 5
   OPERATION_HEADER_SIZE = 8
@@ -112,9 +118,6 @@ module Aerospike
       begin_cmd
       field_count = estimate_key_size(key, policy)
 
-      predexp_size = estimate_predexp(policy.predexp)
-      field_count += 1 if predexp_size > 0
-
       exp_size = estimate_expression_size(@policy.filter_exp)
       field_count += 1 if exp_size > 0
 
@@ -126,7 +129,6 @@ module Aerospike
 
       write_header_write(policy, INFO2_WRITE, field_count, bins.length)
       write_key(key, policy)
-      write_predexp(policy.predexp, predexp_size)
       write_filter_exp(@policy.filter_exp, exp_size)
 
       bins.each do |bin|
@@ -142,16 +144,12 @@ module Aerospike
       begin_cmd
       field_count = estimate_key_size(key)
 
-      predexp_size = estimate_predexp(policy.predexp)
-      field_count += 1 if predexp_size > 0
-
       exp_size = estimate_expression_size(@policy.filter_exp)
       field_count += 1 if exp_size > 0
 
       size_buffer
-      write_header_write(policy,  INFO2_WRITE | INFO2_DELETE, field_count, 0)
+      write_header_write(policy, INFO2_WRITE | INFO2_DELETE, field_count, 0)
       write_key(key)
-      write_predexp(policy.predexp, predexp_size)
       write_filter_exp(@policy.filter_exp, exp_size)
       end_cmd
     end
@@ -161,17 +159,13 @@ module Aerospike
       begin_cmd
       field_count = estimate_key_size(key)
 
-      predexp_size = estimate_predexp(policy.predexp)
-      field_count += 1 if predexp_size > 0
-
       exp_size = estimate_expression_size(@policy.filter_exp)
       field_count += 1 if exp_size > 0
 
       estimate_operation_size
       size_buffer
-      write_header_write(policy,  INFO2_WRITE, field_count, 1)
+      write_header_write(policy, INFO2_WRITE, field_count, 1)
       write_key(key)
-      write_predexp(policy.predexp, predexp_size)
       write_filter_exp(@policy.filter_exp, exp_size)
       write_operation_for_operation_type(Aerospike::Operation::TOUCH)
       end_cmd
@@ -182,16 +176,12 @@ module Aerospike
       begin_cmd
       field_count = estimate_key_size(key)
 
-      predexp_size = estimate_predexp(policy.predexp)
-      field_count += 1 if predexp_size > 0
-
       exp_size = estimate_expression_size(@policy.filter_exp)
       field_count += 1 if exp_size > 0
 
       size_buffer
       write_header_read_header(policy, INFO1_READ | INFO1_NOBINDATA, field_count, 0)
       write_key(key)
-      write_predexp(policy.predexp, predexp_size)
       write_filter_exp(@policy.filter_exp, exp_size)
       end_cmd
     end
@@ -201,16 +191,12 @@ module Aerospike
       begin_cmd
       field_count = estimate_key_size(key)
 
-      predexp_size = estimate_predexp(policy.predexp)
-      field_count += 1 if predexp_size > 0
-
       exp_size = estimate_expression_size(@policy.filter_exp)
       field_count += 1 if exp_size > 0
 
       size_buffer
       write_header_read(policy, INFO1_READ | INFO1_GET_ALL, 0, field_count, 0)
       write_key(key)
-      write_predexp(policy.predexp, predexp_size)
       write_filter_exp(@policy.filter_exp, exp_size)
       end_cmd
     end
@@ -220,9 +206,6 @@ module Aerospike
       if bin_names && !bin_names.empty?
         begin_cmd
         field_count = estimate_key_size(key)
-
-        predexp_size = estimate_predexp(policy.predexp)
-        field_count += 1 if predexp_size > 0
 
         exp_size = estimate_expression_size(@policy.filter_exp)
         field_count += 1 if exp_size > 0
@@ -239,7 +222,6 @@ module Aerospike
 
         write_header_read(policy, attr, 0, field_count, bin_names.length)
         write_key(key)
-        write_predexp(policy.predexp, predexp_size)
         write_filter_exp(@policy.filter_exp, exp_size)
 
         bin_names.each do |bin_name|
@@ -258,9 +240,6 @@ module Aerospike
       begin_cmd
       field_count = estimate_key_size(key)
 
-      predexp_size = estimate_predexp(policy.predexp)
-      field_count += 1 if predexp_size > 0
-
       exp_size = estimate_expression_size(@policy.filter_exp)
       field_count += 1 if exp_size > 0
 
@@ -273,7 +252,6 @@ module Aerospike
       write_header_read_header(policy, INFO1_READ|INFO1_NOBINDATA, field_count, 0)
 
       write_key(key)
-      write_predexp(policy.predexp, predexp_size)
       write_filter_exp(@policy.filter_exp, exp_size)
       end_cmd
       mark_compressed(policy)
@@ -284,9 +262,6 @@ module Aerospike
       begin_cmd
       field_count = estimate_key_size(key, policy)
 
-      predexp_size = estimate_predexp(policy.predexp)
-      field_count += 1 if predexp_size > 0
-
       exp_size = estimate_expression_size(policy.filter_exp)
       field_count += 1 if exp_size > 0
 
@@ -296,7 +271,6 @@ module Aerospike
 
       write_header_read_write(policy, args.read_attr, args.write_attr, field_count, args.operations.length)
       write_key(key, policy)
-      write_predexp(policy.predexp, predexp_size)
       write_filter_exp(policy.filter_exp, exp_size)
 
       args.operations.each do |operation|
@@ -311,9 +285,6 @@ module Aerospike
       begin_cmd
       field_count = estimate_key_size(key, policy)
 
-      predexp_size = estimate_predexp(policy.predexp)
-      field_count += 1 if predexp_size > 0
-
       exp_size = estimate_expression_size(@policy.filter_exp)
       field_count += 1 if exp_size > 0
 
@@ -324,7 +295,6 @@ module Aerospike
 
       write_header_write(policy, INFO2_WRITE, field_count, 0)
       write_key(key, policy)
-      write_predexp(policy.predexp, predexp_size)
       write_filter_exp(@policy.filter_exp, exp_size)
       write_field_string(package_name, Aerospike::FieldType::UDF_PACKAGE_NAME)
       write_field_string(function_name, Aerospike::FieldType::UDF_FUNCTION)
@@ -372,9 +342,6 @@ module Aerospike
         @data_offset += 4 + FIELD_HEADER_SIZE
         field_count += 1
       end
-
-      predexp_size = estimate_predexp(policy.predexp)
-      field_count += 1 if predexp_size > 0
 
       exp_size = estimate_expression_size(@policy.filter_exp)
       field_count += 1 if exp_size > 0
@@ -446,7 +413,6 @@ module Aerospike
         write_field_int(policy.records_per_second, Aerospike::FieldType::RECORDS_PER_SECOND)
       end
 
-      write_predexp(policy.predexp, predexp_size)
       write_filter_exp(@policy.filter_exp, exp_size)
 
       # write_field_header(2, Aerospike::FieldType::SCAN_OPTIONS)
@@ -474,7 +440,6 @@ module Aerospike
 
       end_cmd
     end
-
 
     def set_query(cluster, policy, statement, background, node_partitions)
       function_arg_buffer = nil
@@ -525,7 +490,7 @@ module Aerospike
 
         # Estimate INDEX_RANGE field.
         @data_offset += FIELD_HEADER_SIZE
-        filter_size += 1  # num filters
+        filter_size += 1 # num filters
         filter_size += filter.estimate_size
 
         @data_offset += filter_size
@@ -539,14 +504,6 @@ module Aerospike
       end
 
       statement.set_task_id
-      predexp = policy.predexp || statement.predexp
-
-      if predexp
-        @data_offset += FIELD_HEADER_SIZE
-        pred_size = Aerospike::PredExp.estimate_size(predexp)
-        @data_offset += pred_size
-        field_count += 1
-      end
 
       unless policy.filter_exp.nil?
         exp_size = estimate_expression_size(policy.filter_exp)
@@ -656,13 +613,6 @@ module Aerospike
       # Write task_id field
       write_field_int64(statement.task_id, FieldType::TRAN_ID)
 
-      unless predexp.nil?
-        write_field_header(pred_size, Aerospike::FieldType::PREDEXP)
-        @data_offset = Aerospike::PredExp.write(
-          predexp, @data_buffer, @data_offset
-        )
-      end
-
       if filter
         type = filter.collection_type
 
@@ -683,7 +633,8 @@ module Aerospike
 
       if statement.function_name
         write_field_header(1, FieldType::UDF_OP)
-        @data_offset += @data_buffer.write_byte(1, @data_offset)
+        ret_marker = statement.return_data ? 1 : 2
+        @data_offset += @data_buffer.write_byte(ret_marker, @data_offset)
         write_field_string(statement.package_name, FieldType::UDF_PACKAGE_NAME)
         write_field_string(statement.function_name, FieldType::UDF_FUNCTION)
         write_field_string(function_arg_buffer, FieldType::UDF_ARGLIST)
@@ -725,7 +676,6 @@ module Aerospike
       end_cmd
     end
 
-
     def execute
       iterations = 0
 
@@ -752,7 +702,7 @@ module Aerospike
             # Socket connection error has occurred. Decrease health and retry.
             @node.decrease_health
 
-            Aerospike.logger.error("Node #{@node.to_s}: #{e}")
+            Aerospike.logger.error("Node #{@node}: #{e}")
           else
             Aerospike.logger.error("No node available for transaction: #{e}")
           end
@@ -785,7 +735,7 @@ module Aerospike
             # Close socket to flush out possible garbage. Do not put back in pool.
             @conn.close if @conn
 
-            Aerospike.logger.error("Node #{@node.to_s}: #{e}")
+            Aerospike.logger.error("Node #{@node}: #{e}")
             # IO error means connection to server @node is unhealthy.
             # Reflect cmd status.
             @node.decrease_health
@@ -853,14 +803,14 @@ module Aerospike
         field_count += 1
       end
 
-      return field_count
+      field_count
     end
 
     def estimate_udf_size(package_name, function_name, bytes)
       @data_offset += package_name.bytesize + FIELD_HEADER_SIZE
       @data_offset += function_name.bytesize + FIELD_HEADER_SIZE
       @data_offset += bytes.bytesize + FIELD_HEADER_SIZE
-      return 3
+      3
     end
 
     def estimate_operation_size_for_bin(bin)
@@ -888,16 +838,6 @@ module Aerospike
 
     def estimate_operation_size
       @data_offset += OPERATION_HEADER_SIZE
-    end
-
-    def estimate_predexp(predexp)
-      if predexp && !predexp.empty?
-        @data_offset += FIELD_HEADER_SIZE
-        sz = Aerospike::PredExp.estimate_size(predexp)
-        @data_offset += sz
-        return sz
-      end
-      return 0
     end
 
     def estimate_expression_size(exp)
@@ -1025,7 +965,7 @@ module Aerospike
       @data_buffer.write_byte(0, 10)
       @data_buffer.write_byte(info_attr, 11)
 
-      (12...22).each { |i| @data_buffer.write_byte(i, 0) }
+      (12...22).each { |i| @data_buffer.write_byte(0, i) }
 
       # Initialize timeout. It will be written later.
       @data_buffer.write_byte(0, 22)
@@ -1048,7 +988,7 @@ module Aerospike
       @data_buffer.write_byte(0, 10)
       @data_buffer.write_byte(info_attr, 11)
 
-      (12...22).each { |i| @data_buffer.write_byte(i, 0) }
+      (12...22).each { |i| @data_buffer.write_byte(0, i) }
 
       # Initialize timeout. It will be written later.
       @data_buffer.write_byte(0, 22)
@@ -1058,6 +998,89 @@ module Aerospike
 
       @data_buffer.write_int16(field_count, 26)
       @data_buffer.write_int16(operation_count, 28)
+
+      @data_offset = MSG_TOTAL_HEADER_SIZE
+    end
+
+    def write_batch_operations(key, ops, attr, filter_exp)
+      if attr.has_write
+        write_batch_write(key, attr, filter_exp, 0, ops.length)
+      else
+        write_batch_read(key, attr, filter_exp, ops.length)
+      end
+
+      ops.each do |op|
+        write_operation_for_operation(op)
+      end
+    end
+
+    def write_batch_fields(key, field_count, op_count)
+      field_count+=2
+      @data_offset += @data_buffer.write_uint16(field_count, @data_offset)
+      @data_offset += @data_buffer.write_uint16(op_count, @data_offset)
+      write_field_string(key.namespace, Aerospike::FieldType::NAMESPACE)
+      write_field_string(key.set_name, Aerospike::FieldType::TABLE)
+    end
+
+    def write_batch_fields_with_filter(key, filter_exp, field_count, op_count)
+      if filter_exp
+        field_count+=1
+        write_batch_fields(key, field_count, op_count)
+        write_filter_exp(filter_exp, filter_exp.size)
+      else
+        write_batch_fields(key, field_count, op_count)
+      end
+    end
+
+    def write_batch_read(key, attr, filter_exp, op_count)
+      @data_offset += @data_buffer.write_byte(BATCH_MSG_INFO | BATCH_MSG_TTL, @data_offset)
+      @data_offset += @data_buffer.write_byte(attr.read_attr, @data_offset)
+      @data_offset += @data_buffer.write_byte(attr.write_attr, @data_offset)
+      @data_offset += @data_buffer.write_byte(attr.info_attr, @data_offset)
+      @data_offset += @data_buffer.write_uint32(attr.expiration, @data_offset)
+      write_batch_fields_with_filter(key, filter_exp, 0, op_count)
+    end
+
+    def write_batch_write(key, attr, filter_exp, field_count, op_count)
+      @data_offset += @data_buffer.write_byte(BATCH_MSG_INFO | BATCH_MSG_GEN | BATCH_MSG_TTL, @data_offset)
+      @data_offset += @data_buffer.write_byte(attr.read_attr, @data_offset)
+      @data_offset += @data_buffer.write_byte(attr.write_attr, @data_offset)
+      @data_offset += @data_buffer.write_byte(attr.info_attr, @data_offset)
+      @data_offset += @data_buffer.write_uint16(attr.generation, @data_offset)
+      @data_offset += @data_buffer.write_uint32(attr.expiration, @data_offset)
+      if attr.send_key
+        field_count+=1
+        write_batch_fields_with_filter(key, filter_exp, field_count, op_count)
+        write_field_value(key.user_key, KEY)
+      else
+        write_batch_fields_with_filter(key, filter_exp, field_count, op_count)
+      end
+    end
+
+    def write_batch_bin_names(key, bin_names, attr, filter_exp)
+      write_batch_read(key, attr, filter_exp, bin_names.length)
+      bin_names.each do |bin_name|
+        write_operation_for_bin_name(bin_name, Aerospike::Operation::READ)
+      end
+    end
+
+    def write_batch_header(policy, field_count)
+      read_attr = INFO1_BATCH
+      read_attr |= INFO1_COMPRESS_RESPONSE if policy.use_compression
+      #TODO: Add SC Mode
+
+      @data_buffer.write_byte(MSG_REMAINING_HEADER_SIZE, 8) # Message header.length, @data_offset.
+      @data_buffer.write_byte(read_attr, 9)
+      @data_buffer.write_byte(0, 10)
+      @data_buffer.write_byte(0, 11)
+
+      (12...22).each { |i| @data_buffer.write_byte(0, i) }
+
+      # Initialize timeout. It will be written later.
+      @data_buffer.write_uint32(0, 22)
+
+      @data_buffer.write_uint16(field_count, 26)
+      @data_buffer.write_uint16(0, 28)
 
       @data_offset = MSG_TOTAL_HEADER_SIZE
     end
@@ -1199,15 +1222,6 @@ module Aerospike
       @data_offset += 1
     end
 
-    def write_predexp(predexp, predexp_size)
-      if predexp && !predexp.empty?
-        write_field_header(predexp_size, Aerospike::FieldType::FILTER_EXP)
-        @data_offset = Aerospike::PredExp.write(
-          predexp, @data_buffer, @data_offset
-        )
-      end
-    end
-
     def write_filter_exp(exp, exp_size)
       unless exp.nil?
         write_field_header(exp_size, Aerospike::FieldType::FILTER_EXP)
@@ -1238,7 +1252,7 @@ module Aerospike
 
     def compress_buffer
       if @data_offset > COMPRESS_THRESHOLD
-        compressed = Zlib::deflate(@data_buffer.buf, Zlib::DEFAULT_COMPRESSION)
+        compressed = Zlib.deflate(@data_buffer.buf, Zlib::DEFAULT_COMPRESSION)
 
         # write original size as header
         proto_s = format("%08d", 0)

@@ -65,9 +65,8 @@ module Aerospike
         @arguments = arguments
       end
 
-
       # BitResizeOp creates byte "resize" operation.
-      # Server resizes byte[] to byte_size according to resize_flags (See {@link BitResizeFlags}).
+      # Server resizes byte[] to byte_size according to resize_flags (See {BitResizeFlags}).
       # Server does not return a value.
       # Example:
       # bin = [0b00000001, 0b01000010]
@@ -195,7 +194,7 @@ module Aerospike
       # BitAddOp creates bit "add" operation.
       # Server adds value to byte[] bin starting at bit_offset for bit_size. Bit_size must be <= 64.
       # Signed indicates if bits should be treated as a signed number.
-      # If add overflows/underflows, {@link BitOverflowAction} is used.
+      # If add overflows/underflows, {BitOverflowAction} is used.
       # Server does not return a value.
       # Example:
       # bin = [0b00000001, 0b01000010, 0b00000011, 0b00000100, 0b00000101]
@@ -223,7 +222,7 @@ module Aerospike
       # BitSubtractOp creates bit "subtract" operation.
       # Server subtracts value from byte[] bin starting at bit_offset for bit_size. Bit_size must be <= 64.
       # Signed indicates if bits should be treated as a signed number.
-      # If add overflows/underflows, {@link BitOverflowAction} is used.
+      # If add overflows/underflows, {BitOverflowAction} is used.
       # Server does not return a value.
       # Example:
       # bin = [0b00000001, 0b01000010, 0b00000011, 0b00000100, 0b00000101]
@@ -351,7 +350,7 @@ module Aerospike
         bytes = nil
         args = arguments.dup
         Packer.use do |packer|
-          if @ctx != nil && @ctx.length > 0
+          if !@ctx.nil? && @ctx.length > 0
             packer.write_array_header(3)
             Value.of(0xff).pack(packer)
 
