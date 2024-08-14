@@ -424,6 +424,16 @@ module Aerospike
       Nil.new
     end
 
+    # Create Infinity value.
+    def self.infinity_val
+      Infinity.new
+    end
+
+    # Create Wildcard value.
+    def self.wildcard_val
+      Wildcard.new
+    end
+
     #--------------------------------------------------
     # Boolean Operator
     #--------------------------------------------------
@@ -1316,6 +1326,18 @@ module Aerospike
     class Nil < Exp
       def pack(packer)
         Value.of(nil).pack(packer)
+      end
+    end
+
+    class Infinity < Exp
+      def pack(packer)
+        InfinityValue.new.pack(packer)
+      end
+    end
+
+    class Wildcard < Exp
+      def pack(packer)
+        WildcardValue.new.pack(packer)
       end
     end
 
