@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file.
 
-## [3.1.0] 2024-08-14
+## [4.0.0] 2024-08-14
 
 - **New Features**
   - [CLIENT-2177] Add support for `MapReturnType#MAP_ORDERED` and `MapReturnType#MAP_UNORDERED`.
