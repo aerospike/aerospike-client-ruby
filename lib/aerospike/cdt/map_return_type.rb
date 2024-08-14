@@ -70,6 +70,14 @@ module Aerospike
       EXISTS = 13
 
       ##
+      # Return an unordered map.
+      UNORDERED_MAP = 16
+
+      ##
+      # Return an ordered map.
+      ORDERED_MAP = 17
+
+      ##
       #  :private
       #
       # TODO: Should be like ListOperation and Implement InvertibleMapOperation
