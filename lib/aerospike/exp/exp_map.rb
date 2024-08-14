@@ -4,7 +4,7 @@
 # Portions may be licensed to Aerospike, Inc. under one or more contributor
 # license agreements.
 #
-# Licensed under the Apache License, Version 2.0 (the "License"); you may no
+# Licensed under the Apache License, Version 2.0 (the "License") you may no
 # use this file except in compliance with the License. You may obtain a copy of
 # the License at http:#www.apache.org/licenses/LICENSE-2.0
 #
@@ -450,7 +450,7 @@ module Aerospike
     GET_BY_KEY = 97
     GET_BY_INDEX = 98
     GET_BY_RANK = 100
-    GET_BY_VALUE = 102; # GET_ALL_BY_VALUE on server
+    GET_BY_VALUE = 102 # GET_ALL_BY_VALUE on server
     GET_BY_KEY_INTERVAL = 103
     GET_BY_INDEX_RANGE = 104
     GET_BY_VALUE_INTERVAL = 105
@@ -475,15 +475,27 @@ module Aerospike
 
     def self.get_value_type(return_type)
       t = return_type & ~CDT::MapReturnType::INVERTED
+      case t
+      when MapReturnType::INDEX, MapReturnType::REVERSE_INDEX, MapReturnType::RANK, MapReturnType::REVERSE_RANK
+          # This method only called from expressions that can return multiple integers (ie list).
+          Exp::Type::LIST
 
-      if t <= CDT::MapReturnType::COUNT
-        return Exp::Type::INT
-      end
+      when MapReturnType::COUNT
+          Exp::Type::INT
 
-      if t == CDT::MapReturnType::KEY_VALUE
-        return Exp::Type::MAP
+      when MapReturnType::KEY, MapReturnType::VALUE
+          # This method only called from expressions that can return multiple objects (ie list).
+          Exp::Type::LIST
+
+      when MapReturnType::KEY_VALUE, MapReturnType::ORDERED_MAP, MapReturnType::UNORDERED_MAP
+          Exp::Type::MAP
+
+      when MapReturnType::EXISTS
+          Exp::Type::BOOL
+
+      else
+          raise Exceptions::Aerospike.new(Aerospike::ResultCode::PARAMETER_ERROR, "Invalid MapReturnType: #{return_type}")
       end
-      Exp::Type::LIST
     end
   end # class MapExp
 end # module Aerospike

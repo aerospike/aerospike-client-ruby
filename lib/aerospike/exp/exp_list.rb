@@ -365,10 +365,27 @@ module Aerospike
     end
 
     def self.get_value_type(return_type)
-      if (return_type & ~CDT::ListReturnType::INVERTED) == CDT::ListReturnType::VALUE
-        Exp::Type::LIST
-      else
+      t = return_type & ~CDT::ListReturnType::INVERTED
+      case t
+      when ListReturnType::INDEX,
+         ListReturnType::REVERSE_INDEX,
+         ListReturnType::RANK,
+         ListReturnType::REVERSE_RANK
+          # This method only called from expressions that can return multiple integers (ie list).
+          Exp::Type::LIST
+
+      when ListReturnType::COUNT
         Exp::Type::INT
+
+      when ListReturnType::VALUE
+          # This method only called from expressions that can return multiple objects (ie list)::
+          Exp::Type::LIST
+
+      when ListReturnType::EXISTS
+          Exp::Type::BOOL
+
+      else
+          raise Exceptions::Aerospike.new(Aerospike::ResultCode::PARAMETER_ERROR, "Invalid ListReturnType: #{return_type}")
       end
     end
 
