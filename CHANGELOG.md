@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file.
 
+## [3.1.0] 2024-08-14
+
+- **New Features**
+  - [CLIENT-2177] Add support for `MapReturnType#MAP_ORDERED` and `MapReturnType#MAP_UNORDERED`.
+  - [CLIENT-2308] Add `Exp#infinity_val` and `Exp#wildcard_val`.
+  - [CLIENT_1731] Support Batch Operations.
+
+- **Updates**
+  - [CLIENT-3055] Remove Unsupported Server Features (`Predexp` and `BatchDirect`).
+
+- **Improvements**
+  - [CLIENT-3056] Fix Github Actions Workflow. Tests still fail due to runner constraints, but we are now on the right track.
+  - [CLIENT-2682] Code Coverage - obtain current code coverage numbers for automated unit/integration functional tests.
+
+- **Fixes**
+  - [CLIENT-3080] Set correct return types in list/map read expressions.
+    Set `bool` return type for list read expressions with `ListReturnType.EXISTS`.
+    Set `bool` return type for map read expressions with `MapReturnType.EXISTS`.
+    Set `map` return type for map read expressions with `MapReturnType.UNORDERED_MAP` or  `MapReturnType.ORDERED_MAP`.
+  - [CLIENT-3072] Fix an issue where `Statement#return_data` is not respected.
+
 ## [3.0.0] 2023-12-15
 Notice: This version of the client only supports Aerospike Server v6.0 and later. Some features will work for the older server versions.
 - **new_features**
