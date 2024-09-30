@@ -61,6 +61,18 @@ describe Aerospike::Client do
         expect(records[0].record.bins.length).to eql 3
       end
 
+      it 'returns bins specified with operations' do
+        ops = [
+          Aerospike::Operation.get("idx"),
+          Aerospike::Operation.get("rnd")
+        ]
+        records = [Aerospike::BatchRead.ops(keys.first, ops)]
+        client.batch_operate(records, batch_policy)
+
+        expect(records[0].result_code).to eql(0)
+        expect(records[0].record.bins).to eql({ "idx"=>0, "rnd"=>99 })
+      end
+
       it 'filter out' do
         records = [Aerospike::BatchRead.read_all_bins(keys.first)]
         client.batch_operate(records, opts)

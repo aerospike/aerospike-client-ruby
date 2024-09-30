@@ -88,7 +88,7 @@ module Aerospike
           raise AerospikeException.new(ResultCode::PARAMETER_ERROR, "Write operations not allowed in batch read")
         end
         size += op.bin_name.bytesize + Aerospike::OPERATION_HEADER_SIZE
-        size += op.value.estimate_size
+        size += op.bin_value.estimate_size
       end
 
       size

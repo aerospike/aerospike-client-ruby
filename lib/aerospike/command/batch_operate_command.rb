@@ -92,7 +92,7 @@ module Aerospike
             if record.bin_names&.length&.> 0
               write_batch_bin_names(key, record.bin_names, attr, attr.filter_exp)
             elsif record.ops&.length&.> 0
-              attr.adjust_read(br.ops)
+              attr.adjust_read(record.ops)
               write_batch_operations(key, record.ops, attr, attr.filter_exp)
             else
               attr.adjust_read_all_bins(record.read_all_bins)
