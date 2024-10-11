@@ -68,7 +68,7 @@ module Aerospike
     # For internal use only.
     def ==(other) # :nodoc:
       other && other.instance_of?(self.class) &&
-        @bin_names.sort == other.bin_names.sort && @ops.sort == other.ops.sort &&
+        @bin_names&.sort == other.bin_names&.sort && @ops == other.ops &&
         @policy == other.policy && @read_all_bins == other.read_all_bins
     end
 
