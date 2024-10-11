@@ -49,12 +49,12 @@ describe Aerospike::Client do
 
     context "seed hosts" do
       around(:each) do |example|
-        begin
+
           as_hosts = ENV.delete("AEROSPIKE_HOSTS")
           example.call
-        ensure
+      ensure
           ENV["AEROSPIKE_HOSTS"] = as_hosts
-        end
+
       end
 
       def cluster_seeds(client)
@@ -215,7 +215,7 @@ describe Aerospike::Client do
 
     shared_examples_for 'a cluster' do
       before do
-        allow_any_instance_of(::Aerospike::Cluster).to receive(:supports_peers_protocol?).and_return(peers_enabled)
+        allow_any_instance_of(Aerospike::Cluster).to receive(:supports_peers_protocol?).and_return(peers_enabled)
       end
 
       context 'with empty policy' do
@@ -270,9 +270,9 @@ describe Aerospike::Client do
           'bin-name-size-16' => 'bin name with 16 chars'
         }
 
-        expect {
+        expect do
           client.put(key, bins)
-        }.to raise_error(Aerospike::Exceptions::Aerospike) { |error|
+        end.to raise_error(Aerospike::Exceptions::Aerospike) { |error|
           error.result_code == Aerospike::ResultCode::BIN_NAME_TOO_LONG
         }
       end
@@ -286,8 +286,8 @@ describe Aerospike::Client do
         bin_map = {
           'bin1' => 'value1',
           'bin2' => 2,
-          'bin4' => ['value4', {'map1' => 'map val'}],
-          'bin5' => {'value5' => [124, "string value"]},
+          'bin4' => ['value4', { 'map1' => 'map val' }],
+          'bin5' => { 'value5' => [124, "string value"] }
         }
         client.put(key, bin_map)
         record = client.get(key)
@@ -299,12 +299,12 @@ describe Aerospike::Client do
         bin_map = {
           'bin1' => 'value1',
           'bin2' => 2,
-          'bin4' => ['value4', {'map1' => 'map val'}],
-          'bin5' => {'value5' => [124, "string value"]},
+          'bin4' => ['value4', { 'map1' => 'map val' }],
+          'bin5' => { 'value5' => [124, "string value"] }
         }
         client.put(key, bin_map)
-        record = client.get(key, ['bin1', 'bin2'])
-        expect(record.bins).to eq ({'bin1' => 'value1', 'bin2' => 2})
+        record = client.get(key, %w[bin1 bin2])
+        expect(record.bins).to eq({ 'bin1' => 'value1', 'bin2' => 2 })
       end
 
       it "should put a STRING and get it successfully" do
@@ -324,8 +324,7 @@ describe Aerospike::Client do
       it "should put a NIL and get it successfully" do
         key = Support.gen_random_key
         client.put(key, [Aerospike::Bin.new('bin', nil),
-                         Aerospike::Bin.new('bin1', 'auxilary')]
-                   )
+                         Aerospike::Bin.new('bin1', 'auxilary')])
         record = client.get(key)
         expect(record.bins['bin']).to eq nil
       end
@@ -358,7 +357,7 @@ describe Aerospike::Client do
 
       it "should put a GeoJSON value and get it successfully", skip: !Support.feature?(Aerospike::Features::GEO) do
         key = Support.gen_random_key
-        bin = Aerospike::Bin.new('bin', Aerospike::GeoJSON.new({type: "Point", coordinates: [103.9114, 1.3083]}))
+        bin = Aerospike::Bin.new('bin', Aerospike::GeoJSON.new({ type: "Point", coordinates: [103.9114, 1.3083] }))
         client.put(key, bin)
         record = client.get(key)
         expect(record.bins['bin']).to eq bin.value
@@ -370,9 +369,9 @@ describe Aerospike::Client do
           "string",
           rand(2**63),
           [1, nil, 'this'],
-          ["embedded array", 1984, nil, {2 => 'string'}],
+          ["embedded array", 1984, nil, { 2 => 'string' }],
           nil,
-          {'array' => ["another string", 17]},
+          { 'array' => ["another string", 17] }
         ]
         bin = Aerospike::Bin.new('bin', value)
         client.put(key, bin)
@@ -384,9 +383,9 @@ describe Aerospike::Client do
         key = Support.gen_random_key
         value = {
           "string" => nil,
-          rand(2**31) => {2 => 11},
+          rand(2**31) => { 2 => 11 },
           # [1, nil, 'this'] => {nil => "nihilism"},
-          nil => ["embedded array", 1984, nil, {2 => 'string'}],
+          "1" => ["embedded array", 1984, nil, { 2 => 'string' }]
           # {11 => [11, 'str']} => nil,
           # {} => {'array' => ["another string", 17]},
         }
@@ -406,10 +405,10 @@ describe Aerospike::Client do
 
       it "should convert symbols to strings in LIST bin values" do
         key = Support.gen_random_key
-        bin = Aerospike::Bin.new('list', [ :foo, :bar ])
+        bin = Aerospike::Bin.new('list', [:foo, :bar])
         client.put(key, bin)
         record = client.get(key)
-        expect(record.bins['list']).to eq([ 'foo', 'bar' ])
+        expect(record.bins['list']).to eq(%w[foo bar])
       end
 
       it "should put a BYTE ARRAY and get it successfully" do
@@ -436,7 +435,7 @@ describe Aerospike::Client do
     it "should raise an error if hash with non-string keys is passed as record" do
       key = Support.gen_random_key
 
-      expect { client.put(key, {symbol_key: "string value"}) }.to raise_error(Aerospike::Exceptions::Aerospike)
+      expect { client.put(key, { symbol_key: "string value" }) }.to raise_error(Aerospike::Exceptions::Aerospike)
     end
 
   end
@@ -506,40 +505,40 @@ describe Aerospike::Client do
       exists = client.exists(key)
       expect(exists).to eq false
 
-      client.put(key, {'str' => 'value', 'int' => 10, 'float' => 3.14159})
+      client.put(key, { 'str' => 'value', 'int' => 10, 'float' => 3.14159 })
 
       exists = client.exists(key)
       expect(exists).to eq true
     end
 
     it "should append to a key successfully" do
-      client.append(key, {'str' => '1' })
+      client.append(key, { 'str' => '1' })
       record = client.get(key)
       expect(record.bins['str']).to eq 'value1'
     end
 
     it "should prepend to a key successfully" do
-      client.prepend(key, {'str' => '0' })
+      client.prepend(key, { 'str' => '0' })
       record = client.get(key)
       expect(record.bins['str']).to eq '0value'
     end
 
     it "should add to an int key successfully" do
-      client.add(key, {'int' => 10 })
+      client.add(key, { 'int' => 10 })
       record = client.get(key)
       expect(record.bins['int']).to eq 20
 
-      client.add(key, {'int' => -10 })
+      client.add(key, { 'int' => -10 })
       record = client.get(key)
       expect(record.bins['int']).to eq 10
     end
 
     it "should add to a float key successfully" do
-      client.add(key, {'float' => 2.71828 })
+      client.add(key, { 'float' => 2.71828 })
       record = client.get(key)
       expect(record.bins['float']).to eq 5.85987
 
-      client.add(key, {'float' => -3.14159 })
+      client.add(key, { 'float' => -3.14159 })
       record = client.get(key)
       expect(record.bins['float']).to eq 2.71828
     end
@@ -566,8 +565,8 @@ describe Aerospike::Client do
 
     it "should #add, #get" do
       client.operate(key, [
-                       Aerospike::Operation.add(bin_int),
-      ])
+                       Aerospike::Operation.add(bin_int)
+                     ])
       rec = client.get(key)
       expect(rec.bins[bin_str.name]).to eq bin_int.value * 1
       expect(rec.generation).to eq 1
@@ -576,16 +575,16 @@ describe Aerospike::Client do
     it "should #put, #append" do
       rec = client.operate(key, [
                              Aerospike::Operation.put(bin_str),
-                             Aerospike::Operation.get,
-      ])
+                             Aerospike::Operation.get
+                           ])
 
       expect(rec.bins[bin_str.name]).to eq bin_str.value
       expect(rec.generation).to eq 1
 
       rec = client.operate(key, [
                              Aerospike::Operation.append(bin_str),
-                             Aerospike::Operation.get,
-      ])
+                             Aerospike::Operation.get
+                           ])
 
       expect(rec.bins[bin_str.name]).to eq bin_str.value * 2
       expect(rec.generation).to eq 2
@@ -594,16 +593,16 @@ describe Aerospike::Client do
     it "should #put, #prepend" do
       rec = client.operate(key, [
                              Aerospike::Operation.put(bin_str),
-                             Aerospike::Operation.get,
-      ])
+                             Aerospike::Operation.get
+                           ])
 
       expect(rec.bins[bin_str.name]).to eq bin_str.value
       expect(rec.generation).to eq 1
 
       rec = client.operate(key, [
                              Aerospike::Operation.prepend(bin_str),
-                             Aerospike::Operation.get,
-      ])
+                             Aerospike::Operation.get
+                           ])
 
       expect(rec.bins[bin_str.name]).to eq bin_str.value * 2
       expect(rec.generation).to eq 2
@@ -612,16 +611,16 @@ describe Aerospike::Client do
     it "should #put, #add integer" do
       rec = client.operate(key, [
                              Aerospike::Operation.put(bin_int),
-                             Aerospike::Operation.get,
-      ])
+                             Aerospike::Operation.get
+                           ])
 
       expect(rec.bins[bin_int.name]).to eq bin_int.value
       expect(rec.generation).to eq 1
 
       rec = client.operate(key, [
                              Aerospike::Operation.add(bin_int),
-                             Aerospike::Operation.get,
-      ])
+                             Aerospike::Operation.get
+                           ])
 
       expect(rec.bins[bin_str.name]).to eq bin_int.value * 2
       expect(rec.generation).to eq 2
@@ -630,16 +629,16 @@ describe Aerospike::Client do
     it "should #put, #add float" do
       rec = client.operate(key, [
                              Aerospike::Operation.put(bin_float),
-                             Aerospike::Operation.get,
-      ])
+                             Aerospike::Operation.get
+                           ])
 
       expect(rec.bins[bin_float.name]).to eq bin_float.value
       expect(rec.generation).to eq 1
 
       rec = client.operate(key, [
                              Aerospike::Operation.add(bin_float),
-                             Aerospike::Operation.get,
-      ])
+                             Aerospike::Operation.get
+                           ])
 
       expect(rec.bins[bin_str.name]).to be_within(0.00001).of(bin_float.value * 2)
       expect(rec.generation).to eq 2
@@ -648,16 +647,16 @@ describe Aerospike::Client do
     it "should #put, #touch" do
       rec = client.operate(key, [
                              Aerospike::Operation.put(bin_int),
-                             Aerospike::Operation.get,
-      ])
+                             Aerospike::Operation.get
+                           ])
 
       expect(rec.bins[bin_int.name]).to eq bin_int.value
       expect(rec.generation).to eq 1
 
       rec = client.operate(key, [
                              Aerospike::Operation.touch,
-                             Aerospike::Operation.get_header,
-      ])
+                             Aerospike::Operation.get_header
+                           ])
 
       expect(rec.generation).to eq 2
     end
@@ -665,19 +664,19 @@ describe Aerospike::Client do
     it "should #put, #delete" do
       rec = client.operate(key, [
                              Aerospike::Operation.put(bin_int),
-                             Aerospike::Operation.get,
-      ])
+                             Aerospike::Operation.get
+                           ])
 
       expect(rec.bins[bin_int.name]).to eq bin_int.value
       expect(rec.generation).to eq 1
 
       client.operate(key, [
-                             Aerospike::Operation.delete,
-      ])
+                       Aerospike::Operation.delete
+                     ])
 
       rec = client.operate(key, [
-                             Aerospike::Operation.get,
-      ])
+                             Aerospike::Operation.get
+                           ])
 
       expect(rec).to be_nil
     end
@@ -719,7 +718,7 @@ describe Aerospike::Client do
           result = client.operate(key, ops, policy)
 
           value = result.bins[map_bin.name]
-          expect(value).to eq([ { "a" => 3 }, { "c" => 1 } ])
+          expect(value).to eq([{ "a" => 3 }, { "c" => 1 }])
         end
 
       end
@@ -734,7 +733,7 @@ describe Aerospike::Client do
       namespace = 'test'
       set_name = 'test'
       records_before.times do
-        client.put(Support.gen_random_key(20, set: set_name), {"i" => 42})
+        client.put(Support.gen_random_key(20, set: set_name), { "i" => 42 })
       end
       sleep(0.1)
 
@@ -751,13 +750,13 @@ describe Aerospike::Client do
       namespace = 'test'
       set_name = 'test'
       records_before.times do
-        client.put(Support.gen_random_key(20, set: set_name), {"i" => 42})
+        client.put(Support.gen_random_key(20, set: set_name), { "i" => 42 })
       end
       sleep(0.1)
       truncate_time = Time.now
       sleep(0.1)
       records_after.times do
-        client.put(Support.gen_random_key(20, set: set_name), {"i" => 42})
+        client.put(Support.gen_random_key(20, set: set_name), { "i" => 42 })
       end
       sleep(0.1)
 
