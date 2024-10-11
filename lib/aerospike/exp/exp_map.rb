@@ -476,21 +476,21 @@ module Aerospike
     def self.get_value_type(return_type)
       t = return_type & ~CDT::MapReturnType::INVERTED
       case t
-      when MapReturnType::INDEX, MapReturnType::REVERSE_INDEX, MapReturnType::RANK, MapReturnType::REVERSE_RANK
+      when CDT::MapReturnType::INDEX, CDT::MapReturnType::REVERSE_INDEX, CDT::MapReturnType::RANK, CDT::MapReturnType::REVERSE_RANK
           # This method only called from expressions that can return multiple integers (ie list).
           Exp::Type::LIST
 
-      when MapReturnType::COUNT
+      when CDT::MapReturnType::COUNT
           Exp::Type::INT
 
-      when MapReturnType::KEY, MapReturnType::VALUE
+      when CDT::MapReturnType::KEY, CDT::MapReturnType::VALUE
           # This method only called from expressions that can return multiple objects (ie list).
           Exp::Type::LIST
 
-      when MapReturnType::KEY_VALUE, MapReturnType::ORDERED_MAP, MapReturnType::UNORDERED_MAP
+      when CDT::MapReturnType::KEY_VALUE, CDT::MapReturnType::ORDERED_MAP, CDT::MapReturnType::UNORDERED_MAP
           Exp::Type::MAP
 
-      when MapReturnType::EXISTS
+      when CDT::MapReturnType::EXISTS
           Exp::Type::BOOL
 
       else
