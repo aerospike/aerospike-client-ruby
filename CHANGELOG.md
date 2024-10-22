@@ -6,6 +6,7 @@ All notable changes to this project will be documented in this file.
 
 - **New Features**
   - [CLIENT-2833] Support `Policy#ReadTouchTtlPercent`.
+  - [CLIENT-2826] Support `QueryDuration` in `QueryPolicy#ExpectedDuration`.
 
 - **Fixes**
   - [CLIENT-3144] Various fixes. PR #132 and #133 Thanks to [Igor Pstyga](https://github.com/opti)
