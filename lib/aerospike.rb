@@ -90,6 +90,7 @@ require "aerospike/cdt/bit_policy"
 require "aerospike/geo_json"
 require "aerospike/ttl"
 
+require "aerospike/policy/query_duration"
 require "aerospike/policy/client_policy"
 require "aerospike/policy/priority"
 require "aerospike/policy/record_exists_action"

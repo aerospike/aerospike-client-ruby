@@ -168,6 +168,9 @@ module Aerospike
     # Write command loses conflict to XDR.
     LOST_CONFLICT = 28
 
+    # Write can't complete until XDR finishes shipping.
+    XDR_KEY_BUSY = 32
+
     # There are no more records left for query.
     QUERY_END = 50
 
@@ -445,6 +448,10 @@ module Aerospike
       when LOST_CONFLICT
         "Write command loses conflict to XDR."
 
+      # Write can't complete until XDR finishes shipping.
+      when XDR_KEY_BUSY
+        "XDR key busy"
+
       when QUERY_END
         "Query end"
 
@@ -580,7 +587,6 @@ module Aerospike
       else
         "ResultCode #{code} unknown in the client. Please file a github issue."
       end # case
-
     end
 
   end # class

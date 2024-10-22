@@ -68,7 +68,7 @@ module Aerospike
     # For internal use only.
     def ==(other) # :nodoc:
       other && other.instance_of?(self.class) &&
-        @bin_names.sort == other.bin_names.sort && @ops.sort == other.ops.sort &&
+        @bin_names&.sort == other.bin_names&.sort && @ops == other.ops &&
         @policy == other.policy && @read_all_bins == other.read_all_bins
     end
 
@@ -88,7 +88,7 @@ module Aerospike
           raise AerospikeException.new(ResultCode::PARAMETER_ERROR, "Write operations not allowed in batch read")
         end
         size += op.bin_name.bytesize + Aerospike::OPERATION_HEADER_SIZE
-        size += op.value.estimate_size
+        size += op.bin_value.estimate_size
       end
 
       size

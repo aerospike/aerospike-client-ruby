@@ -58,7 +58,8 @@ module Aerospike
   INFO2_DURABLE_DELETE = Integer(1 << 4)
   # Create only. Fail if record already exists.
   INFO2_CREATE_ONLY = Integer(1 << 5)
-
+  # Treat as long query, but relax read consistency.
+  INFO2_RELAX_AP_LONG_QUERY = (1 << 6)
   # Return a result for every operation.
   INFO2_RESPOND_ALL_OPS = Integer(1 << 7)
 
@@ -195,7 +196,7 @@ module Aerospike
       field_count += 1 if exp_size > 0
 
       size_buffer
-      write_header_read(policy, INFO1_READ | INFO1_GET_ALL, 0, field_count, 0)
+      write_header_read(policy, INFO1_READ | INFO1_GET_ALL, 0, 0, field_count, 0)
       write_key(key)
       write_filter_exp(@policy.filter_exp, exp_size)
       end_cmd
@@ -220,7 +221,7 @@ module Aerospike
           attr |= INFO1_GET_ALL
         end
 
-        write_header_read(policy, attr, 0, field_count, bin_names.length)
+        write_header_read(policy, attr, 0, 0, field_count, bin_names.length)
         write_key(key)
         write_filter_exp(@policy.filter_exp, exp_size)
 
@@ -269,7 +270,7 @@ module Aerospike
 
       size_buffer
 
-      write_header_read_write(policy, args.read_attr, args.write_attr, field_count, args.operations.length)
+      write_header_read_write(policy, args, field_count)
       write_key(key, policy)
       write_filter_exp(policy.filter_exp, exp_size)
 
@@ -377,7 +378,7 @@ module Aerospike
         operation_count = bin_names.length
       end
 
-      write_header_read(policy, read_attr, info_attr, field_count, operation_count)
+      write_header_read(policy, read_attr, 0, info_attr, field_count, operation_count)
 
       if namespace
         write_field_string(namespace, Aerospike::FieldType::NAMESPACE)
@@ -591,10 +592,16 @@ module Aerospike
         write_header_write(policy, INFO2_WRITE, field_count, operation_count)
       else
         read_attr = INFO1_READ
+        write_attr = 0
+
         read_attr |= INFO1_NOBINDATA unless policy.include_bin_data
-        read_attr |= INFO1_SHORT_QUERY if policy.short_query
+        if policy.short_query || policy.expected_duration == QueryDuration::SHORT
+          read_attr |= INFO1_SHORT_QUERY
+        elsif policy.expected_duration == QueryDuration::LONG_RELAX_AP
+          write_attr |= INFO2_RELAX_AP_LONG_QUERY
+        end
         info_attr = INFO3_PARTITION_DONE if is_new
-        write_header_read(policy, read_attr, info_attr, field_count, operation_count)
+        write_header_read(policy, read_attr, write_attr, info_attr, field_count, operation_count)
       end
 
 
@@ -903,10 +910,14 @@ module Aerospike
     end
 
     # Header write for write operations.
-    def write_header_read_write(policy, read_attr, write_attr, field_count, operation_count)
+    def write_header_read_write(policy, args, field_count)
       # Set flags.
       generation = Integer(0)
+      ttl = args.has_write ? policy.expiration : policy.read_touch_ttl_percent
+      read_attr = args.read_attr
+      write_attr = args.write_attr
       info_attr = Integer(0)
+      operation_count = args.operations.length
 
       case policy.record_exists_action
       when Aerospike::RecordExistsAction::UPDATE
@@ -942,7 +953,7 @@ module Aerospike
       @data_buffer.write_byte(0, 12) # unused
       @data_buffer.write_byte(0, 13) # clear the result code
       @data_buffer.write_uint32(generation, 14)
-      @data_buffer.write_uint32(policy.ttl, 18)
+      @data_buffer.write_uint32(ttl, 18)
 
       # Initialize timeout. It will be written later.
       @data_buffer.write_byte(0, 22)
@@ -956,18 +967,19 @@ module Aerospike
       @data_offset = MSG_TOTAL_HEADER_SIZE
     end
 
-    def write_header_read(policy, read_attr, info_attr, field_count, operation_count)
+    def write_header_read(policy, read_attr, write_attr, info_attr, field_count, operation_count)
       read_attr |= INFO1_COMPRESS_RESPONSE if policy.use_compression
       #TODO: Add SC Mode
 
       @data_buffer.write_byte(MSG_REMAINING_HEADER_SIZE, 8) # Message header.length.
       @data_buffer.write_byte(read_attr, 9)
-      @data_buffer.write_byte(0, 10)
+      @data_buffer.write_byte(write_attr, 10)
       @data_buffer.write_byte(info_attr, 11)
 
-      (12...22).each { |i| @data_buffer.write_byte(0, i) }
+      (12...18).each { |i| @data_buffer.write_byte(0, i) }
 
       # Initialize timeout. It will be written later.
+      @data_buffer.write_int32(policy.read_touch_ttl_percent, 18)
       @data_buffer.write_byte(0, 22)
       @data_buffer.write_byte(0, 23)
       @data_buffer.write_byte(0, 24)
@@ -988,9 +1000,10 @@ module Aerospike
       @data_buffer.write_byte(0, 10)
       @data_buffer.write_byte(info_attr, 11)
 
-      (12...22).each { |i| @data_buffer.write_byte(0, i) }
+      (12...18).each { |i| @data_buffer.write_byte(0, i) }
 
       # Initialize timeout. It will be written later.
+      @data_buffer.write_int32(policy.read_touch_ttl_percent, 18)
       @data_buffer.write_byte(0, 22)
       @data_buffer.write_byte(0, 23)
       @data_buffer.write_byte(0, 24)

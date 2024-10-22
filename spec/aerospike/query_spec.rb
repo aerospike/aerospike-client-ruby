@@ -57,8 +57,8 @@ describe Aerospike::Client do
         bin_map = {
           'bin1' => "value#{i}",
           'bin2' => i,
-          'bin3' => [ i, i + 1_000, i + 1_000_000 ],
-          'bin4' => { "key#{i}" => i },
+          'bin3' => [i, i + 1_000, i + 1_000_000],
+          'bin4' => { "key#{i}" => i }
         }
         Support.client.put(key, bin_map)
       end
@@ -92,8 +92,20 @@ describe Aerospike::Client do
         expect(count).to be > 0
       end
 
+      it "returns all record bins, expected_duration: QueryDuration::SHORT", skip: !Support.min_version?("7.0.0") do
+        stmt = Aerospike::Statement.new(@namespace, @set)
+        stmt.filters << Aerospike::Filter.Equal('bin2', 1)
+        rs = client.query(stmt, expected_duration: Aerospike::QueryDuration::SHORT)
+        count = 0
+        rs.each do |rec|
+          count += 1
+          expect(rec.bins.keys).to contain_exactly("bin1", "bin2", "bin3", "bin4")
+        end
+        expect(count).to be > 0
+      end
+
       it "returns only the selected bins" do
-        bins = ["bin1", "bin2"]
+        bins = %w[bin1 bin2]
         stmt = Aerospike::Statement.new(@namespace, @set, bins)
         stmt.filters << Aerospike::Filter.Equal('bin2', 1)
         rs = client.query(stmt)
@@ -152,7 +164,7 @@ describe Aerospike::Client do
         rs = client.query(stmt)
 
         records = 0
-        expect { rs.each { records += 1 } }.not_to raise_error()
+        expect { rs.each { records += 1 } }.not_to raise_error
         expect(records).to eql(0)
       end
 
@@ -164,13 +176,13 @@ describe Aerospike::Client do
           bin_map = {
             'bin1' => "value#{i}",
             'bin2' => i,
-            'bin3' => [ i, i + 1_000, i + 1_000_000 ],
-            'bin4' => { "key#{i}" => i },
+            'bin3' => [i, i + 1_000, i + 1_000_000],
+            'bin4' => { "key#{i}" => i }
           }
           Support.client.put(key, bin_map)
         end
 
-        stmt = Aerospike::Statement.new(@namespace, set, ['bin1', 'bin2'])
+        stmt = Aerospike::Statement.new(@namespace, set, %w[bin1 bin2])
         rs = client.query(stmt, :records_per_second => (@record_count / 4).to_i)
 
         i = 0
@@ -193,7 +205,7 @@ describe Aerospike::Client do
       context "Numeric Bins" do
 
         it "should return relevant records" do
-          stmt = Aerospike::Statement.new(@namespace, @set, ['bin1', 'bin2'])
+          stmt = Aerospike::Statement.new(@namespace, @set, %w[bin1 bin2])
           stmt.filters = [Aerospike::Filter.Equal('bin2', 1)]
           rs = client.query(stmt)
 
@@ -236,7 +248,7 @@ describe Aerospike::Client do
       context "List Bins" do
 
         it "should return relevant records" do
-          stmt = Aerospike::Statement.new(@namespace, @set, ['bin2', 'bin3'])
+          stmt = Aerospike::Statement.new(@namespace, @set, %w[bin2 bin3])
           stmt.filters = [Aerospike::Filter.Contains('bin3', 42, :list)]
           rs = client.query(stmt)
 
@@ -351,12 +363,12 @@ describe Aerospike::Client do
 
     context "Geospatial Filter", skip: !Support.feature?(Aerospike::Features::GEO) do
 
-      let(:lon){ 103.9114 }
-      let(:lat){ 1.3083 }
-      let(:radius){ 1000 }
-      let(:point){ Aerospike::GeoJSON.new({type: "Point", coordinates: [lon, lat]}) }
-      let(:point2){ Aerospike::GeoJSON.new({type: "Point", coordinates: [lon + 1, lat + 1]}) }
-      let(:region){ Aerospike::GeoJSON.new({type: "Polygon", coordinates: [[[103.6055, 1.1587], [103.6055, 1.4707], [104.0884, 1.4707], [104.0884, 1.1587], [103.6055, 1.1587]]]}) }
+      let(:lon) { 103.9114 }
+      let(:lat) { 1.3083 }
+      let(:radius) { 1000 }
+      let(:point) { Aerospike::GeoJSON.new({ type: "Point", coordinates: [lon, lat] }) }
+      let(:point2) { Aerospike::GeoJSON.new({ type: "Point", coordinates: [lon + 1, lat + 1] }) }
+      let(:region) { Aerospike::GeoJSON.new({ type: "Polygon", coordinates: [[[103.6055, 1.1587], [103.6055, 1.4707], [104.0884, 1.4707], [104.0884, 1.1587], [103.6055, 1.1587]]] }) }
 
       before(:all) do
         tasks = []
@@ -386,7 +398,7 @@ describe Aerospike::Client do
         rs = client.query(stmt)
 
         results = []
-        rs.each{|record| results << record }
+        rs.each { |record| results << record }
         expect(results.map(&:key)).to eq [key]
       end # it
 
@@ -399,7 +411,7 @@ describe Aerospike::Client do
         rs = client.query(stmt)
 
         results = []
-        rs.each{|record| results << record }
+        rs.each { |record| results << record }
         expect(results.map(&:key)).to eq [key]
       end # it
 
@@ -412,7 +424,7 @@ describe Aerospike::Client do
         rs = client.query(stmt)
 
         results = []
-        rs.each{|record| results << record }
+        rs.each { |record| results << record }
         expect(results.map(&:key)).to eq [key]
       end # it
 
@@ -425,7 +437,7 @@ describe Aerospike::Client do
         rs = client.query(stmt)
 
         results = []
-        rs.each{|record| results << record }
+        rs.each { |record| results << record }
         expect(results.map(&:key)).to eq [key]
       end # it
 
@@ -438,7 +450,7 @@ describe Aerospike::Client do
         rs = client.query(stmt)
 
         results = []
-        rs.each{|record| results << record }
+        rs.each { |record| results << record }
         expect(results.map(&:key)).to eq [key]
       end # it
 
@@ -451,7 +463,7 @@ describe Aerospike::Client do
         rs = client.query(stmt)
 
         results = []
-        rs.each{|record| results << record }
+        rs.each { |record| results << record }
         expect(results.map(&:key)).to eq [key]
       end # it
 

@@ -61,12 +61,96 @@ describe Aerospike::Client do
         expect(records[0].record.bins.length).to eql 3
       end
 
+      it 'returns bins specified with operations' do
+        ops = [
+          Aerospike::Operation.get("idx"),
+          Aerospike::Operation.get("rnd")
+        ]
+        records = [
+          Aerospike::BatchRead.ops(keys.first, ops),
+          Aerospike::BatchRead.ops(keys.last, ops)
+        ]
+        client.batch_operate(records, batch_policy)
+
+        expect(records[0].result_code).to eql(0)
+        expect(records[1].result_code).to eql(0)
+        expect(records[0].record.bins).to eql({ "idx"=>0, "rnd"=>99 })
+        expect(records[1].record.bins).to eql({ "idx"=>2, "rnd"=>99 })
+      end
+
       it 'filter out' do
         records = [Aerospike::BatchRead.read_all_bins(keys.first)]
         client.batch_operate(records, opts)
 
         expect(records[0].result_code).to eql Aerospike::ResultCode::FILTERED_OUT
         expect(records[0].record).to eql nil
+      end
+    end
+
+    context '#BatchRead TTL', skip: !Support.min_version?("7.1") || !Support.ttl_supported? do
+      it 'Reset Read' do
+        key = Support.gen_random_key
+        bin = Aerospike::Bin.new("expireBinName", "expirevalue")
+
+        client.put(key, [bin], ttl: 2)
+
+        # Read the record before it expires and reset read ttl.
+        sleep(1)
+        rec = client.get(key, [bin.name], read_touch_ttl_percent: 80)
+        expect(rec.bins[bin.name]).to eql bin.value
+
+        # Read the record again, but don't reset read ttl.
+        sleep(1)
+        rec = client.get(key, [bin.name], read_touch_ttl_percent: -1)
+        expect(rec.bins[bin.name]).to eql bin.value
+
+        # Read the record after it expires, showing it's gone.
+        sleep(2)
+        rec = client.get(key, [bin.name], read_touch_ttl_percent: -1)
+        expect(rec).to be_nil
+      end
+
+      it '#BatchRead' do
+        key1 = Support.gen_random_key
+        key2 = Support.gen_random_key
+        bin = Aerospike::Bin.new("a", 1)
+
+        bw1 = Aerospike::BatchWrite.new(key1, [Aerospike::Operation.put(bin)], ttl: 10)
+        bw2 = Aerospike::BatchWrite.new(key2, [Aerospike::Operation.put(bin)], ttl: 10)
+
+        client.batch_operate([bw1, bw2])
+
+        # Read records before they expire and reset read ttl on one record.
+        sleep(8)
+
+        br1 = Aerospike::BatchRead.read_bins(key1, ["a"], read_touch_ttl_percent: 80)
+        br2 = Aerospike::BatchRead.read_bins(key2, ["a"], read_touch_ttl_percent: -1)
+
+        client.batch_operate([br1, br2])
+
+        expect(br1.result_code).to eql(Aerospike::ResultCode::OK)
+        expect(br2.result_code).to eql(Aerospike::ResultCode::OK)
+
+        # Read records again, but don't reset read ttl.
+        sleep(3)
+
+        br1 = Aerospike::BatchRead.read_bins(key1, ["a"], read_touch_ttl_percent: -1)
+        br2 = Aerospike::BatchRead.read_bins(key2, ["a"], read_touch_ttl_percent: -1)
+
+        client.batch_operate([br1, br2])
+
+        # Key 2 should have expired.
+        expect(br1.result_code).to eql(Aerospike::ResultCode::OK)
+        expect(br2.result_code).to eql(Aerospike::ResultCode::KEY_NOT_FOUND_ERROR)
+
+        # Read  record after it expires, showing it's gone.
+        sleep(8)
+
+        client.batch_operate([br1, br2])
+
+        # Key 2 should have expired.
+        expect(br1.result_code).to eql(Aerospike::ResultCode::KEY_NOT_FOUND_ERROR)
+        expect(br2.result_code).to eql(Aerospike::ResultCode::KEY_NOT_FOUND_ERROR)
       end
     end
 

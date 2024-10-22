@@ -15,6 +15,7 @@
 # License for the specific language governing permissions and limitations under
 # the License.
 
+require 'aerospike/policy/query_duration'
 require 'aerospike/policy/policy'
 
 module Aerospike
@@ -22,16 +23,10 @@ module Aerospike
   # Container object for query policy command.
   class QueryPolicy < Policy
 
-    attr_accessor :concurrent_nodes
-    attr_accessor :max_records
-    attr_accessor :include_bin_data
-    attr_accessor :record_queue_size
-    attr_accessor :records_per_second
-    attr_accessor :socket_timeout
-    attr_accessor :short_query
+    attr_accessor :concurrent_nodes, :max_records, :include_bin_data, :record_queue_size, :records_per_second, :socket_timeout, :short_query, :expected_duration
 
     def initialize(opt={})
-      super(opt)
+      super
 
       # Indicates if bin data is retrieved. If false, only record digests (and
       # user keys if stored on the server) are retrieved.
@@ -74,11 +69,21 @@ module Aerospike
       # Default is 0
       @records_per_second = opt[:records_per_second] || 0
 
+      # Expected query duration. The server treats the query in different ways depending on the expected duration.
+      # This field is ignored for aggregation queries, background queries and server versions < 6.0.
+      #
+      # Default: QueryDuration::LONG
+      @expected_duration = opt[:expected_duration] || QueryDuration::LONG
+
+      # DEPRECATED
       # Detemine wether query expected to return less than 100 records.
       # If true, the server will optimize the query for a small record set.
       # This field is ignored for aggregation queries, background queries
       # and server versions 6.0+.
       #
+      # This field is deprecated and will eventually be removed. Use {expected_duration} instead.
+      # For backwards compatibility: If ShortQuery is true, the query is treated as a short query and
+      # {expected_duration} is ignored. If {short_query} is false, {expected_duration} is used as defaults to {Policy#QueryDuration#LONG}.
       # Default: false
       @short_query = opt[:short_query] ||false
 
