@@ -22,7 +22,7 @@ module Aerospike
   # Container object for client policy command.
   class Policy
     attr_accessor :filter_exp, :priority, :timeout, :max_retries, :sleep_between_retries, :consistency_level,
-                  :fail_on_filtered_out, :replica, :use_compression, :socket_timeout
+                  :fail_on_filtered_out, :replica, :use_compression, :socket_timeout, :read_touch_ttl_percent
 
     alias total_timeout timeout
     alias total_timeout= timeout=
@@ -94,6 +94,23 @@ module Aerospike
       # If max_retries is exceeded, the abort will occur even if the timeout
       # has not yet been exceeded.
       @max_retries = opt[:max_retries] || 2
+
+      # Determines how record TTL (time to live) is affected on reads. When enabled, the server can
+      # efficiently operate as a read-based LRU cache where the least recently used records are expired.
+      # The value is expressed as a percentage of the TTL sent on the most recent write such that a read
+      # within this interval of the record’s end of life will generate a touch.
+      #
+      # For example, if the most recent write had a TTL of 10 hours and read_touch_ttl_percent is set to
+      # 80, the next read within 8 hours of the record's end of life (equivalent to 2 hours after the most
+      # recent write) will result in a touch, resetting the TTL to another 10 hours.
+      #
+      # Values:
+      #
+      # 0 : Use server config default-read-touch-ttl-pct for the record's namespace/set.
+      # -1 : Do not reset record TTL on reads.
+      # 1 - 100 : Reset record TTL on reads when within this percentage of the most recent write TTL.
+      # Default: 0
+      @read_touch_ttl_percent = opt[:read_touch_ttl_percent] || 0
 
       # Duration to sleep between retries if a transaction fails and the
       # timeout was not exceeded. Enter zero to skip sleep.

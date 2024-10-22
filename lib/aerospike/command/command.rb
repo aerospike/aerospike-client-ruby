@@ -269,7 +269,7 @@ module Aerospike
 
       size_buffer
 
-      write_header_read_write(policy, args.read_attr, args.write_attr, field_count, args.operations.length)
+      write_header_read_write(policy, args, field_count)
       write_key(key, policy)
       write_filter_exp(policy.filter_exp, exp_size)
 
@@ -903,10 +903,14 @@ module Aerospike
     end
 
     # Header write for write operations.
-    def write_header_read_write(policy, read_attr, write_attr, field_count, operation_count)
+    def write_header_read_write(policy, args, field_count)
       # Set flags.
       generation = Integer(0)
+      ttl = args.has_write ? policy.expiration : policy.read_touch_ttl_percent
+      read_attr = args.read_attr
+      write_attr = args.write_attr
       info_attr = Integer(0)
+      operation_count = args.operations.length
 
       case policy.record_exists_action
       when Aerospike::RecordExistsAction::UPDATE
@@ -942,7 +946,7 @@ module Aerospike
       @data_buffer.write_byte(0, 12) # unused
       @data_buffer.write_byte(0, 13) # clear the result code
       @data_buffer.write_uint32(generation, 14)
-      @data_buffer.write_uint32(policy.ttl, 18)
+      @data_buffer.write_uint32(ttl, 18)
 
       # Initialize timeout. It will be written later.
       @data_buffer.write_byte(0, 22)
@@ -965,9 +969,10 @@ module Aerospike
       @data_buffer.write_byte(0, 10)
       @data_buffer.write_byte(info_attr, 11)
 
-      (12...22).each { |i| @data_buffer.write_byte(0, i) }
+      (12...18).each { |i| @data_buffer.write_byte(0, i) }
 
       # Initialize timeout. It will be written later.
+      @data_buffer.write_int32(policy.read_touch_ttl_percent, 18)
       @data_buffer.write_byte(0, 22)
       @data_buffer.write_byte(0, 23)
       @data_buffer.write_byte(0, 24)
@@ -988,9 +993,10 @@ module Aerospike
       @data_buffer.write_byte(0, 10)
       @data_buffer.write_byte(info_attr, 11)
 
-      (12...22).each { |i| @data_buffer.write_byte(0, i) }
+      (12...18).each { |i| @data_buffer.write_byte(0, i) }
 
       # Initialize timeout. It will be written later.
+      @data_buffer.write_int32(policy.read_touch_ttl_percent, 18)
       @data_buffer.write_byte(0, 22)
       @data_buffer.write_byte(0, 23)
       @data_buffer.write_byte(0, 24)

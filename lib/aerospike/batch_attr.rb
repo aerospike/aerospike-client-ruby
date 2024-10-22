@@ -75,7 +75,7 @@ module Aerospike
       @write_attr = 0
       @info_attr = 0
 
-      @expiration = 0
+      @expiration = rp.read_touch_ttl_percent
       @generation = 0
       @has_write = false
       @send_key = false
@@ -88,7 +88,7 @@ module Aerospike
       @write_attr = 0
       @info_attr = 0
 
-      @expiration = 0
+      @expiration = rp.read_touch_ttl_percent
       @generation = 0
       @has_write = false
       @send_key = false

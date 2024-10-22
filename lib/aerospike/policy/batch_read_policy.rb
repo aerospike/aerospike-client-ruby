@@ -20,7 +20,7 @@ module Aerospike
   # Policy attributes used in batch read commands.
   class BatchReadPolicy
 
-    attr_accessor :filter_exp
+    attr_accessor :filter_exp, :read_touch_ttl_percent
 
     def initialize(opt={})
       # Optional expression filter. If filter_exp exists and evaluates to false, the specific batch key
@@ -33,6 +33,23 @@ module Aerospike
       #
       # Default: nil
       @filter_exp = opt[:filter_exp]
+
+      # Determines how record TTL (time to live) is affected on reads. When enabled, the server can
+      # efficiently operate as a read-based LRU cache where the least recently used records are expired.
+      # The value is expressed as a percentage of the TTL sent on the most recent write such that a read
+      # within this interval of the record’s end of life will generate a touch.
+      #
+      # For example, if the most recent write had a TTL of 10 hours and read_touch_ttl_percent is set to
+      # 80, the next read within 8 hours of the record's end of life (equivalent to 2 hours after the most
+      # recent write) will result in a touch, resetting the TTL to another 10 hours.
+      #
+      # Values:
+      #
+      # 0 : Use server config default-read-touch-ttl-pct for the record's namespace/set.
+      # -1 : Do not reset record TTL on reads.
+      # 1 - 100 : Reset record TTL on reads when within this percentage of the most recent write TTL.
+      # Default: 0
+      @read_touch_ttl_percent = opt[:read_touch_ttl_percent] || 0
     end
   end
 end
