@@ -29,7 +29,7 @@ module Aerospike
 
     def initialize(node, records_with_idx)
       @node = node
-      @records_by_idx = records_with_idx.map(&:reverse).to_h
+      @records_by_idx = records_with_idx.to_h { |rec, idx| [idx, rec] }
     end
 
     def records
