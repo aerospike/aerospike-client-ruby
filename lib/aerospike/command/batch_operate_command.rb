@@ -21,13 +21,12 @@ module Aerospike
 
   class BatchOperateCommand < MultiCommand #:nodoc:
 
-    attr_accessor :batch, :policy, :attr, :records
+    attr_accessor :batch, :policy, :attr
 
-    def initialize(node, batch, policy, records)
+    def initialize(node, batch, policy)
       super(node)
       @batch = batch
       @policy = policy
-      @records = records
     end
 
     def batch_flags
@@ -50,7 +49,7 @@ module Aerospike
       @data_offset += FIELD_HEADER_SIZE + 4 + 1 # batch.keys.length + flags
 
       prev = nil
-      @records.each do |record|
+      batch.records.each do |record|
         key = record.key
         @data_offset += key.digest.length + 4 # 4 byte batch offset
 
@@ -78,7 +77,7 @@ module Aerospike
 
       prev = nil
       attr = BatchAttr.new
-      batch.records.each_with_index do |record, index|
+      batch.each_record_with_index do |record, index|
         @data_offset += @data_buffer.write_int32(index, @data_offset)
         key = record.key
         @data_offset += @data_buffer.write_binary(key.digest, @data_offset)
@@ -136,13 +135,13 @@ module Aerospike
       op_count = @data_buffer.read_int16(20)
 
       skip_key(field_count)
-      req_key = records[batch_index].key
+      req_key = batch.record_for_index(batch_index).key
 
-      records[batch_index].result_code = result_code
+      batch.record_for_index(batch_index).result_code = result_code
       case result_code
       when 0, ResultCode::UDF_BAD_RESPONSE
         record = parse_record(req_key, op_count, generation, expiration)
-        records[batch_index].record = record
+        batch.record_for_index(batch_index).record = record
       end
     end
 

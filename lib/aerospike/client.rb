@@ -347,7 +347,7 @@ module Aerospike
       policy = create_policy(options, BatchPolicy, default_batch_policy)
 
       execute_batch_operate_commands(policy, records) do |node, batch|
-        BatchOperateCommand.new(node, batch, policy, records)
+        BatchOperateCommand.new(node, batch, policy)
       end
     end
 
