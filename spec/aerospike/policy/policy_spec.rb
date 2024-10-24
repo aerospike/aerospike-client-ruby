@@ -26,7 +26,7 @@ describe Aerospike::Policy do
 
       expect(policy.class).to eq described_class
       expect(policy.timeout).to eq 0
-      expect(policy.max_retries).to eq 2
+      expect(policy.max_retries).to eq 3
       expect(policy.sleep_between_retries).to eq 0.5
 
     end
