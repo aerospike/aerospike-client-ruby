@@ -27,7 +27,7 @@ module Aerospike
           def call(node, info_map)
             gen_string = info_map.fetch('rebalance-generation', nil)
 
-            raise Aerospike::Exceptions::Parse.new('rebalance-generation is empty') if gen_string.to_s.empty?
+            raise Aerospike::Exceptions::Parse.new('rebalance-generation is empty', node) if gen_string.to_s.empty?
 
             generation = gen_string.to_i
 

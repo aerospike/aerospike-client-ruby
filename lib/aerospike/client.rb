@@ -239,7 +239,7 @@ module Aerospike
 
       response = send_info_command(policy, str_cmd, node).upcase
       return if response == "OK"
-      raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::SERVER_ERROR, "Truncate failed: #{response}")
+      raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::SERVER_ERROR, "Truncate failed: #{response}", [node])
     end
 
     #-------------------------------------------------------

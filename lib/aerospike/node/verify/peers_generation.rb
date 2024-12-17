@@ -25,7 +25,7 @@ module Aerospike
           def call(node, info_map, peers)
             gen_string = info_map.fetch('peers-generation', nil)
 
-            raise Aerospike::Exceptions::Parse.new('peers-generation is empty') if gen_string.to_s.empty?
+            raise Aerospike::Exceptions::Parse.new('peers-generation is empty', node) if gen_string.to_s.empty?
 
             generation = gen_string.to_i
 

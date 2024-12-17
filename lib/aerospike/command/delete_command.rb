@@ -59,13 +59,13 @@ module Aerospike
 
       if result_code == Aerospike::ResultCode::FILTERED_OUT
         if @policy.fail_on_filtered_out
-          raise Aerospike::Exceptions::Aerospike.new(result_code)
+          raise Aerospike::Exceptions::Aerospike.new(result_code, nil, [@node])
         end
         @existed = true
         return
       end
 
-      raise Aerospike::Exceptions::Aerospike.new(result_code)
+      raise Aerospike::Exceptions::Aerospike.new(result_code, nil, [@node])
     end
 
   end # class

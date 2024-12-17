@@ -77,7 +77,7 @@ module Aerospike
 
       pmap = cluster.partitions
       replica_array = pmap[namespace]
-      raise Aerospike::Exceptions::InvalidNamespace("namespace not found in the partition map") if !replica_array
+      raise Aerospike::Exceptions::InvalidNamespace.new("namespace not found in the partition map") if !replica_array
 
       master = (replica_array.get)[0]
       master = master.get

@@ -50,7 +50,7 @@ module Aerospike
       if result_code == 0
         generation = @data_buffer.read_int32(14)
         expiration = @data_buffer.read_int32(18)
-        @record = Record.new(@node, @key, nil,  generation, expiration)
+        @record = Record.new(@node, @key, nil, generation, expiration)
         return
       end
 
@@ -62,12 +62,12 @@ module Aerospike
       if result_code == Aerospike::ResultCode::FILTERED_OUT
         @record = nil
         if @policy.fail_on_filtered_out
-          raise Aerospike::Exceptions::Aerospike.new(result_code)
+          raise Aerospike::Exceptions::Aerospike.new(result_code, nil, [@node])
         end
         return
       end
 
-      raise Aerospike::Exceptions::Aerospike.new(result_code)
+      raise Aerospike::Exceptions::Aerospike.new(result_code, nil, [@node])
     end
 
   end # class

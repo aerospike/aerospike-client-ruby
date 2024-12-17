@@ -24,7 +24,7 @@ module Aerospike
   class MultiCommand < Command #:nodoc:
 
     def initialize(node)
-      super(node)
+      super
 
       @valid = true
       @mutex = Mutex.new
@@ -69,7 +69,7 @@ module Aerospike
 
             # inflate the results
             # TODO: reuse the current buffer
-            uncompressed = Zlib::inflate(@data_buffer.buf)
+            uncompressed = Zlib.inflate(@data_buffer.buf)
             receive_size = uncompressed.size - 8
 
             @compressed_data_buffer = Buffer.new(-1, uncompressed)
@@ -83,11 +83,11 @@ module Aerospike
           end
         end
 
-        if receive_size > 0
-          status = parse_group(receive_size)
-        else
-          status = false
-        end
+        status = if receive_size > 0
+          parse_group(receive_size)
+                 else
+          false
+                 end
       end
     end
 
@@ -101,10 +101,10 @@ module Aerospike
         # The only valid server return codes are "ok", "not found" and "filtered out".
         # If other return codes are received, then abort the batch.
         if result_code != 0
-            if result_code == Aerospike::ResultCode::KEY_NOT_FOUND_ERROR || result_code == Aerospike::ResultCode::FILTERED_OUT
+            if [Aerospike::ResultCode::KEY_NOT_FOUND_ERROR, Aerospike::ResultCode::FILTERED_OUT].include?(result_code)
               # NOOP
             else
-              raise Aerospike::Exceptions::Aerospike.new(result_code)
+              raise Aerospike::Exceptions::Aerospike.new(result_code, nil, [@node])
             end
         end
 
@@ -145,7 +145,7 @@ module Aerospike
         when Aerospike::FieldType::TABLE
           set_name = @data_buffer.read(1, size).force_encoding('utf-8')
         when Aerospike::FieldType::KEY
-          user_key = Aerospike::bytes_to_key_value(@data_buffer.read(1).ord, @data_buffer, 2, size-1)
+          user_key = Aerospike.bytes_to_key_value(@data_buffer.read(1).ord, @data_buffer, 2, size-1)
         when Aerospike::FieldType::BVAL_ARRAY
           bval = @data_buffer.read_uint64_little_endian(1)
         end
@@ -207,7 +207,7 @@ module Aerospike
         # Corrupted data streams can result in a huge length.
         # Do a sanity check here.
         if length > Aerospike::Buffer::MAX_BUFFER_SIZE
-          raise Aerospike::Exceptions::Parse.new("Invalid read_bytes length: #{length}")
+          raise Aerospike::Exceptions::Parse.new("Invalid read_bytes length: #{length}", [@node])
         end
         @data_buffer = Buffer.new(length)
       end

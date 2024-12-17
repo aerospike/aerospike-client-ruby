@@ -571,7 +571,7 @@ module Aerospike
       if operations
 
         unless background
-          raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::PARAMETER_ERROR)
+          raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::PARAMETER_ERROR, nil, [@node])
         end
 
         operations.each do |operation|
@@ -685,6 +685,7 @@ module Aerospike
 
     def execute
       iterations = 0
+      failed_nodes = []
 
       # set timeout outside the loop
       limit = Time.now + @policy.timeout
@@ -705,6 +706,7 @@ module Aerospike
           @node = get_node
           @conn = @node.get_connection(@policy.timeout)
         rescue => e
+          failed_nodes << @node if @node
           if @node
             # Socket connection error has occurred. Decrease health and retry.
             @node.decrease_health
@@ -724,6 +726,7 @@ module Aerospike
           begin
             write_buffer
           rescue => e
+            failed_nodes << @node if @node
             Aerospike.logger.error(e)
 
             # All runtime exceptions are considered fatal. Do not retry.
@@ -738,6 +741,7 @@ module Aerospike
           begin
             @conn.write(@data_buffer, @data_offset)
           rescue => e
+            failed_nodes << @node if @node
             # IO errors are considered temporary anomalies. Retry.
             # Close socket to flush out possible garbage. Do not put back in pool.
             @conn.close if @conn
@@ -753,6 +757,7 @@ module Aerospike
           begin
             parse_result
           rescue => e
+            failed_nodes << @node if @node
             case e
               # do not log the following exceptions
             when Aerospike::Exceptions::ScanTerminated
@@ -783,7 +788,7 @@ module Aerospike
       end # while
 
       # execution timeout
-      raise Aerospike::Exceptions::Timeout.new(limit, iterations)
+      raise Aerospike::Exceptions::Timeout.new(limit, iterations, failed_nodes)
     end
 
     protected

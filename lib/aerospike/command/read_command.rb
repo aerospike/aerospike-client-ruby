@@ -70,7 +70,7 @@ module Aerospike
 
           # inflate the results
           # TODO: reuse the current buffer
-          uncompressed = Zlib::inflate(@data_buffer.buf)
+          uncompressed = Zlib.inflate(@data_buffer.buf)
 
           @data_buffer = Buffer.new(-1, uncompressed)
         rescue => e
@@ -126,7 +126,7 @@ module Aerospike
 
       if result_code == Aerospike::ResultCode::FILTERED_OUT
         if @policy.fail_on_filtered_out
-          raise Aerospike::Exceptions::Aerospike.new(result_code)
+          raise Aerospike::Exceptions::Aerospike.new(result_code, nil, [@node])
         end
         return
       end
@@ -141,19 +141,19 @@ module Aerospike
         end
       end
 
-      raise Aerospike::Exceptions::Aerospike.new(result_code)
+      raise Aerospike::Exceptions::Aerospike.new(result_code, nil, [@node])
     end
 
     def handle_udf_error(result_code)
       ret = @record.bins['FAILURE']
-      raise Aerospike::Exceptions::Aerospike.new(result_code, ret) if ret
-      raise Aerospike::Exceptions::Aerospike.new(result_code)
+      raise Aerospike::Exceptions::Aerospike.new(result_code, ret, [@node]) if ret
+      raise Aerospike::Exceptions::Aerospike.new(result_code, nil, [@node])
     end
 
     def parse_record(op_count, field_count, generation, expiration)
       bins = op_count > 0 ? {} : nil
       receive_offset = 0
-      single_bin_value = (!(OperatePolicy === policy) || policy.record_bin_multiplicity == RecordBinMultiplicity::SINGLE)
+      single_bin_value = !policy.is_a?(OperatePolicy) || policy.record_bin_multiplicity == RecordBinMultiplicity::SINGLE
 
       # There can be fields in the response (setname etc).
       # But for now, ignore them. Expose them to the API if needed in the future.
@@ -181,7 +181,7 @@ module Aerospike
 
         if single_bin_value || !bins.has_key?(name)
           bins[name] = value
-        elsif (prev = bins[name]).kind_of?(OpResults)
+        elsif (prev = bins[name]).is_a?(OpResults)
           prev << value
         else
           bins[name] = OpResults.new << prev << value

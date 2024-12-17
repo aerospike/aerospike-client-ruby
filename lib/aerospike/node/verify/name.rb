@@ -25,15 +25,15 @@ module Aerospike
           def call(node, info_map)
             info_name = info_map['node']
 
-            if !info_name
+            unless info_name
               node.decrease_health
-              raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::INVALID_NODE_ERROR, 'Node name is empty')
+              raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::INVALID_NODE_ERROR, 'Node name is empty', [node])
             end
 
-            if !(node.name == info_name)
+            unless node.name == info_name
               # Set node to inactive immediately.
               node.inactive!
-              raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::INVALID_NODE_ERROR, "Node name has changed. Old=#{node.name} New= #{info_name}")
+              raise Aerospike::Exceptions::Aerospike.new(Aerospike::ResultCode::INVALID_NODE_ERROR, "Node name has changed. Old=#{node.name} New= #{info_name}", [node])
             end
           end
         end

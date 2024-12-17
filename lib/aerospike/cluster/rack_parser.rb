@@ -43,7 +43,7 @@ module Aerospike
 
       info = info_map[RACK_IDS]
       if !info || info.length == 0
-        raise Aerospike::Exceptions::Connection.new("#{RACK_IDS} response for node #{@node.name} is empty")
+        raise Aerospike::Exceptions::Connection.new("#{RACK_IDS} response for node #{@node.name} is empty", @node)
       end
 
       @buffer = info
@@ -54,7 +54,7 @@ module Aerospike
         namespace = parse_name
         rack_id = parse_rack_id
 
-        @racks = {} if !@racks
+        @racks ||= {}
         @racks[namespace] = rack_id
       end
 
@@ -76,7 +76,8 @@ module Aerospike
       if namespace.length <= 0 || namespace.length >= 32
         response = get_truncated_response
         raise Aerospike::Exceptions::Parse.new(
-          "Invalid rack namespace #{namespace}. Response=#{response}"
+          "Invalid rack namespace #{namespace}. Response=#{response}",
+          @node
         )
       end
 
@@ -97,7 +98,8 @@ module Aerospike
       if rack_id < 0
         response = get_truncated_response
         raise Aerospike::Exceptions::Parse.new(
-          "Invalid rack_id #{rack_id}. Response=#{response}"
+          "Invalid rack_id #{rack_id}. Response=#{response}",
+          @node
         )
       end
 

@@ -46,7 +46,7 @@ module Aerospike
           read_bytes(receive_size - @data_offset) if @data_offset < receive_size
           return nil
         else
-          raise Aerospike::Exceptions::Aerospike.new(result_code)
+          raise Aerospike::Exceptions::Aerospike.new(result_code, nil, [@node])
         end
 
         info3 = @data_buffer.read(3).ord
@@ -72,17 +72,16 @@ module Aerospike
           next
         end
 
-        if result_code == 0
-          if @recordset.active?
-            @recordset.records.enq(parse_record(key, op_count, generation, expiration))
-          else
-            expn = @recordset.is_scan? ? SCAN_TERMINATED_EXCEPTION : QUERY_TERMINATED_EXCEPTION
-            raise expn
-          end
-
-          # UDF results do not return a key
-          @tracker&.set_last(@node_partitions, key, key.bval) if key
+        next unless result_code == 0
+        if @recordset.active?
+          @recordset.records.enq(parse_record(key, op_count, generation, expiration))
+        else
+          expn = @recordset.is_scan? ? SCAN_TERMINATED_EXCEPTION : QUERY_TERMINATED_EXCEPTION
+          raise expn
         end
+
+        # UDF results do not return a key
+        @tracker&.set_last(@node_partitions, key, key.bval) if key
       end # while
 
       true

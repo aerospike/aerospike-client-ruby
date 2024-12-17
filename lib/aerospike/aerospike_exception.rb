@@ -21,79 +21,79 @@ require 'aerospike/result_code'
 module Aerospike
   module Exceptions
     class Aerospike < StandardError
-      attr_reader :result_code
+      attr_reader :result_code, :failed_nodes
 
-      def initialize(result_code, message = nil)
+      def initialize(result_code, message = nil, failed_nodes = nil)
         @result_code = result_code
+        @failed_nodes = failed_nodes
         message ||= ResultCode.message(result_code)
         super(message)
       end
     end
 
     class Timeout < Aerospike
-      attr_reader :timeout, :iterations, :failed_nodes, :failed_connections
+      attr_reader :timeout, :iterations, :failed_connections
 
       def initialize(timeout, iterations, failed_nodes=nil, failed_connections=nil)
         @timeout = timeout
         @iterations = iterations
-        @failed_nodes = failed_nodes
         @failed_connections = failed_connections
 
-        super(ResultCode::TIMEOUT)
+        super(ResultCode::TIMEOUT, nil, failed_nodes)
       end
     end
 
     class InvalidCredentials < Aerospike
-      def initialize(msg = nil)
-        super(ResultCode::NOT_AUTHENTICATED, msg)
+      def initialize(msg = nil, node=nil)
+        super(ResultCode::NOT_AUTHENTICATED, msg, [node])
       end
     end
 
     class Serialize < Aerospike
       def initialize(msg=nil)
-        super(ResultCode::SERIALIZE_ERROR, msg)
+        super(ResultCode::SERIALIZE_ERROR, msg, [node])
       end
     end
 
     class Parse < Aerospike
-      def initialize(msg=nil)
-        super(ResultCode::PARSE_ERROR, msg)
+      def initialize(msg=nil, node=nil)
+        super(ResultCode::PARSE_ERROR, msg, [node])
       end
     end
 
     class Connection < Aerospike
-      def initialize(msg=nil)
-        super(ResultCode::SERVER_NOT_AVAILABLE, msg)
+      def initialize(msg=nil, node=nil)
+        super(ResultCode::SERVER_NOT_AVAILABLE, msg, [node])
       end
     end
 
     class InvalidNode < Aerospike
-      def initialize(msg=nil)
-        super(ResultCode::INVALID_NODE_ERROR, msg)
+      def initialize(msg=nil, node=nil)
+        super(ResultCode::INVALID_NODE_ERROR, msg, [node])
       end
     end
 
     class ScanTerminated < Aerospike
-      def initialize(msg=nil)
-        super(ResultCode::SCAN_TERMINATED, msg)
+      def initialize(msg=nil, node=nil)
+        super(ResultCode::SCAN_TERMINATED, msg, [node])
       end
     end
 
     class QueryTerminated < Aerospike
-      def initialize(msg=nil)
-        super(ResultCode::QUERY_TERMINATED, msg)
+      def initialize(msg=nil, node=nil)
+        super(ResultCode::QUERY_TERMINATED, msg, [node])
       end
     end
 
     class CommandRejected < Aerospike
-      def initialize(msg=nil)
-        super(ResultCode::COMMAND_REJECTED, msg)
+      def initialize(msg=nil, node=nil)
+        super(ResultCode::COMMAND_REJECTED, msg, [node])
       end
     end
 
     class InvalidNamespace < Aerospike
-      def initialize(msg=nil)
-        super(ResultCode::INVALID_NAMESPACE, msg)
+      def initialize(msg=nil, node=nil)
+        super(ResultCode::INVALID_NAMESPACE, msg, [node])
       end
     end
   end

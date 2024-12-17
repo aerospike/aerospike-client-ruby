@@ -33,7 +33,7 @@ module Aerospike
       op_count = @data_buffer.read_int16(20)
 
       if op_count > 0
-        raise Aerospike::Exceptions::Parse.new('Received bins that were not requested!')
+        raise Aerospike::Exceptions::Parse.new('Received bins that were not requested!', @node)
       end
 
       skip_key(field_count)

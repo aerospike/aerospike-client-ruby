@@ -2,6 +2,11 @@
 
 All notable changes to this project will be documented in this file.
 
+## [4.2.0] 2024-12-18
+
+- **Fixes**
+  - [CLIENT-3195] Fix ruby client does not return failed nodes on timeout.
+
 ## [4.1.0] 2024-10-22
 
 - **New Features**

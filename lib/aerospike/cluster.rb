@@ -129,7 +129,7 @@ module Aerospike
       when Aerospike::Replica::RANDOM
           random_node
       else
-          raise Aerospike::Exceptions::InvalidNode("invalid policy.replica value")
+          raise Aerospike::Exceptions::InvalidNode.new("invalid policy.replica value")
       end
     end
 
@@ -147,7 +147,7 @@ module Aerospike
       when Aerospike::Replica::RANDOM
           random_node
       else
-          raise Aerospike::Exceptions::InvalidNode("invalid policy.replica value")
+          raise Aerospike::Exceptions::InvalidNode.new("invalid policy.replica value")
       end
     end
 
@@ -155,13 +155,13 @@ module Aerospike
     def master_node(partition)
       partition_map = partitions
       replica_array = partition_map[partition.namespace]
-      raise Aerospike::Exceptions::InvalidNamespace("namespace not found in the partition map") unless replica_array
+      raise Aerospike::Exceptions::InvalidNamespace.new("namespace not found in the partition map") unless replica_array
 
       node_array = replica_array.get[0]
-      raise Aerospike::Exceptions::InvalidNamespace("namespace not found in the partition map") unless node_array
+      raise Aerospike::Exceptions::InvalidNamespace.new("namespace not found in the partition map") unless node_array
 
       node = node_array.get[partition.partition_id]
-      raise Aerospike::Exceptions::InvalidNode if !node || !node.active?
+      raise Aerospike::Exceptions::InvalidNode.new("no active node found") if !node || !node.active?
 
       node
     end
@@ -170,7 +170,7 @@ module Aerospike
     def rack_node(partition, seq)
       partition_map = partitions
       replica_array = partition_map[partition.namespace]
-      raise Aerospike::Exceptions::InvalidNamespace("namespace not found in the partition map") unless replica_array
+      raise Aerospike::Exceptions::InvalidNamespace.new("namespace not found in the partition map") unless replica_array
 
       replica_array = replica_array.get
 
@@ -195,14 +195,14 @@ module Aerospike
 
       return fallback if fallback
 
-      raise Aerospike::Exceptions::InvalidNode
+      raise Aerospike::Exceptions::InvalidNode.new("no active node found")
     end
 
     # Returns a node on the cluster for read operations
     def master_proles_node(partition)
       partition_map = partitions
       replica_array = partition_map[partition.namespace]
-      raise Aerospike::Exceptions::InvalidNamespace("namespace not found in the partition map") unless replica_array
+      raise Aerospike::Exceptions::InvalidNamespace.new("namespace not found in the partition map") unless replica_array
 
       replica_array = replica_array.get
 
@@ -214,14 +214,14 @@ module Aerospike
         return node if node && node.active?
       end
 
-      raise Aerospike::Exceptions::InvalidNode
+      raise Aerospike::Exceptions::InvalidNode.new("no active node found")
     end
 
     # Returns a random node on the cluster
     def sequence_node(partition, seq)
       partition_map = partitions
       replica_array = partition_map[partition.namespace]
-      raise Aerospike::Exceptions::InvalidNamespace("namespace not found in the partition map") unless replica_array
+      raise Aerospike::Exceptions::InvalidNamespace.new("namespace not found in the partition map") unless replica_array
 
       replica_array = replica_array.get
 
@@ -233,7 +233,7 @@ module Aerospike
         return node if node && node.active?
       end
 
-      raise Aerospike::Exceptions::InvalidNode
+      raise Aerospike::Exceptions::InvalidNode.new("node active node found")
     end
 
     def get_node_for_key(replica_policy, key, is_write: false)
@@ -251,10 +251,10 @@ module Aerospike
 
       partition_map = partitions
       replica_array = partition_map[namespace]
-      raise Aerospike::Exceptions::InvalidNamespace("namespace not found in the partition map") unless replica_array
+      raise Aerospike::Exceptions::InvalidNamespace.new("namespace not found in the partition map") unless replica_array
 
       node_array = replica_array.get[0]
-      raise Aerospike::Exceptions::InvalidNamespace("namespace not found in the partition map") unless node_array
+      raise Aerospike::Exceptions::InvalidNamespace.new("namespace not found in the partition map") unless node_array
 
 
       pid = 0
@@ -281,7 +281,7 @@ module Aerospike
 
         i = i.succ
       end
-      raise Aerospike::Exceptions::InvalidNode
+      raise Aerospike::Exceptions::InvalidNode.new("no active node found")
     end
 
     # Returns a list of all nodes in the cluster
@@ -296,7 +296,7 @@ module Aerospike
     def get_node_by_name(node_name)
       node = find_node_by_name(node_name)
 
-      raise Aerospike::Exceptions::InvalidNode unless node
+      raise Aerospike::Exceptions::InvalidNode.new("node `#{node_name}` not found") unless node
 
       node
     end

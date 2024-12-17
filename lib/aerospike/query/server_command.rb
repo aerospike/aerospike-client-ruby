@@ -45,7 +45,7 @@ module Aerospike
         if result_code == Aerospike::ResultCode::KEY_NOT_FOUND_ERROR
           return false
         end
-        raise Aerospike::Exceptions::Aerospike.new(result_code)
+        raise Aerospike::Exceptions::Aerospike.new(result_code, nil, [@node])
       end
       op_count = @data_buffer.read_int16(20)
       if op_count <= 0

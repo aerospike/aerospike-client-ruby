@@ -42,7 +42,7 @@ module Aerospike
 
       info = info_map[REPLICAS_ALL]
       if !info || info.length == 0
-        raise Aerospike::Exceptions::Connection.new("#{REPLICAS_ALL} response for node #{@node.name} is empty")
+        raise Aerospike::Exceptions::Connection.new("#{REPLICAS_ALL} response for node #{@node.name} is empty", @node)
       end
 
       @buffer = info
@@ -112,7 +112,8 @@ module Aerospike
       if namespace.length <= 0 || namespace.length >= 32
         response = get_truncated_response
         raise Aerospike::Exceptions::Parse.new(
-          "Invalid partition namespace #{namespace}. Response=#{response}"
+          "Invalid partition namespace #{namespace}. Response=#{response}",
+          @node
         )
       end
 
@@ -133,7 +134,8 @@ module Aerospike
       if count < 0 || count > 4096
         response = get_truncated_response
         raise Aerospike::Exceptions::Parse.new(
-          "Invalid partition count #{count}. Response=#{response}"
+          "Invalid partition count #{count}. Response=#{response}",
+          @node
         )
       end
 
