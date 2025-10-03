@@ -7,7 +7,7 @@
 [gem-image]: https://img.shields.io/gem/v/aerospike.svg
 [gem-url]: https://rubygems.org/gems/aerospike
 
-An Aerospike library for Ruby.
+A community supported Aerospike library for Ruby. This client is now deprecated. 
 
 This library is compatible with Ruby 2.3+ and supports Linux, Mac OS X and various other BSDs.
 
