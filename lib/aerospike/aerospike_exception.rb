@@ -28,6 +28,31 @@ module Aerospike
         message ||= ResultCode.message(result_code)
         super(message)
       end
+
+      def retryable?
+        case @result_code
+        when ResultCode::COMMAND_REJECTED
+          true
+        when ResultCode::INVALID_NODE_ERROR
+          true
+        when ResultCode::SERVER_ERROR
+          true
+        when ResultCode::SERVER_MEM_ERROR
+          true
+        when ResultCode::TIMEOUT
+          true
+        when ResultCode::KEY_BUSY
+          true
+        when ResultCode::SERVER_NOT_AVAILABLE
+          true
+        when ResultCode::DEVICE_OVERLOAD
+          true
+        when ResultCode::QUERY_NET_IO
+          true
+        else
+          false
+        end
+      end
     end
 
     class Timeout < Aerospike
@@ -39,7 +64,11 @@ module Aerospike
         @failed_nodes = failed_nodes
         @failed_connections = failed_connections
 
-        super(ResultCode::TIMEOUT)
+        super(ResultCode::TIMEOUT, "Timeout after #{iterations} attempts!")
+      end
+
+      def retryable?
+        true
       end
     end
 
@@ -64,6 +93,10 @@ module Aerospike
     class Connection < Aerospike
       def initialize(msg=nil)
         super(ResultCode::SERVER_NOT_AVAILABLE, msg)
+      end
+
+      def retryable?
+        true
       end
     end
 

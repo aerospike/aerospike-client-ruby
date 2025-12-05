@@ -22,6 +22,10 @@ RSpec.describe Aerospike::Cluster do
   let(:instance) { described_class.new(policy, hosts) }
   let(:hosts) { [] }
 
+  after do
+    instance.close
+  end
+
   describe '#create_node' do
     let(:nv) { double('nv') }
     let(:node) { instance_double(Aerospike::Node) }
