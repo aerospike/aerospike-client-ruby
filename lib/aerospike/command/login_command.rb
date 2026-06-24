@@ -156,8 +156,10 @@ module Aerospike
 
     SALT = '$2a$10$7EqJtq98hPqEX7fNZaFWoO'
     def self.hash_password(password)
-      # Hashing the password with the cost of 10, with a static salt
-      return BCrypt::Engine.hash_secret(password, SALT, :cost => 10)
+      # Hashing the password with a static salt. The cost (10) is already
+      # encoded in SALT, so the third argument to hash_secret is redundant
+      # and has been removed (bcrypt >= 3.1.19 deprecates passing it).
+      return BCrypt::Engine.hash_secret(password, SALT)
     end
   end
 end
